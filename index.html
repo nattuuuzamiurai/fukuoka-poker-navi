@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>福岡ポーカートーナメント日程 | ふくおかポーカーナビ</title>
-<meta name="description" content="福岡県内（天神・博多・中洲・大名・北九州・久留米）のアミューズメントポーカー店のトーナメント日程を一括で確認。日付・エリア・バイインで絞り込み。">
+<meta name="description" content="福岡県内（天神・中洲・北九州・久留米・筑豊）のアミューズメントポーカー店のトーナメント日程を一括で確認。日付・エリア・バイインで絞り込み。">
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   :root{
@@ -138,7 +138,7 @@
 
 <section class="hero">
   <h1>福岡の<span class="hl">ポーカートーナメント</span>を<br>ぜんぶ、ここで。</h1>
-  <p>天神・博多・中洲・大名・北九州・久留米のアミューズ店のトーナメント日程を一括表示</p>
+  <p>天神・中洲・北九州（小倉/黒崎）・久留米・筑豊のアミューズ店のトーナメント日程を一括表示</p>
   <div class="stats">
     <div class="stat"><b id="stat-t">–</b><span>掲載トーナメント</span></div>
     <div class="stat"><b id="stat-v">–</b><span>掲載店舗</span></div>
@@ -259,7 +259,12 @@
     document.getElementById('list-cnt').textContent = rows.length + '件';
 
     const list = document.getElementById('list');
-    if (!rows.length){ list.innerHTML = '<div class="empty">条件に合うトーナメントがありません。<br>フィルタを変えてお試しください。</div>'; return; }
+    if (!rows.length){
+      const msg = TOURNAMENTS.length === 0
+        ? '掲載トーナメントは順次追加中です。<br>下の掲載店舗のSNS・公式サイトから最新の開催情報をご確認ください。'
+        : '条件に合うトーナメントがありません。<br>フィルタを変えてお試しください。';
+      list.innerHTML = '<div class="empty">'+msg+'</div>'; return;
+    }
 
     // group by date
     const groups = {};
