@@ -17,6 +17,7 @@
 | ファイル | 役割 |
 |---|---|
 | `index.html` | 公開サイト本体（モバイルファースト・単一HTML） |
+| `admin.html` | 管理コンソール（告知テキスト貼付 → Claude API で自動抽出 → `data.js` 生成） |
 | `data.js` | 表示用の正規化済みデータ（`VENUES` / `TOURNAMENTS` / `AREAS`）とスキーマ定義 |
 
 `data.js` を差し替えるだけでサイトが更新される設計。CDN/静的ホスティング（GitHub Pages 等）にそのまま置ける。
@@ -65,7 +66,8 @@
 ## ロードマップ
 
 - [x] v1: 公開UI（日付/エリア/バイイン/タグ絞り込み・店舗一覧・LINE送客・広告/PR枠）＋データスキーマ
-- [ ] 管理コンソール：告知テキスト貼付 → LLM整形 → `data.js`（or DB）へ upsert
+- [x] 管理コンソール（`admin.html`）：告知テキスト貼付 → Claude API（structured outputs）で整形 → 確認・編集 → `data.js` 生成
+- [ ] 実店舗データの投入（福岡県内アミューズ店の調査結果を反映）
 - [ ] 自動クローラ：公式サイト/Googleビジネスの定期取得（GitHub Actions cron 等）
 - [ ] LINE公式アカウント連携：新着トーナメントの自動プッシュ配信
 - [ ] SEO：店舗個別ページ・大会個別ページの静的生成、構造化データ(JSON-LD)

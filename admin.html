@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>管理コンソール | ふくおかポーカーナビ</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --felt:#0f3d2e; --felt2:#14513c; --gold:#d9a441;
+    --bg:#f6f4ef; --sur:#ffffff; --bor:#e7e1d6; --txt:#25201b; --mut:#8a8078;
+    --red:#c0392b; --grn:#1a9e6f; --r:12px; --sha:0 2px 10px rgba(30,20,5,.07);
+  }
+  body{font-family:"Hiragino Sans","Yu Gothic UI",system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.5;font-size:14px;padding-bottom:60px}
+  header{background:linear-gradient(135deg,var(--felt),var(--felt2));color:#fff;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+  header h1{font-size:1.05em;font-weight:800}
+  header .pip{color:var(--gold)}
+  header a{color:#cfe6db;font-size:.82em;text-decoration:none}
+  .wrap{max-width:960px;margin:0 auto;padding:18px}
+  .card{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:18px 20px;margin-bottom:18px}
+  .card h2{font-size:1em;font-weight:800;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+  .card h2 .num{background:var(--felt);color:#fff;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.8em;flex-shrink:0}
+  .card .hint{font-size:.82em;color:var(--mut);margin-bottom:12px}
+  label{display:block;font-size:.78em;font-weight:700;color:var(--mut);margin:10px 0 4px}
+  input,select,textarea{width:100%;border:1px solid var(--bor);border-radius:8px;padding:8px 10px;font-size:.92em;font-family:inherit;color:var(--txt);background:#fff;outline:none}
+  input:focus,select:focus,textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(217,164,65,.15)}
+  textarea{resize:vertical;min-height:120px}
+  .row{display:flex;gap:12px;flex-wrap:wrap}
+  .row>div{flex:1;min-width:160px}
+  .btn{background:var(--felt);color:#fff;border:none;border-radius:9px;padding:10px 18px;font-size:.9em;font-weight:700;cursor:pointer;font-family:inherit}
+  .btn:hover{background:var(--felt2)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn.sec{background:#fff;color:var(--felt);border:1px solid var(--bor)}
+  .btn.gold{background:var(--gold);color:#3a2a06}
+  .btn.sm{padding:5px 11px;font-size:.8em}
+  .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+  .status{font-size:.85em;margin-top:10px;min-height:1.2em}
+  .status.err{color:var(--red)}
+  .status.ok{color:var(--grn)}
+  table{width:100%;border-collapse:collapse;margin-top:10px;font-size:.84em}
+  th{background:#faf7f2;text-align:left;padding:7px 8px;color:var(--mut);font-size:.9em;border-bottom:1px solid var(--bor);white-space:nowrap}
+  td{padding:5px 6px;border-bottom:1px solid var(--bor);vertical-align:middle}
+  td input,td select{padding:5px 7px;font-size:.9em}
+  .tbl-wrap{overflow-x:auto}
+  .pill{display:inline-block;font-size:.72em;font-weight:700;padding:1px 8px;border-radius:20px;background:#eef0fe;color:#5560d0}
+  code{background:#f3efe6;padding:1px 6px;border-radius:5px;font-size:.85em}
+  .keybar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .keybar input{flex:1;min-width:200px}
+  .muted{color:var(--mut);font-size:.8em}
+  details{margin-top:10px}
+  summary{cursor:pointer;font-size:.85em;font-weight:700;color:var(--felt)}
+  pre{background:#1b2320;color:#d4e5dd;padding:12px;border-radius:8px;overflow-x:auto;font-size:.78em;margin-top:10px;max-height:320px}
+</style>
+</head>
+<body>
+<header>
+  <h1><span class="pip">♠</span> 管理コンソール <span class="muted" style="color:#9fc2b4;font-weight:400">ふくおかポーカーナビ</span></h1>
+  <a href="index.html">← 公開サイトを見る</a>
+</header>
+
+<div class="wrap">
+
+  <!-- STEP 0: API key -->
+  <div class="card">
+    <h2><span class="num">0</span>Claude API 設定</h2>
+    <div class="hint">告知テキストの整形に Claude API を使います。キーはこのブラウザ（localStorage）にのみ保存され、送信先は api.anthropic.com のみです。※公開せず自分専用で使ってください。</div>
+    <div class="keybar">
+      <input type="password" id="apikey" placeholder="sk-ant-... (Anthropic API キー)">
+      <select id="model" style="max-width:220px">
+        <option value="claude-opus-4-8">claude-opus-4-8（推奨・高精度）</option>
+        <option value="claude-haiku-4-5">claude-haiku-4-5（低コスト）</option>
+        <option value="claude-sonnet-5">claude-sonnet-5（中間）</option>
+      </select>
+      <button class="btn sm sec" onclick="saveKey()">保存</button>
+    </div>
+  </div>
+
+  <!-- STEP 1: paste -> extract -->
+  <div class="card">
+    <h2><span class="num">1</span>告知テキストを貼り付け → 自動抽出</h2>
+    <div class="hint">店舗の公式LINE・X・Instagram などの告知文をそのまま貼り付けます。1つの投稿に複数トーナメントが含まれていてもOK。日付・大会名・バイイン・GTD等を自動抽出します。</div>
+    <div class="row">
+      <div style="flex:2">
+        <label>対象店舗</label>
+        <select id="venue"></select>
+      </div>
+      <div>
+        <label>基準日（年が無い日付の解決に使用）</label>
+        <input type="date" id="baseDate">
+      </div>
+    </div>
+    <label>告知テキスト</label>
+    <textarea id="announce" placeholder="例）1/25(土) 19:00 START｜AceHigh Daily NLH｜BuyIn 3,000円 + AddOn 1,000円｜Stack 20,000｜レイト可 …"></textarea>
+    <div class="btnrow">
+      <button class="btn" id="extractBtn" onclick="extract()">🤖 抽出する</button>
+      <span class="status" id="exStatus"></span>
+    </div>
+  </div>
+
+  <!-- STEP 2: review -->
+  <div class="card" id="reviewCard" style="display:none">
+    <h2><span class="num">2</span>抽出結果を確認・編集 → 登録</h2>
+    <div class="hint">内容を確認して必要なら修正し、「登録」で保存対象に追加します。抽出データは <code>source: "semi"</code> / <code>verified: false</code> で登録されます。</div>
+    <div class="tbl-wrap">
+      <table id="reviewTbl">
+        <thead><tr>
+          <th>日付</th><th>開始</th><th>大会名</th><th>BuyIn</th><th>AddOn</th><th>Stack</th><th>GTD</th><th>Re</th><th>タグ</th><th></th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="btnrow">
+      <button class="btn gold" onclick="commitReview()">✓ 登録（保存対象に追加）</button>
+      <button class="btn sec" onclick="clearReview()">破棄</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: registered tournaments -->
+  <div class="card">
+    <h2><span class="num">3</span>登録済みトーナメント <span class="pill" id="tourCount">0</span></h2>
+    <div class="hint">公開サイトに反映されるデータです。行の 🗑 で削除できます。</div>
+    <div class="tbl-wrap">
+      <table id="dataTbl">
+        <thead><tr><th>日付</th><th>開始</th><th>店舗</th><th>大会名</th><th>BuyIn</th><th>GTD</th><th>取得元</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- STEP 4: venues editor -->
+  <div class="card">
+    <h2><span class="num">4</span>店舗データ（JSON）</h2>
+    <div class="hint">店舗の追加・編集はここで。<code>featured: true</code> でPR枠（上位固定・PRバッジ）になります。</div>
+    <textarea id="venuesJson" style="min-height:180px;font-family:ui-monospace,monospace;font-size:.8em"></textarea>
+    <div class="btnrow">
+      <button class="btn sec sm" onclick="applyVenues()">店舗JSONを反映</button>
+      <span class="status" id="vStatus"></span>
+    </div>
+  </div>
+
+  <!-- STEP 5: export -->
+  <div class="card">
+    <h2><span class="num">5</span>data.js を生成 → 公開反映</h2>
+    <div class="hint">生成した <code>data.js</code> をリポジトリの <code>fukuoka-poker/data.js</code> に上書きコミットすると公開サイトに反映されます。</div>
+    <div class="btnrow">
+      <button class="btn" onclick="genData()">data.js を生成</button>
+      <button class="btn gold" onclick="download()">⬇ data.js をダウンロード</button>
+      <button class="btn sec" onclick="copyData()">コピー</button>
+      <span class="status" id="genStatus"></span>
+    </div>
+    <details><summary>プレビュー</summary><pre id="preview">（未生成）</pre></details>
+  </div>
+
+</div>
+
+<script src="data.js"></script>
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  // working copies (data.js may use relative dates for the demo; we normalize to absolute on load)
+  let venues = (typeof VENUES !== 'undefined') ? JSON.parse(JSON.stringify(VENUES)) : [];
+  let tours  = (typeof TOURNAMENTS !== 'undefined') ? JSON.parse(JSON.stringify(TOURNAMENTS)) : [];
+  const areas = (typeof AREAS !== 'undefined') ? AREAS.slice() : [];
+  let review = [];
+  let lastGen = '';
+
+  // --- key / model persistence ---
+  $('apikey').value = localStorage.getItem('fpn_key') || '';
+  $('model').value  = localStorage.getItem('fpn_model') || 'claude-opus-4-8';
+  window.saveKey = () => { localStorage.setItem('fpn_key', $('apikey').value.trim()); localStorage.setItem('fpn_model', $('model').value); alert('保存しました'); };
+  $('model').addEventListener('change', () => localStorage.setItem('fpn_model', $('model').value));
+
+  // base date = today
+  const t = new Date(); t.setHours(0,0,0,0);
+  $('baseDate').value = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+
+  function refreshVenueSelect(){
+    $('venue').innerHTML = venues.map(v => `<option value="${v.id}">${v.name}（${v.area}）</option>`).join('');
+  }
+  function venueName(id){ const v = venues.find(x=>x.id===id); return v ? v.name : '(不明)'; }
+  const yen = n => n==null ? '–' : '¥'+Number(n).toLocaleString('ja-JP');
+
+  const reMap = { late:'late', reentry:true, none:false };
+  const reLabel = v => v==='late'?'レイト':(v===true?'Re可':'なし');
+
+  // --- extraction ---
+  const SCHEMA = {
+    type:'object', additionalProperties:false,
+    properties:{ tournaments:{ type:'array', items:{
+      type:'object', additionalProperties:false,
+      properties:{
+        name:{type:'string'}, date:{type:'string', description:'YYYY-MM-DD'},
+        start:{type:'string', description:'HH:MM 24h'},
+        buyin:{type:'integer'}, addon:{type:['integer','null']}, stack:{type:'integer'},
+        guarantee:{type:['integer','null']}, reentry:{type:'string', enum:['late','reentry','none']},
+        prize:{type:['string','null']}, tags:{type:'array', items:{type:'string'}}
+      },
+      required:['name','date','start','buyin','addon','stack','guarantee','reentry','prize','tags']
+    }}},
+    required:['tournaments']
+  };
+
+  window.extract = async () => {
+    const key = $('apikey').value.trim();
+    const text = $('announce').value.trim();
+    const st = $('exStatus');
+    if(!key){ st.className='status err'; st.textContent='API キーを入力してください'; return; }
+    if(!text){ st.className='status err'; st.textContent='告知テキストを貼り付けてください'; return; }
+    $('extractBtn').disabled = true;
+    st.className='status'; st.textContent='抽出中…';
+    const prompt = `あなたは福岡のアミューズメントポーカー店のトーナメント告知テキストを構造化するアシスタントです。以下の告知から開催される全トーナメントを抽出してください。
+- 今日の基準日: ${$('baseDate').value}。年が無い日付は基準日以降の直近の日付として解釈。
+- buyin / addon は円の整数（例: 3000）。addon が無ければ null。
+- stack は初期スタックの点数（整数）。
+- guarantee は GTD/保証額の円（無ければ null）。
+- reentry: レイトエントリー可なら "late"、リエントリー/リバイ可なら "reentry"、記載無しなら "none"。
+- tags: 該当するラベルを日本語で（大型 / メイン / ターボ / ディープ / バウンティ / 女性歓迎 / デイリー など）。
+- prize: 賞品/賞金の記載があれば短く、無ければ null。
+確実に読み取れない数値は無理に埋めず、buyin/stack が不明なら 0 にしてください。
+
+告知テキスト:
+${text}`;
+    try{
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method:'POST',
+        headers:{
+          'content-type':'application/json',
+          'x-api-key':key,
+          'anthropic-version':'2023-06-01',
+          'anthropic-dangerous-direct-browser-access':'true'
+        },
+        body: JSON.stringify({
+          model: $('model').value,
+          max_tokens: 4096,
+          output_config:{ format:{ type:'json_schema', schema: SCHEMA } },
+          messages:[{ role:'user', content: prompt }]
+        })
+      });
+      const data = await res.json();
+      if(!res.ok){ throw new Error((data.error && data.error.message) || ('HTTP '+res.status)); }
+      const block = (data.content||[]).find(b=>b.type==='text');
+      if(!block) throw new Error('応答にテキストがありません');
+      const parsed = JSON.parse(block.text);
+      review = (parsed.tournaments||[]);
+      if(!review.length){ st.className='status err'; st.textContent='トーナメントを検出できませんでした'; return; }
+      renderReview();
+      st.className='status ok'; st.textContent = review.length+'件を抽出しました。内容を確認してください。';
+    }catch(e){
+      st.className='status err'; st.textContent='抽出失敗: '+e.message;
+    }finally{
+      $('extractBtn').disabled = false;
+    }
+  };
+
+  function renderReview(){
+    $('reviewCard').style.display='block';
+    const tb = $('reviewTbl').querySelector('tbody');
+    tb.innerHTML = review.map((r,i)=>`<tr>
+      <td><input type="date" value="${r.date||''}" onchange="review[${i}].date=this.value"></td>
+      <td><input value="${r.start||''}" style="width:64px" onchange="review[${i}].start=this.value"></td>
+      <td><input value="${(r.name||'').replace(/"/g,'&quot;')}" onchange="review[${i}].name=this.value"></td>
+      <td><input type="number" value="${r.buyin||0}" style="width:80px" onchange="review[${i}].buyin=+this.value"></td>
+      <td><input type="number" value="${r.addon==null?'':r.addon}" style="width:80px" onchange="review[${i}].addon=this.value===''?null:+this.value"></td>
+      <td><input type="number" value="${r.stack||0}" style="width:80px" onchange="review[${i}].stack=+this.value"></td>
+      <td><input type="number" value="${r.guarantee==null?'':r.guarantee}" style="width:90px" onchange="review[${i}].guarantee=this.value===''?null:+this.value"></td>
+      <td><select onchange="review[${i}].reentry=this.value">
+        <option value="late"${r.reentry==='late'?' selected':''}>レイト</option>
+        <option value="reentry"${r.reentry==='reentry'?' selected':''}>Re可</option>
+        <option value="none"${r.reentry==='none'?' selected':''}>なし</option>
+      </select></td>
+      <td><input value="${(r.tags||[]).join(',')}" style="width:120px" onchange="review[${i}].tags=this.value.split(',').map(s=>s.trim()).filter(Boolean)"></td>
+      <td><button class="btn sm sec" onclick="review.splice(${i},1);renderReview()">✕</button></td>
+    </tr>`).join('');
+  }
+  window.renderReview = renderReview;
+  window.review = review;
+
+  window.clearReview = () => { review=[]; window.review=review; $('reviewCard').style.display='none'; };
+
+  window.commitReview = () => {
+    const vid = $('venue').value;
+    let base = Date.now();
+    review.forEach((r,i)=>{
+      tours.push({
+        id:'t'+(base+i), venueId: vid, name: r.name||'(名称未設定)',
+        date: r.date, start: r.start||'', buyin: r.buyin||0,
+        addon: r.addon==null?null:r.addon, stack: r.stack||0,
+        guarantee: r.guarantee==null?null:r.guarantee,
+        reentry: reMap[r.reentry] , prize: r.prize||null,
+        tags: r.tags||[], source:'semi', verified:false
+      });
+    });
+    clearReview();
+    $('announce').value='';
+    renderData();
+  };
+
+  function renderData(){
+    tours.sort((a,b)=> (a.date||'').localeCompare(b.date||'') || (a.start||'').localeCompare(b.start||''));
+    $('tourCount').textContent = tours.length;
+    const tb = $('dataTbl').querySelector('tbody');
+    tb.innerHTML = tours.map((t,i)=>`<tr>
+      <td>${t.date||'–'}</td><td>${t.start||'–'}</td><td>${venueName(t.venueId)}</td>
+      <td>${(t.name||'').replace(/</g,'&lt;')}</td><td>${yen(t.buyin)}</td>
+      <td>${t.guarantee?('¥'+(t.guarantee/10000)+'万'):'–'}</td>
+      <td>${t.source||'?'}${t.verified?' ✓':''}</td>
+      <td><button class="btn sm sec" onclick="delTour('${t.id}')">🗑</button></td>
+    </tr>`).join('');
+  }
+  window.delTour = id => { tours = tours.filter(t=>t.id!==id); renderData(); };
+
+  // --- venues editor ---
+  function refreshVenuesJson(){ $('venuesJson').value = JSON.stringify(venues, null, 2); }
+  window.applyVenues = () => {
+    const st=$('vStatus');
+    try{ const v=JSON.parse($('venuesJson').value); if(!Array.isArray(v)) throw new Error('配列である必要があります');
+      venues=v; refreshVenueSelect(); renderData(); st.className='status ok'; st.textContent='反映しました';
+    }catch(e){ st.className='status err'; st.textContent='JSONエラー: '+e.message; }
+  };
+
+  // --- export ---
+  function buildFile(){
+    const j = o => JSON.stringify(o, null, 2);
+    return `/* ============================================================
+ * data.js — 福岡ポーカートーナメント・アグリゲーター データ層
+ * 管理コンソール(admin.html)で生成。実データ（絶対日付）。
+ * ============================================================ */
+
+const VENUES = ${j(venues)};
+
+const TOURNAMENTS = ${j(tours)};
+
+const AREAS = ${j(areas)};
+
+if (typeof module !== 'undefined') { module.exports = { VENUES, TOURNAMENTS, AREAS }; }
+`;
+  }
+  window.genData = () => { lastGen = buildFile(); $('preview').textContent = lastGen; $('genStatus').className='status ok'; $('genStatus').textContent='生成しました（'+tours.length+'件）'; };
+  window.download = () => { if(!lastGen) window.genData(); const b=new Blob([lastGen],{type:'text/javascript'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='data.js'; a.click(); };
+  window.copyData = async () => { if(!lastGen) window.genData(); try{ await navigator.clipboard.writeText(lastGen); $('genStatus').className='status ok'; $('genStatus').textContent='コピーしました'; }catch(e){ $('genStatus').className='status err'; $('genStatus').textContent='コピー不可（プレビューから手動でコピーしてください）'; } };
+
+  // init
+  refreshVenueSelect(); refreshVenuesJson(); renderData();
+})();
+</script>
+</body>
+</html>
