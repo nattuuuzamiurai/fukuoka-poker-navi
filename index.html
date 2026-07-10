@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>福岡ポーカートーナメント日程 | ふくおかポーカーナビ</title>
+<meta name="description" content="福岡県内（天神・博多・中洲・大名・北九州・久留米）のアミューズメントポーカー店のトーナメント日程を一括で確認。日付・エリア・バイインで絞り込み。">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --felt:#0f3d2e; --felt2:#14513c; --gold:#d9a441; --gold2:#f0c56b;
+    --bg:#f6f4ef; --sur:#ffffff; --bor:#e7e1d6; --txt:#25201b; --mut:#8a8078;
+    --chip:#f0ece3; --red:#c0392b; --grn:#1a9e6f;
+    --sha:0 2px 12px rgba(30,20,5,.08); --r:14px;
+  }
+  html{scroll-behavior:smooth}
+  body{font-family:"Hiragino Sans","Yu Gothic UI",system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.55;font-size:15px}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 16px}
+
+  /* HEADER */
+  header{background:linear-gradient(135deg,var(--felt),var(--felt2));color:#fff;position:sticky;top:0;z-index:40;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+  .hbar{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;max-width:1000px;margin:0 auto}
+  .logo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:1.06em}
+  .logo .pip{color:var(--gold2)}
+  .hbar .line-btn{background:#06c755;color:#fff;font-size:.78em;font-weight:700;padding:7px 13px;border-radius:20px;white-space:nowrap}
+
+  /* HERO */
+  .hero{background:linear-gradient(135deg,var(--felt2),var(--felt));color:#fff;padding:26px 16px 30px;text-align:center}
+  .hero h1{font-size:1.5em;font-weight:800;letter-spacing:.01em;line-height:1.35}
+  .hero h1 .hl{color:var(--gold2)}
+  .hero p{color:#d7e5dd;font-size:.92em;margin-top:9px}
+  .hero .stats{display:flex;justify-content:center;gap:22px;margin-top:16px;flex-wrap:wrap}
+  .hero .stat{text-align:center}
+  .hero .stat b{display:block;font-size:1.5em;color:var(--gold2);font-weight:800;line-height:1}
+  .hero .stat span{font-size:.72em;color:#c3d6cd}
+
+  /* FILTER BAR */
+  .filters{background:var(--sur);border-bottom:1px solid var(--bor);position:sticky;top:53px;z-index:30;box-shadow:var(--sha)}
+  .frow{display:flex;gap:8px;padding:12px 16px;max-width:1000px;margin:0 auto;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .frow::-webkit-scrollbar{height:0}
+  .seg{display:flex;gap:6px}
+  .fbtn{border:1px solid var(--bor);background:var(--sur);color:var(--txt);border-radius:20px;padding:7px 14px;font-size:.83em;font-weight:600;white-space:nowrap;cursor:pointer;transition:.13s;font-family:inherit}
+  .fbtn:hover{border-color:var(--gold)}
+  .fbtn.on{background:var(--felt);color:#fff;border-color:var(--felt)}
+  .fsel{border:1px solid var(--bor);border-radius:20px;padding:7px 12px;font-size:.83em;font-weight:600;background:var(--sur);color:var(--txt);cursor:pointer;font-family:inherit;outline:none}
+
+  /* AD SLOT */
+  .adslot{max-width:1000px;margin:16px auto 0;padding:0 16px}
+  .ad{background:repeating-linear-gradient(45deg,#faf8f3,#faf8f3 12px,#f3efe6 12px,#f3efe6 24px);border:1px dashed #cfc6b6;border-radius:var(--r);padding:16px;text-align:center;color:var(--mut);font-size:.8em}
+  .ad b{display:block;color:#b3a892;font-size:.9em;letter-spacing:.08em;margin-bottom:2px}
+
+  /* SECTION */
+  main{padding:18px 0 40px}
+  .shead{display:flex;align-items:baseline;justify-content:space-between;margin:22px 0 12px}
+  .shead h2{font-size:1.08em;font-weight:800}
+  .shead .cnt{font-size:.8em;color:var(--mut)}
+
+  /* DATE GROUP */
+  .dgroup{margin-bottom:20px}
+  .dlabel{display:flex;align-items:center;gap:9px;font-weight:800;font-size:.95em;color:var(--felt);margin:0 0 9px}
+  .dlabel .dnum{background:var(--felt);color:#fff;border-radius:9px;min-width:44px;text-align:center;padding:5px 6px;line-height:1.15}
+  .dlabel .dnum small{display:block;font-size:.6em;font-weight:600;opacity:.85}
+  .dlabel .dnum b{font-size:1.15em}
+  .dlabel .dw{font-size:.78em;color:var(--mut);font-weight:600}
+  .dlabel.today .dnum{background:var(--gold);color:#3a2a06}
+
+  /* TOURNAMENT CARD */
+  .tcard{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:15px 16px;margin-bottom:10px;position:relative;overflow:hidden}
+  .tcard.feat{border-color:var(--gold)}
+  .tcard.feat::before{content:"PR";position:absolute;top:0;right:0;background:var(--gold);color:#3a2a06;font-size:.62em;font-weight:800;padding:3px 10px;border-bottom-left-radius:9px;letter-spacing:.05em}
+  .tc-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+  .tc-time{text-align:center;flex-shrink:0}
+  .tc-time b{font-size:1.15em;font-weight:800;color:var(--felt)}
+  .tc-time span{display:block;font-size:.66em;color:var(--mut);font-weight:600}
+  .tc-main{flex:1;min-width:0}
+  .tc-name{font-weight:800;font-size:1.02em;line-height:1.3}
+  .tc-venue{font-size:.82em;color:var(--mut);margin-top:2px;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+  .tc-venue .area{background:var(--chip);border-radius:5px;padding:1px 7px;font-weight:700;color:#6b6055}
+  .tc-buyin{text-align:right;flex-shrink:0}
+  .tc-buyin b{font-size:1.12em;font-weight:800}
+  .tc-buyin span{display:block;font-size:.64em;color:var(--mut);font-weight:600}
+  .tc-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px;align-items:center}
+  .mtag{font-size:.72em;font-weight:700;padding:2px 9px;border-radius:20px;background:var(--chip);color:#6b6055}
+  .mtag.gtd{background:#fdf0d6;color:#9a6b0f}
+  .mtag.re{background:#e6f4ee;color:#177a56}
+  .mtag.big{background:#fde8e4;color:var(--red)}
+  .tc-foot{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:11px;border-top:1px solid var(--bor)}
+  .src{font-size:.7em;color:var(--mut);display:flex;align-items:center;gap:5px}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--grn)}
+  .dot.semi{background:var(--gold)}
+  .dot.manual{background:#a89}
+  .tc-actions{display:flex;gap:7px}
+  .abtn{font-size:.76em;font-weight:700;padding:6px 12px;border-radius:8px;border:1px solid var(--bor);cursor:pointer}
+  .abtn.pri{background:var(--felt);color:#fff;border-color:var(--felt)}
+
+  .empty{text-align:center;color:var(--mut);padding:40px 16px;font-size:.9em}
+
+  /* VENUE STRIP */
+  .venues{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+  .vcard{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:14px 15px}
+  .vcard.feat{border-color:var(--gold)}
+  .vc-name{font-weight:800;font-size:.98em;display:flex;align-items:center;gap:6px}
+  .vc-name .star{color:var(--gold)}
+  .vc-area{font-size:.76em;color:var(--mut);margin-top:3px}
+  .vc-links{display:flex;gap:7px;margin-top:11px;flex-wrap:wrap}
+  .vlink{font-size:.72em;font-weight:700;padding:5px 10px;border-radius:7px;background:var(--chip);color:#6b6055}
+  .vlink.x{background:#111;color:#fff}
+  .vlink.line{background:#06c755;color:#fff}
+  .vlink.ig{background:linear-gradient(45deg,#f09433,#dc2743,#bc1888);color:#fff}
+
+  /* LINE CTA */
+  .linecta{background:linear-gradient(135deg,#06c755,#04a548);color:#fff;border-radius:var(--r);padding:22px 18px;text-align:center;margin-top:26px}
+  .linecta h3{font-size:1.12em;font-weight:800}
+  .linecta p{font-size:.85em;opacity:.95;margin-top:6px}
+  .linecta a{display:inline-block;background:#fff;color:#06a34a;font-weight:800;padding:11px 26px;border-radius:24px;margin-top:14px;font-size:.92em}
+
+  /* FOOTER */
+  footer{background:#1b2320;color:#9aa39d;padding:26px 16px;font-size:.8em;text-align:center;line-height:1.9}
+  footer a{color:var(--gold2)}
+  footer .disc{max-width:640px;margin:10px auto 0;font-size:.92em;color:#6f7772}
+
+  @media(max-width:560px){
+    .hero h1{font-size:1.25em}
+    .tc-buyin{display:none}
+    .shead h2{font-size:1em}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hbar">
+    <div class="logo"><span class="pip">♠</span>ふくおかポーカーナビ</div>
+    <a class="line-btn" href="#line">LINEで新着通知</a>
+  </div>
+</header>
+
+<section class="hero">
+  <h1>福岡の<span class="hl">ポーカートーナメント</span>を<br>ぜんぶ、ここで。</h1>
+  <p>天神・博多・中洲・大名・北九州・久留米のアミューズ店のトーナメント日程を一括表示</p>
+  <div class="stats">
+    <div class="stat"><b id="stat-t">–</b><span>掲載トーナメント</span></div>
+    <div class="stat"><b id="stat-v">–</b><span>掲載店舗</span></div>
+    <div class="stat"><b id="stat-today">–</b><span>本日開催</span></div>
+  </div>
+</section>
+
+<div class="filters">
+  <div class="frow">
+    <div class="seg" id="seg-when">
+      <button class="fbtn on" data-when="all">すべて</button>
+      <button class="fbtn" data-when="today">今日</button>
+      <button class="fbtn" data-when="weekend">週末</button>
+      <button class="fbtn" data-when="week">今週</button>
+    </div>
+    <select class="fsel" id="sel-area"><option value="all">全エリア</option></select>
+    <select class="fsel" id="sel-buyin">
+      <option value="all">バイイン</option>
+      <option value="lo">〜3,000円</option>
+      <option value="mid">3,001〜8,000円</option>
+      <option value="hi">8,001円〜</option>
+    </select>
+    <select class="fsel" id="sel-tag">
+      <option value="all">タグ</option>
+      <option value="大型">大型</option>
+      <option value="バウンティ">バウンティ</option>
+      <option value="ターボ">ターボ</option>
+      <option value="ディープ">ディープ</option>
+      <option value="女性歓迎">女性歓迎</option>
+    </select>
+  </div>
+</div>
+
+<div class="adslot">
+  <div class="ad"><b>広告 / SPONSORED</b>AdSense・PR枠（集客が付いたら本命）— この位置に広告 or 店舗のPRバナー</div>
+</div>
+
+<main class="wrap">
+  <div class="shead">
+    <h2>トーナメント日程</h2>
+    <span class="cnt" id="list-cnt"></span>
+  </div>
+  <div id="list"></div>
+
+  <div class="shead" style="margin-top:34px">
+    <h2>掲載店舗</h2>
+    <span class="cnt" id="venue-cnt"></span>
+  </div>
+  <div class="venues" id="venues"></div>
+
+  <div class="linecta" id="line">
+    <h3>📣 新着トーナメントをLINEで通知</h3>
+    <p>友だち追加で、福岡の大型大会・GTD更新を自動でお届け。<br>アプリ不要・無料。行きたい大会を見逃さない。</p>
+    <a href="#">＋ 友だち追加</a>
+  </div>
+</main>
+
+<footer>
+  <div><b style="color:#fff">ふくおかポーカーナビ</b> — 福岡ポーカートーナメント日程アグリゲーター</div>
+  <div>運営: エースハイ合同会社　|　<a href="#">お問い合わせ</a>　|　<a href="#">店舗の掲載・PRについて</a></div>
+  <div class="disc">
+    掲載情報は各店舗のSNS・公式サイト等をもとに自動/手動で収集しています。開催内容は変更される場合があるため、
+    参加前に必ず各店舗の公式情報をご確認ください。当サイトはアミューズメント（賭博性のない娯楽）目的の情報を掲載します。
+    ※現在の掲載データは構造デモ用のサンプルです。
+  </div>
+</footer>
+
+<script src="data.js"></script>
+<script>
+(function(){
+  const WD = ['日','月','火','水','木','金','土'];
+  const fmt = n => '¥' + n.toLocaleString('ja-JP');
+  const today = new Date(); today.setHours(0,0,0,0);
+  const iso = d => { const t=new Date(d); t.setHours(0,0,0,0); return t; };
+
+  const venueById = {};
+  VENUES.forEach(v => venueById[v.id] = v);
+
+  // populate area select
+  const selArea = document.getElementById('sel-area');
+  AREAS.forEach(a => { const o=document.createElement('option'); o.value=a; o.textContent=a; selArea.appendChild(o); });
+
+  // stats
+  document.getElementById('stat-t').textContent = TOURNAMENTS.length;
+  document.getElementById('stat-v').textContent = VENUES.length;
+  const todayStr = iso(today).toISOString().slice(0,10);
+  const _t = new Date(); _t.setHours(0,0,0,0);
+  const y=_t.getFullYear(), m=String(_t.getMonth()+1).padStart(2,'0'), dd=String(_t.getDate()).padStart(2,'0');
+  const localToday = `${y}-${m}-${dd}`;
+  document.getElementById('stat-today').textContent = TOURNAMENTS.filter(t=>t.date===localToday).length;
+
+  const state = { when:'all', area:'all', buyin:'all', tag:'all' };
+
+  function inWhen(dateStr){
+    const d = iso(dateStr), diff = Math.round((d - today)/86400000);
+    if (state.when==='all') return diff >= 0;
+    if (state.when==='today') return diff === 0;
+    if (state.when==='week') return diff >= 0 && diff < 7;
+    if (state.when==='weekend'){ const w=d.getDay(); return diff>=0 && diff<14 && (w===0||w===6); }
+    return true;
+  }
+  function inBuyin(b){
+    if (state.buyin==='all') return true;
+    if (state.buyin==='lo') return b <= 3000;
+    if (state.buyin==='mid') return b > 3000 && b <= 8000;
+    if (state.buyin==='hi') return b > 8000;
+    return true;
+  }
+
+  function render(){
+    const rows = TOURNAMENTS
+      .filter(t => inWhen(t.date))
+      .filter(t => { const v=venueById[t.venueId]; return state.area==='all' || (v && v.area===state.area); })
+      .filter(t => inBuyin(t.buyin))
+      .filter(t => state.tag==='all' || (t.tags||[]).includes(state.tag))
+      .sort((a,b)=> a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
+
+    document.getElementById('list-cnt').textContent = rows.length + '件';
+
+    const list = document.getElementById('list');
+    if (!rows.length){ list.innerHTML = '<div class="empty">条件に合うトーナメントがありません。<br>フィルタを変えてお試しください。</div>'; return; }
+
+    // group by date
+    const groups = {};
+    rows.forEach(t => { (groups[t.date] = groups[t.date] || []).push(t); });
+
+    let html = '';
+    Object.keys(groups).sort().forEach(date => {
+      const d = iso(date), isToday = date === localToday;
+      html += `<div class="dgroup">
+        <div class="dlabel${isToday?' today':''}">
+          <span class="dnum"><small>${d.getMonth()+1}月</small><b>${d.getDate()}</b></span>
+          <span class="dw">${WD[d.getDay()]}曜日${isToday?' ・本日':''}</span>
+        </div>`;
+      groups[date].forEach(t => {
+        const v = venueById[t.venueId] || {};
+        const tags = [];
+        if (t.guarantee) tags.push(`<span class="mtag gtd">GTD ${(t.guarantee/10000)}万</span>`);
+        if (t.reentry) tags.push(`<span class="mtag re">${t.reentry==='late'?'レイト可':'リエントリー可'}</span>`);
+        (t.tags||[]).forEach(tg => tags.push(`<span class="mtag${tg==='大型'?' big':''}">${tg}</span>`));
+        const total = t.buyin + (t.addon||0);
+        const srcCls = t.source==='auto'?'':(t.source==='semi'?'semi':'manual');
+        const srcLbl = t.source==='auto'?'自動取得':(t.source==='semi'?'SNS取込':'手動');
+        html += `<div class="tcard${v.featured?' feat':''}">
+          <div class="tc-top">
+            <div class="tc-time"><b>${t.start}</b><span>START</span></div>
+            <div class="tc-main">
+              <div class="tc-name">${t.name}</div>
+              <div class="tc-venue"><span class="area">${v.area||''}</span>${v.name||''}</div>
+            </div>
+            <div class="tc-buyin"><b>${fmt(t.buyin)}</b><span>${t.addon?('+AO '+fmt(t.addon)):('STACK '+t.stack.toLocaleString())}</span></div>
+          </div>
+          <div class="tc-meta">${tags.join('')}<span class="mtag">${t.stack.toLocaleString()}点</span></div>
+          <div class="tc-foot">
+            <span class="src"><span class="dot ${srcCls}"></span>${srcLbl}${t.verified?' ✓':' (未確認)'}</span>
+            <div class="tc-actions">
+              ${v.line?`<a class="abtn" href="${v.line}" target="_blank" rel="noopener">店LINE</a>`:''}
+              ${v.x?`<a class="abtn" href="${v.x}" target="_blank" rel="noopener">X</a>`:''}
+              <a class="abtn pri" href="#" onclick="return false">詳細</a>
+            </div>
+          </div>
+        </div>`;
+      });
+      html += '</div>';
+    });
+    list.innerHTML = html;
+  }
+
+  function renderVenues(){
+    const sorted = VENUES.slice().sort((a,b)=> (b.featured?1:0)-(a.featured?1:0));
+    document.getElementById('venue-cnt').textContent = VENUES.length + '店舗';
+    document.getElementById('venues').innerHTML = sorted.map(v => {
+      const links = [];
+      if (v.website) links.push(`<a class="vlink" href="${v.website}" target="_blank" rel="noopener">公式</a>`);
+      if (v.x) links.push(`<a class="vlink x" href="${v.x}" target="_blank" rel="noopener">X</a>`);
+      if (v.line) links.push(`<a class="vlink line" href="${v.line}" target="_blank" rel="noopener">LINE</a>`);
+      if (v.instagram) links.push(`<a class="vlink ig" href="${v.instagram}" target="_blank" rel="noopener">IG</a>`);
+      const upcoming = TOURNAMENTS.filter(t=>t.venueId===v.id && iso(t.date)>=today).length;
+      return `<div class="vcard${v.featured?' feat':''}">
+        <div class="vc-name">${v.featured?'<span class="star">★</span>':''}${v.name}</div>
+        <div class="vc-area">${v.area}　|　${v.access||''}</div>
+        <div class="vc-area" style="margin-top:4px;color:var(--felt);font-weight:700">今後の開催 ${upcoming}件</div>
+        <div class="vc-links">${links.join('')}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // filter events
+  document.getElementById('seg-when').addEventListener('click', e => {
+    const b = e.target.closest('.fbtn'); if(!b) return;
+    document.querySelectorAll('#seg-when .fbtn').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); state.when = b.dataset.when; render();
+  });
+  selArea.addEventListener('change', e => { state.area = e.target.value; render(); });
+  document.getElementById('sel-buyin').addEventListener('change', e => { state.buyin = e.target.value; render(); });
+  document.getElementById('sel-tag').addEventListener('change', e => { state.tag = e.target.value; render(); });
+
+  render();
+  renderVenues();
+})();
+</script>
+</body>
+</html>
