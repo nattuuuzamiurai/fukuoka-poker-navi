@@ -2,7 +2,7 @@
   "_meta": {
     "description": "福岡県内アミューズメントポーカー店の実在調査結果（出典付き）。data.js の VENUES はこれを元に生成。公開前に各店舗の公式情報で住所・SNS・営業状況を再確認すること。",
     "collectedAt": "2026-07-10",
-    "count": 20,
+    "count": 21,
     "caveats": [
       "ポータル(poker.dmm.com 等)・公式サイト/SNS本体はボット対策で直接取得が403のため、店舗詳細はWeb検索の要約経由。住所番地・SNSハンドル・営業時間に軽微な誤りが残る可能性あり。",
       "じゃんけんポーカー天神店=移転中の情報／RAISE BLUE=2025年11月に重要告知 → 営業状況要確認。",
@@ -30,6 +30,7 @@
     {"name":"テキサスホールデムAA","area":"北九州","city":"北九州市小倉北区","address":"福岡県北九州市小倉北区片野新町1-10-23 3F","access":"","website":"https://texasaa.net/","x":"https://x.com/texasaanet","instagram":"","line":"","tel":"","holds_tournaments":true,"sources":["https://texasaa.net/","https://x.com/texasaanet"],"note":"1部13:15〜(ミニトーナメント/練習リング)、2部17:30〜(各種トーナメント)。入場料2,000円。"},
     {"name":"Poker Bar IRIS","area":"北九州","city":"北九州市八幡西区","address":"福岡県北九州市八幡西区黒崎2-6-3 2F","access":"JR黒崎駅周辺","website":"","x":"https://x.com/pokerbar_iris","instagram":"","line":"","tel":"","holds_tournaments":true,"sources":["https://poker.dmm.com/details/4041424","https://x.com/pokerbar_iris"],"note":"黒崎のポーカーバー。FUKUOKA SUPER TOURNAMENT(FST)会場を務める等トーナメント開催実績あり。"},
     {"name":"CASINO Arrows 小倉店","area":"北九州","city":"北九州市小倉北区","address":"福岡県北九州市小倉北区堺町1-9-20 ナカノビル3F","access":"モノレール平和通駅 徒歩5分","website":"","x":"https://x.com/CASINO_Arrows","instagram":"https://www.instagram.com/casino_arrows2025/","line":"","tel":"","holds_tournaments":false,"sources":["https://x.com/CASINO_Arrows","https://casino-yaritai.com/casino-bar/casino_Arrows"],"note":"2025/8/1オープン。ポーカー2卓他。現金賭博なし・初心者歓迎。トーナメント開催要確認。"},
-    {"name":"アミューズメントポーカー KING&QUEEN SUITED 直方店","area":"筑豊","city":"直方市","address":"","access":"","website":"","x":"https://x.com/king_queen1312","instagram":"https://www.instagram.com/king2485queen/","line":"","tel":"080-7987-1213","holds_tournaments":true,"sources":["https://my.beyond-ss.com/pokerroom-hukuoka/","https://michisasa.com/kingqueen/"],"note":"福岡市外では貴重なスポット。ハウス+大型大会サテライトを開催。黒崎(八幡西区)に系列店。住所未確認。"}
+    {"name":"アミューズメントポーカー KING&QUEEN SUITED 直方店","area":"筑豊","city":"直方市","address":"","access":"","website":"","x":"https://x.com/king_queen1312","instagram":"https://www.instagram.com/king2485queen/","line":"","tel":"080-7987-1213","holds_tournaments":true,"sources":["https://my.beyond-ss.com/pokerroom-hukuoka/","https://michisasa.com/kingqueen/"],"note":"福岡市外では貴重なスポット。ハウス+大型大会サテライトを開催。黒崎(八幡西区)に系列店。住所未確認。"},
+    {"name":"KENポーカー（久留米）","area":"久留米","city":"久留米市","address":"福岡県久留米市東町34-71","access":"西鉄久留米駅 徒歩5分","website":"","x":"","instagram":"https://www.instagram.com/kurume_ken_poker/","line":"","tel":"080-3904-2698","holds_tournaments":true,"sources":["https://www.instagram.com/kurume_ken_poker/","ポーカー店ディレクトリ(WebSearch要約)"],"note":"ユーザー提供の7月予定表で開催確認。営業18:00-24:00・初心者講習あり。JOPT/WJPT・MASAKICHI SUPER LEAGUE系。卓状況はオープンチャットで更新。住所/電話はディレクトリ情報のため要確認。Xアカウントは未発見(SNSはInstagram中心)。"}
   ]
 }
