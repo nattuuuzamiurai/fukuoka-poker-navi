@@ -284,19 +284,19 @@
         if (t.guarantee) tags.push(`<span class="mtag gtd">GTD ${(t.guarantee/10000)}万</span>`);
         if (t.reentry) tags.push(`<span class="mtag re">${t.reentry==='late'?'レイト可':'リエントリー可'}</span>`);
         (t.tags||[]).forEach(tg => tags.push(`<span class="mtag${tg==='大型'?' big':''}">${tg}</span>`));
-        const total = t.buyin + (t.addon||0);
+        if (t.stack) tags.push(`<span class="mtag">${t.stack.toLocaleString()}点</span>`);
         const srcCls = t.source==='auto'?'':(t.source==='semi'?'semi':'manual');
         const srcLbl = t.source==='auto'?'自動取得':(t.source==='semi'?'SNS取込':'手動');
         html += `<div class="tcard${v.featured?' feat':''}">
           <div class="tc-top">
-            <div class="tc-time"><b>${t.start}</b><span>START</span></div>
+            <div class="tc-time"><b>${t.start||'未定'}</b><span>START</span></div>
             <div class="tc-main">
               <div class="tc-name">${t.name}</div>
               <div class="tc-venue"><span class="area">${v.area||''}</span>${v.name||''}</div>
             </div>
-            <div class="tc-buyin"><b>${fmt(t.buyin)}</b><span>${t.addon?('+AO '+fmt(t.addon)):('STACK '+t.stack.toLocaleString())}</span></div>
+            <div class="tc-buyin"><b>${t.buyin?fmt(t.buyin):'別紙'}</b><span>${t.addon?('+AO '+fmt(t.addon)):(t.stack?('STACK '+t.stack.toLocaleString()):'')}</span></div>
           </div>
-          <div class="tc-meta">${tags.join('')}<span class="mtag">${t.stack.toLocaleString()}点</span></div>
+          <div class="tc-meta">${tags.join('')}</div>
           <div class="tc-foot">
             <span class="src"><span class="dot ${srcCls}"></span>${srcLbl}${t.verified?' ✓':' (未確認)'}</span>
             <div class="tc-actions">
