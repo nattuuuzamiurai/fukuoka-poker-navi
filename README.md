@@ -19,6 +19,7 @@
 | `index.html` | 公開サイト本体（モバイルファースト・単一HTML） |
 | `admin.html` | 管理コンソール（告知テキスト貼付 → Claude API で自動抽出 → `data.js` 生成） |
 | `data.js` | 表示用の正規化済みデータ（`VENUES` / `TOURNAMENTS` / `AREAS`）とスキーマ定義 |
+| `fukuoka-venues.json` | 実在店の調査結果（出典・注記付き。`data.js` の VENUES の原典） |
 
 `data.js` を差し替えるだけでサイトが更新される設計。CDN/静的ホスティング（GitHub Pages 等）にそのまま置ける。
 
@@ -67,7 +68,8 @@
 
 - [x] v1: 公開UI（日付/エリア/バイイン/タグ絞り込み・店舗一覧・LINE送客・広告/PR枠）＋データスキーマ
 - [x] 管理コンソール（`admin.html`）：告知テキスト貼付 → Claude API（structured outputs）で整形 → 確認・編集 → `data.js` 生成
-- [ ] 実店舗データの投入（福岡県内アミューズ店の調査結果を反映）
+- [x] 実店舗データの投入（福岡県内アミューズ店20店を調査・反映 → `fukuoka-venues.json` / `data.js`）
+- [ ] 各店の実開催日程を admin.html で継続登録（告知の取り込み運用）
 - [ ] 自動クローラ：公式サイト/Googleビジネスの定期取得（GitHub Actions cron 等）
 - [ ] LINE公式アカウント連携：新着トーナメントの自動プッシュ配信
 - [ ] SEO：店舗個別ページ・大会個別ページの静的生成、構造化データ(JSON-LD)
