@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>福岡ポーカートーナメント日程 | ふくおかポーカーナビ</title>
-<meta name="description" content="福岡県内（天神・中洲・北九州・久留米・筑豊）のアミューズメントポーカー店のトーナメント日程を一括で確認。日付・エリア・バイインで絞り込み。">
+<meta name="description" content="福岡県内（天神・中洲・北九州・久留米・筑豊）のアミューズメントポーカー店のトーナメント日程を一括で確認。日付・エリア・種類（サテライト/PLO/NLH）で絞り込み。">
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   :root{
@@ -90,9 +90,13 @@
   .dot{width:6px;height:6px;border-radius:50%;background:var(--grn)}
   .dot.semi{background:var(--gold)}
   .dot.manual{background:#a89}
-  .tc-actions{display:flex;gap:7px}
+  .tc-actions{display:flex;gap:7px;align-items:center}
   .abtn{font-size:.76em;font-weight:700;padding:6px 12px;border-radius:8px;border:1px solid var(--bor);cursor:pointer}
   .abtn.pri{background:var(--felt);color:#fff;border-color:var(--felt)}
+  .ticon{width:29px;height:29px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .ticon.x{background:#111}
+  .ticon.line{background:#06c755}
+  .ticon.ig{background:linear-gradient(45deg,#f09433,#dc2743,#bc1888)}
 
   .empty{text-align:center;color:var(--mut);padding:40px 16px;font-size:.9em}
 
@@ -155,19 +159,11 @@
       <button class="fbtn" data-when="week">今週</button>
     </div>
     <select class="fsel" id="sel-area"><option value="all">全エリア</option></select>
-    <select class="fsel" id="sel-buyin">
-      <option value="all">バイイン</option>
-      <option value="lo">〜3,000円</option>
-      <option value="mid">3,001〜8,000円</option>
-      <option value="hi">8,001円〜</option>
-    </select>
     <select class="fsel" id="sel-tag">
-      <option value="all">タグ</option>
-      <option value="大型">大型</option>
-      <option value="バウンティ">バウンティ</option>
-      <option value="ターボ">ターボ</option>
-      <option value="ディープ">ディープ</option>
-      <option value="女性歓迎">女性歓迎</option>
+      <option value="all">種類</option>
+      <option value="サテライト">サテライト</option>
+      <option value="PLO">PLO</option>
+      <option value="NLH">NLH（通常）</option>
     </select>
   </div>
 </div>
@@ -177,17 +173,21 @@
 </div>
 
 <main class="wrap">
-  <div class="shead">
-    <h2>トーナメント日程</h2>
-    <span class="cnt" id="list-cnt"></span>
-  </div>
-  <div id="list"></div>
+  <div id="page-list">
+    <div class="shead">
+      <h2>トーナメント日程</h2>
+      <span class="cnt" id="list-cnt"></span>
+    </div>
+    <div id="list"></div>
 
-  <div class="shead" style="margin-top:34px">
-    <h2>掲載店舗</h2>
-    <span class="cnt" id="venue-cnt"></span>
+    <div class="shead" style="margin-top:34px">
+      <h2>掲載店舗</h2>
+      <span class="cnt" id="venue-cnt"></span>
+    </div>
+    <div class="venues" id="venues"></div>
   </div>
-  <div class="venues" id="venues"></div>
+
+  <div id="page-venue" style="display:none"></div>
 
   <div class="linecta" id="line">
     <h3>📣 新着トーナメントをLINEで通知</h3>
@@ -230,7 +230,7 @@
   const localToday = `${y}-${m}-${dd}`;
   document.getElementById('stat-today').textContent = TOURNAMENTS.filter(t=>t.date===localToday).length;
 
-  const state = { when:'all', area:'all', buyin:'all', tag:'all' };
+  const state = { when:'all', area:'all', tag:'all' };
 
   function inWhen(dateStr){
     const d = iso(dateStr), diff = Math.round((d - today)/86400000);
@@ -240,20 +240,17 @@
     if (state.when==='weekend'){ const w=d.getDay(); return diff>=0 && diff<14 && (w===0||w===6); }
     return true;
   }
-  function inBuyin(b){
-    if (state.buyin==='all') return true;
-    if (state.buyin==='lo') return b <= 3000;
-    if (state.buyin==='mid') return b > 3000 && b <= 8000;
-    if (state.buyin==='hi') return b > 8000;
-    return true;
+  function inTag(tags){
+    if (state.tag==='all') return true;
+    if (state.tag==='NLH') return !(tags||[]).some(tg => tg==='PLO' || tg==='ミックス');
+    return (tags||[]).includes(state.tag);
   }
 
   function render(){
     const rows = TOURNAMENTS
       .filter(t => inWhen(t.date))
       .filter(t => { const v=venueById[t.venueId]; return state.area==='all' || (v && v.area===state.area); })
-      .filter(t => inBuyin(t.buyin))
-      .filter(t => state.tag==='all' || (t.tags||[]).includes(state.tag))
+      .filter(t => inTag(t.tags))
       .sort((a,b)=> a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
 
     document.getElementById('list-cnt').textContent = rows.length + '件';
@@ -271,45 +268,124 @@
     rows.forEach(t => { (groups[t.date] = groups[t.date] || []).push(t); });
 
     let html = '';
-    Object.keys(groups).sort().forEach(date => {
-      const d = iso(date), isToday = date === localToday;
-      html += `<div class="dgroup">
-        <div class="dlabel${isToday?' today':''}">
-          <span class="dnum"><small>${d.getMonth()+1}月</small><b>${d.getDate()}</b></span>
-          <span class="dw">${WD[d.getDay()]}曜日${isToday?' ・本日':''}</span>
-        </div>`;
-      groups[date].forEach(t => {
-        const v = venueById[t.venueId] || {};
-        const tags = [];
-        if (t.guarantee) tags.push(`<span class="mtag gtd">GTD ${(t.guarantee/10000)}万</span>`);
-        if (t.reentry) tags.push(`<span class="mtag re">${t.reentry==='late'?'レイト可':'リエントリー可'}</span>`);
-        (t.tags||[]).forEach(tg => tags.push(`<span class="mtag${tg==='大型'?' big':''}">${tg}</span>`));
-        if (t.stack) tags.push(`<span class="mtag">${t.stack.toLocaleString()}点</span>`);
-        const srcCls = t.source==='auto'?'':(t.source==='semi'?'semi':'manual');
-        const srcLbl = t.source==='auto'?'自動取得':(t.source==='semi'?'SNS取込':'手動');
-        html += `<div class="tcard${v.featured?' feat':''}">
-          <div class="tc-top">
-            <div class="tc-time"><b>${t.start||'未定'}</b><span>START</span></div>
-            <div class="tc-main">
-              <div class="tc-name">${t.name}</div>
-              <div class="tc-venue"><span class="area">${v.area||''}</span>${v.name||''}</div>
-            </div>
-            <div class="tc-buyin"><b>${t.buyin?fmt(t.buyin):'別紙'}</b><span>${t.addon?('+AO '+fmt(t.addon)):(t.stack?('STACK '+t.stack.toLocaleString()):'')}</span></div>
-          </div>
-          <div class="tc-meta">${tags.join('')}</div>
-          <div class="tc-foot">
-            <span class="src"><span class="dot ${srcCls}"></span>${srcLbl}${t.verified?' ✓':' (未確認)'}</span>
-            <div class="tc-actions">
-              ${v.line?`<a class="abtn" href="${v.line}" target="_blank" rel="noopener">店LINE</a>`:''}
-              ${v.x?`<a class="abtn" href="${v.x}" target="_blank" rel="noopener">X</a>`:''}
-              <a class="abtn pri" href="#" onclick="return false">詳細</a>
-            </div>
-          </div>
-        </div>`;
-      });
-      html += '</div>';
-    });
+    Object.keys(groups).sort().forEach(date => { html += renderDateGroup(date, groups[date]); });
     list.innerHTML = html;
+  }
+
+  function renderTournamentCard(t){
+    const v = venueById[t.venueId] || {};
+    const tags = [];
+    if (t.guarantee) tags.push(`<span class="mtag gtd">GTD ${(t.guarantee/10000)}万</span>`);
+    if (t.reentry) tags.push(`<span class="mtag re">${t.reentry==='late'?'レイト可':'リエントリー可'}</span>`);
+    (t.tags||[]).forEach(tg => tags.push(`<span class="mtag${tg==='大型'?' big':''}">${tg}</span>`));
+    if (t.stack) tags.push(`<span class="mtag">${t.stack.toLocaleString()}点</span>`);
+    const srcCls = t.source==='auto'?'':(t.source==='semi'?'semi':'manual');
+    const srcLbl = t.source==='auto'?'自動取得':(t.source==='semi'?'SNS取込':'手動');
+    const sns = [];
+    if (v.x) sns.push(`<a class="ticon x" href="${v.x}" target="_blank" rel="noopener" aria-label="X（旧Twitter）"><svg viewBox="0 0 24 24" width="13" height="13" fill="#fff"><path d="M18.9 2H22l-7.6 8.7L23 22h-6.9l-5.4-6.6L4.6 22H1.5l8.1-9.3L1 2h7.1l4.9 6.1L18.9 2Zm-1.2 18h1.9L7.4 4H5.4l12.3 16Z"/></svg></a>`);
+    if (v.instagram) sns.push(`<a class="ticon ig" href="${v.instagram}" target="_blank" rel="noopener" aria-label="Instagram"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r="1.1" fill="#fff" stroke="none"/></svg></a>`);
+    if (v.line) sns.push(`<a class="ticon line" href="${v.line}" target="_blank" rel="noopener" aria-label="公式LINE"><svg viewBox="0 0 24 24" width="14" height="14" fill="#fff"><path d="M12 3C6.5 3 2 6.6 2 11c0 3.6 3 6.7 7.1 7.7-.3 1.1-.9 3.1-1 3.5-.1.5.2.5.4.4.2-.1 3.1-2.1 4.3-2.9.4 0 .8.1 1.2.1 5.5 0 10-3.6 10-8S17.5 3 12 3z"/></svg></a>`);
+    return `<div class="tcard${v.featured?' feat':''}">
+      <div class="tc-top">
+        <div class="tc-time"><b>${t.start||'未定'}</b><span>START</span></div>
+        <div class="tc-main">
+          <div class="tc-name">${t.name}</div>
+          <div class="tc-venue"><span class="area">${v.area||''}</span><a href="#venue/${t.venueId}">${v.name||''}</a></div>
+        </div>
+        <div class="tc-buyin"><b>${t.buyin?fmt(t.buyin):'別紙'}</b><span>${t.addon?('+AO '+fmt(t.addon)):(t.stack?('STACK '+t.stack.toLocaleString()):'')}</span></div>
+      </div>
+      <div class="tc-meta">${tags.join('')}</div>
+      <div class="tc-foot">
+        <span class="src"><span class="dot ${srcCls}"></span>${srcLbl}${t.verified?' ✓':' (未確認)'}</span>
+        <div class="tc-actions">${sns.join('')}</div>
+      </div>
+    </div>`;
+  }
+
+  function renderDateGroup(date, rows){
+    const d = iso(date), isToday = date === localToday;
+    let html = `<div class="dgroup">
+      <div class="dlabel${isToday?' today':''}">
+        <span class="dnum"><small>${d.getMonth()+1}月</small><b>${d.getDate()}</b></span>
+        <span class="dw">${WD[d.getDay()]}曜日${isToday?' ・本日':''}</span>
+      </div>`;
+    rows.forEach(t => { html += renderTournamentCard(t); });
+    html += '</div>';
+    return html;
+  }
+
+  function renderVenuePage(venueId, monthStr){
+    const v = venueById[venueId];
+    const page = document.getElementById('page-venue');
+    if (!v){
+      page.innerHTML = '<div class="empty">店舗が見つかりませんでした。<br><a class="abtn pri" href="#" style="display:inline-block;margin-top:10px">一覧へ戻る</a></div>';
+      return;
+    }
+    const [yy, mm] = monthStr.split('-').map(Number);
+    const monthLabel = `${yy}年${mm}月`;
+    const prevD = new Date(yy, mm-2, 1), nextD = new Date(yy, mm, 1);
+    const prevStr = `${prevD.getFullYear()}-${String(prevD.getMonth()+1).padStart(2,'0')}`;
+    const nextStr = `${nextD.getFullYear()}-${String(nextD.getMonth()+1).padStart(2,'0')}`;
+
+    const rows = TOURNAMENTS
+      .filter(t => t.venueId===venueId && t.date.slice(0,7)===monthStr)
+      .sort((a,b)=> a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
+
+    const links = [];
+    if (v.website) links.push(`<a class="vlink" href="${v.website}" target="_blank" rel="noopener">公式</a>`);
+    if (v.x) links.push(`<a class="vlink x" href="${v.x}" target="_blank" rel="noopener">X</a>`);
+    if (v.line) links.push(`<a class="vlink line" href="${v.line}" target="_blank" rel="noopener">LINE</a>`);
+    if (v.instagram) links.push(`<a class="vlink ig" href="${v.instagram}" target="_blank" rel="noopener">IG</a>`);
+
+    let listHtml;
+    if (!rows.length){
+      listHtml = `<div class="empty">${monthLabel}の掲載トーナメントはまだありません。<br>店舗のSNS・公式情報もあわせてご確認ください。</div>`;
+    } else {
+      const groups = {};
+      rows.forEach(t => { (groups[t.date] = groups[t.date] || []).push(t); });
+      listHtml = Object.keys(groups).sort().map(date => renderDateGroup(date, groups[date])).join('');
+    }
+
+    document.title = `${v.name} のトーナメント日程（${monthLabel}）| ふくおかポーカーナビ`;
+    page.innerHTML = `
+      <a class="abtn" href="#" style="display:inline-block;margin-bottom:16px">← トーナメント一覧へ戻る</a>
+      <div class="shead"><h2>${v.featured?'<span class="star">★</span> ':''}${v.name}</h2></div>
+      <div class="vc-area">${v.area}${v.access?'　|　'+v.access:''}${v.address?'　|　'+v.address:''}</div>
+      <div class="vc-links" style="margin:11px 0 2px">${links.join('')}</div>
+      ${v.note?`<div style="font-size:.82em;color:var(--mut);margin-top:10px;line-height:1.6">${v.note}</div>`:''}
+      <div class="shead" style="margin-top:28px;align-items:center">
+        <h2 style="display:flex;align-items:center;gap:10px">
+          <a class="abtn" href="#venue/${venueId}/${prevStr}">← 前月</a>
+          ${monthLabel}の全トーナメント
+          <a class="abtn" href="#venue/${venueId}/${nextStr}">翌月 →</a>
+        </h2>
+        <span class="cnt">${rows.length}件</span>
+      </div>
+      <div id="venue-list">${listHtml}</div>
+    `;
+  }
+
+  function parseHash(){
+    const m = location.hash.match(/^#venue\/([^/]+)(?:\/(\d{4}-\d{2}))?$/);
+    if (!m) return null;
+    return { venueId: m[1], month: m[2] || localToday.slice(0,7) };
+  }
+
+  function route(){
+    const parsed = parseHash();
+    const filters = document.querySelector('.filters');
+    if (parsed){
+      filters.style.display = 'none';
+      document.getElementById('page-list').style.display = 'none';
+      document.getElementById('page-venue').style.display = '';
+      renderVenuePage(parsed.venueId, parsed.month);
+      window.scrollTo(0,0);
+    } else {
+      filters.style.display = '';
+      document.getElementById('page-list').style.display = '';
+      document.getElementById('page-venue').style.display = 'none';
+      document.title = '福岡ポーカートーナメント日程 | ふくおかポーカーナビ';
+    }
   }
 
   function renderVenues(){
@@ -327,6 +403,7 @@
         <div class="vc-area">${v.area}　|　${v.access||''}</div>
         <div class="vc-area" style="margin-top:4px;color:var(--felt);font-weight:700">今後の開催 ${upcoming}件</div>
         <div class="vc-links">${links.join('')}</div>
+        <a class="abtn pri" href="#venue/${v.id}" style="display:inline-block;margin-top:11px">今月の予定を見る →</a>
       </div>`;
     }).join('');
   }
@@ -338,11 +415,12 @@
     b.classList.add('on'); state.when = b.dataset.when; render();
   });
   selArea.addEventListener('change', e => { state.area = e.target.value; render(); });
-  document.getElementById('sel-buyin').addEventListener('change', e => { state.buyin = e.target.value; render(); });
   document.getElementById('sel-tag').addEventListener('change', e => { state.tag = e.target.value; render(); });
+  window.addEventListener('hashchange', route);
 
   render();
   renderVenues();
+  route();
 })();
 </script>
 </body>
