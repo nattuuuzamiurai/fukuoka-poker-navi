@@ -257,8 +257,8 @@ const VENUES = [
     "tel": "080-6340-3000",
     "featured": false,
     "note": "リング/トーナメント両方",
-    "sourceLabel": "",
-    "sourceUrl": ""
+    "sourceLabel": "公式スケジュールページ",
+    "sourceUrl": "https://texaspoker.pro/sc/sche3.cgi?year=2026&mon=7"
   },
   {
     "id": "v17",
@@ -1227,7 +1227,28 @@ const TOURNAMENTS = [
   { "id": "nw0714", "venueId": "v13", "name": "フリーロールトーナメント3.0", "date": "2026-07-14", "start": "19:30", "buyin": 0, "addon": null, "stack": 30000, "guarantee": null, "reentry": false, "prize": null, "tags": ["フリーロール"], "source": "semi", "verified": false },
   { "id": "nw0715", "venueId": "v13", "name": "WJPT チケット争奪トーナメント", "date": "2026-07-15", "start": "19:30", "buyin": 1500, "addon": null, "stack": 20000, "guarantee": null, "reentry": false, "prize": null, "tags": ["サテライト", "WJPT"], "source": "semi", "verified": false },
   { "id": "nw0716", "venueId": "v13", "name": "WJPT チケット争奪トーナメント", "date": "2026-07-16", "start": "19:30", "buyin": 1500, "addon": null, "stack": 20000, "guarantee": null, "reentry": false, "prize": null, "tags": ["サテライト", "WJPT"], "source": "semi", "verified": false },
-  { "id": "nw0717", "venueId": "v13", "name": "フリーロールトーナメント3.0", "date": "2026-07-17", "start": "19:30", "buyin": 0, "addon": null, "stack": 30000, "guarantee": null, "reentry": false, "prize": null, "tags": ["フリーロール"], "source": "semi", "verified": false }
+  { "id": "nw0717", "venueId": "v13", "name": "フリーロールトーナメント3.0", "date": "2026-07-17", "start": "19:30", "buyin": 0, "addon": null, "stack": 30000, "guarantee": null, "reentry": false, "prize": null, "tags": ["フリーロール"], "source": "semi", "verified": false },
+  { "id": "tx0703", "venueId": "v16", "name": "てきさすトーナメント", "date": "2026-07-03", "start": "18:15", "buyin": 1100, "addon": 1100, "stack": 30000, "guarantee": null, "reentry": true, "prize": null, "tags": [], "source": "semi", "verified": false },
+  { "id": "tx0704", "venueId": "v16", "name": "第3回いっぷす杯", "date": "2026-07-04", "start": "18:15", "buyin": 2500, "addon": 1500, "stack": 30000, "guarantee": 76000, "reentry": true, "prize": null, "tags": ["特別開催"], "source": "semi", "verified": false },
+  { "id": "tx0705", "venueId": "v16", "name": "IP(インマネポイント)増量トーナメント", "date": "2026-07-05", "start": "18:15", "buyin": 2500, "addon": 1100, "stack": 0, "guarantee": null, "reentry": true, "prize": null, "tags": ["ポイントレース"], "source": "semi", "verified": false },
+  { "id": "tx0706", "venueId": "v16", "name": "DeepStack Freeze out", "date": "2026-07-06", "start": "18:15", "buyin": 2200, "addon": 2200, "stack": 100000, "guarantee": null, "reentry": false, "prize": null, "tags": ["ディープ"], "source": "semi", "verified": false },
+  { "id": "tx0707", "venueId": "v16", "name": "アリーナトーナメント", "date": "2026-07-07", "start": "18:15", "buyin": 2200, "addon": 2200, "stack": 0, "guarantee": null, "reentry": true, "prize": null, "tags": [], "source": "semi", "verified": false },
+  { "id": "tx0708", "venueId": "v16", "name": "てきさすトーナメント", "date": "2026-07-08", "start": "18:15", "buyin": 1100, "addon": 1100, "stack": 30000, "guarantee": null, "reentry": true, "prize": null, "tags": [], "source": "semi", "verified": false },
+  { "id": "tx0710", "venueId": "v16", "name": "IP(インマネポイント)増量トーナメント", "date": "2026-07-10", "start": "18:15", "buyin": 2500, "addon": 1100, "stack": 0, "guarantee": null, "reentry": true, "prize": null, "tags": ["ポイントレース"], "source": "semi", "verified": false },
+  { "id": "tx0712", "venueId": "v16", "name": "アリーナトーナメント！BOOST！", "date": "2026-07-12", "start": "18:15", "buyin": 2200, "addon": 2200, "stack": 30000, "guarantee": null, "reentry": true, "prize": null, "tags": [], "source": "semi", "verified": false },
+  { "id": "tx0713", "venueId": "v16", "name": "DeepStack Freeze out", "date": "2026-07-13", "start": "18:15", "buyin": 2200, "addon": 2200, "stack": 100000, "guarantee": null, "reentry": false, "prize": null, "tags": ["ディープ"], "source": "semi", "verified": false },
+  { "id": "tx0714", "venueId": "v16", "name": "アリーナトーナメント", "date": "2026-07-14", "start": "18:15", "buyin": 2200, "addon": 2200, "stack": 0, "guarantee": null, "reentry": true, "prize": null, "tags": [], "source": "semi", "verified": false },
+  { "id": "tx0717", "venueId": "v16", "name": "てきさすトーナメント", "date": "2026-07-17", "start": "18:15", "buyin": 1100, "addon": 1100, "stack": 30000, "guarantee": null, "reentry": true, "prize": null, "tags": [], "source": "semi", "verified": false },
+  { "id": "tx0718", "venueId": "v16", "name": "アリーナトーナメント", "date": "2026-07-18", "start": "18:15", "buyin": 2200, "addon": 2200, "stack": 0, "guarantee": null, "reentry": true, "prize": null, "tags": [], "source": "semi", "verified": false },
+  { "id": "tx0719", "venueId": "v16", "name": "ロイヤルトーナメント【5級】（招待制）", "date": "2026-07-19", "start": "18:30", "buyin": 0, "addon": 2200, "stack": 0, "guarantee": null, "reentry": true, "prize": "アリーナポイント12pt以上保有者への無料招待制", "tags": ["フリーロール", "招待制"], "source": "semi", "verified": false },
+  { "id": "tx0720", "venueId": "v16", "name": "IP(インマネポイント)増量トーナメント", "date": "2026-07-20", "start": "18:15", "buyin": 2500, "addon": 1100, "stack": 0, "guarantee": null, "reentry": true, "prize": null, "tags": ["ポイントレース"], "source": "semi", "verified": false },
+  { "id": "tx0721", "venueId": "v16", "name": "てきさすトーナメント", "date": "2026-07-21", "start": "18:15", "buyin": 1100, "addon": 1100, "stack": 30000, "guarantee": null, "reentry": true, "prize": null, "tags": [], "source": "semi", "verified": false },
+  { "id": "tx0722", "venueId": "v16", "name": "DeepStack Freeze out", "date": "2026-07-22", "start": "18:15", "buyin": 2200, "addon": 2200, "stack": 100000, "guarantee": null, "reentry": false, "prize": null, "tags": ["ディープ"], "source": "semi", "verified": false },
+  { "id": "tx0725", "venueId": "v16", "name": "アリーナトーナメント", "date": "2026-07-25", "start": "18:15", "buyin": 2200, "addon": 2200, "stack": 0, "guarantee": null, "reentry": true, "prize": null, "tags": [], "source": "semi", "verified": false },
+  { "id": "tx0726", "venueId": "v16", "name": "ロイヤルトーナメント【4級】（招待制）", "date": "2026-07-26", "start": "18:30", "buyin": 0, "addon": 3300, "stack": 0, "guarantee": null, "reentry": true, "prize": "アリーナポイント33pt以上保有者への無料招待制", "tags": ["フリーロール", "招待制"], "source": "semi", "verified": false },
+  { "id": "tx0727", "venueId": "v16", "name": "IP(インマネポイント)増量トーナメント", "date": "2026-07-27", "start": "18:15", "buyin": 2500, "addon": 1100, "stack": 0, "guarantee": null, "reentry": true, "prize": null, "tags": ["ポイントレース"], "source": "semi", "verified": false },
+  { "id": "tx0729", "venueId": "v16", "name": "DeepStack Freeze out", "date": "2026-07-29", "start": "18:15", "buyin": 2200, "addon": 2200, "stack": 100000, "guarantee": null, "reentry": false, "prize": null, "tags": ["ディープ"], "source": "semi", "verified": false },
+  { "id": "tx0731", "venueId": "v16", "name": "IP(インマネポイント)増量トーナメント", "date": "2026-07-31", "start": "18:15", "buyin": 2500, "addon": 1100, "stack": 0, "guarantee": null, "reentry": true, "prize": null, "tags": ["ポイントレース"], "source": "semi", "verified": false }
 ];
 
 const AREAS = [
