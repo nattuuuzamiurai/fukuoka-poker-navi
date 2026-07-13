@@ -81,6 +81,7 @@
   .tc-venue .area{background:var(--chip);border-radius:5px;padding:1px 7px;font-weight:700;color:#6b6055;font-size:.84em}
   .tc-buyin{text-align:right;flex-shrink:0}
   .tc-buyin b{font-size:1.12em;font-weight:800}
+  .tc-buyin b.unknown{font-size:.68em;font-weight:700;color:var(--mut);display:block;max-width:80px;line-height:1.3;text-align:right}
   .tc-buyin span{display:block;font-size:.64em;color:var(--mut);font-weight:600}
   .tc-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px;align-items:center}
   .mtag{font-size:.72em;font-weight:700;padding:2px 9px;border-radius:20px;background:var(--chip);color:#6b6055}
@@ -319,7 +320,7 @@
           <div class="tc-name">${t.name}</div>
           <div class="tc-venue"><span class="area">${v.area||''}</span><a href="#venue/${t.venueId}">${v.name||''}</a></div>
         </div>
-        <div class="tc-buyin"><b>${t.buyin?fmt(t.buyin):'別紙'}</b><span>${t.addon?('+AO '+fmt(t.addon)):(t.stack?('STACK '+t.stack.toLocaleString()):'')}</span></div>
+        <div class="tc-buyin">${t.buyin?`<b>${fmt(t.buyin)}</b>`:'<b class="unknown">詳細は店舗SNSを確認</b>'}<span>${t.addon?('+AO '+fmt(t.addon)):(t.stack?('STACK '+t.stack.toLocaleString()):'')}</span></div>
       </div>
       <div class="tc-meta">${tags.join('')}</div>
       <div class="tc-foot">
