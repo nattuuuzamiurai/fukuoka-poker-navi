@@ -11,7 +11,6 @@
 http://localhost:8787/admin.html を開く。
 """
 import http.server
-import json
 import os
 import subprocess
 import tempfile
@@ -20,31 +19,20 @@ PORT = 8787
 DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_FILE = os.path.join(DIR, 'data.js')
 
-# data.js から VENUES/TOURNAMENTS/RECURRING の件数を数えるための小さなNodeスクリプト。
-# 複数のブラウザタブを開いていると、古いタブ(まだ少ない店舗数しか読み込んでいない状態)
-# からの保存で新しいタブが追加した店舗が消えてしまう事故が実際に起きたため、
-# 「店舗数が減る保存」は事故とみなして拒否する安全装置。
-COUNT_SCRIPT = (
-    "const p = require(process.argv[1]);"
-    "console.log(JSON.stringify({"
-    "venues: (p.VENUES||[]).length,"
-    "tournaments: (p.TOURNAMENTS||[]).length,"
-    "recurring: (p.RECURRING||[]).length"
-    "}));"
-)
+# 保存内容が壊れたJSでないかだけを確認する(店舗を閉店等で意図的に減らす
+# 保存も正当な操作のため、件数の増減そのものは制限しない)。
+VALIDATE_SCRIPT = "require(process.argv[1]); console.log('ok');"
 
 
-def count_entities(path):
+def is_valid_js(path):
     try:
         out = subprocess.run(
-            ['node', '-e', COUNT_SCRIPT, path],
+            ['node', '-e', VALIDATE_SCRIPT, path],
             capture_output=True, text=True, timeout=10, cwd=DIR
         )
-        if out.returncode != 0:
-            return None
-        return json.loads(out.stdout.strip())
+        return out.returncode == 0
     except Exception:
-        return None
+        return False
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
@@ -68,16 +56,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             tmp.write(body)
             tmp_path = tmp.name
         try:
-            new_counts = count_entities(tmp_path)
-            if new_counts is None:
+            if not is_valid_js(tmp_path):
                 self.reject('保存を拒否しました: 送信内容が正しいJSとして読み込めません')
-                return
-            old_counts = count_entities(DATA_FILE)
-            if old_counts and new_counts['venues'] < old_counts['venues']:
-                self.reject(
-                    f"保存を拒否しました: 店舗数が {old_counts['venues']} → {new_counts['venues']} に減っています"
-                    "(古いタブからの保存の可能性)。ページを再読み込みしてからやり直してください。"
-                )
                 return
         finally:
             os.remove(tmp_path)
