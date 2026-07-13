@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /dev-server.py
+
+Sitemap: https://nattuuuzamiurai.github.io/fukuoka-poker-navi/sitemap.xml
