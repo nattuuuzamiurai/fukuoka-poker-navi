@@ -28,9 +28,7 @@
   .btn:hover{background:var(--felt2)}
   .btn:disabled{opacity:.5;cursor:not-allowed}
   .btn.sec{background:#fff;color:var(--felt);border:1px solid var(--bor)}
-  .btn.gold{background:var(--gold);color:#3a2a06}
   .btn.sm{padding:5px 11px;font-size:.8em}
-  .btn.block{width:100%;padding:13px;font-size:1em}
   .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center}
   .status{font-size:.85em}
   .status.err{color:var(--red)}
@@ -47,10 +45,8 @@
 
   /* --- 店舗一覧(常時表示リスト) --- */
   table.venuelist{width:100%;border-collapse:collapse;font-size:.92em}
-  table.venuelist tr{cursor:pointer;border-bottom:1px solid var(--bor)}
+  table.venuelist tr{border-bottom:1px solid var(--bor)}
   table.venuelist tr:last-child{border-bottom:none}
-  table.venuelist tr:hover{background:#faf7f2}
-  table.venuelist tr.sel{background:#fdf6e6}
   table.venuelist tr.done{color:var(--mut)}
   table.venuelist td{padding:9px 6px;vertical-align:middle}
   table.venuelist td.badge{width:52px;font-size:.78em;font-weight:700;white-space:nowrap}
@@ -64,27 +60,9 @@
   .srcform{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
   .srcform input{width:auto;flex:1;min-width:100px;padding:4px 6px;font-size:.85em}
 
-  /* --- 選択中の店舗 & 登録エリア --- */
-  .picked{font-size:.98em;margin-bottom:12px}
-  .picked strong{color:var(--felt)}
-  .picked a{color:var(--felt);margin-left:8px}
-  .dropzone{border:2px dashed var(--bor);border-radius:10px;padding:18px;text-align:center;font-size:.85em;color:var(--mut);cursor:pointer;transition:border-color .15s,background .15s}
-  .dropzone.drag{border-color:var(--gold);background:#fffaf0}
-  .dropzone input[type=file]{display:block;margin:10px auto 0;width:auto}
-  .thumbs{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
-  .thumb{position:relative;width:72px;height:72px;border-radius:8px;overflow:hidden;border:1px solid var(--bor);flex-shrink:0}
-  .thumb img{width:100%;height:100%;object-fit:cover;display:block}
-  .thumb button{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:.7em;line-height:1;cursor:pointer}
-  details.textfallback{margin-top:10px}
-  details.textfallback summary{cursor:pointer;font-size:.82em;color:var(--mut)}
-  details.textfallback textarea{margin-top:8px}
-
   details.settings{margin-top:22px}
   details.settings>summary{cursor:pointer;font-size:.9em;font-weight:700;color:var(--mut);padding:6px 0}
   details.settings .card h3{font-size:.9em;margin-bottom:6px}
-  .keybar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-  .keybar input{flex:1;min-width:200px}
-  .keybar select{max-width:220px;width:auto}
 
   table.datatbl{width:100%;border-collapse:collapse;margin-top:8px;font-size:.82em}
   table.datatbl th{background:#faf7f2;text-align:left;padding:6px 6px;color:var(--mut);font-size:.88em;border-bottom:1px solid var(--bor);white-space:nowrap}
@@ -103,6 +81,8 @@
 
 <div class="wrap">
 
+  <div class="hint">実際のトーナメント登録は Claude Code のチャットで行います（店舗名と告知画像を渡すだけ）。この画面は、どの店舗がまだ今月分未入力かの確認と、情報取得先リンクの管理・登録済みデータの修正用です。</div>
+
   <div class="bar">
     <label style="margin:0">対象月</label>
     <input type="month" id="targetMonth">
@@ -114,42 +94,8 @@
     <table class="venuelist" id="venueTable"><tbody></tbody></table>
   </div>
 
-  <div class="card" id="entryCard" style="display:none">
-    <div class="picked" id="pickedInfo"></div>
-
-    <div class="dropzone" id="dropzone">
-      画像をドラッグ＆ドロップ／貼り付け（⌘V）／クリックして選択
-      <input type="file" id="imgFile" accept="image/*" multiple>
-    </div>
-    <div class="thumbs" id="thumbs"></div>
-
-    <details class="textfallback">
-      <summary>画像がない場合は代わりにテキストを貼り付け</summary>
-      <textarea id="announce" placeholder="例）1/25(土) 19:00 START｜AceHigh Daily NLH｜BuyIn 3,000円 + AddOn 1,000円｜Stack 20,000｜レイト可 …"></textarea>
-    </details>
-
-    <div class="btnrow">
-      <button class="btn block" id="registerBtn">この店舗として登録する</button>
-    </div>
-    <div class="status" id="regStatus"></div>
-  </div>
-
   <details class="settings">
     <summary>詳細設定</summary>
-
-    <div class="card">
-      <h3>Claude APIキー</h3>
-      <div class="hint">画像・テキストからの自動抽出に使います。「登録する」ボタンにはこのキーが必要です。キーはこのブラウザ（localStorage）にのみ保存され、送信先は api.anthropic.com のみです。</div>
-      <div class="keybar">
-        <input type="password" id="apikey" placeholder="sk-ant-... (Anthropic API キー)">
-        <select id="model">
-          <option value="claude-opus-4-8">claude-opus-4-8（推奨・高精度）</option>
-          <option value="claude-haiku-4-5">claude-haiku-4-5（低コスト）</option>
-          <option value="claude-sonnet-5">claude-sonnet-5（中間）</option>
-        </select>
-        <button class="btn sm sec" onclick="saveKey()">保存</button>
-      </div>
-    </div>
 
     <div class="card">
       <h3>登録済みトーナメント <span class="pill" id="tourCount">0</span></h3>
@@ -194,20 +140,11 @@
   let venues = (typeof VENUES !== 'undefined') ? JSON.parse(JSON.stringify(VENUES)) : [];
   let tours  = (typeof TOURNAMENTS !== 'undefined') ? JSON.parse(JSON.stringify(TOURNAMENTS)) : [];
   const areas = (typeof AREAS !== 'undefined') ? AREAS.slice() : [];
-  let images = []; // {mediaType, data(base64,no prefix), url(dataURL for preview)}
-  let selectedVenueId = null;
   let editingSourceId = null;
   let lastGen = '';
 
   const pad2 = n => String(n).padStart(2,'0');
   const yen = n => n==null ? '–' : '¥'+Number(n).toLocaleString('ja-JP');
-  const reMap = { late:'late', reentry:true, none:false };
-
-  // --- key / model persistence ---
-  $('apikey').value = localStorage.getItem('fpn_key') || '';
-  $('model').value  = localStorage.getItem('fpn_model') || 'claude-opus-4-8';
-  window.saveKey = () => { localStorage.setItem('fpn_key', $('apikey').value.trim()); localStorage.setItem('fpn_model', $('model').value); alert('保存しました'); };
-  $('model').addEventListener('change', () => localStorage.setItem('fpn_model', $('model').value));
 
   const t = new Date(); t.setHours(0,0,0,0);
   $('targetMonth').value = `${t.getFullYear()}-${pad2(t.getMonth()+1)}`;
@@ -248,24 +185,24 @@
   function srcCellHtml(v){
     if(editingSourceId === v.id){
       return `<div class="srcform">
-        <input id="srcLabelInput" placeholder="例: 公式LINE" value="${(v.sourceLabel||'').replace(/"/g,'&quot;')}" onclick="event.stopPropagation()">
-        <input id="srcUrlInput" placeholder="https://..." value="${(v.sourceUrl||'').replace(/"/g,'&quot;')}" onclick="event.stopPropagation()">
-        <button class="btn sm" type="button" onclick="event.stopPropagation();saveSource('${v.id}')">保存</button>
-        <button class="btn sm sec" type="button" onclick="event.stopPropagation();cancelEditSource()">キャンセル</button>
+        <input id="srcLabelInput" placeholder="例: 公式LINE" value="${(v.sourceLabel||'').replace(/"/g,'&quot;')}">
+        <input id="srcUrlInput" placeholder="https://..." value="${(v.sourceUrl||'').replace(/"/g,'&quot;')}">
+        <button class="btn sm" type="button" onclick="saveSource('${v.id}')">保存</button>
+        <button class="btn sm sec" type="button" onclick="cancelEditSource()">キャンセル</button>
       </div>`;
     }
     if(v.sourceUrl){
-      return `<a href="${v.sourceUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()">🔗 ${(v.sourceLabel||'情報元').replace(/</g,'')}</a>
-        <button class="linkbtn" type="button" onclick="event.stopPropagation();editSource('${v.id}')">編集</button>`;
+      return `<a href="${v.sourceUrl}" target="_blank" rel="noopener">🔗 ${(v.sourceLabel||'情報元').replace(/</g,'')}</a>
+        <button class="linkbtn" type="button" onclick="editSource('${v.id}')">編集</button>`;
     }
-    return `<button class="linkbtn" type="button" onclick="event.stopPropagation();editSource('${v.id}')">+ リンク追加</button>`;
+    return `<button class="linkbtn" type="button" onclick="editSource('${v.id}')">+ リンク追加</button>`;
   }
 
   function renderVenueList(){
     const tb = $('venueTable').querySelector('tbody');
     const rows = venues.map((v,i)=>({v,i,done:venueDone(v)}))
       .sort((a,b)=> (a.done===b.done) ? a.i-b.i : (a.done?1:-1));
-    tb.innerHTML = rows.map(({v,done}) => `<tr class="${v.id===selectedVenueId?'sel':''} ${done?'done':''}" onclick="selectVenue('${v.id}')">
+    tb.innerHTML = rows.map(({v,done}) => `<tr class="${done?'done':''}">
       <td class="badge">${done?'✓ 済':'未'}</td>
       <td class="name">${v.name}<span class="area">（${v.area}）</span></td>
       <td class="src">${srcCellHtml(v)}</td>
@@ -283,166 +220,8 @@
     editingSourceId = null;
     refreshVenuesJson();
     renderVenueList();
-    renderPicked();
     persist();
   };
-
-  function renderPicked(){
-    const v = venues.find(x=>x.id===selectedVenueId);
-    if(!v){ $('entryCard').style.display='none'; return; }
-    $('entryCard').style.display='block';
-    const src = v.sourceUrl
-      ? `<a href="${v.sourceUrl}" target="_blank" rel="noopener">🔗 ${(v.sourceLabel||'情報元')}を開く</a>`
-      : `<a href="#" onclick="event.preventDefault();editSource('${v.id}')">+ 情報取得先を追加</a>`;
-    $('pickedInfo').innerHTML = `<strong>${v.name}</strong>（${v.area}）を登録中 ${src}`;
-  }
-
-  window.selectVenue = id => {
-    if(selectedVenueId !== id){
-      images = []; renderThumbs();
-      $('announce').value = '';
-      $('regStatus').className = 'status'; $('regStatus').textContent = '';
-    }
-    selectedVenueId = id;
-    renderVenueList();
-    renderPicked();
-  };
-
-  // --- 画像(貼り付け/ドラッグ&ドロップ/選択) ---
-  function fileToImage(file){
-    return new Promise((resolve, reject)=>{
-      const reader = new FileReader();
-      reader.onload = () => {
-        const m = /^data:(.+);base64,(.+)$/.exec(reader.result || '');
-        if(!m){ reject(new Error('画像の読み込みに失敗しました')); return; }
-        resolve({ mediaType: m[1], data: m[2], url: reader.result });
-      };
-      reader.onerror = () => reject(reader.error);
-      reader.readAsDataURL(file);
-    });
-  }
-  async function addFiles(fileList){
-    const files = Array.from(fileList||[]).filter(f=>f.type && f.type.startsWith('image/'));
-    for(const f of files){
-      try{ images.push(await fileToImage(f)); }catch(e){ console.error(e); }
-    }
-    renderThumbs();
-  }
-  function renderThumbs(){
-    $('thumbs').innerHTML = images.map((img,i)=>`<div class="thumb"><img src="${img.url}"><button type="button" onclick="removeImage(${i})">✕</button></div>`).join('');
-  }
-  window.removeImage = i => { images.splice(i,1); renderThumbs(); };
-
-  $('imgFile').addEventListener('change', e => { addFiles(e.target.files); e.target.value=''; });
-  const dz = $('dropzone');
-  dz.addEventListener('click', e => { if(e.target.id !== 'imgFile') $('imgFile').click(); });
-  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
-  dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
-  dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag'); addFiles(e.dataTransfer.files); });
-  window.addEventListener('paste', e => {
-    if(!selectedVenueId) return;
-    const items = (e.clipboardData && e.clipboardData.items) || [];
-    const files = Array.from(items).filter(it=>it.type && it.type.startsWith('image/')).map(it=>it.getAsFile()).filter(Boolean);
-    if(files.length) addFiles(files);
-  });
-
-  // --- 抽出スキーマ ---
-  const SCHEMA = {
-    type:'object', additionalProperties:false,
-    properties:{ tournaments:{ type:'array', items:{
-      type:'object', additionalProperties:false,
-      properties:{
-        name:{type:'string'}, date:{type:'string', description:'YYYY-MM-DD'},
-        start:{type:'string', description:'HH:MM 24h'},
-        buyin:{type:'integer'}, addon:{type:['integer','null']}, stack:{type:'integer'},
-        guarantee:{type:['integer','null']}, reentry:{type:'string', enum:['late','reentry','none']},
-        prize:{type:['string','null']}, tags:{type:'array', items:{type:'string'}}
-      },
-      required:['name','date','start','buyin','addon','stack','guarantee','reentry','prize','tags']
-    }}},
-    required:['tournaments']
-  };
-
-  $('registerBtn').addEventListener('click', async () => {
-    const key = $('apikey').value.trim();
-    const text = $('announce').value.trim();
-    const st = $('regStatus');
-    const vid = selectedVenueId;
-    if(!vid){ st.className='status err'; st.textContent='まず店舗を選んでください'; return; }
-    if(!key){ st.className='status err'; st.textContent='下の「詳細設定」でAPIキーを入力してください'; return; }
-    if(!text && !images.length){ st.className='status err'; st.textContent='画像またはテキストを追加してください'; return; }
-    $('registerBtn').disabled = true;
-    st.className='status'; st.textContent='抽出中…';
-
-    const month = $('targetMonth').value;
-    const instructions = `あなたは福岡のアミューズメントポーカー店のトーナメント告知(テキスト、または月間スケジュールの画像)を構造化するアシスタントです。開催される全トーナメントを抽出してください。
-- 入力は告知テキスト・1枚〜複数枚の画像(月間カレンダー表やスケジュール画像)のいずれか、または両方です。画像がカレンダー/表形式の場合は、日付ごとの行をそれぞれ1トーナメントとして抽出してください。
-- 対象月は ${month || '不明'} です。年が無い日付はこの月のものとして解釈してください。
-- buyin / addon は円の整数(例: 3000)。addon が無ければ null。
-- stack は初期スタックの点数(整数)。
-- guarantee は GTD/保証額の円(無ければ null)。
-- reentry: レイトエントリー可なら "late"、リエントリー/リバイ可なら "reentry"、記載無しなら "none"。
-- tags: 該当するラベルを日本語で(大型 / メイン / ターボ / ディープ / バウンティ / 女性歓迎 / デイリー など)。
-  - 「大型」は次のいずれかに該当し、かつ想定エントリー数が最低100人以上の場合のみ付与する: (a) 複数店舗を巻き込んでサテライトが行われている本線(決勝/本戦)トーナメント、(b) 大会場を借りて実施するイベント的なトーナメント。
-  - 1店舗だけで完結する通常営業のトーナメント(各店舗のDAY1サテライト等を含む)は、たとえ大きい大会の予選であっても、それ単体では「大型」を付けない。100人以上の根拠が告知文から読み取れない場合も付けない。
-- prize: 賞品/賞金の記載があれば短く、無ければ null。
-確実に読み取れない数値は無理に埋めず、buyin/stack が不明なら 0 にしてください。`;
-    const textBlock = text ? `\n\n告知テキスト:\n${text}` : '\n\n(添付画像を参照してください)';
-    const content = [
-      ...images.map(img => ({ type:'image', source:{ type:'base64', media_type: img.mediaType, data: img.data } })),
-      { type:'text', text: instructions + textBlock }
-    ];
-    try{
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method:'POST',
-        headers:{
-          'content-type':'application/json',
-          'x-api-key':key,
-          'anthropic-version':'2023-06-01',
-          'anthropic-dangerous-direct-browser-access':'true'
-        },
-        body: JSON.stringify({
-          model: $('model').value,
-          max_tokens: 8192,
-          output_config:{ format:{ type:'json_schema', schema: SCHEMA } },
-          messages:[{ role:'user', content }]
-        })
-      });
-      const data = await res.json();
-      if(!res.ok){ throw new Error((data.error && data.error.message) || ('HTTP '+res.status)); }
-      const block = (data.content||[]).find(b=>b.type==='text');
-      if(!block) throw new Error('応答にテキストがありません');
-      const parsed = JSON.parse(block.text);
-      const extracted = parsed.tournaments || [];
-      if(!extracted.length){ st.className='status err'; st.textContent='トーナメントを検出できませんでした'; return; }
-
-      // 同じ店舗・同じ対象月の既存データは今回の内容で置き換える(再登録による重複を防ぐ)
-      tours = tours.filter(x => !(x.venueId===vid && (x.date||'').slice(0,7)===month));
-      const base = Date.now();
-      extracted.forEach((r,i)=>{
-        tours.push({
-          id:'t'+(base+i), venueId: vid, name: r.name||'(名称未設定)',
-          date: r.date, start: r.start||'', buyin: r.buyin||0,
-          addon: r.addon==null?null:r.addon, stack: r.stack||0,
-          guarantee: r.guarantee==null?null:r.guarantee,
-          reentry: reMap[r.reentry], prize: r.prize||null,
-          tags: r.tags||[], source:'semi', verified:false
-        });
-      });
-
-      images = []; renderThumbs();
-      $('announce').value = '';
-      renderData();
-      renderVenueList();
-      persist();
-      st.className='status ok';
-      st.textContent = `✓ ${extracted.length}件登録しました。内容がおかしい場合は下の「詳細設定→登録済みトーナメント」で直接修正できます。`;
-    }catch(e){
-      st.className='status err'; st.textContent='抽出失敗: '+e.message;
-    }finally{
-      $('registerBtn').disabled = false;
-    }
-  });
 
   // --- 登録済みトーナメント(直接編集可能) ---
   function renderData(){
@@ -493,13 +272,12 @@ if (typeof module !== 'undefined') { module.exports = { VENUES, TOURNAMENTS, ARE
   window.download = () => { if(!lastGen) window.genData(); const b=new Blob([lastGen],{type:'text/javascript'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='data.js'; a.click(); };
   window.copyData = async () => { if(!lastGen) window.genData(); try{ await navigator.clipboard.writeText(lastGen); $('genStatus').className='status ok'; $('genStatus').textContent='コピーしました'; }catch(e){ $('genStatus').className='status err'; $('genStatus').textContent='コピー不可(プレビューから手動でコピーしてください)'; } };
 
-  $('targetMonth').addEventListener('change', () => { renderVenueList(); renderPicked(); });
+  $('targetMonth').addEventListener('change', renderVenueList);
 
   // init
   refreshVenuesJson();
   renderVenueList();
   renderData();
-  renderPicked();
 })();
 </script>
 </body>
