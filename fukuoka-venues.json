@@ -2,7 +2,7 @@
   "_meta": {
     "description": "福岡県内アミューズメントポーカー店の実在調査結果（出典付き）。data.js の VENUES はこれを元に生成。公開前に各店舗の公式情報で住所・SNS・営業状況を再確認すること。",
     "collectedAt": "2026-07-10",
-    "count": 35,
+    "count": 29,
     "caveats": [
       "ポータル(poker.dmm.com 等)・公式サイト/SNS本体はボット対策で直接取得が403のため、店舗詳細はWeb検索の要約経由。住所番地・SNSハンドル・営業時間に軽微な誤りが残る可能性あり。",
       "じゃんけんポーカー天神店=移転中の情報／RAISE BLUE=2025年11月に重要告知 → 営業状況要確認。",
@@ -11,40 +11,534 @@
     ]
   },
   "venues": [
-    {"name":"じゃんけんポーカー福岡天神店","area":"天神","city":"福岡市中央区","address":"福岡県福岡市中央区天神3-1-12 北天神ビル4F","access":"西鉄福岡（天神）駅 徒歩4分","website":"","x":"https://x.com/jyanken_tenjin","instagram":"https://www.instagram.com/jyanken.fukuoka/","line":"","tel":"092-401-1467","holds_tournaments":true,"sources":["https://aricheki.com/shop/6026/","https://nexus-poker.jp/poker_spot/jyankenpokerhukuokatenjin/","https://x.com/jyanken_tenjin"],"note":"トッププロ余語葦織監修のストラクチャーでトーナメント/リングを毎日開催。X名義が『【移転中】』。住所・営業要確認。"},
-    {"name":"KKPOKER FUKUOKA","area":"天神","city":"福岡市中央区","address":"福岡県福岡市中央区春吉3-21-19 ARBRE天神4F","access":"天神南駅 徒歩3分","website":"","x":"https://x.com/kkpoker_fukuoka","instagram":"https://www.instagram.com/kkpoker_fukuoka/","line":"","tel":"","holds_tournaments":true,"sources":["https://kklive.jp/news/room/4888/","https://x.com/kkpoker_fukuoka"],"note":"KKPOKER系。6卓RFIDテーブルで博多エリア最大級。1,000円〜の初心者向けトーナメントを毎日開催。"},
-    {"name":"m HOLD'EM 中洲","area":"中洲","city":"福岡市博多区","address":"福岡県福岡市博多区中洲3-7-24 ゲイツビル3F","access":"中洲川端駅4番出口直結","website":"https://mpj-portal.jp/official/nakasu/","x":"https://x.com/m_holdem_nakasu","instagram":"","line":"","tel":"","holds_tournaments":true,"sources":["https://mpj-portal.jp/official/nakasu/","https://prtimes.jp/main/html/rd/p/000000045.000096065.html"],"note":"サミー系ポーカーハウス&バーの九州初出店(2025/6/6)。毎日各種トーナメント開催。"},
-    {"name":"ONECASINO 福岡中洲","area":"中洲","city":"福岡市博多区","address":"福岡県福岡市博多区中洲4-7-7 中洲リッチビル2F","access":"中洲川端駅 徒歩2分","website":"https://one-casino.jp/","x":"https://x.com/onecasino477","instagram":"https://www.instagram.com/onecasino_fuk/","line":"","tel":"092-292-9917","holds_tournaments":true,"sources":["https://one-casino.jp/","https://x.com/onecasino477"],"note":"アミューズメントカジノバー。18:00〜翌5:00。毎週木曜に無料フリーロールトーナメント。"},
-    {"name":"Casino bar Leje 博多店","area":"中洲","city":"福岡市博多区","address":"福岡県福岡市博多区中洲3-7-10 若松ビル4F","access":"中洲川端駅 徒歩2分","website":"https://www.lejehakata.com/","x":"","instagram":"","line":"","tel":"092-291-9200","holds_tournaments":true,"sources":["https://www.lejehakata.com/","https://www.hotpepper.jp/strJ003736010/"],"note":"テキサスホールデム他。メガディープ等の定期トーナメント。入場1,000円飲み放題付き。"},
-    {"name":"グランドミラージュポーカー","area":"天神","city":"福岡市中央区","address":"福岡県福岡市中央区今泉1-17-16","access":"西鉄福岡（天神）駅 徒歩4分","website":"","x":"https://x.com/poker_mirage","instagram":"","line":"","tel":"","holds_tournaments":true,"sources":["https://poker-choice.com/fukuoka/mirage-poker/","https://x.com/poker_mirage"],"note":"テキサスホールデム専門。トーナメント定期開催。空席状況をXで随時発信。一般3,000円/女性・初回2,000円。"},
-    {"name":"ポーカーハウスFUXK 福岡天神店","area":"天神","city":"福岡市中央区","address":"福岡県福岡市中央区春吉3-21-18 2F","access":"天神南駅 徒歩5分","website":"","x":"https://x.com/poker_fuxk","instagram":"https://www.instagram.com/poker_fuxk/","line":"","tel":"","holds_tournaments":true,"sources":["https://www.uwu-onug.com/poker-fuxk","https://x.com/poker_fuxk"],"note":"リング毎日開催。バウンティ/ディープ/ガールズ/ポイントレース等のトーナメント。無料初心者講習あり。"},
-    {"name":"RAISE BLUE 天神ポーカーハウス","area":"天神","city":"福岡市中央区","address":"","access":"天神駅 徒歩約10分","website":"","x":"https://x.com/RAISEBLUE_poker","instagram":"https://www.instagram.com/raise_blue/","line":"","tel":"","holds_tournaments":true,"sources":["https://x.com/RAISEBLUE_poker","https://www.instagram.com/raise_blue/"],"note":"トーナメントを毎日開催(BLUERUSH等)。住所未確認。2025/11に重要告知あり営業状況要確認。"},
-    {"name":"CASINO BLOW 西中洲","area":"中洲","city":"福岡市中央区","address":"福岡県福岡市中央区西中洲1-21 GIOビル2F","access":"中洲川端駅 徒歩5分","website":"https://blow-casino.com/shop/detail.html?id=251","x":"","instagram":"https://www.instagram.com/casino_nishinakasu/","line":"","tel":"092-733-8899","holds_tournaments":false,"sources":["https://blow-casino.com/shop/detail.html?id=251"],"note":"BLOW系カジノバー。18:00〜翌1:00。定期トーナメント開催は要確認。"},
-    {"name":"POKER BAR U","area":"天神","city":"福岡市中央区","address":"福岡県福岡市中央区渡辺通(番地要確認)","access":"天神南駅 徒歩1分","website":"","x":"","instagram":"","line":"","tel":"070-9075-2740","holds_tournaments":false,"sources":["https://retty.me/area/PRE40/ARE122/SUB12201/100001691212/"],"note":"ポーカーも遊べるバー寄り業態。16:00開店。番地・トーナメント開催有無要確認。"},
-    {"name":"アミューズメント・ゲームバー SAVE 天神店","area":"天神","city":"福岡市中央区","address":"福岡県福岡市中央区天神3-6-16 オフィスニューガイアクレール8F","access":"天神駅 徒歩5分","website":"https://fbfg900.gorp.jp/","x":"","instagram":"","line":"","tel":"050-5487-0779","holds_tournaments":false,"sources":["https://jp-pokernews.com/pokerhouse/327","https://fbfg900.gorp.jp/"],"note":"400種以上のゲーム機・ダーツ等の総合ゲームバー。ポーカーは遊べるが専門トーナメント会場ではない。"},
-    {"name":"CASINO Bar ACES 久留米","area":"久留米","city":"久留米市","address":"福岡県久留米市日吉町12-63","access":"JR久留米駅・西鉄久留米駅の中間繁華街","website":"","x":"https://x.com/casino_aces_","instagram":"https://www.instagram.com/aces_a_group/","line":"","tel":"","holds_tournaments":false,"sources":["https://poker-choice.com/amusement-casino/pokerroom-fukuoka/","https://x.com/casino_aces_"],"note":"久留米の隠れ家的アミューズメントカジノ。トーナメント開催有無要確認。"},
-    {"name":"アミューズメントPokerBar NUWLAND","area":"北九州","city":"北九州市小倉北区","address":"福岡県北九州市小倉北区京町2-4-27 ロックビル3F","access":"小倉駅 徒歩2分","website":"https://nuwland.com/","x":"","instagram":"","line":"","tel":"","holds_tournaments":true,"sources":["https://nuwland.com/","https://pokerdiary.net/pokerbar-nuwland/"],"note":"NLH中心のトーナメント・リングを毎日開催。大型大会サテライトも。初心者講習あり。"},
-    {"name":"アミューズメントバー TripleBarrel 小倉店","area":"北九州","city":"北九州市小倉北区","address":"福岡県北九州市小倉北区鍛治町1-7-4 鍛治町会館3F","access":"JR小倉駅 徒歩約4分","website":"https://triplebarrel.jimdofree.com/","x":"https://x.com/triplebarrel2","instagram":"https://www.instagram.com/triplebarrel_kokura/","line":"","tel":"080-9109-4036","holds_tournaments":true,"sources":["https://triplebarrel.jimdofree.com/","https://amuse-casino.com/triplebarrel/shop/"],"note":"ポーカー・ダーツ等。『オルカ』主催トーナメントを毎日開催。移転歴あり住所は最新を記載。"},
-    {"name":"新感覚アミューズメントバー KAJI BAR","area":"北九州","city":"北九州市小倉北区","address":"福岡県北九州市小倉北区鍛治町1-5-11 第18エルザビル4F","access":"モノレール平和通駅 徒歩約3分","website":"https://kajibarkokura.owst.jp/","x":"","instagram":"","line":"","tel":"093-521-9876","holds_tournaments":true,"sources":["https://kajibarkokura.owst.jp/","https://poker-choice.com/fukuoka/kaji-bar/"],"note":"ポーカー他多数。サテライトトーナメントを開催(公式IGで告知)。19:00〜翌3:00。"},
-    {"name":"てきさすほーるでむ。","area":"北九州","city":"北九州市小倉南区","address":"福岡県北九州市小倉南区北方2-24-1","access":"小倉競馬場前 徒歩1分","website":"https://texaspoker.pro/","x":"https://x.com/texasholdem3000","instagram":"https://www.instagram.com/texasholdem3000/","line":"","tel":"080-6340-3000","holds_tournaments":true,"sources":["https://texaspoker.pro/","https://x.com/texasholdem3000"],"note":"リングとトーナメント両方開催。初心者歓迎でルール説明あり。"},
-    {"name":"テキサスホールデムAA","area":"北九州","city":"北九州市小倉北区","address":"福岡県北九州市小倉北区片野新町1-10-23 3F","access":"","website":"https://texasaa.net/","x":"https://x.com/texasaanet","instagram":"","line":"","tel":"","holds_tournaments":true,"sources":["https://texasaa.net/","https://x.com/texasaanet"],"note":"1部13:15〜(ミニトーナメント/練習リング)、2部17:30〜(各種トーナメント)。入場料2,000円。"},
-    {"name":"Poker Bar IRIS","area":"北九州","city":"北九州市八幡西区","address":"福岡県北九州市八幡西区黒崎2-6-3 2F","access":"JR黒崎駅周辺","website":"","x":"https://x.com/pokerbar_iris","instagram":"","line":"","tel":"","holds_tournaments":true,"sources":["https://poker.dmm.com/details/4041424","https://x.com/pokerbar_iris"],"note":"黒崎のポーカーバー。FUKUOKA SUPER TOURNAMENT(FST)会場を務める等トーナメント開催実績あり。"},
-    {"name":"CASINO Arrows 小倉店","area":"北九州","city":"北九州市小倉北区","address":"福岡県北九州市小倉北区堺町1-9-20 ナカノビル3F","access":"モノレール平和通駅 徒歩5分","website":"","x":"https://x.com/CASINO_Arrows","instagram":"https://www.instagram.com/casino_arrows2025/","line":"","tel":"","holds_tournaments":false,"sources":["https://x.com/CASINO_Arrows","https://casino-yaritai.com/casino-bar/casino_Arrows"],"note":"2025/8/1オープン。ポーカー2卓他。現金賭博なし・初心者歓迎。トーナメント開催要確認。"},
-    {"name":"アミューズメントポーカー KING&QUEEN SUITED 直方店","area":"筑豊","city":"直方市","address":"","access":"","website":"","x":"https://x.com/king_queen1312","instagram":"https://www.instagram.com/king2485queen/","line":"","tel":"080-7987-1213","holds_tournaments":true,"sources":["https://my.beyond-ss.com/pokerroom-hukuoka/","https://michisasa.com/kingqueen/"],"note":"福岡市外では貴重なスポット。ハウス+大型大会サテライトを開催。黒崎(八幡西区)に系列店。住所未確認。"},
-    {"name":"KENポーカー（久留米）","area":"久留米","city":"久留米市","address":"福岡県久留米市東町34-71","access":"西鉄久留米駅 徒歩5分","website":"","x":"","instagram":"https://www.instagram.com/kurume_ken_poker/","line":"https://line.me/ti/g2/JROMKCR0N5","tel":"080-3904-2698","holds_tournaments":true,"sources":["https://www.instagram.com/kurume_ken_poker/","ポーカー店ディレクトリ(WebSearch要約)","ユーザー提供のLINEオープンチャットQRコード(2026-07-13)"],"note":"ユーザー提供の7月予定表で開催確認。営業18:00-24:00・初心者講習あり。JOPT/WJPT・MASAKICHI SUPER LEAGUE系。卓状況はLINEオープンチャット(公式アカウントではなくコミュニティ)で更新。住所/電話はディレクトリ情報のため要確認。Xアカウントは未発見(SNSはInstagram中心)。"},
-    {"name":"CRownCLown（クラウンクラウン）","area":"中洲","city":"福岡市博多区","address":"福岡県福岡市博多区中洲3-7-15 TM30 BUILDING 2F","access":"中洲川端駅 徒歩1分","website":"","x":"https://x.com/rownlown","instagram":"","line":"","tel":"","holds_tournaments":true,"sources":["https://x.com/rownlown","https://light-three.com/hakata-poker/","https://u-ful.com/58055"],"note":"中洲川端駅徒歩1分。RFIDテーブル導入で本格志向だが初心者歓迎を明言。ハイローラー等各種イベント/トーナメントを定期開催。25時以降は2卓体制。住所はlight-three/u-fulの2ソースで中洲3-7-15が一致(PayPayグルメでは西中洲1-4表記もあり要現地確認)。"},
-    {"name":"ALICE the Poker room（アリス）","area":"天神","city":"福岡市中央区","address":"福岡県福岡市中央区渡辺通5-2-10 2F","access":"天神南駅 徒歩2分","website":"https://alice2174.com/73162/","x":"https://x.com/ALICE_POKERROOM","instagram":"","line":"","tel":"","holds_tournaments":true,"sources":["https://alice2174.com/73162/","https://x.com/ALICE_POKERROOM","https://oncasimonster.jp/information/amusement-casino/aris-the-poker-room/"],"note":"ポーカー専門のアミューズメントスポット。入場1,000円(飲み放題込)、トーナメント参加費1,000円〜。住所はWeb検索要約のため要確認。"},
-    {"name":"ROOTS FUKUOKA","area":"大名","city":"福岡市中央区","address":"福岡県福岡市中央区大名一丁目12-46 エムズクロス福岡大名6F","access":"地下鉄天神駅 徒歩7分","website":"https://roots-poker.com/","x":"","instagram":"","line":"","tel":"","holds_tournaments":false,"sources":["https://prtimes.jp/main/html/rd/p/000000029.000080190.html","https://fanfun.jp/312990/","https://roots-poker.com/whats-new/roots-fukuoka-beginning"],"note":"★2026年秋オープン予定・本稿執筆時点(2026-07-13)ではまだ未開店。運営は㈱POKER ROOM、「日本最大級のポーカールーム」を掲げ九州初出店(福岡・天神/大名エリア)。開店後は複数店舗を巻き込む大型/本線トーナメントの会場になる可能性が高く継続フォロー対象。"},
-    {"name":"72 -SevenTwo-","area":"天神","city":"福岡市中央区","address":"福岡県福岡市中央区天神3-3-5-1 フルフルビル3F","access":"天神駅 徒歩2分","website":"https://g72.jp/","x":"https://x.com/72SevenTwo3351","instagram":"","line":"","tel":"","holds_tournaments":true,"sources":["https://x.com/72SevenTwo3351","https://g72.jp/","https://light-three.com/hakata-poker/"],"note":"白基調の明るい内装。プレー実績に応じ国内外トーナメント出場権を得るRPG的な昇格制度あり。「72王者決定戦予選」等の自主トーナメントやFSTサテライトを開催。ユーザーの言う『セブンデュース』はおそらくこの店(72=セブンデュース＝ポーカー最弱ハンドの俗称)。"},
-    {"name":"JOKER♠️ポーカーハウス 福岡大橋","area":"大橋","city":"福岡市南区","address":"","access":"大橋駅周辺","website":"","x":"","instagram":"https://www.instagram.com/joker_pokerhouse/","line":"","tel":"","holds_tournaments":false,"sources":["https://www.instagram.com/joker_pokerhouse/","https://light-three.com/hakata-poker/"],"note":"2025/11/15開店の新しいポーカールーム。大橋駅周辺では貴重。100BB購入で初心者講習無料、学生/女性チップ半額等の割引あり。トーナメント開催の明確な記載は未確認。住所要確認。"},
-    {"name":"THE DOJO","area":"大橋","city":"福岡市南区","address":"福岡県福岡市南区大橋4-2-3 ライフビル2F","access":"大橋駅周辺","website":"","x":"","instagram":"","line":"","tel":"","holds_tournaments":false,"sources":["https://poker.dmm.com/stores/4069478","https://light-three.com/hakata-poker/"],"note":"2025/12/13開店。「SUPER DOJO RING DAY」等リングイベントの開催を確認。トーナメント開催の明確な記載は未確認。"},
-    {"name":"CasinoX（カジノックス）福岡今泉店","area":"今泉","city":"福岡市中央区","address":"福岡県福岡市中央区今泉1-10-15","access":"天神駅 徒歩4分","website":"","x":"https://x.com/cajinoX","instagram":"https://www.instagram.com/cajinox/","line":"","tel":"","holds_tournaments":false,"sources":["https://www.instagram.com/cajinox/","https://light-three.com/hakata-poker/","https://poker.dmm.com/details/4021718"],"note":"姉弟で運営する小規模アットホーム店。女性・初心者向け。貸切イベント対応可。リング中心でトーナメント定期開催の明確な記載は未確認。"},
-    {"name":"梵 bon 西中洲","area":"西中洲","city":"福岡市中央区","address":"福岡県福岡市中央区西中洲1-21 6F","access":"天神南駅周辺","website":"","x":"https://x.com/bon_nishinakasu","instagram":"https://www.instagram.com/bon_nishinakasu/","line":"","tel":"","holds_tournaments":false,"sources":["https://nexus-poker.jp/poker_spot/bon/","https://x.com/bon_nishinakasu","https://poker.dmm.com/details/4013587"],"note":"ポーカー・シーシャ・フードを一つの空間で楽しめる複合ラウンジ。20:00-04:00・月曜定休。Nexus Pokerのスポット一覧に掲載されポーカー営業は活発だが、定期トーナメント開催の明確な記載は未確認。"},
-    {"name":"ARIA 中洲（会員制ポーカーバー）","area":"中洲","city":"福岡市博多区","address":"福岡県福岡市博多区中洲2-1-18","access":"中洲川端駅周辺","website":"https://aria-fukuoka.com/","x":"https://twitter.com/AriaPoker8","instagram":"","line":"","tel":"","holds_tournaments":true,"sources":["https://oncasimonster.jp/information/amusement-casino/aria-poker-bar/","https://light-three.com/hakata-poker/"],"note":"会員制の本格リングゲーム+フリーロールトーナメント開催店。同名の(無関係な)会員制クラブ/ガールズバーが中洲に複数あるため取材時は要注意。"},
-    {"name":"GuildBAR（ギルドバー）","area":"中洲","city":"福岡市博多区","address":"福岡県福岡市博多区中洲5-5-9 サンゴールデンビル7F","access":"中洲川端駅 徒歩3分","website":"https://guild-bar.com/","x":"https://x.com/guild_bar","instagram":"","line":"","tel":"092-710-6300","holds_tournaments":false,"sources":["https://guild-bar.com/","https://u-ful.com/58055"],"note":"ボードゲーム&ポーカーの複合バー。入場1,800円(ドリンク or チップ付)。トーナメント開催頻度は未確認。"},
-    {"name":"BAR BETTY（バーベティ）","area":"中洲","city":"福岡市博多区","address":"福岡県福岡市博多区中洲2-6-20 2F","access":"中洲川端駅 徒歩5分","website":"","x":"","instagram":"https://www.instagram.com/casinobar_betty/","line":"","tel":"092-272-3077","holds_tournaments":false,"sources":["https://www.instagram.com/casinobar_betty/","https://u-ful.com/58055"],"note":"バニーガール衣装のディーラーが接客するカジノバー。ポーカー/バカラ/ブラックジャック/ルーレット/大小。定期トーナメント開催の明確な記載は未確認。"},
-    {"name":"Poker room SKY（美野島）","area":"博多","city":"福岡市博多区","address":"福岡県福岡市博多区美野島2-2-2 2F","access":"","website":"","x":"https://x.com/sky_minoshima","instagram":"https://www.instagram.com/sky_minoshima/","line":"","tel":"","holds_tournaments":false,"sources":["https://x.com/sky_minoshima","https://light-three.com/hakata-poker/"],"note":"NLH〜Mixまで対応。Webコイン制(残チップを次回持ち越し可)。求人募集も活発で営業実態は活発だが、定期トーナメント開催の明確な記載は未確認。"},
-    {"name":"アミューズメントポーカー KING&QUEEN SUITED 黒崎店","area":"北九州","city":"北九州市八幡西区","address":"福岡県北九州市八幡西区黒崎2-6-17 ケイズプレイス黒崎Ⅱ2F","access":"JR黒崎駅 徒歩5分","website":"","x":"","instagram":"","line":"","tel":"","holds_tournaments":true,"sources":["https://www.ksplace.jp/blog/entry-505749/","https://my.beyond-ss.com/pokerroom-hukuoka/"],"note":"直方店の系列店(黒崎)。4卓を有しXPT等のサテライトトーナメントを頻繁に開催。平日19:00-24:30・土日祝17:00-24:30、水曜定休。初心者講習無料。"},
-    {"name":"アミューズメントポーカー A&K（Ace and King）","area":"久留米","city":"久留米市","address":"〒830-0032 福岡県久留米市東町38-19 富田屋ビル3F","access":"西鉄久留米駅 徒歩1分","website":"","x":"https://x.com/AandK_poker","instagram":"https://www.instagram.com/ace_and_king259/","line":"","tel":"080-3967-8543","holds_tournaments":true,"sources":["ユーザー提供のGoogle検索スクリーンショット(2026-07-13)","https://x.com/AandK_poker","https://www.instagram.com/ace_and_king259/"],"note":"2026年7月Grand Open(新規開店)の久留米エリア新店。西鉄久留米駅を降りて徒歩1分。初心者講習毎日開催。FREEROLLイベント実績あり。営業時間: 月-金17:30-24:00、土日13:30-24:00。KENポーカー(久留米/v21)と同エリアの別店舗。Google店舗情報(クチコミ5.0・1件)で確認。"}
+    {
+      "name": "KKPOKER FUKUOKA",
+      "area": "天神",
+      "city": "福岡市中央区",
+      "address": "福岡県福岡市中央区春吉3-21-19 ARBRE天神4F",
+      "access": "天神南駅 徒歩3分",
+      "website": "",
+      "x": "https://x.com/kkpoker_fukuoka",
+      "instagram": "https://www.instagram.com/kkpoker_fukuoka/",
+      "line": "",
+      "tel": "",
+      "holds_tournaments": true,
+      "sources": [
+        "https://kklive.jp/news/room/4888/",
+        "https://x.com/kkpoker_fukuoka"
+      ],
+      "note": "KKPOKER系。6卓RFIDテーブルで博多エリア最大級。1,000円〜の初心者向けトーナメントを毎日開催。"
+    },
+    {
+      "name": "m HOLD'EM 中洲",
+      "area": "中洲",
+      "city": "福岡市博多区",
+      "address": "福岡県福岡市博多区中洲3-7-24 ゲイツビル3F",
+      "access": "中洲川端駅4番出口直結",
+      "website": "https://mpj-portal.jp/official/nakasu/",
+      "x": "https://x.com/m_holdem_nakasu",
+      "instagram": "",
+      "line": "",
+      "tel": "",
+      "holds_tournaments": true,
+      "sources": [
+        "https://mpj-portal.jp/official/nakasu/",
+        "https://prtimes.jp/main/html/rd/p/000000045.000096065.html"
+      ],
+      "note": "サミー系ポーカーハウス&バーの九州初出店(2025/6/6)。毎日各種トーナメント開催。"
+    },
+    {
+      "name": "ONECASINO 福岡中洲",
+      "area": "中洲",
+      "city": "福岡市博多区",
+      "address": "福岡県福岡市博多区中洲4-7-7 中洲リッチビル2F",
+      "access": "中洲川端駅 徒歩2分",
+      "website": "https://one-casino.jp/",
+      "x": "https://x.com/onecasino477",
+      "instagram": "https://www.instagram.com/onecasino_fuk/",
+      "line": "",
+      "tel": "092-292-9917",
+      "holds_tournaments": true,
+      "sources": [
+        "https://one-casino.jp/",
+        "https://x.com/onecasino477"
+      ],
+      "note": "アミューズメントカジノバー。18:00〜翌5:00。毎週木曜に無料フリーロールトーナメント。"
+    },
+    {
+      "name": "Casino bar Leje 博多店",
+      "area": "中洲",
+      "city": "福岡市博多区",
+      "address": "福岡県福岡市博多区中洲3-7-10 若松ビル4F",
+      "access": "中洲川端駅 徒歩2分",
+      "website": "https://www.lejehakata.com/",
+      "x": "",
+      "instagram": "",
+      "line": "",
+      "tel": "092-291-9200",
+      "holds_tournaments": true,
+      "sources": [
+        "https://www.lejehakata.com/",
+        "https://www.hotpepper.jp/strJ003736010/"
+      ],
+      "note": "テキサスホールデム他。メガディープ等の定期トーナメント。入場1,000円飲み放題付き。"
+    },
+    {
+      "name": "グランドミラージュポーカー",
+      "area": "天神",
+      "city": "福岡市中央区",
+      "address": "福岡県福岡市中央区今泉1-17-16",
+      "access": "西鉄福岡（天神）駅 徒歩4分",
+      "website": "",
+      "x": "https://x.com/poker_mirage",
+      "instagram": "",
+      "line": "",
+      "tel": "",
+      "holds_tournaments": true,
+      "sources": [
+        "https://poker-choice.com/fukuoka/mirage-poker/",
+        "https://x.com/poker_mirage"
+      ],
+      "note": "テキサスホールデム専門。トーナメント定期開催。空席状況をXで随時発信。一般3,000円/女性・初回2,000円。"
+    },
+    {
+      "name": "ポーカーハウスFUXK 福岡天神店",
+      "area": "天神",
+      "city": "福岡市中央区",
+      "address": "福岡県福岡市中央区春吉3-21-18 2F",
+      "access": "天神南駅 徒歩5分",
+      "website": "",
+      "x": "https://x.com/poker_fuxk",
+      "instagram": "https://www.instagram.com/poker_fuxk/",
+      "line": "",
+      "tel": "",
+      "holds_tournaments": true,
+      "sources": [
+        "https://www.uwu-onug.com/poker-fuxk",
+        "https://x.com/poker_fuxk"
+      ],
+      "note": "リング毎日開催。バウンティ/ディープ/ガールズ/ポイントレース等のトーナメント。無料初心者講習あり。"
+    },
+    {
+      "name": "RAISE BLUE 天神ポーカーハウス",
+      "area": "天神",
+      "city": "福岡市中央区",
+      "address": "",
+      "access": "天神駅 徒歩約10分",
+      "website": "",
+      "x": "https://x.com/RAISEBLUE_poker",
+      "instagram": "https://www.instagram.com/raise_blue/",
+      "line": "",
+      "tel": "",
+      "holds_tournaments": true,
+      "sources": [
+        "https://x.com/RAISEBLUE_poker",
+        "https://www.instagram.com/raise_blue/"
+      ],
+      "note": "トーナメントを毎日開催(BLUERUSH等)。住所未確認。2025/11に重要告知あり営業状況要確認。"
+    },
+    {
+      "name": "CASINO BLOW 西中洲",
+      "area": "中洲",
+      "city": "福岡市中央区",
+      "address": "福岡県福岡市中央区西中洲1-21 GIOビル2F",
+      "access": "中洲川端駅 徒歩5分",
+      "website": "https://blow-casino.com/shop/detail.html?id=251",
+      "x": "",
+      "instagram": "https://www.instagram.com/casino_nishinakasu/",
+      "line": "",
+      "tel": "092-733-8899",
+      "holds_tournaments": false,
+      "sources": [
+        "https://blow-casino.com/shop/detail.html?id=251"
+      ],
+      "note": "BLOW系カジノバー。18:00〜翌1:00。定期トーナメント開催は要確認。"
+    },
+    {
+      "name": "アミューズメントPokerBar NUWLAND",
+      "area": "北九州",
+      "city": "北九州市小倉北区",
+      "address": "福岡県北九州市小倉北区京町2-4-27 ロックビル3F",
+      "access": "小倉駅 徒歩2分",
+      "website": "https://nuwland.com/",
+      "x": "",
+      "instagram": "",
+      "line": "",
+      "tel": "",
+      "holds_tournaments": true,
+      "sources": [
+        "https://nuwland.com/",
+        "https://pokerdiary.net/pokerbar-nuwland/"
+      ],
+      "note": "NLH中心のトーナメント・リングを毎日開催。大型大会サテライトも。初心者講習あり。"
+    },
+    {
+      "name": "アミューズメントバー TripleBarrel 小倉店",
+      "area": "北九州",
+      "city": "北九州市小倉北区",
+      "address": "福岡県北九州市小倉北区鍛治町1-7-4 鍛治町会館3F",
+      "access": "JR小倉駅 徒歩約4分",
+      "website": "https://triplebarrel.jimdofree.com/",
+      "x": "https://x.com/triplebarrel2",
+      "instagram": "https://www.instagram.com/triplebarrel_kokura/",
+      "line": "",
+      "tel": "080-9109-4036",
+      "holds_tournaments": true,
+      "sources": [
+        "https://triplebarrel.jimdofree.com/",
+        "https://amuse-casino.com/triplebarrel/shop/"
+      ],
+      "note": "ポーカー・ダーツ等。『オルカ』主催トーナメントを毎日開催。移転歴あり住所は最新を記載。"
+    },
+    {
+      "name": "てきさすほーるでむ。",
+      "area": "北九州",
+      "city": "北九州市小倉南区",
+      "address": "福岡県北九州市小倉南区北方2-24-1",
+      "access": "小倉競馬場前 徒歩1分",
+      "website": "https://texaspoker.pro/",
+      "x": "https://x.com/texasholdem3000",
+      "instagram": "https://www.instagram.com/texasholdem3000/",
+      "line": "",
+      "tel": "080-6340-3000",
+      "holds_tournaments": true,
+      "sources": [
+        "https://texaspoker.pro/",
+        "https://x.com/texasholdem3000"
+      ],
+      "note": "リングとトーナメント両方開催。初心者歓迎でルール説明あり。"
+    },
+    {
+      "name": "テキサスホールデムAA",
+      "area": "北九州",
+      "city": "北九州市小倉北区",
+      "address": "福岡県北九州市小倉北区片野新町1-10-23 3F",
+      "access": "",
+      "website": "https://texasaa.net/",
+      "x": "https://x.com/texasaanet",
+      "instagram": "",
+      "line": "",
+      "tel": "",
+      "holds_tournaments": true,
+      "sources": [
+        "https://texasaa.net/",
+        "https://x.com/texasaanet"
+      ],
+      "note": "1部13:15〜(ミニトーナメント/練習リング)、2部17:30〜(各種トーナメント)。入場料2,000円。"
+    },
+    {
+      "name": "Poker Bar IRIS",
+      "area": "北九州",
+      "city": "北九州市八幡西区",
+      "address": "福岡県北九州市八幡西区黒崎2-6-3 2F",
+      "access": "JR黒崎駅周辺",
+      "website": "",
+      "x": "https://x.com/pokerbar_iris",
+      "instagram": "",
+      "line": "",
+      "tel": "",
+      "holds_tournaments": true,
+      "sources": [
+        "https://poker.dmm.com/details/4041424",
+        "https://x.com/pokerbar_iris"
+      ],
+      "note": "黒崎のポーカーバー。FUKUOKA SUPER TOURNAMENT(FST)会場を務める等トーナメント開催実績あり。"
+    },
+    {
+      "name": "CASINO Arrows 小倉店",
+      "area": "北九州",
+      "city": "北九州市小倉北区",
+      "address": "福岡県北九州市小倉北区堺町1-9-20 ナカノビル3F",
+      "access": "モノレール平和通駅 徒歩5分",
+      "website": "",
+      "x": "https://x.com/CASINO_Arrows",
+      "instagram": "https://www.instagram.com/casino_arrows2025/",
+      "line": "",
+      "tel": "",
+      "holds_tournaments": false,
+      "sources": [
+        "https://x.com/CASINO_Arrows",
+        "https://casino-yaritai.com/casino-bar/casino_Arrows"
+      ],
+      "note": "2025/8/1オープン。ポーカー2卓他。現金賭博なし・初心者歓迎。トーナメント開催要確認。"
+    },
+    {
+      "name": "アミューズメントポーカー KING&QUEEN SUITED 直方店",
+      "area": "筑豊",
+      "city": "直方市",
+      "address": "",
+      "access": "",
+      "website": "",
+      "x": "https://x.com/king_queen1312",
+      "instagram": "https://www.instagram.com/king2485queen/",
+      "line": "",
+      "tel": "080-7987-1213",
+      "holds_tournaments": true,
+      "sources": [
+        "https://my.beyond-ss.com/pokerroom-hukuoka/",
+        "https://michisasa.com/kingqueen/"
+      ],
+      "note": "福岡市外では貴重なスポット。ハウス+大型大会サテライトを開催。黒崎(八幡西区)に系列店。住所未確認。"
+    },
+    {
+      "name": "KENポーカー（久留米）",
+      "area": "久留米",
+      "city": "久留米市",
+      "address": "福岡県久留米市東町34-71",
+      "access": "西鉄久留米駅 徒歩5分",
+      "website": "",
+      "x": "",
+      "instagram": "https://www.instagram.com/kurume_ken_poker/",
+      "line": "https://line.me/ti/g2/JROMKCR0N5",
+      "tel": "080-3904-2698",
+      "holds_tournaments": true,
+      "sources": [
+        "https://www.instagram.com/kurume_ken_poker/",
+        "ポーカー店ディレクトリ(WebSearch要約)",
+        "ユーザー提供のLINEオープンチャットQRコード(2026-07-13)"
+      ],
+      "note": "ユーザー提供の7月予定表で開催確認。営業18:00-24:00・初心者講習あり。JOPT/WJPT・MASAKICHI SUPER LEAGUE系。卓状況はLINEオープンチャット(公式アカウントではなくコミュニティ)で更新。住所/電話はディレクトリ情報のため要確認。Xアカウントは未発見(SNSはInstagram中心)。"
+    },
+    {
+      "name": "CRownCLown（クラウンクラウン）",
+      "area": "中洲",
+      "city": "福岡市博多区",
+      "address": "福岡県福岡市博多区中洲3-7-15 TM30 BUILDING 2F",
+      "access": "中洲川端駅 徒歩1分",
+      "website": "",
+      "x": "https://x.com/rownlown",
+      "instagram": "",
+      "line": "",
+      "tel": "",
+      "holds_tournaments": true,
+      "sources": [
+        "https://x.com/rownlown",
+        "https://light-three.com/hakata-poker/",
+        "https://u-ful.com/58055"
+      ],
+      "note": "中洲川端駅徒歩1分。RFIDテーブル導入で本格志向だが初心者歓迎を明言。ハイローラー等各種イベント/トーナメントを定期開催。25時以降は2卓体制。住所はlight-three/u-fulの2ソースで中洲3-7-15が一致(PayPayグルメでは西中洲1-4表記もあり要現地確認)。"
+    },
+    {
+      "name": "ALICE the Poker room（アリス）",
+      "area": "天神",
+      "city": "福岡市中央区",
+      "address": "福岡県福岡市中央区渡辺通5-2-10 2F",
+      "access": "天神南駅 徒歩2分",
+      "website": "https://alice2174.com/73162/",
+      "x": "https://x.com/ALICE_POKERROOM",
+      "instagram": "",
+      "line": "",
+      "tel": "",
+      "holds_tournaments": true,
+      "sources": [
+        "https://alice2174.com/73162/",
+        "https://x.com/ALICE_POKERROOM",
+        "https://oncasimonster.jp/information/amusement-casino/aris-the-poker-room/"
+      ],
+      "note": "ポーカー専門のアミューズメントスポット。入場1,000円(飲み放題込)、トーナメント参加費1,000円〜。住所はWeb検索要約のため要確認。"
+    },
+    {
+      "name": "ROOTS FUKUOKA",
+      "area": "大名",
+      "city": "福岡市中央区",
+      "address": "福岡県福岡市中央区大名一丁目12-46 エムズクロス福岡大名6F",
+      "access": "地下鉄天神駅 徒歩7分",
+      "website": "https://roots-poker.com/",
+      "x": "",
+      "instagram": "",
+      "line": "",
+      "tel": "",
+      "holds_tournaments": false,
+      "sources": [
+        "https://prtimes.jp/main/html/rd/p/000000029.000080190.html",
+        "https://fanfun.jp/312990/",
+        "https://roots-poker.com/whats-new/roots-fukuoka-beginning"
+      ],
+      "note": "★2026年秋オープン予定・本稿執筆時点(2026-07-13)ではまだ未開店。運営は㈱POKER ROOM、「日本最大級のポーカールーム」を掲げ九州初出店(福岡・天神/大名エリア)。開店後は複数店舗を巻き込む大型/本線トーナメントの会場になる可能性が高く継続フォロー対象。"
+    },
+    {
+      "name": "72 -SevenTwo-",
+      "area": "天神",
+      "city": "福岡市中央区",
+      "address": "福岡県福岡市中央区天神3-3-5-1 フルフルビル3F",
+      "access": "天神駅 徒歩2分",
+      "website": "https://g72.jp/",
+      "x": "https://x.com/72SevenTwo3351",
+      "instagram": "",
+      "line": "",
+      "tel": "",
+      "holds_tournaments": true,
+      "sources": [
+        "https://x.com/72SevenTwo3351",
+        "https://g72.jp/",
+        "https://light-three.com/hakata-poker/"
+      ],
+      "note": "白基調の明るい内装。プレー実績に応じ国内外トーナメント出場権を得るRPG的な昇格制度あり。「72王者決定戦予選」等の自主トーナメントやFSTサテライトを開催。ユーザーの言う『セブンデュース』はおそらくこの店(72=セブンデュース＝ポーカー最弱ハンドの俗称)。"
+    },
+    {
+      "name": "JOKER♠️ポーカーハウス 福岡大橋",
+      "area": "大橋",
+      "city": "福岡市南区",
+      "address": "",
+      "access": "大橋駅周辺",
+      "website": "",
+      "x": "",
+      "instagram": "https://www.instagram.com/joker_pokerhouse/",
+      "line": "",
+      "tel": "",
+      "holds_tournaments": false,
+      "sources": [
+        "https://www.instagram.com/joker_pokerhouse/",
+        "https://light-three.com/hakata-poker/"
+      ],
+      "note": "2025/11/15開店の新しいポーカールーム。大橋駅周辺では貴重。100BB購入で初心者講習無料、学生/女性チップ半額等の割引あり。トーナメント開催の明確な記載は未確認。住所要確認。"
+    },
+    {
+      "name": "THE DOJO",
+      "area": "大橋",
+      "city": "福岡市南区",
+      "address": "福岡県福岡市南区大橋4-2-3 ライフビル2F",
+      "access": "大橋駅周辺",
+      "website": "",
+      "x": "",
+      "instagram": "",
+      "line": "",
+      "tel": "",
+      "holds_tournaments": false,
+      "sources": [
+        "https://poker.dmm.com/stores/4069478",
+        "https://light-three.com/hakata-poker/"
+      ],
+      "note": "2025/12/13開店。「SUPER DOJO RING DAY」等リングイベントの開催を確認。トーナメント開催の明確な記載は未確認。"
+    },
+    {
+      "name": "CasinoX（カジノックス）福岡今泉店",
+      "area": "今泉",
+      "city": "福岡市中央区",
+      "address": "福岡県福岡市中央区今泉1-10-15",
+      "access": "天神駅 徒歩4分",
+      "website": "",
+      "x": "https://x.com/cajinoX",
+      "instagram": "https://www.instagram.com/cajinox/",
+      "line": "",
+      "tel": "",
+      "holds_tournaments": false,
+      "sources": [
+        "https://www.instagram.com/cajinox/",
+        "https://light-three.com/hakata-poker/",
+        "https://poker.dmm.com/details/4021718"
+      ],
+      "note": "姉弟で運営する小規模アットホーム店。女性・初心者向け。貸切イベント対応可。リング中心でトーナメント定期開催の明確な記載は未確認。"
+    },
+    {
+      "name": "梵 bon 西中洲",
+      "area": "西中洲",
+      "city": "福岡市中央区",
+      "address": "福岡県福岡市中央区西中洲1-21 6F",
+      "access": "天神南駅周辺",
+      "website": "",
+      "x": "https://x.com/bon_nishinakasu",
+      "instagram": "https://www.instagram.com/bon_nishinakasu/",
+      "line": "",
+      "tel": "",
+      "holds_tournaments": false,
+      "sources": [
+        "https://nexus-poker.jp/poker_spot/bon/",
+        "https://x.com/bon_nishinakasu",
+        "https://poker.dmm.com/details/4013587"
+      ],
+      "note": "ポーカー・シーシャ・フードを一つの空間で楽しめる複合ラウンジ。20:00-04:00・月曜定休。Nexus Pokerのスポット一覧に掲載されポーカー営業は活発だが、定期トーナメント開催の明確な記載は未確認。"
+    },
+    {
+      "name": "ARIA 中洲（会員制ポーカーバー）",
+      "area": "中洲",
+      "city": "福岡市博多区",
+      "address": "福岡県福岡市博多区中洲2-1-18",
+      "access": "中洲川端駅周辺",
+      "website": "https://aria-fukuoka.com/",
+      "x": "https://twitter.com/AriaPoker8",
+      "instagram": "",
+      "line": "",
+      "tel": "",
+      "holds_tournaments": true,
+      "sources": [
+        "https://oncasimonster.jp/information/amusement-casino/aria-poker-bar/",
+        "https://light-three.com/hakata-poker/"
+      ],
+      "note": "会員制の本格リングゲーム+フリーロールトーナメント開催店。同名の(無関係な)会員制クラブ/ガールズバーが中洲に複数あるため取材時は要注意。"
+    },
+    {
+      "name": "BAR BETTY（バーベティ）",
+      "area": "中洲",
+      "city": "福岡市博多区",
+      "address": "福岡県福岡市博多区中洲2-6-20 2F",
+      "access": "中洲川端駅 徒歩5分",
+      "website": "",
+      "x": "",
+      "instagram": "https://www.instagram.com/casinobar_betty/",
+      "line": "",
+      "tel": "092-272-3077",
+      "holds_tournaments": false,
+      "sources": [
+        "https://www.instagram.com/casinobar_betty/",
+        "https://u-ful.com/58055"
+      ],
+      "note": "バニーガール衣装のディーラーが接客するカジノバー。ポーカー/バカラ/ブラックジャック/ルーレット/大小。定期トーナメント開催の明確な記載は未確認。"
+    },
+    {
+      "name": "Poker room SKY（美野島）",
+      "area": "博多",
+      "city": "福岡市博多区",
+      "address": "福岡県福岡市博多区美野島2-2-2 2F",
+      "access": "",
+      "website": "",
+      "x": "https://x.com/sky_minoshima",
+      "instagram": "https://www.instagram.com/sky_minoshima/",
+      "line": "",
+      "tel": "",
+      "holds_tournaments": false,
+      "sources": [
+        "https://x.com/sky_minoshima",
+        "https://light-three.com/hakata-poker/"
+      ],
+      "note": "NLH〜Mixまで対応。Webコイン制(残チップを次回持ち越し可)。求人募集も活発で営業実態は活発だが、定期トーナメント開催の明確な記載は未確認。"
+    },
+    {
+      "name": "アミューズメントポーカー KING&QUEEN SUITED 黒崎店",
+      "area": "北九州",
+      "city": "北九州市八幡西区",
+      "address": "福岡県北九州市八幡西区黒崎2-6-17 ケイズプレイス黒崎Ⅱ2F",
+      "access": "JR黒崎駅 徒歩5分",
+      "website": "",
+      "x": "",
+      "instagram": "",
+      "line": "",
+      "tel": "",
+      "holds_tournaments": true,
+      "sources": [
+        "https://www.ksplace.jp/blog/entry-505749/",
+        "https://my.beyond-ss.com/pokerroom-hukuoka/"
+      ],
+      "note": "直方店の系列店(黒崎)。4卓を有しXPT等のサテライトトーナメントを頻繁に開催。平日19:00-24:30・土日祝17:00-24:30、水曜定休。初心者講習無料。"
+    },
+    {
+      "name": "アミューズメントポーカー A&K（Ace and King）",
+      "area": "久留米",
+      "city": "久留米市",
+      "address": "〒830-0032 福岡県久留米市東町38-19 富田屋ビル3F",
+      "access": "西鉄久留米駅 徒歩1分",
+      "website": "",
+      "x": "https://x.com/AandK_poker",
+      "instagram": "https://www.instagram.com/ace_and_king259/",
+      "line": "",
+      "tel": "080-3967-8543",
+      "holds_tournaments": true,
+      "sources": [
+        "ユーザー提供のGoogle検索スクリーンショット(2026-07-13)",
+        "https://x.com/AandK_poker",
+        "https://www.instagram.com/ace_and_king259/"
+      ],
+      "note": "2026年7月Grand Open(新規開店)の久留米エリア新店。西鉄久留米駅を降りて徒歩1分。初心者講習毎日開催。FREEROLLイベント実績あり。営業時間: 月-金17:30-24:00、土日13:30-24:00。KENポーカー(久留米/v21)と同エリアの別店舗。Google店舗情報(クチコミ5.0・1件)で確認。"
+    }
   ]
 }

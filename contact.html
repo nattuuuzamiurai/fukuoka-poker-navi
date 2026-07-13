@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>お問い合わせ | ふくおかポーカーナビ</title>
+<meta name="description" content="ふくおかポーカーナビへのお問い合わせ・店舗掲載やPRのご相談はこちらから。">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --felt:#0f3d2e; --felt2:#14513c; --gold:#d9a441; --gold2:#f0c56b;
+    --bg:#f6f4ef; --sur:#ffffff; --bor:#e7e1d6; --txt:#25201b; --mut:#8a8078;
+    --red:#c0392b; --grn:#1a9e6f; --r:14px; --sha:0 2px 12px rgba(30,20,5,.08);
+  }
+  body{font-family:"Hiragino Sans","Yu Gothic UI",system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.6;font-size:15px}
+  a{color:inherit}
+  .wrap{max-width:640px;margin:0 auto;padding:0 16px}
+  header{background:linear-gradient(135deg,var(--felt),var(--felt2));color:#fff;padding:14px 18px}
+  .hbar{display:flex;align-items:center;justify-content:space-between;max-width:640px;margin:0 auto}
+  .logo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:1.06em;text-decoration:none;color:#fff}
+  .logo .pip{color:var(--gold2)}
+  .back{color:#cfe6db;font-size:.82em;text-decoration:none}
+  main{padding:28px 0 50px}
+  h1{font-size:1.3em;font-weight:800;margin-bottom:8px}
+  .lead{color:var(--mut);font-size:.9em;margin-bottom:22px}
+  .card{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:22px 20px}
+  label{display:block;font-size:.82em;font-weight:700;color:var(--mut);margin:16px 0 6px}
+  label:first-of-type{margin-top:0}
+  label .req{color:var(--red);margin-left:3px}
+  select,input,textarea{width:100%;border:1px solid var(--bor);border-radius:9px;padding:11px 12px;font-size:.95em;font-family:inherit;color:var(--txt);background:#fff;outline:none}
+  select:focus,input:focus,textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(217,164,65,.15)}
+  textarea{resize:vertical;min-height:140px}
+  .btn{background:var(--felt);color:#fff;border:none;border-radius:24px;padding:13px 30px;font-size:.95em;font-weight:800;cursor:pointer;font-family:inherit;margin-top:18px;width:100%}
+  .btn:hover{background:var(--felt2)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .status{font-size:.85em;margin-top:12px;text-align:center}
+  .status.err{color:var(--red)}
+  .status.ok{color:var(--grn);font-weight:700}
+  .note{font-size:.78em;color:var(--mut);margin-top:16px;line-height:1.7}
+  footer{background:#1b2320;color:#9aa39d;padding:22px 16px;font-size:.8em;text-align:center}
+  footer a{color:var(--gold2)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hbar">
+    <a class="logo" href="index.html"><span class="pip">♠</span>ふくおかポーカーナビ</a>
+    <a class="back" href="index.html">← トップへ戻る</a>
+  </div>
+</header>
+
+<main class="wrap">
+  <h1>お問い合わせ</h1>
+  <p class="lead">掲載内容の誤り・修正依頼、店舗掲載/PR枠のご相談、その他ご質問はこちらのフォームからお送りください。</p>
+
+  <div class="card">
+    <form id="contactForm">
+      <label>お問い合わせ種別</label>
+      <select id="category" name="category">
+        <option value="general">一般のお問い合わせ</option>
+        <option value="correction">掲載内容の誤り・修正依頼</option>
+        <option value="listing">店舗掲載・PR枠のご相談</option>
+        <option value="other">その他</option>
+      </select>
+
+      <label>メールアドレス<span class="req">*</span></label>
+      <input type="email" id="email" name="email" required placeholder="you@example.com">
+
+      <label>お問い合わせ内容<span class="req">*</span></label>
+      <textarea id="message" name="message" required placeholder="お問い合わせ内容をご記入ください"></textarea>
+
+      <button type="submit" class="btn" id="submitBtn">送信する</button>
+      <div class="status" id="formStatus"></div>
+    </form>
+    <div class="note">
+      送信いただいた内容は運営(エースハイ合同会社)にのみ送られます。返信までお時間をいただく場合があります。
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div><b style="color:#fff">ふくおかポーカーナビ</b> — 福岡ポーカートーナメント日程アグリゲーター</div>
+  <div style="margin-top:6px"><a href="index.html">トップへ戻る</a></div>
+</footer>
+
+<script>
+(function(){
+  // Googleフォーム「福岡ポーカーナビお問い合わせ」への送信。
+  // フォーム自体はメールアドレス/お問い合わせ内容の2項目構成のため、
+  // 種別選択はお問い合わせ内容の先頭に付記する形で送信する。
+  const FORM_ACTION = 'https://docs.google.com/forms/d/e/1FAIpQLSc5jkg9LxWNSMbpxeckeL4SXps6vbR1o7tYogOqYqOcLIsgRA/formResponse';
+  const ENTRY_EMAIL = 'entry.427973259';
+  const ENTRY_MESSAGE = 'entry.1401877361';
+
+  const form = document.getElementById('contactForm');
+  const statusEl = document.getElementById('formStatus');
+  const btn = document.getElementById('submitBtn');
+  const categoryLabels = {
+    general: '一般のお問い合わせ',
+    correction: '掲載内容の誤り・修正依頼',
+    listing: '店舗掲載・PR枠のご相談',
+    other: 'その他'
+  };
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    btn.disabled = true;
+    statusEl.className = 'status';
+    statusEl.textContent = '送信中…';
+
+    const email = document.getElementById('email').value;
+    const category = document.getElementById('category').value;
+    const message = document.getElementById('message').value;
+    const body = new URLSearchParams();
+    body.set(ENTRY_EMAIL, email);
+    body.set(ENTRY_MESSAGE, `【${categoryLabels[category] || category}】\n${message}`);
+
+    try{
+      // Googleフォームはno-cors応答のためレスポンス内容は読めない。
+      // fetchが例外を投げなければ送信成功とみなす。
+      await fetch(FORM_ACTION, { method: 'POST', mode: 'no-cors', body });
+      statusEl.className = 'status ok';
+      statusEl.textContent = '送信しました。お問い合わせありがとうございます。';
+      form.reset();
+    } catch(err){
+      statusEl.className = 'status err';
+      statusEl.textContent = '送信に失敗しました。時間をおいて再度お試しください。';
+    } finally {
+      btn.disabled = false;
+    }
+  });
+})();
+</script>
+</body>
+</html>

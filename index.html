@@ -74,9 +74,11 @@
   .tc-time b{font-size:1.15em;font-weight:800;color:var(--felt)}
   .tc-time span{display:block;font-size:.66em;color:var(--mut);font-weight:600}
   .tc-main{flex:1;min-width:0}
-  .tc-name{font-weight:800;font-size:1.02em;line-height:1.3}
-  .tc-venue{font-size:.82em;color:var(--mut);margin-top:2px;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
-  .tc-venue .area{background:var(--chip);border-radius:5px;padding:1px 7px;font-weight:700;color:#6b6055}
+  .tc-name{font-weight:800;font-size:1.1em;line-height:1.35;letter-spacing:.01em;color:var(--txt)}
+  .tc-name::before{content:"♠";color:var(--gold);margin-right:5px;font-weight:700}
+  .tc-venue{font-size:.95em;color:var(--felt);margin-top:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-weight:800}
+  .tc-venue a{text-decoration:underline;text-decoration-color:var(--bor)}
+  .tc-venue .area{background:var(--chip);border-radius:5px;padding:1px 7px;font-weight:700;color:#6b6055;font-size:.84em}
   .tc-buyin{text-align:right;flex-shrink:0}
   .tc-buyin b{font-size:1.12em;font-weight:800}
   .tc-buyin span{display:block;font-size:.64em;color:var(--mut);font-weight:600}
@@ -85,12 +87,7 @@
   .mtag.gtd{background:#fdf0d6;color:#9a6b0f}
   .mtag.re{background:#e6f4ee;color:#177a56}
   .mtag.big{background:#fde8e4;color:var(--red)}
-  .tc-foot{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:11px;border-top:1px solid var(--bor)}
-  .src{font-size:.7em;color:var(--mut);display:flex;align-items:center;gap:5px}
-  .dot{width:6px;height:6px;border-radius:50%;background:var(--grn)}
-  .dot.semi{background:var(--gold)}
-  .dot.manual{background:#a89}
-  .dot.recurring{background:#5560d0}
+  .tc-foot{display:flex;justify-content:flex-end;align-items:center;margin-top:12px;padding-top:11px;border-top:1px solid var(--bor)}
   .tc-actions{display:flex;gap:7px;align-items:center}
   .abtn{font-size:.76em;font-weight:700;padding:6px 12px;border-radius:8px;border:1px solid var(--bor);cursor:pointer}
   .abtn.pri{background:var(--felt);color:#fff;border-color:var(--felt)}
@@ -154,14 +151,14 @@
 <div class="filters">
   <div class="frow">
     <div class="seg" id="seg-when">
-      <button class="fbtn on" data-when="all">すべて</button>
-      <button class="fbtn" data-when="today">今日</button>
+      <button class="fbtn" data-when="all">すべて</button>
+      <button class="fbtn on" data-when="today">今日</button>
       <button class="fbtn" data-when="weekend">週末</button>
       <button class="fbtn" data-when="week">今週</button>
     </div>
     <select class="fsel" id="sel-area"><option value="all">全エリア</option></select>
     <select class="fsel" id="sel-tag">
-      <option value="all">種類</option>
+      <option value="all">すべて</option>
       <option value="サテライト">サテライト</option>
       <option value="PLO">PLO</option>
       <option value="NLH">NLH（通常）</option>
@@ -181,6 +178,8 @@
     </div>
     <div id="list"></div>
 
+    <div class="ad" style="margin-top:22px"><b>広告 / SPONSORED</b>AdSense・PR枠 — この位置に広告 or 店舗のPRバナー</div>
+
     <div class="shead" style="margin-top:34px">
       <h2>掲載店舗</h2>
       <span class="cnt" id="venue-cnt"></span>
@@ -195,11 +194,13 @@
     <p>友だち追加で、福岡の大型大会・GTD更新を自動でお届け。<br>アプリ不要・無料。行きたい大会を見逃さない。</p>
     <a href="#">＋ 友だち追加</a>
   </div>
+
+  <div class="ad" style="margin-top:26px"><b>広告 / SPONSORED</b>AdSense・PR枠 — この位置に広告 or 店舗のPRバナー</div>
 </main>
 
 <footer>
   <div><b style="color:#fff">ふくおかポーカーナビ</b> — 福岡ポーカートーナメント日程アグリゲーター</div>
-  <div>運営: エースハイ合同会社　|　<a href="#">お問い合わせ</a>　|　<a href="#">店舗の掲載・PRについて</a></div>
+  <div>運営: エースハイ合同会社　|　<a href="contact.html">お問い合わせ</a>　|　<a href="contact.html">店舗の掲載・PRについて</a></div>
   <div class="disc">
     掲載情報は各店舗のSNS・公式サイト等をもとに自動/手動で収集しています。開催内容は変更される場合があるため、
     参加前に必ず各店舗の公式情報をご確認ください。当サイトはアミューズメント（賭博性のない娯楽）目的の情報を掲載します。
@@ -258,7 +259,7 @@
   const localToday = `${y}-${m}-${dd}`;
   document.getElementById('stat-today').textContent = ALL_TOURNAMENTS.filter(t=>t.date===localToday).length;
 
-  const state = { when:'all', area:'all', tag:'all' };
+  const state = { when:'today', area:'all', tag:'all' };
 
   function inWhen(dateStr){
     const d = iso(dateStr), diff = Math.round((d - today)/86400000);
@@ -307,15 +308,13 @@
     if (t.reentry) tags.push(`<span class="mtag re">${t.reentry==='late'?'レイト可':'リエントリー可'}</span>`);
     (t.tags||[]).forEach(tg => tags.push(`<span class="mtag${tg==='大型'?' big':''}">${tg}</span>`));
     if (t.stack) tags.push(`<span class="mtag">${t.stack.toLocaleString()}点</span>`);
-    const srcCls = t.source==='auto'?'':(t.source==='semi'?'semi':(t.source==='recurring'?'recurring':'manual'));
-    const srcLbl = t.source==='auto'?'自動取得':(t.source==='semi'?'SNS取込':(t.source==='recurring'?'定期開催':'手動'));
     const sns = [];
     if (v.x) sns.push(`<a class="ticon x" href="${v.x}" target="_blank" rel="noopener" aria-label="X（旧Twitter）"><svg viewBox="0 0 24 24" width="13" height="13" fill="#fff"><path d="M18.9 2H22l-7.6 8.7L23 22h-6.9l-5.4-6.6L4.6 22H1.5l8.1-9.3L1 2h7.1l4.9 6.1L18.9 2Zm-1.2 18h1.9L7.4 4H5.4l12.3 16Z"/></svg></a>`);
     if (v.instagram) sns.push(`<a class="ticon ig" href="${v.instagram}" target="_blank" rel="noopener" aria-label="Instagram"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r="1.1" fill="#fff" stroke="none"/></svg></a>`);
     if (v.line) sns.push(`<a class="ticon line" href="${v.line}" target="_blank" rel="noopener" aria-label="公式LINE"><svg viewBox="0 0 24 24" width="14" height="14" fill="#fff"><path d="M12 3C6.5 3 2 6.6 2 11c0 3.6 3 6.7 7.1 7.7-.3 1.1-.9 3.1-1 3.5-.1.5.2.5.4.4.2-.1 3.1-2.1 4.3-2.9.4 0 .8.1 1.2.1 5.5 0 10-3.6 10-8S17.5 3 12 3z"/></svg></a>`);
     return `<div class="tcard${v.featured?' feat':''}">
       <div class="tc-top">
-        <div class="tc-time"><b>${t.start||'未定'}</b><span>START</span></div>
+        <div class="tc-time"><b>${t.start||'不明'}</b><span>START</span></div>
         <div class="tc-main">
           <div class="tc-name">${t.name}</div>
           <div class="tc-venue"><span class="area">${v.area||''}</span><a href="#venue/${t.venueId}">${v.name||''}</a></div>
@@ -324,7 +323,6 @@
       </div>
       <div class="tc-meta">${tags.join('')}</div>
       <div class="tc-foot">
-        <span class="src"><span class="dot ${srcCls}"></span>${srcLbl}${t.verified?' ✓':' (未確認)'}</span>
         <div class="tc-actions">${sns.join('')}</div>
       </div>
     </div>`;
@@ -332,7 +330,7 @@
 
   function renderDateGroup(date, rows){
     const d = iso(date), isToday = date === localToday;
-    let html = `<div class="dgroup">
+    let html = `<div class="dgroup" data-date="${date}">
       <div class="dlabel${isToday?' today':''}">
         <span class="dnum"><small>${d.getMonth()+1}月</small><b>${d.getDate()}</b></span>
         <span class="dw">${WD[d.getDay()]}曜日${isToday?' ・本日':''}</span>
@@ -409,7 +407,14 @@
       document.getElementById('page-list').style.display = 'none';
       document.getElementById('page-venue').style.display = '';
       renderVenuePage(parsed.venueId, parsed.month);
-      window.scrollTo(0,0);
+      const groups = [...document.querySelectorAll('#page-venue .dgroup')];
+      const fromToday = groups.find(g => g.dataset.date >= localToday);
+      if (fromToday){
+        const y = fromToday.getBoundingClientRect().top + window.scrollY - 70;
+        window.scrollTo(0, Math.max(y, 0));
+      } else {
+        window.scrollTo(0,0);
+      }
     } else {
       filters.style.display = '';
       document.getElementById('page-list').style.display = '';

@@ -158,6 +158,13 @@
       const badge = $('saveBadge');
       try{
         const res = await fetch('/save-data', { method:'POST', body: buildFile() });
+        if(res.status === 409){
+          const msg = await res.text();
+          badge.textContent = '⚠ ' + msg;
+          badge.className = 'savebadge show err';
+          setTimeout(()=>badge.classList.remove('show'), 9000);
+          return;
+        }
         if(!res.ok) throw new Error('HTTP '+res.status);
         badge.textContent = '✓ 保存しました ('+new Date().toLocaleTimeString('ja-JP')+')';
         badge.className = 'savebadge show';
