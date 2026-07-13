@@ -19,24 +19,28 @@
   .wrap{max-width:1000px;margin:0 auto;padding:0 16px}
 
   /* HEADER */
-  header{background:linear-gradient(135deg,var(--felt),var(--felt2));color:#fff;position:sticky;top:0;z-index:40;box-shadow:0 2px 8px rgba(0,0,0,.15)}
-  .hbar{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;max-width:1000px;margin:0 auto}
-  .logo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:1.06em}
+  header{background:linear-gradient(135deg,var(--felt),var(--felt2));color:#fff;position:sticky;top:0;z-index:40;box-shadow:0 2px 8px rgba(0,0,0,.15);transition:background .15s}
+  header.venue-mode{background:linear-gradient(135deg,#7a5711,var(--gold))}
+  .hbar{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;max-width:1000px;margin:0 auto}
+  .logo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:1em}
   .logo .pip{color:var(--gold2)}
   .hbar .line-btn{background:#06c755;color:#fff;font-size:.78em;font-weight:700;padding:7px 13px;border-radius:20px;white-space:nowrap}
+  .back-link{color:#fff;font-size:.85em;font-weight:800;text-decoration:none;flex-shrink:0}
+  .back-link:hover{text-decoration:underline}
+  .venue-header-name{font-weight:800;font-size:.95em;color:#3a2a06;text-align:right;max-width:65%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
   /* HERO */
-  .hero{background:linear-gradient(135deg,var(--felt2),var(--felt));color:#fff;padding:26px 16px 30px;text-align:center}
-  .hero h1{font-size:1.5em;font-weight:800;letter-spacing:.01em;line-height:1.35}
+  .hero{background:linear-gradient(135deg,var(--felt2),var(--felt));color:#fff;padding:18px 16px 20px;text-align:center}
+  .hero h1{font-size:1.32em;font-weight:800;letter-spacing:.01em;line-height:1.3}
   .hero h1 .hl{color:var(--gold2)}
-  .hero p{color:#d7e5dd;font-size:.92em;margin-top:9px}
-  .hero .stats{display:flex;justify-content:center;gap:22px;margin-top:16px;flex-wrap:wrap}
+  .hero p{color:#d7e5dd;font-size:.86em;margin-top:6px}
+  .hero .stats{display:flex;justify-content:center;gap:16px;margin-top:11px;flex-wrap:wrap}
   .hero .stat{text-align:center}
-  .hero .stat b{display:block;font-size:1.5em;color:var(--gold2);font-weight:800;line-height:1}
-  .hero .stat span{font-size:.72em;color:#c3d6cd}
+  .hero .stat b{display:block;font-size:1.3em;color:var(--gold2);font-weight:800;line-height:1}
+  .hero .stat span{font-size:.7em;color:#c3d6cd}
 
   /* FILTER BAR */
-  .filters{background:var(--sur);border-bottom:1px solid var(--bor);position:sticky;top:53px;z-index:30;box-shadow:var(--sha)}
+  .filters{background:var(--sur);border-bottom:1px solid var(--bor);position:sticky;top:48px;z-index:30;box-shadow:var(--sha)}
   .frow{display:flex;gap:8px;padding:12px 16px;max-width:1000px;margin:0 auto;overflow-x:auto;-webkit-overflow-scrolling:touch}
   .frow::-webkit-scrollbar{height:0}
   .seg{display:flex;gap:6px}
@@ -124,7 +128,7 @@
   footer .disc{max-width:640px;margin:10px auto 0;font-size:.92em;color:#6f7772}
 
   @media(max-width:560px){
-    .hero h1{font-size:1.25em}
+    .hero h1{font-size:1.15em}
     .tc-buyin{display:none}
     .shead h2{font-size:1em}
   }
@@ -133,9 +137,13 @@
 <body>
 
 <header>
-  <div class="hbar">
+  <div class="hbar" id="hbar-list">
     <div class="logo"><span class="pip">♠</span>ふくおかポーカーナビ</div>
     <a class="line-btn" href="#line">LINEで新着通知</a>
+  </div>
+  <div class="hbar hbar-venue" id="hbar-venue" style="display:none">
+    <a class="back-link" href="#">← 一覧へ戻る</a>
+    <div class="venue-header-name" id="venueHeaderName"></div>
   </div>
 </header>
 
@@ -143,7 +151,7 @@
   <h1>福岡の<span class="hl">ポーカートーナメント</span>を<br>ぜんぶ、ここで。</h1>
   <p>天神・中洲・北九州（小倉/黒崎）・久留米・筑豊のアミューズ店のトーナメント日程を一括表示</p>
   <div class="stats">
-    <div class="stat"><b id="stat-t">–</b><span>掲載トーナメント</span></div>
+    <div class="stat"><b id="stat-t">–</b><span>今月の掲載トーナメント</span></div>
     <div class="stat"><b id="stat-v">–</b><span>掲載店舗</span></div>
     <div class="stat"><b id="stat-today">–</b><span>本日開催</span></div>
   </div>
@@ -154,12 +162,10 @@
     <div class="seg" id="seg-when">
       <button class="fbtn" data-when="all">すべて</button>
       <button class="fbtn on" data-when="today">今日</button>
-      <button class="fbtn" data-when="weekend">週末</button>
-      <button class="fbtn" data-when="week">今週</button>
     </div>
     <select class="fsel" id="sel-area"><option value="all">全エリア</option></select>
     <select class="fsel" id="sel-tag">
-      <option value="all">すべて</option>
+      <option value="all">全種類</option>
       <option value="サテライト">サテライト</option>
       <option value="PLO">PLO</option>
       <option value="NLH">NLH（通常）</option>
@@ -239,7 +245,7 @@
         out.push({
           id: `${r.id}_${ds}`, venueId: r.venueId, name: r.name, date: ds, start: r.start,
           buyin: r.buyin, addon: r.addon==null?null:r.addon, stack: r.buyinStack || 0,
-          guarantee: null, reentry: r.reentryFee != null || !/freeze/i.test(r.name), prize: null,
+          guarantee: null, reentry: r.reentryFee != null || !/freeze|フリーズ/i.test(r.name), prize: null,
           tags: r.tags || [], source: 'recurring', verified: true
         });
       });
@@ -252,7 +258,12 @@
   const ALL_TOURNAMENTS = TOURNAMENTS.concat(expandRecurring(today, addDays(today, 60)));
 
   // stats
-  document.getElementById('stat-t').textContent = ALL_TOURNAMENTS.length;
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+  const monthEnd = new Date(today.getFullYear(), today.getMonth()+1, 0);
+  const monthStartStr = dateStr(monthStart), monthEndStr = dateStr(monthEnd);
+  const thisMonthCount = TOURNAMENTS.filter(t => t.date >= monthStartStr && t.date <= monthEndStr).length
+    + expandRecurring(monthStart, monthEnd).length;
+  document.getElementById('stat-t').textContent = thisMonthCount;
   document.getElementById('stat-v').textContent = VENUES.length;
   const todayStr = iso(today).toISOString().slice(0,10);
   const _t = new Date(); _t.setHours(0,0,0,0);
@@ -266,8 +277,6 @@
     const d = iso(dateStr), diff = Math.round((d - today)/86400000);
     if (state.when==='all') return diff >= 0;
     if (state.when==='today') return diff === 0;
-    if (state.when==='week') return diff >= 0 && diff < 7;
-    if (state.when==='weekend'){ const w=d.getDay(); return diff>=0 && diff<14 && (w===0||w===6); }
     return true;
   }
   function inTag(tags){
@@ -403,8 +412,18 @@
   function route(){
     const parsed = parseHash();
     const filters = document.querySelector('.filters');
+    const hero = document.querySelector('.hero');
+    const headerEl = document.querySelector('header');
+    const hbarList = document.getElementById('hbar-list');
+    const hbarVenue = document.getElementById('hbar-venue');
     if (parsed){
       filters.style.display = 'none';
+      hero.style.display = 'none';
+      headerEl.classList.add('venue-mode');
+      hbarList.style.display = 'none';
+      hbarVenue.style.display = '';
+      const v = venueById[parsed.venueId];
+      document.getElementById('venueHeaderName').textContent = v ? v.name : '店舗詳細';
       document.getElementById('page-list').style.display = 'none';
       document.getElementById('page-venue').style.display = '';
       renderVenuePage(parsed.venueId, parsed.month);
@@ -418,6 +437,10 @@
       }
     } else {
       filters.style.display = '';
+      hero.style.display = '';
+      headerEl.classList.remove('venue-mode');
+      hbarList.style.display = '';
+      hbarVenue.style.display = 'none';
       document.getElementById('page-list').style.display = '';
       document.getElementById('page-venue').style.display = 'none';
       document.title = '福岡ポーカートーナメント日程 | ふくおかポーカーナビ';
