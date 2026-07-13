@@ -237,7 +237,7 @@
         out.push({
           id: `${r.id}_${ds}`, venueId: r.venueId, name: r.name, date: ds, start: r.start,
           buyin: r.buyin, addon: r.addon==null?null:r.addon, stack: r.buyinStack || 0,
-          guarantee: null, reentry: true, prize: null,
+          guarantee: null, reentry: r.reentryFee != null || !/freeze/i.test(r.name), prize: null,
           tags: r.tags || [], source: 'recurring', verified: true
         });
       });
