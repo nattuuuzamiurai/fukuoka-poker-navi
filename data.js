@@ -416,9 +416,9 @@ const VENUES = [
     "website": "",
     "tel": "",
     "featured": false,
-    "note": "2025/11開店の新店。学生/女性割引あり。トーナメント開催は要確認。住所要確認。",
-    "sourceLabel": "",
-    "sourceUrl": ""
+    "note": "2025/11開店の新店。学生/女性割引あり。DAYTIME/NIGHTTIMEの2部制でトーナメント開催中(週替わり)。",
+    "sourceLabel": "Instagram",
+    "sourceUrl": "https://www.instagram.com/joker_pokerhouse/"
   },
   {
     "id": "v27",
@@ -432,7 +432,7 @@ const VENUES = [
     "website": "",
     "tel": "",
     "featured": false,
-    "note": "2025/12開店。リングイベント「SUPER DOJO RING DAY」を確認。トーナメント開催は要確認。",
+    "note": "2025/12開店。DJL(店内リーグ戦)・FPC・FSTサテライト・ミステリーバウンティ等を定期開催。「SUPER DOJO RING DAY」はリングゲーム企画のため掲載対象外。",
     "sourceLabel": "",
     "sourceUrl": ""
   },
@@ -448,9 +448,9 @@ const VENUES = [
     "website": "",
     "tel": "",
     "featured": false,
-    "note": "姉弟運営の小規模店。女性・初心者向け。貸切イベント可。定期トーナメントは要確認。",
-    "sourceLabel": "",
-    "sourceUrl": ""
+    "note": "姉弟運営の小規模店。女性・初心者向け。貸切イベント可。水曜=FSTサテライトが毎週固定。",
+    "sourceLabel": "Instagram",
+    "sourceUrl": "https://www.instagram.com/cajinox/"
   },
   {
     "id": "v29",
@@ -1319,7 +1319,60 @@ const TOURNAMENTS = [
   { "id": "cc0725c", "venueId": "v22", "name": "10th Anniversary Main Day1 D", "date": "2026-07-25", "start": "19:30", "buyin": 0, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": null, "tags": ["特別開催"], "source": "semi", "verified": false },
   { "id": "cc0726a", "venueId": "v22", "name": "10th Anniversary Main Day2", "date": "2026-07-26", "start": "14:00", "buyin": 0, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": null, "tags": ["特別開催"], "source": "semi", "verified": false },
   { "id": "cc0726b", "venueId": "v22", "name": "10th Anniversary CRownCLown魂 x OLA Taipei", "date": "2026-07-26", "start": "15:00", "buyin": 0, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": null, "tags": ["特別開催"], "source": "semi", "verified": false },
-  { "id": "cc0726c", "venueId": "v22", "name": "10th Anniversary CRownCLown魂 x AJPC SAMURAI", "date": "2026-07-26", "start": "18:30", "buyin": 0, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": null, "tags": ["特別開催"], "source": "semi", "verified": false }
+  { "id": "cc0726c", "venueId": "v22", "name": "10th Anniversary CRownCLown魂 x AJPC SAMURAI", "date": "2026-07-26", "start": "18:30", "buyin": 0, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": null, "tags": ["特別開催"], "source": "semi", "verified": false },
+  { "id": "s70712", "venueId": "v25", "name": "GⅡ ブランドGETトーナメント", "date": "2026-07-12", "start": "16:30", "buyin": 0, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": null, "tags": ["特別開催"], "source": "semi", "verified": false },
+  { "id": "s70713", "venueId": "v25", "name": "選べる3種サテライト", "date": "2026-07-13", "start": "19:30", "buyin": 0, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": null, "tags": ["サテライト"], "source": "semi", "verified": false },
+  { "id": "s70714", "venueId": "v25", "name": "選べる3種サテライト", "date": "2026-07-14", "start": "19:30", "buyin": 0, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": null, "tags": ["サテライト"], "source": "semi", "verified": false },
+  { "id": "s70715", "venueId": "v25", "name": "選べる3種サテライト", "date": "2026-07-15", "start": "19:30", "buyin": 0, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": null, "tags": ["サテライト"], "source": "semi", "verified": false },
+  { "id": "s70716", "venueId": "v25", "name": "トーナメント2000", "date": "2026-07-16", "start": "19:30", "buyin": 2000, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": null, "tags": [], "source": "semi", "verified": false },
+  { "id": "s70717", "venueId": "v25", "name": "WJPTサテライト", "date": "2026-07-17", "start": "19:30", "buyin": 0, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": null, "tags": ["サテライト", "WJPT"], "source": "semi", "verified": false },
+  { "id": "s70718", "venueId": "v25", "name": "たっぷりディープ40000", "date": "2026-07-18", "start": "", "buyin": 0, "addon": null, "stack": 40000, "guarantee": null, "reentry": false, "prize": null, "tags": ["ディープ"], "source": "semi", "verified": false },
+  { "id": "s70721", "venueId": "v25", "name": "トーナメント2000", "date": "2026-07-21", "start": "19:30", "buyin": 2000, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": null, "tags": [], "source": "semi", "verified": false },
+  { "id": "s70722", "venueId": "v25", "name": "Win the Button", "date": "2026-07-22", "start": "19:30", "buyin": 0, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": null, "tags": [], "source": "semi", "verified": false },
+  { "id": "s70723", "venueId": "v25", "name": "トーナメント2000", "date": "2026-07-23", "start": "19:30", "buyin": 2000, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": null, "tags": [], "source": "semi", "verified": false },
+  { "id": "s70724", "venueId": "v25", "name": "選べるサテライト", "date": "2026-07-24", "start": "19:30", "buyin": 0, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": null, "tags": ["サテライト"], "source": "semi", "verified": false },
+  { "id": "s70725", "venueId": "v25", "name": "GⅢ 72王者ファイナル（The Final・参加資格:歴代王者）", "date": "2026-07-25", "start": "19:30", "buyin": 0, "addon": 2000, "stack": 0, "guarantee": null, "reentry": true, "prize": "参加資格:歴代王者。Re-entry ¥4,000", "tags": ["特別開催"], "source": "semi", "verified": false },
+  { "id": "jk0713a", "venueId": "v26", "name": "フリロ", "date": "2026-07-13", "start": "", "buyin": 0, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": null, "tags": ["フリーロール"], "source": "semi", "verified": false },
+  { "id": "jk0713b", "venueId": "v26", "name": "JOPTサテライト", "date": "2026-07-13", "start": "19:00", "buyin": 4000, "addon": 4000, "stack": 0, "guarantee": null, "reentry": true, "prize": null, "tags": ["サテライト", "JOPT"], "source": "semi", "verified": false },
+  { "id": "jk0714a", "venueId": "v26", "name": "フリロ", "date": "2026-07-14", "start": "15:00", "buyin": 1000, "addon": 1000, "stack": 0, "guarantee": null, "reentry": true, "prize": null, "tags": ["フリーロール"], "source": "semi", "verified": false },
+  { "id": "jk0714b", "venueId": "v26", "name": "アイテムトナメ", "date": "2026-07-14", "start": "19:00", "buyin": 2000, "addon": 2000, "stack": 0, "guarantee": null, "reentry": true, "prize": null, "tags": ["特別開催"], "source": "semi", "verified": false },
+  { "id": "jk0715", "venueId": "v26", "name": "初心者トナメ", "date": "2026-07-15", "start": "19:00", "buyin": 1000, "addon": 1000, "stack": 0, "guarantee": null, "reentry": true, "prize": null, "tags": ["初心者"], "source": "semi", "verified": false },
+  { "id": "jk0716a", "venueId": "v26", "name": "フリロ", "date": "2026-07-16", "start": "15:00", "buyin": 1000, "addon": 1000, "stack": 0, "guarantee": null, "reentry": true, "prize": null, "tags": ["フリーロール"], "source": "semi", "verified": false },
+  { "id": "jk0716b", "venueId": "v26", "name": "JOPTサテライト", "date": "2026-07-16", "start": "19:00", "buyin": 4000, "addon": 4000, "stack": 0, "guarantee": null, "reentry": true, "prize": null, "tags": ["サテライト", "JOPT"], "source": "semi", "verified": false },
+  { "id": "jk0717", "venueId": "v26", "name": "JOKER RINGレース", "date": "2026-07-17", "start": "19:00", "buyin": 4000, "addon": 4000, "stack": 0, "guarantee": null, "reentry": true, "prize": "純増1位にJPT", "tags": ["特別開催"], "source": "semi", "verified": false },
+  { "id": "jk0718a", "venueId": "v26", "name": "フリロ", "date": "2026-07-18", "start": "12:00", "buyin": 1000, "addon": 1000, "stack": 0, "guarantee": null, "reentry": true, "prize": null, "tags": ["フリーロール"], "source": "semi", "verified": false },
+  { "id": "jk0718b", "venueId": "v26", "name": "FSTサテライト", "date": "2026-07-18", "start": "19:00", "buyin": 3000, "addon": 3000, "stack": 0, "guarantee": null, "reentry": true, "prize": null, "tags": ["サテライト", "FST"], "source": "semi", "verified": false },
+  { "id": "jk0719a", "venueId": "v26", "name": "フリロ", "date": "2026-07-19", "start": "12:00", "buyin": 1000, "addon": 1000, "stack": 0, "guarantee": null, "reentry": true, "prize": null, "tags": ["フリーロール"], "source": "semi", "verified": false },
+  { "id": "jk0719b", "venueId": "v26", "name": "JOPTサテライト", "date": "2026-07-19", "start": "19:00", "buyin": 4000, "addon": 4000, "stack": 0, "guarantee": null, "reentry": true, "prize": null, "tags": ["サテライト", "JOPT"], "source": "semi", "verified": false },
+  { "id": "dj0701", "venueId": "v27", "name": "DJL第9節", "date": "2026-07-01", "start": "19:00", "buyin": 0, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": null, "tags": [], "source": "semi", "verified": false },
+  { "id": "dj0702", "venueId": "v27", "name": "FPCサテライト", "date": "2026-07-02", "start": "19:00", "buyin": 3000, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": "3000円で4E/1SET・1枚。1000円で1E/1SET・1枚。開始1時間以内のエントリーは1枚¥3000", "tags": ["サテライト"], "source": "semi", "verified": false },
+  { "id": "dj0703", "venueId": "v27", "name": "DJL第10節", "date": "2026-07-03", "start": "19:00", "buyin": 0, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": null, "tags": [], "source": "semi", "verified": false },
+  { "id": "dj0704", "venueId": "v27", "name": "FPCサテライト", "date": "2026-07-04", "start": "19:00", "buyin": 3000, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": "3000円で4E/1SET・1枚。1000円で1E/1SET・1枚。開始1時間以内のエントリーは1枚¥3000", "tags": ["サテライト"], "source": "semi", "verified": false },
+  { "id": "dj0705", "venueId": "v27", "name": "FPC DAY1", "date": "2026-07-05", "start": "12:00", "buyin": 0, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": null, "tags": ["店舗DAY1"], "source": "semi", "verified": false },
+  { "id": "dj0706", "venueId": "v27", "name": "トーナメ1000", "date": "2026-07-06", "start": "19:00", "buyin": 1000, "addon": null, "stack": 0, "guarantee": null, "reentry": true, "prize": null, "tags": [], "source": "semi", "verified": false },
+  { "id": "dj0707", "venueId": "v27", "name": "ミステリーバウンティ", "date": "2026-07-07", "start": "19:00", "buyin": 4000, "addon": 4000, "stack": 20000, "guarantee": null, "reentry": true, "prize": null, "tags": ["バウンティ"], "source": "semi", "verified": false },
+  { "id": "dj0708", "venueId": "v27", "name": "DJL第11節", "date": "2026-07-08", "start": "19:00", "buyin": 0, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": null, "tags": [], "source": "semi", "verified": false },
+  { "id": "dj0709", "venueId": "v27", "name": "FPC", "date": "2026-07-09", "start": "19:00", "buyin": 0, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": null, "tags": ["サテライト"], "source": "semi", "verified": false },
+  { "id": "dj0711", "venueId": "v27", "name": "DJL第12節", "date": "2026-07-11", "start": "19:00", "buyin": 0, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": null, "tags": [], "source": "semi", "verified": false },
+  { "id": "dj0713", "venueId": "v27", "name": "トーナメ1000", "date": "2026-07-13", "start": "19:00", "buyin": 1000, "addon": null, "stack": 0, "guarantee": null, "reentry": true, "prize": null, "tags": [], "source": "semi", "verified": false },
+  { "id": "dj0714", "venueId": "v27", "name": "ミステリーバウンティ", "date": "2026-07-14", "start": "19:00", "buyin": 4000, "addon": 4000, "stack": 20000, "guarantee": null, "reentry": true, "prize": null, "tags": ["バウンティ"], "source": "semi", "verified": false },
+  { "id": "dj0715", "venueId": "v27", "name": "DJL第13節", "date": "2026-07-15", "start": "19:00", "buyin": 0, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": null, "tags": [], "source": "semi", "verified": false },
+  { "id": "dj0716", "venueId": "v27", "name": "FSTサテライト", "date": "2026-07-16", "start": "19:00", "buyin": 3000, "addon": 3000, "stack": 20000, "guarantee": null, "reentry": true, "prize": null, "tags": ["サテライト", "FST"], "source": "semi", "verified": false },
+  { "id": "dj0719", "venueId": "v27", "name": "SUPER DOJO RING DAY スーパーステートナメ", "date": "2026-07-19", "start": "21:40", "buyin": 3000, "addon": 3000, "stack": 20000, "guarantee": null, "reentry": true, "prize": null, "tags": ["特別開催"], "source": "semi", "verified": false },
+  { "id": "dj0721", "venueId": "v27", "name": "ミステリーバウンティ", "date": "2026-07-21", "start": "19:00", "buyin": 4000, "addon": 4000, "stack": 20000, "guarantee": null, "reentry": true, "prize": null, "tags": ["バウンティ"], "source": "semi", "verified": false },
+  { "id": "dj0722", "venueId": "v27", "name": "DJL第15節", "date": "2026-07-22", "start": "19:00", "buyin": 0, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": null, "tags": [], "source": "semi", "verified": false },
+  { "id": "dj0723", "venueId": "v27", "name": "FSTサテライト", "date": "2026-07-23", "start": "19:00", "buyin": 3000, "addon": 3000, "stack": 20000, "guarantee": null, "reentry": true, "prize": null, "tags": ["サテライト", "FST"], "source": "semi", "verified": false },
+  { "id": "dj0726", "venueId": "v27", "name": "THE DOJO", "date": "2026-07-26", "start": "14:00", "buyin": 1500, "addon": 1000, "stack": 25000, "guarantee": null, "reentry": true, "prize": null, "tags": ["メイン"], "source": "semi", "verified": false },
+  { "id": "dj0727", "venueId": "v27", "name": "トーナメ1000", "date": "2026-07-27", "start": "19:00", "buyin": 1000, "addon": null, "stack": 0, "guarantee": null, "reentry": true, "prize": null, "tags": [], "source": "semi", "verified": false },
+  { "id": "dj0728", "venueId": "v27", "name": "ミステリーバウンティ", "date": "2026-07-28", "start": "19:00", "buyin": 4000, "addon": 4000, "stack": 20000, "guarantee": null, "reentry": true, "prize": null, "tags": ["バウンティ"], "source": "semi", "verified": false },
+  { "id": "dj0729", "venueId": "v27", "name": "DJL EXHIBITION", "date": "2026-07-29", "start": "19:00", "buyin": 0, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": null, "tags": ["特別開催"], "source": "semi", "verified": false },
+  { "id": "dj0730", "venueId": "v27", "name": "FSTサテライト", "date": "2026-07-30", "start": "19:00", "buyin": 3000, "addon": 3000, "stack": 20000, "guarantee": null, "reentry": true, "prize": null, "tags": ["サテライト", "FST"], "source": "semi", "verified": false },
+  { "id": "cx0702", "venueId": "v28", "name": "チャンピオンシップ -CHAMPIONSHIP-", "date": "2026-07-02", "start": "", "buyin": 0, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": null, "tags": ["特別開催"], "source": "semi", "verified": false },
+  { "id": "cx0703", "venueId": "v28", "name": "RGS DAY1", "date": "2026-07-03", "start": "", "buyin": 0, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": null, "tags": ["店舗DAY1"], "source": "semi", "verified": false },
+  { "id": "cx0704", "venueId": "v28", "name": "RGSサテライト AOF", "date": "2026-07-04", "start": "", "buyin": 0, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": null, "tags": ["サテライト"], "source": "semi", "verified": false },
+  { "id": "cx0711", "venueId": "v28", "name": "SFC×CasinoX", "date": "2026-07-11", "start": "15:00", "buyin": 0, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": null, "tags": ["特別開催"], "source": "semi", "verified": false },
+  { "id": "cx0719", "venueId": "v28", "name": "初心者トナメ", "date": "2026-07-19", "start": "", "buyin": 0, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": null, "tags": ["初心者"], "source": "semi", "verified": false },
+  { "id": "cx0726", "venueId": "v28", "name": "ハイパーターボトナメ", "date": "2026-07-26", "start": "", "buyin": 0, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": null, "tags": ["ターボ"], "source": "semi", "verified": false }
 ];
 
 const AREAS = [
@@ -1359,7 +1412,8 @@ const RECURRING = [
   { id: "rec_v19_sun", venueId: "v19", weekday: 0, name: "Turbo", start: "16:10", lateReg: "18:20", buyin: 2000, buyinStack: 30000, reentryFee: null, reentryStack: null, addon: null, addonStack: null, blindTime: null, tags: ["ターボ"] },
   { id: "rec_v20_wed", venueId: "v20", weekday: 3, name: "フリーロール", start: "", lateReg: "", buyin: 0, buyinStack: null, reentryFee: null, reentryStack: null, addon: null, addonStack: null, blindTime: null, tags: ["フリーロール"] },
   { id: "rec_v20_fri", venueId: "v20", weekday: 5, name: "華金トナメ", start: "", lateReg: "", buyin: 0, buyinStack: null, reentryFee: null, reentryStack: null, addon: null, addonStack: null, blindTime: null, tags: [] },
-  { id: "rec_v20_sat", venueId: "v20", weekday: 6, name: "DEEP STACK", start: "", lateReg: "", buyin: 0, buyinStack: null, reentryFee: null, reentryStack: null, addon: null, addonStack: null, blindTime: null, tags: ["ディープ"] }
+  { id: "rec_v20_sat", venueId: "v20", weekday: 6, name: "DEEP STACK", start: "", lateReg: "", buyin: 0, buyinStack: null, reentryFee: null, reentryStack: null, addon: null, addonStack: null, blindTime: null, tags: ["ディープ"] },
+  { id: "rec_v28_wed", venueId: "v28", weekday: 3, name: "FSTサテライト", start: "", lateReg: "", buyin: 0, buyinStack: null, reentryFee: null, reentryStack: null, addon: null, addonStack: null, blindTime: null, tags: ["サテライト", "FST"] }
 ];
 
 if (typeof module !== 'undefined') { module.exports = { VENUES, TOURNAMENTS, AREAS, RECURRING }; }
