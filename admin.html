@@ -16,52 +16,83 @@
   header h1{font-size:1.05em;font-weight:800}
   header .pip{color:var(--gold)}
   header a{color:#cfe6db;font-size:.82em;text-decoration:none}
-  .wrap{max-width:960px;margin:0 auto;padding:18px}
-  .card{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:18px 20px;margin-bottom:18px}
-  .card h2{font-size:1em;font-weight:800;margin-bottom:4px;display:flex;align-items:center;gap:8px}
-  .card h2 .num{background:var(--felt);color:#fff;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.8em;flex-shrink:0}
-  .card .hint{font-size:.82em;color:var(--mut);margin-bottom:12px}
+  .wrap{max-width:760px;margin:0 auto;padding:18px}
+  .card{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:16px 18px;margin-bottom:16px}
+  .hint{font-size:.82em;color:var(--mut);margin-bottom:10px}
+  .muted{color:var(--mut)}
   label{display:block;font-size:.78em;font-weight:700;color:var(--mut);margin:10px 0 4px}
   input,select,textarea{width:100%;border:1px solid var(--bor);border-radius:8px;padding:8px 10px;font-size:.92em;font-family:inherit;color:var(--txt);background:#fff;outline:none}
   input:focus,select:focus,textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(217,164,65,.15)}
-  textarea{resize:vertical;min-height:120px}
-  .row{display:flex;gap:12px;flex-wrap:wrap}
-  .row>div{flex:1;min-width:160px}
+  textarea{resize:vertical;min-height:90px}
   .btn{background:var(--felt);color:#fff;border:none;border-radius:9px;padding:10px 18px;font-size:.9em;font-weight:700;cursor:pointer;font-family:inherit}
   .btn:hover{background:var(--felt2)}
   .btn:disabled{opacity:.5;cursor:not-allowed}
   .btn.sec{background:#fff;color:var(--felt);border:1px solid var(--bor)}
   .btn.gold{background:var(--gold);color:#3a2a06}
   .btn.sm{padding:5px 11px;font-size:.8em}
-  .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
-  .status{font-size:.85em;margin-top:10px;min-height:1.2em}
+  .btn.block{width:100%;padding:13px;font-size:1em}
+  .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center}
+  .status{font-size:.85em}
   .status.err{color:var(--red)}
   .status.ok{color:var(--grn)}
-  table{width:100%;border-collapse:collapse;margin-top:10px;font-size:.84em}
-  th{background:#faf7f2;text-align:left;padding:7px 8px;color:var(--mut);font-size:.9em;border-bottom:1px solid var(--bor);white-space:nowrap}
-  td{padding:5px 6px;border-bottom:1px solid var(--bor);vertical-align:middle}
-  td input,td select{padding:5px 7px;font-size:.9em}
-  .tbl-wrap{overflow-x:auto}
-  .pill{display:inline-block;font-size:.72em;font-weight:700;padding:1px 8px;border-radius:20px;background:#eef0fe;color:#5560d0}
-  code{background:#f3efe6;padding:1px 6px;border-radius:5px;font-size:.85em}
-  .keybar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-  .keybar input{flex:1;min-width:200px}
-  .muted{color:var(--mut);font-size:.8em}
-  details{margin-top:10px}
-  summary{cursor:pointer;font-size:.85em;font-weight:700;color:var(--felt)}
-  pre{background:#1b2320;color:#d4e5dd;padding:12px;border-radius:8px;overflow-x:auto;font-size:.78em;margin-top:10px;max-height:320px}
-  .dropzone{border:2px dashed var(--bor);border-radius:10px;padding:16px;text-align:center;font-size:.82em;color:var(--mut);cursor:pointer;transition:border-color .15s,background .15s}
+
+  /* --- 対象月バー --- */
+  .bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  .bar label{margin:0;white-space:nowrap}
+  .bar input[type=month]{width:auto}
+  .bar .progress{font-size:.85em;color:var(--mut)}
+  .savebadge{font-size:.78em;color:var(--grn);opacity:0;transition:opacity .3s}
+  .savebadge.show{opacity:1}
+  .savebadge.err{color:var(--red)}
+
+  /* --- 店舗一覧(常時表示リスト) --- */
+  table.venuelist{width:100%;border-collapse:collapse;font-size:.92em}
+  table.venuelist tr{cursor:pointer;border-bottom:1px solid var(--bor)}
+  table.venuelist tr:last-child{border-bottom:none}
+  table.venuelist tr:hover{background:#faf7f2}
+  table.venuelist tr.sel{background:#fdf6e6}
+  table.venuelist tr.done{color:var(--mut)}
+  table.venuelist td{padding:9px 6px;vertical-align:middle}
+  table.venuelist td.badge{width:52px;font-size:.78em;font-weight:700;white-space:nowrap}
+  tr.done td.badge{color:var(--grn)}
+  tr:not(.done) td.badge{color:var(--gold)}
+  table.venuelist td.name .area{color:var(--mut);font-weight:400;font-size:.9em}
+  table.venuelist td.src{text-align:right;white-space:nowrap}
+  table.venuelist td.src a{color:var(--felt);font-weight:700;text-decoration:none;font-size:.85em}
+  table.venuelist td.src a:hover{text-decoration:underline}
+  .linkbtn{background:none;border:none;color:var(--mut);font-size:.8em;text-decoration:underline;cursor:pointer;font-family:inherit}
+  .srcform{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+  .srcform input{width:auto;flex:1;min-width:100px;padding:4px 6px;font-size:.85em}
+
+  /* --- 選択中の店舗 & 登録エリア --- */
+  .picked{font-size:.98em;margin-bottom:12px}
+  .picked strong{color:var(--felt)}
+  .picked a{color:var(--felt);margin-left:8px}
+  .dropzone{border:2px dashed var(--bor);border-radius:10px;padding:18px;text-align:center;font-size:.85em;color:var(--mut);cursor:pointer;transition:border-color .15s,background .15s}
   .dropzone.drag{border-color:var(--gold);background:#fffaf0}
-  .dropzone input[type=file]{display:block;margin:8px auto 0}
+  .dropzone input[type=file]{display:block;margin:10px auto 0;width:auto}
   .thumbs{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
   .thumb{position:relative;width:72px;height:72px;border-radius:8px;overflow:hidden;border:1px solid var(--bor);flex-shrink:0}
   .thumb img{width:100%;height:100%;object-fit:cover;display:block}
   .thumb button{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:.7em;line-height:1;cursor:pointer}
-  .srcline{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:.85em}
-  .srcline a{color:var(--felt);font-weight:700;text-decoration:none;border:1px solid var(--bor);border-radius:8px;padding:4px 10px;background:#faf7f2}
-  .srcline a:hover{border-color:var(--gold)}
-  .srcform{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px}
-  .srcform input{width:auto;flex:1;min-width:140px}
+  details.textfallback{margin-top:10px}
+  details.textfallback summary{cursor:pointer;font-size:.82em;color:var(--mut)}
+  details.textfallback textarea{margin-top:8px}
+
+  details.settings{margin-top:22px}
+  details.settings>summary{cursor:pointer;font-size:.9em;font-weight:700;color:var(--mut);padding:6px 0}
+  details.settings .card h3{font-size:.9em;margin-bottom:6px}
+  .keybar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .keybar input{flex:1;min-width:200px}
+  .keybar select{max-width:220px;width:auto}
+
+  table.datatbl{width:100%;border-collapse:collapse;margin-top:8px;font-size:.82em}
+  table.datatbl th{background:#faf7f2;text-align:left;padding:6px 6px;color:var(--mut);font-size:.88em;border-bottom:1px solid var(--bor);white-space:nowrap}
+  table.datatbl td{padding:4px 5px;border-bottom:1px solid var(--bor);vertical-align:middle}
+  table.datatbl td input,table.datatbl td select{padding:4px 6px;font-size:.9em}
+  .tbl-wrap{overflow-x:auto}
+  .pill{display:inline-block;font-size:.72em;font-weight:700;padding:1px 8px;border-radius:20px;background:#eef0fe;color:#5560d0}
+  pre{background:#1b2320;color:#d4e5dd;padding:12px;border-radius:8px;overflow-x:auto;font-size:.78em;margin-top:10px;max-height:280px}
 </style>
 </head>
 <body>
@@ -72,109 +103,87 @@
 
 <div class="wrap">
 
-  <!-- STEP 0: API key -->
-  <div class="card">
-    <h2><span class="num">0</span>Claude API 設定</h2>
-    <div class="hint">告知テキストの整形に Claude API を使います。キーはこのブラウザ（localStorage）にのみ保存され、送信先は api.anthropic.com のみです。※公開せず自分専用で使ってください。</div>
-    <div class="keybar">
-      <input type="password" id="apikey" placeholder="sk-ant-... (Anthropic API キー)">
-      <select id="model" style="max-width:220px">
-        <option value="claude-opus-4-8">claude-opus-4-8（推奨・高精度）</option>
-        <option value="claude-haiku-4-5">claude-haiku-4-5（低コスト）</option>
-        <option value="claude-sonnet-5">claude-sonnet-5（中間）</option>
-      </select>
-      <button class="btn sm sec" onclick="saveKey()">保存</button>
-    </div>
+  <div class="bar">
+    <label style="margin:0">対象月</label>
+    <input type="month" id="targetMonth">
+    <span class="progress" id="progress"></span>
+    <span class="savebadge" id="saveBadge"></span>
   </div>
 
-  <!-- STEP 1: paste -> extract -->
-  <div class="card">
-    <h2><span class="num">1</span>月間スケジュールを取り込み → 自動抽出</h2>
-    <div class="hint">月末に全店舗ぶんを順番に処理する想定です。対象店舗を選ぶと、その店の情報取得先（LINE等）にすぐ飛べます。対象月ぶんを登録し終えた店舗は下の選択肢から自動的に外れます。</div>
-    <div class="row">
-      <div>
-        <label>対象月</label>
-        <input type="month" id="targetMonth">
-      </div>
-      <div>
-        <label>基準日（年が無い日付の解決に使用）</label>
-        <input type="date" id="baseDate">
-      </div>
-    </div>
-    <div class="hint" id="venueProgress" style="margin-bottom:0"></div>
+  <div class="card" style="padding:0">
+    <table class="venuelist" id="venueTable"><tbody></tbody></table>
+  </div>
 
-    <label>対象店舗</label>
-    <select id="venue"></select>
-    <div class="srcline" id="srcLine" style="margin-top:8px"></div>
+  <div class="card" id="entryCard" style="display:none">
+    <div class="picked" id="pickedInfo"></div>
 
-    <label style="margin-top:16px">告知画像（スクリーンショット等・複数可）</label>
     <div class="dropzone" id="dropzone">
-      画像をドラッグ＆ドロップ、貼り付け（⌘V）、またはファイル選択
+      画像をドラッグ＆ドロップ／貼り付け（⌘V）／クリックして選択
       <input type="file" id="imgFile" accept="image/*" multiple>
     </div>
     <div class="thumbs" id="thumbs"></div>
 
-    <label>告知テキスト（画像と併用可・どちらか一方でもOK）</label>
-    <textarea id="announce" placeholder="例）1/25(土) 19:00 START｜AceHigh Daily NLH｜BuyIn 3,000円 + AddOn 1,000円｜Stack 20,000｜レイト可 …"></textarea>
+    <details class="textfallback">
+      <summary>画像がない場合は代わりにテキストを貼り付け</summary>
+      <textarea id="announce" placeholder="例）1/25(土) 19:00 START｜AceHigh Daily NLH｜BuyIn 3,000円 + AddOn 1,000円｜Stack 20,000｜レイト可 …"></textarea>
+    </details>
+
     <div class="btnrow">
-      <button class="btn" id="extractBtn" onclick="extract()">🤖 抽出する</button>
-      <span class="status" id="exStatus"></span>
+      <button class="btn block" id="registerBtn">この店舗として登録する</button>
     </div>
+    <div class="status" id="regStatus"></div>
   </div>
 
-  <!-- STEP 2: review -->
-  <div class="card" id="reviewCard" style="display:none">
-    <h2><span class="num">2</span>抽出結果を確認・編集 → 登録</h2>
-    <div class="hint">内容を確認して必要なら修正し、「登録」で保存対象に追加します。抽出データは <code>source: "semi"</code> / <code>verified: false</code> で登録されます。</div>
-    <div class="tbl-wrap">
-      <table id="reviewTbl">
-        <thead><tr>
-          <th>日付</th><th>開始</th><th>大会名</th><th>BuyIn</th><th>AddOn</th><th>Stack</th><th>GTD</th><th>Re</th><th>タグ</th><th></th>
-        </tr></thead>
-        <tbody></tbody>
-      </table>
-    </div>
-    <div class="btnrow">
-      <button class="btn gold" onclick="commitReview()">✓ 登録（保存対象に追加）</button>
-      <button class="btn sec" onclick="clearReview()">破棄</button>
-    </div>
-  </div>
+  <details class="settings">
+    <summary>詳細設定</summary>
 
-  <!-- STEP 3: registered tournaments -->
-  <div class="card">
-    <h2><span class="num">3</span>登録済みトーナメント <span class="pill" id="tourCount">0</span></h2>
-    <div class="hint">公開サイトに反映されるデータです。行の 🗑 で削除できます。</div>
-    <div class="tbl-wrap">
-      <table id="dataTbl">
-        <thead><tr><th>日付</th><th>開始</th><th>店舗</th><th>大会名</th><th>BuyIn</th><th>GTD</th><th>取得元</th><th></th></tr></thead>
-        <tbody></tbody>
-      </table>
+    <div class="card">
+      <h3>Claude APIキー</h3>
+      <div class="hint">画像・テキストからの自動抽出に使います。「登録する」ボタンにはこのキーが必要です。キーはこのブラウザ（localStorage）にのみ保存され、送信先は api.anthropic.com のみです。</div>
+      <div class="keybar">
+        <input type="password" id="apikey" placeholder="sk-ant-... (Anthropic API キー)">
+        <select id="model">
+          <option value="claude-opus-4-8">claude-opus-4-8（推奨・高精度）</option>
+          <option value="claude-haiku-4-5">claude-haiku-4-5（低コスト）</option>
+          <option value="claude-sonnet-5">claude-sonnet-5（中間）</option>
+        </select>
+        <button class="btn sm sec" onclick="saveKey()">保存</button>
+      </div>
     </div>
-  </div>
 
-  <!-- STEP 4: venues editor -->
-  <div class="card">
-    <h2><span class="num">4</span>店舗データ（JSON）</h2>
-    <div class="hint">店舗の追加・編集はここで。<code>featured: true</code> でPR枠（上位固定・PRバッジ）になります。</div>
-    <textarea id="venuesJson" style="min-height:180px;font-family:ui-monospace,monospace;font-size:.8em"></textarea>
-    <div class="btnrow">
-      <button class="btn sec sm" onclick="applyVenues()">店舗JSONを反映</button>
-      <span class="status" id="vStatus"></span>
+    <div class="card">
+      <h3>登録済みトーナメント <span class="pill" id="tourCount">0</span></h3>
+      <div class="hint">公開サイトに反映されるデータです。直接修正したり、🗑で削除できます（変更は自動保存されます）。</div>
+      <div class="tbl-wrap">
+        <table class="datatbl" id="dataTbl">
+          <thead><tr><th>日付</th><th>開始</th><th>店舗</th><th>大会名</th><th>BuyIn</th><th>GTD</th><th>取得元</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </div>
-  </div>
 
-  <!-- STEP 5: export -->
-  <div class="card">
-    <h2><span class="num">5</span>data.js を生成 → 公開反映</h2>
-    <div class="hint">生成した <code>data.js</code> をリポジトリの <code>fukuoka-poker/data.js</code> に上書きコミットすると公開サイトに反映されます。</div>
-    <div class="btnrow">
-      <button class="btn" onclick="genData()">data.js を生成</button>
-      <button class="btn gold" onclick="download()">⬇ data.js をダウンロード</button>
-      <button class="btn sec" onclick="copyData()">コピー</button>
-      <span class="status" id="genStatus"></span>
+    <div class="card">
+      <h3>店舗データ(JSON)</h3>
+      <div class="hint">店舗の追加・編集はここで。<code>featured: true</code> でPR枠（上位固定・PRバッジ）になります。</div>
+      <textarea id="venuesJson" style="min-height:160px;font-family:ui-monospace,monospace;font-size:.8em"></textarea>
+      <div class="btnrow">
+        <button class="btn sec sm" onclick="applyVenues()">店舗JSONを反映</button>
+        <span class="status" id="vStatus"></span>
+      </div>
     </div>
-    <details><summary>プレビュー</summary><pre id="preview">（未生成）</pre></details>
-  </div>
+
+    <div class="card">
+      <h3>手動エクスポート</h3>
+      <div class="hint">通常は変更のたびに自動でこのディレクトリの <code>data.js</code> に保存されます（dev-server.py 経由）。自動保存できない環境（GitHub Pagesで直接開いた場合など）でのみ、こちらから手動で書き出してください。</div>
+      <div class="btnrow">
+        <button class="btn sec sm" onclick="genData()">data.js を生成</button>
+        <button class="btn sec sm" onclick="download()">⬇ ダウンロード</button>
+        <button class="btn sec sm" onclick="copyData()">コピー</button>
+        <span class="status" id="genStatus"></span>
+      </div>
+      <details><summary style="cursor:pointer;font-size:.85em;margin-top:8px">プレビュー</summary><pre id="preview">（未生成）</pre></details>
+    </div>
+  </details>
 
 </div>
 
@@ -182,13 +191,17 @@
 <script>
 (function(){
   const $ = id => document.getElementById(id);
-  // working copies (data.js may use relative dates for the demo; we normalize to absolute on load)
   let venues = (typeof VENUES !== 'undefined') ? JSON.parse(JSON.stringify(VENUES)) : [];
   let tours  = (typeof TOURNAMENTS !== 'undefined') ? JSON.parse(JSON.stringify(TOURNAMENTS)) : [];
   const areas = (typeof AREAS !== 'undefined') ? AREAS.slice() : [];
-  let review = [];
-  let lastGen = '';
   let images = []; // {mediaType, data(base64,no prefix), url(dataURL for preview)}
+  let selectedVenueId = null;
+  let editingSourceId = null;
+  let lastGen = '';
+
+  const pad2 = n => String(n).padStart(2,'0');
+  const yen = n => n==null ? '–' : '¥'+Number(n).toLocaleString('ja-JP');
+  const reMap = { late:'late', reentry:true, none:false };
 
   // --- key / model persistence ---
   $('apikey').value = localStorage.getItem('fpn_key') || '';
@@ -196,71 +209,106 @@
   window.saveKey = () => { localStorage.setItem('fpn_key', $('apikey').value.trim()); localStorage.setItem('fpn_model', $('model').value); alert('保存しました'); };
   $('model').addEventListener('change', () => localStorage.setItem('fpn_model', $('model').value));
 
-  // base date = today
-  const pad2 = n => String(n).padStart(2,'0');
   const t = new Date(); t.setHours(0,0,0,0);
-  $('baseDate').value = `${t.getFullYear()}-${pad2(t.getMonth()+1)}-${pad2(t.getDate())}`;
   $('targetMonth').value = `${t.getFullYear()}-${pad2(t.getMonth()+1)}`;
 
-  // --- venue queue: pending (未入力) vs done, for the selected target month ---
+  // --- 自動保存: 変更のたびに dev-server.py の /save-data へ書き出す ---
+  let saveTimer = null;
+  function persist(){
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(async () => {
+      const badge = $('saveBadge');
+      try{
+        const res = await fetch('/save-data', { method:'POST', body: buildFile() });
+        if(!res.ok) throw new Error('HTTP '+res.status);
+        badge.textContent = '✓ 保存しました ('+new Date().toLocaleTimeString('ja-JP')+')';
+        badge.className = 'savebadge show';
+      }catch(e){
+        badge.textContent = '自動保存できません(下の「詳細設定→手動エクスポート」から書き出してください)';
+        badge.className = 'savebadge show err';
+      }
+      setTimeout(()=>badge.classList.remove('show'), 4000);
+    }, 150);
+  }
+
+  // --- 店舗の完了判定(対象月にすでにトーナメントがあるか) ---
   function venueDone(v){
     const m = $('targetMonth').value;
     return !!m && tours.some(x => x.venueId===v.id && (x.date||'').slice(0,7)===m);
   }
-  function refreshVenueSelect(){
-    const prev = $('venue').value;
-    const pending = venues.filter(v=>!venueDone(v));
-    const done = venues.filter(v=>venueDone(v));
-    const opt = v => `<option value="${v.id}">${v.name}（${v.area}）</option>`;
-    $('venue').innerHTML =
-      (pending.length ? `<optgroup label="残り（未入力）">${pending.map(opt).join('')}</optgroup>` : '') +
-      (done.length ? `<optgroup label="✓ 入力済み">${done.map(opt).join('')}</optgroup>` : '') ||
-      '<option value="">(店舗未登録)</option>';
-    if(pending.some(v=>v.id===prev)) $('venue').value = prev; // まだ未入力なら選択を維持
-    else if(pending.length) $('venue').value = pending[0].id; // 入力済みになった/削除された→次の未入力店舗へ自動で進む
-    else if(venues.some(v=>v.id===prev)) $('venue').value = prev; // 全店舗入力済みならそのまま
-    renderProgress();
-    renderSourceLink();
-  }
+
+  function venueName(id){ const v = venues.find(x=>x.id===id); return v ? v.name : '(不明)'; }
+
   function renderProgress(){
     const m = $('targetMonth').value;
     const doneCount = venues.filter(venueDone).length;
-    $('venueProgress').textContent = venues.length
-      ? `対象月 ${m || '-'}：残り ${venues.length - doneCount} / ${venues.length} 店舗`
-      : '';
+    $('progress').textContent = venues.length ? `残り ${venues.length - doneCount} / ${venues.length} 店舗` : '';
   }
-  function renderSourceLink(){
-    const v = venues.find(x=>x.id===$('venue').value);
-    const box = $('srcLine');
-    if(!v){ box.innerHTML=''; return; }
-    if(v.sourceUrl){
-      box.innerHTML = `<a href="${v.sourceUrl}" target="_blank" rel="noopener">🔗 ${(v.sourceLabel||'情報取得先')}を開く</a><button class="btn sm sec" type="button" onclick="editSource()">編集</button>`;
-    } else {
-      box.innerHTML = `<span class="muted">情報取得先: 未設定</span> <button class="btn sm sec" type="button" onclick="editSource()">+ リンクを追加</button>`;
+
+  function srcCellHtml(v){
+    if(editingSourceId === v.id){
+      return `<div class="srcform">
+        <input id="srcLabelInput" placeholder="例: 公式LINE" value="${(v.sourceLabel||'').replace(/"/g,'&quot;')}" onclick="event.stopPropagation()">
+        <input id="srcUrlInput" placeholder="https://..." value="${(v.sourceUrl||'').replace(/"/g,'&quot;')}" onclick="event.stopPropagation()">
+        <button class="btn sm" type="button" onclick="event.stopPropagation();saveSource('${v.id}')">保存</button>
+        <button class="btn sm sec" type="button" onclick="event.stopPropagation();cancelEditSource()">キャンセル</button>
+      </div>`;
     }
+    if(v.sourceUrl){
+      return `<a href="${v.sourceUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()">🔗 ${(v.sourceLabel||'情報元').replace(/</g,'')}</a>
+        <button class="linkbtn" type="button" onclick="event.stopPropagation();editSource('${v.id}')">編集</button>`;
+    }
+    return `<button class="linkbtn" type="button" onclick="event.stopPropagation();editSource('${v.id}')">+ リンク追加</button>`;
   }
-  window.editSource = () => {
-    const v = venues.find(x=>x.id===$('venue').value);
-    if(!v) return;
-    $('srcLine').innerHTML = `<div class="srcform">
-      <input id="srcLabelInput" placeholder="例: 公式LINE" value="${(v.sourceLabel||'').replace(/"/g,'&quot;')}">
-      <input id="srcUrlInput" placeholder="https://..." value="${(v.sourceUrl||'').replace(/"/g,'&quot;')}">
-      <button class="btn sm" type="button" onclick="saveSource()">保存</button>
-      <button class="btn sm sec" type="button" onclick="renderSourceLink()">キャンセル</button>
-    </div>`;
-  };
-  window.saveSource = () => {
-    const v = venues.find(x=>x.id===$('venue').value);
+
+  function renderVenueList(){
+    const tb = $('venueTable').querySelector('tbody');
+    const rows = venues.map((v,i)=>({v,i,done:venueDone(v)}))
+      .sort((a,b)=> (a.done===b.done) ? a.i-b.i : (a.done?1:-1));
+    tb.innerHTML = rows.map(({v,done}) => `<tr class="${v.id===selectedVenueId?'sel':''} ${done?'done':''}" onclick="selectVenue('${v.id}')">
+      <td class="badge">${done?'✓ 済':'未'}</td>
+      <td class="name">${v.name}<span class="area">（${v.area}）</span></td>
+      <td class="src">${srcCellHtml(v)}</td>
+    </tr>`).join('');
+    renderProgress();
+  }
+
+  window.editSource = id => { editingSourceId = id; renderVenueList(); };
+  window.cancelEditSource = () => { editingSourceId = null; renderVenueList(); };
+  window.saveSource = id => {
+    const v = venues.find(x=>x.id===id);
     if(!v) return;
     v.sourceLabel = $('srcLabelInput').value.trim();
     v.sourceUrl = $('srcUrlInput').value.trim();
+    editingSourceId = null;
     refreshVenuesJson();
-    renderSourceLink();
+    renderVenueList();
+    renderPicked();
+    persist();
   };
-  $('venue').addEventListener('change', renderSourceLink);
-  $('targetMonth').addEventListener('change', refreshVenueSelect);
 
-  // --- announcement images (screenshots of monthly calendars etc.) ---
+  function renderPicked(){
+    const v = venues.find(x=>x.id===selectedVenueId);
+    if(!v){ $('entryCard').style.display='none'; return; }
+    $('entryCard').style.display='block';
+    const src = v.sourceUrl
+      ? `<a href="${v.sourceUrl}" target="_blank" rel="noopener">🔗 ${(v.sourceLabel||'情報元')}を開く</a>`
+      : `<a href="#" onclick="event.preventDefault();editSource('${v.id}')">+ 情報取得先を追加</a>`;
+    $('pickedInfo').innerHTML = `<strong>${v.name}</strong>（${v.area}）を登録中 ${src}`;
+  }
+
+  window.selectVenue = id => {
+    if(selectedVenueId !== id){
+      images = []; renderThumbs();
+      $('announce').value = '';
+      $('regStatus').className = 'status'; $('regStatus').textContent = '';
+    }
+    selectedVenueId = id;
+    renderVenueList();
+    renderPicked();
+  };
+
+  // --- 画像(貼り付け/ドラッグ&ドロップ/選択) ---
   function fileToImage(file){
     return new Promise((resolve, reject)=>{
       const reader = new FileReader();
@@ -284,7 +332,6 @@
     $('thumbs').innerHTML = images.map((img,i)=>`<div class="thumb"><img src="${img.url}"><button type="button" onclick="removeImage(${i})">✕</button></div>`).join('');
   }
   window.removeImage = i => { images.splice(i,1); renderThumbs(); };
-  function clearImages(){ images = []; renderThumbs(); }
 
   $('imgFile').addEventListener('change', e => { addFiles(e.target.files); e.target.value=''; });
   const dz = $('dropzone');
@@ -293,18 +340,13 @@
   dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
   dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag'); addFiles(e.dataTransfer.files); });
   window.addEventListener('paste', e => {
+    if(!selectedVenueId) return;
     const items = (e.clipboardData && e.clipboardData.items) || [];
     const files = Array.from(items).filter(it=>it.type && it.type.startsWith('image/')).map(it=>it.getAsFile()).filter(Boolean);
     if(files.length) addFiles(files);
   });
 
-  function venueName(id){ const v = venues.find(x=>x.id===id); return v ? v.name : '(不明)'; }
-  const yen = n => n==null ? '–' : '¥'+Number(n).toLocaleString('ja-JP');
-
-  const reMap = { late:'late', reentry:true, none:false };
-  const reLabel = v => v==='late'?'レイト':(v===true?'Re可':'なし');
-
-  // --- extraction ---
+  // --- 抽出スキーマ ---
   const SCHEMA = {
     type:'object', additionalProperties:false,
     properties:{ tournaments:{ type:'array', items:{
@@ -321,27 +363,31 @@
     required:['tournaments']
   };
 
-  window.extract = async () => {
+  $('registerBtn').addEventListener('click', async () => {
     const key = $('apikey').value.trim();
     const text = $('announce').value.trim();
-    const st = $('exStatus');
-    if(!key){ st.className='status err'; st.textContent='API キーを入力してください'; return; }
-    if(!text && !images.length){ st.className='status err'; st.textContent='告知テキストまたは画像を追加してください'; return; }
-    $('extractBtn').disabled = true;
+    const st = $('regStatus');
+    const vid = selectedVenueId;
+    if(!vid){ st.className='status err'; st.textContent='まず店舗を選んでください'; return; }
+    if(!key){ st.className='status err'; st.textContent='下の「詳細設定」でAPIキーを入力してください'; return; }
+    if(!text && !images.length){ st.className='status err'; st.textContent='画像またはテキストを追加してください'; return; }
+    $('registerBtn').disabled = true;
     st.className='status'; st.textContent='抽出中…';
-    const instructions = `あなたは福岡のアミューズメントポーカー店のトーナメント告知（テキスト、または月間スケジュールの画像）を構造化するアシスタントです。開催される全トーナメントを抽出してください。
-- 入力は告知テキスト・1枚〜複数枚の画像（月間カレンダー表やスケジュール画像）のいずれか、または両方です。画像がカレンダー/表形式の場合は、日付ごとの行をそれぞれ1トーナメントとして抽出してください。
-- 今日の基準日: ${$('baseDate').value}。年が無い日付は基準日以降の直近の日付として解釈。
-- buyin / addon は円の整数（例: 3000）。addon が無ければ null。
-- stack は初期スタックの点数（整数）。
-- guarantee は GTD/保証額の円（無ければ null）。
+
+    const month = $('targetMonth').value;
+    const instructions = `あなたは福岡のアミューズメントポーカー店のトーナメント告知(テキスト、または月間スケジュールの画像)を構造化するアシスタントです。開催される全トーナメントを抽出してください。
+- 入力は告知テキスト・1枚〜複数枚の画像(月間カレンダー表やスケジュール画像)のいずれか、または両方です。画像がカレンダー/表形式の場合は、日付ごとの行をそれぞれ1トーナメントとして抽出してください。
+- 対象月は ${month || '不明'} です。年が無い日付はこの月のものとして解釈してください。
+- buyin / addon は円の整数(例: 3000)。addon が無ければ null。
+- stack は初期スタックの点数(整数)。
+- guarantee は GTD/保証額の円(無ければ null)。
 - reentry: レイトエントリー可なら "late"、リエントリー/リバイ可なら "reentry"、記載無しなら "none"。
-- tags: 該当するラベルを日本語で（大型 / メイン / ターボ / ディープ / バウンティ / 女性歓迎 / デイリー など）。
-  - 「大型」は次のいずれかに該当し、かつ想定エントリー数が最低100人以上の場合のみ付与する: (a) 複数店舗を巻き込んでサテライトが行われている本線（決勝/本戦）トーナメント、(b) 大会場を借りて実施するイベント的なトーナメント。
-  - 1店舗だけで完結する通常営業のトーナメント（各店舗のDAY1サテライト等を含む）は、たとえ大きい大会の予選であっても、それ単体では「大型」を付けない。100人以上の根拠が告知文から読み取れない場合も付けない。
+- tags: 該当するラベルを日本語で(大型 / メイン / ターボ / ディープ / バウンティ / 女性歓迎 / デイリー など)。
+  - 「大型」は次のいずれかに該当し、かつ想定エントリー数が最低100人以上の場合のみ付与する: (a) 複数店舗を巻き込んでサテライトが行われている本線(決勝/本戦)トーナメント、(b) 大会場を借りて実施するイベント的なトーナメント。
+  - 1店舗だけで完結する通常営業のトーナメント(各店舗のDAY1サテライト等を含む)は、たとえ大きい大会の予選であっても、それ単体では「大型」を付けない。100人以上の根拠が告知文から読み取れない場合も付けない。
 - prize: 賞品/賞金の記載があれば短く、無ければ null。
 確実に読み取れない数値は無理に埋めず、buyin/stack が不明なら 0 にしてください。`;
-    const textBlock = text ? `\n\n告知テキスト:\n${text}` : '\n\n（添付画像を参照してください）';
+    const textBlock = text ? `\n\n告知テキスト:\n${text}` : '\n\n(添付画像を参照してください)';
     const content = [
       ...images.map(img => ({ type:'image', source:{ type:'base64', media_type: img.mediaType, data: img.data } })),
       { type:'text', text: instructions + textBlock }
@@ -367,91 +413,71 @@
       const block = (data.content||[]).find(b=>b.type==='text');
       if(!block) throw new Error('応答にテキストがありません');
       const parsed = JSON.parse(block.text);
-      review = (parsed.tournaments||[]);
-      if(!review.length){ st.className='status err'; st.textContent='トーナメントを検出できませんでした'; return; }
-      renderReview();
-      st.className='status ok'; st.textContent = review.length+'件を抽出しました。内容を確認してください。';
+      const extracted = parsed.tournaments || [];
+      if(!extracted.length){ st.className='status err'; st.textContent='トーナメントを検出できませんでした'; return; }
+
+      // 同じ店舗・同じ対象月の既存データは今回の内容で置き換える(再登録による重複を防ぐ)
+      tours = tours.filter(x => !(x.venueId===vid && (x.date||'').slice(0,7)===month));
+      const base = Date.now();
+      extracted.forEach((r,i)=>{
+        tours.push({
+          id:'t'+(base+i), venueId: vid, name: r.name||'(名称未設定)',
+          date: r.date, start: r.start||'', buyin: r.buyin||0,
+          addon: r.addon==null?null:r.addon, stack: r.stack||0,
+          guarantee: r.guarantee==null?null:r.guarantee,
+          reentry: reMap[r.reentry], prize: r.prize||null,
+          tags: r.tags||[], source:'semi', verified:false
+        });
+      });
+
+      images = []; renderThumbs();
+      $('announce').value = '';
+      renderData();
+      renderVenueList();
+      persist();
+      st.className='status ok';
+      st.textContent = `✓ ${extracted.length}件登録しました。内容がおかしい場合は下の「詳細設定→登録済みトーナメント」で直接修正できます。`;
     }catch(e){
       st.className='status err'; st.textContent='抽出失敗: '+e.message;
     }finally{
-      $('extractBtn').disabled = false;
+      $('registerBtn').disabled = false;
     }
-  };
+  });
 
-  function renderReview(){
-    $('reviewCard').style.display='block';
-    const tb = $('reviewTbl').querySelector('tbody');
-    tb.innerHTML = review.map((r,i)=>`<tr>
-      <td><input type="date" value="${r.date||''}" onchange="review[${i}].date=this.value"></td>
-      <td><input value="${r.start||''}" style="width:64px" onchange="review[${i}].start=this.value"></td>
-      <td><input value="${(r.name||'').replace(/"/g,'&quot;')}" onchange="review[${i}].name=this.value"></td>
-      <td><input type="number" value="${r.buyin||0}" style="width:80px" onchange="review[${i}].buyin=+this.value"></td>
-      <td><input type="number" value="${r.addon==null?'':r.addon}" style="width:80px" onchange="review[${i}].addon=this.value===''?null:+this.value"></td>
-      <td><input type="number" value="${r.stack||0}" style="width:80px" onchange="review[${i}].stack=+this.value"></td>
-      <td><input type="number" value="${r.guarantee==null?'':r.guarantee}" style="width:90px" onchange="review[${i}].guarantee=this.value===''?null:+this.value"></td>
-      <td><select onchange="review[${i}].reentry=this.value">
-        <option value="late"${r.reentry==='late'?' selected':''}>レイト</option>
-        <option value="reentry"${r.reentry==='reentry'?' selected':''}>Re可</option>
-        <option value="none"${r.reentry==='none'?' selected':''}>なし</option>
-      </select></td>
-      <td><input value="${(r.tags||[]).join(',')}" style="width:120px" onchange="review[${i}].tags=this.value.split(',').map(s=>s.trim()).filter(Boolean)"></td>
-      <td><button class="btn sm sec" onclick="review.splice(${i},1);renderReview()">✕</button></td>
-    </tr>`).join('');
-  }
-  window.renderReview = renderReview;
-  window.review = review;
-
-  window.clearReview = () => { review=[]; window.review=review; $('reviewCard').style.display='none'; };
-
-  window.commitReview = () => {
-    const vid = $('venue').value;
-    let base = Date.now();
-    review.forEach((r,i)=>{
-      tours.push({
-        id:'t'+(base+i), venueId: vid, name: r.name||'(名称未設定)',
-        date: r.date, start: r.start||'', buyin: r.buyin||0,
-        addon: r.addon==null?null:r.addon, stack: r.stack||0,
-        guarantee: r.guarantee==null?null:r.guarantee,
-        reentry: reMap[r.reentry] , prize: r.prize||null,
-        tags: r.tags||[], source:'semi', verified:false
-      });
-    });
-    clearReview();
-    $('announce').value='';
-    clearImages();
-    renderData();
-    refreshVenueSelect(); // 対象月ぶんが揃った店舗はここで選択肢から外れ、次の未入力店舗へ進む
-  };
-
+  // --- 登録済みトーナメント(直接編集可能) ---
   function renderData(){
     tours.sort((a,b)=> (a.date||'').localeCompare(b.date||'') || (a.start||'').localeCompare(b.start||''));
     $('tourCount').textContent = tours.length;
     const tb = $('dataTbl').querySelector('tbody');
-    tb.innerHTML = tours.map((t,i)=>`<tr>
-      <td>${t.date||'–'}</td><td>${t.start||'–'}</td><td>${venueName(t.venueId)}</td>
-      <td>${(t.name||'').replace(/</g,'&lt;')}</td><td>${yen(t.buyin)}</td>
-      <td>${t.guarantee?('¥'+(t.guarantee/10000)+'万'):'–'}</td>
-      <td>${t.source||'?'}${t.verified?' ✓':''}</td>
-      <td><button class="btn sm sec" onclick="delTour('${t.id}')">🗑</button></td>
+    tb.innerHTML = tours.map((tr,i)=>`<tr>
+      <td><input type="date" value="${tr.date||''}" onchange="editTour(${i},'date',this.value)"></td>
+      <td><input value="${tr.start||''}" style="width:56px" onchange="editTour(${i},'start',this.value)"></td>
+      <td>${venueName(tr.venueId)}</td>
+      <td><input value="${(tr.name||'').replace(/"/g,'&quot;')}" onchange="editTour(${i},'name',this.value)"></td>
+      <td><input type="number" value="${tr.buyin||0}" style="width:70px" onchange="editTour(${i},'buyin',+this.value)"></td>
+      <td><input type="number" value="${tr.guarantee==null?'':tr.guarantee}" style="width:80px" onchange="editTour(${i},'guarantee',this.value===''?null:+this.value)"></td>
+      <td>${tr.source||'?'}${tr.verified?' ✓':''}</td>
+      <td><button class="btn sm sec" onclick="delTour('${tr.id}')">🗑</button></td>
     </tr>`).join('');
   }
-  window.delTour = id => { tours = tours.filter(t=>t.id!==id); renderData(); refreshVenueSelect(); };
+  window.editTour = (i, field, value) => { if(tours[i]){ tours[i][field] = value; renderVenueList(); persist(); } };
+  window.delTour = id => { tours = tours.filter(x=>x.id!==id); renderData(); renderVenueList(); persist(); };
 
-  // --- venues editor ---
+  // --- 店舗データ(JSON) ---
   function refreshVenuesJson(){ $('venuesJson').value = JSON.stringify(venues, null, 2); }
   window.applyVenues = () => {
     const st=$('vStatus');
     try{ const v=JSON.parse($('venuesJson').value); if(!Array.isArray(v)) throw new Error('配列である必要があります');
-      venues=v; refreshVenueSelect(); renderData(); st.className='status ok'; st.textContent='反映しました';
+      venues=v; renderVenueList(); renderData(); st.className='status ok'; st.textContent='反映しました'; persist();
     }catch(e){ st.className='status err'; st.textContent='JSONエラー: '+e.message; }
   };
 
-  // --- export ---
+  // --- 手動エクスポート(フォールバック) ---
   function buildFile(){
     const j = o => JSON.stringify(o, null, 2);
     return `/* ============================================================
  * data.js — 福岡ポーカートーナメント・アグリゲーター データ層
- * 管理コンソール(admin.html)で生成。実データ（絶対日付）。
+ * 管理コンソール(admin.html)で生成。実データ(絶対日付)。
  * ============================================================ */
 
 const VENUES = ${j(venues)};
@@ -463,12 +489,17 @@ const AREAS = ${j(areas)};
 if (typeof module !== 'undefined') { module.exports = { VENUES, TOURNAMENTS, AREAS }; }
 `;
   }
-  window.genData = () => { lastGen = buildFile(); $('preview').textContent = lastGen; $('genStatus').className='status ok'; $('genStatus').textContent='生成しました（'+tours.length+'件）'; };
+  window.genData = () => { lastGen = buildFile(); $('preview').textContent = lastGen; $('genStatus').className='status ok'; $('genStatus').textContent='生成しました('+tours.length+'件)'; };
   window.download = () => { if(!lastGen) window.genData(); const b=new Blob([lastGen],{type:'text/javascript'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='data.js'; a.click(); };
-  window.copyData = async () => { if(!lastGen) window.genData(); try{ await navigator.clipboard.writeText(lastGen); $('genStatus').className='status ok'; $('genStatus').textContent='コピーしました'; }catch(e){ $('genStatus').className='status err'; $('genStatus').textContent='コピー不可（プレビューから手動でコピーしてください）'; } };
+  window.copyData = async () => { if(!lastGen) window.genData(); try{ await navigator.clipboard.writeText(lastGen); $('genStatus').className='status ok'; $('genStatus').textContent='コピーしました'; }catch(e){ $('genStatus').className='status err'; $('genStatus').textContent='コピー不可(プレビューから手動でコピーしてください)'; } };
+
+  $('targetMonth').addEventListener('change', () => { renderVenueList(); renderPicked(); });
 
   // init
-  refreshVenueSelect(); refreshVenuesJson(); renderData();
+  refreshVenuesJson();
+  renderVenueList();
+  renderData();
+  renderPicked();
 })();
 </script>
 </body>
