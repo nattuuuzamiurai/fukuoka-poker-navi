@@ -166,6 +166,14 @@
           return;
         }
         if(!res.ok) throw new Error('HTTP '+res.status);
+        const text = await res.text();
+        if(text.startsWith('WARN:')){
+          // 保存自体は行われている。大きな減少を知らせるだけの非ブロッキング警告。
+          badge.textContent = '⚠ ' + text.slice(5);
+          badge.className = 'savebadge show err';
+          setTimeout(()=>badge.classList.remove('show'), 9000);
+          return;
+        }
         badge.textContent = '✓ 保存しました ('+new Date().toLocaleTimeString('ja-JP')+')';
         badge.className = 'savebadge show';
       }catch(e){

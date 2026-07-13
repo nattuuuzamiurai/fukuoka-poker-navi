@@ -19,20 +19,25 @@ PORT = 8787
 DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_FILE = os.path.join(DIR, 'data.js')
 
-# 保存内容が壊れたJSでないかだけを確認する(店舗を閉店等で意図的に減らす
-# 保存も正当な操作のため、件数の増減そのものは制限しない)。
-VALIDATE_SCRIPT = "require(process.argv[1]); console.log('ok');"
+# 保存内容が壊れたJSでないか、VENUES件数がいくつあるかを確認する。
+# 閉店等での数件程度の意図的な削除は正当な操作なので保存自体は常に許可するが、
+# 「空に近いデータで丸ごと上書き」のような壊滅的な減り方だけは異常とみなし、
+# 保存はしつつ警告を返す(ブロックはしない。ブロックすると正当な削除の邪魔になるため)。
+COUNT_SCRIPT = "const p = require(process.argv[1]); console.log((p.VENUES||[]).length);"
 
 
-def is_valid_js(path):
+def venue_count(path):
+    """壊れたJS/読み込み不能なら None を返す。"""
     try:
         out = subprocess.run(
-            ['node', '-e', VALIDATE_SCRIPT, path],
+            ['node', '-e', COUNT_SCRIPT, path],
             capture_output=True, text=True, timeout=10, cwd=DIR
         )
-        return out.returncode == 0
+        if out.returncode != 0:
+            return None
+        return int(out.stdout.strip())
     except Exception:
-        return False
+        return None
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
@@ -56,15 +61,23 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             tmp.write(body)
             tmp_path = tmp.name
         try:
-            if not is_valid_js(tmp_path):
+            new_count = venue_count(tmp_path)
+            if new_count is None:
                 self.reject('保存を拒否しました: 送信内容が正しいJSとして読み込めません')
                 return
         finally:
             os.remove(tmp_path)
 
+        old_count = venue_count(DATA_FILE)
+
         with open(DATA_FILE, 'w', encoding='utf-8') as f:
             f.write(body)
-        resp = 'ok'.encode('utf-8')
+
+        # 半分以下に激減した場合のみ警告(保存自体は行う)。数件程度の意図的な削除は対象外。
+        if old_count and new_count < old_count * 0.5:
+            resp = f'WARN:店舗数が {old_count} → {new_count} に大きく減りました。意図した変更か確認してください。'.encode('utf-8')
+        else:
+            resp = 'ok'.encode('utf-8')
         self.send_response(200)
         self.send_header('Content-Type', 'text/plain; charset=utf-8')
         self.send_header('Content-Length', str(len(resp)))
