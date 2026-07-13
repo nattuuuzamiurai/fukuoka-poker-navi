@@ -24,7 +24,6 @@
   .hbar{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;max-width:1000px;margin:0 auto}
   .logo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:1em}
   .logo .pip{color:var(--gold2)}
-  .hbar .line-btn{background:#06c755;color:#fff;font-size:.78em;font-weight:700;padding:7px 13px;border-radius:20px;white-space:nowrap}
   .back-link{color:#fff;font-size:.85em;font-weight:800;text-decoration:none;flex-shrink:0}
   .back-link:hover{text-decoration:underline}
   .venue-header-name{font-weight:800;font-size:.95em;color:#3a2a06;text-align:right;max-width:65%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -116,12 +115,6 @@
   .vlink.line{background:#06c755;color:#fff}
   .vlink.ig{background:linear-gradient(45deg,#f09433,#dc2743,#bc1888);color:#fff}
 
-  /* LINE CTA */
-  .linecta{background:linear-gradient(135deg,#06c755,#04a548);color:#fff;border-radius:var(--r);padding:22px 18px;text-align:center;margin-top:26px}
-  .linecta h3{font-size:1.12em;font-weight:800}
-  .linecta p{font-size:.85em;opacity:.95;margin-top:6px}
-  .linecta a{display:inline-block;background:#fff;color:#06a34a;font-weight:800;padding:11px 26px;border-radius:24px;margin-top:14px;font-size:.92em}
-
   /* FOOTER */
   footer{background:#1b2320;color:#9aa39d;padding:26px 16px;font-size:.8em;text-align:center;line-height:1.9}
   footer a{color:var(--gold2)}
@@ -139,7 +132,6 @@
 <header>
   <div class="hbar" id="hbar-list">
     <div class="logo"><span class="pip">♠</span>ふくおかポーカーナビ</div>
-    <a class="line-btn" href="#line">LINEで新着通知</a>
   </div>
   <div class="hbar hbar-venue" id="hbar-venue" style="display:none">
     <a class="back-link" href="#">← 一覧へ戻る</a>
@@ -195,12 +187,6 @@
   </div>
 
   <div id="page-venue" style="display:none"></div>
-
-  <div class="linecta" id="line">
-    <h3>📣 新着トーナメントをLINEで通知</h3>
-    <p>友だち追加で、福岡の大型大会・GTD更新を自動でお届け。<br>アプリ不要・無料。行きたい大会を見逃さない。</p>
-    <a href="#">＋ 友だち追加</a>
-  </div>
 
   <div class="ad" style="margin-top:26px"><b>広告 / SPONSORED</b>AdSense・PR枠 — この位置に広告 or 店舗のPRバナー</div>
 </main>
