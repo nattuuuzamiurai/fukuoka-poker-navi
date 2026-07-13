@@ -74,15 +74,15 @@ const VENUES = [
     "area": "中洲",
     "address": "福岡市博多区中洲3-7-10 若松ビル4F",
     "access": "中洲川端駅 徒歩2分",
-    "x": "",
+    "x": "https://x.com/Leje0118",
     "line": "",
-    "instagram": "",
+    "instagram": "https://www.instagram.com/leje.hakata/",
     "website": "https://www.lejehakata.com/",
     "tel": "092-291-9200",
     "featured": false,
-    "note": "入場1,000円飲み放題",
-    "sourceLabel": "",
-    "sourceUrl": ""
+    "note": "入場1,000円飲み放題。毎週固定の曜日別トーナメントスケジュールあり(月〜日で内容が決まっている)。",
+    "sourceLabel": "X",
+    "sourceUrl": "https://x.com/Leje0118"
   },
   {
     "id": "v6",
@@ -113,8 +113,8 @@ const VENUES = [
     "tel": "",
     "featured": false,
     "note": "無料初心者講習あり",
-    "sourceLabel": "",
-    "sourceUrl": ""
+    "sourceLabel": "X",
+    "sourceUrl": "https://x.com/poker_fuxk"
   },
   {
     "id": "v8",
@@ -128,9 +128,9 @@ const VENUES = [
     "website": "",
     "tel": "",
     "featured": false,
-    "note": "営業状況要確認・住所未確認",
-    "sourceLabel": "",
-    "sourceUrl": ""
+    "note": "営業状況要確認・住所未確認。月・火曜定休(2026年7月カレンダーより確認)。",
+    "sourceLabel": "X",
+    "sourceUrl": "https://x.com/RAISEBLUE_poker"
   },
   {
     "id": "v9",
@@ -1199,7 +1199,35 @@ const TOURNAMENTS = [
   { "id": "kk0728b", "venueId": "v2", "name": "マルチサテライトW", "date": "2026-07-28", "start": "18:30", "buyin": 3000, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": null, "tags": ["サテライト"], "source": "semi", "verified": false },
   { "id": "kk0729a", "venueId": "v2", "name": "PLO 講座会", "date": "2026-07-29", "start": "19:00", "buyin": 2000, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": null, "tags": ["PLO", "勉強会"], "source": "semi", "verified": false },
   { "id": "kk0731a", "venueId": "v2", "name": "JOPT サテライト", "date": "2026-07-31", "start": "17:00", "buyin": 5000, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": null, "tags": ["サテライト", "JOPT"], "source": "semi", "verified": false },
-  { "id": "kk0731b", "venueId": "v2", "name": "5K MIX B.B.", "date": "2026-07-31", "start": "20:00", "buyin": 5000, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": null, "tags": ["ミックス", "バウンティ"], "source": "semi", "verified": false }
+  { "id": "kk0731b", "venueId": "v2", "name": "5K MIX B.B.", "date": "2026-07-31", "start": "20:00", "buyin": 5000, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": null, "tags": ["ミックス", "バウンティ"], "source": "semi", "verified": false },
+  { "id": "fx0706", "venueId": "v7", "name": "ライトトナメ", "date": "2026-07-06", "start": "19:00", "buyin": 1500, "addon": 1000, "stack": 0, "guarantee": null, "reentry": true, "prize": null, "tags": [], "source": "semi", "verified": false },
+  { "id": "fx0707", "venueId": "v7", "name": "七夕タッグ（ペア参加・特別開催）", "date": "2026-07-07", "start": "19:00", "buyin": 4000, "addon": 4000, "stack": 0, "guarantee": null, "reentry": true, "prize": null, "tags": ["タッグ", "特別開催"], "source": "semi", "verified": false },
+  { "id": "fx0708", "venueId": "v7", "name": "FUXKトナメ（メイン・一部配信）", "date": "2026-07-08", "start": "19:00", "buyin": 3000, "addon": 2000, "stack": 0, "guarantee": null, "reentry": true, "prize": null, "tags": ["メイン"], "source": "semi", "verified": false },
+  { "id": "fx0709", "venueId": "v7", "name": "FUXKフリロ", "date": "2026-07-09", "start": "19:00", "buyin": 0, "addon": 1000, "stack": 0, "guarantee": null, "reentry": true, "prize": null, "tags": ["フリーロール"], "source": "semi", "verified": false },
+  { "id": "fx0710a", "venueId": "v7", "name": "ROOKIESトナメ（初心者無料DAY）", "date": "2026-07-10", "start": "18:00", "buyin": 0, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": null, "tags": ["初心者"], "source": "semi", "verified": false },
+  { "id": "fx0710b", "venueId": "v7", "name": "FUXK TURBO", "date": "2026-07-10", "start": "21:00", "buyin": 0, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": "料金は別紙参照", "tags": ["ターボ"], "source": "semi", "verified": false },
+  { "id": "fx0711a", "venueId": "v7", "name": "ゆうかバースデートナメ①（7月生まれスタッフ生誕祝い）", "date": "2026-07-11", "start": "15:30", "buyin": 3000, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": null, "tags": ["特別開催"], "source": "semi", "verified": false },
+  { "id": "fx0711b", "venueId": "v7", "name": "ゆうかバースデートナメ②（7月生まれスタッフ生誕祝い）", "date": "2026-07-11", "start": "19:00", "buyin": 4000, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": null, "tags": ["特別開催"], "source": "semi", "verified": false },
+  { "id": "fx0712a", "venueId": "v7", "name": "FUXK TURBO", "date": "2026-07-12", "start": "17:00", "buyin": 0, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": "料金は別紙参照", "tags": ["ターボ"], "source": "semi", "verified": false },
+  { "id": "fx0712b", "venueId": "v7", "name": "FUXK TURBO", "date": "2026-07-12", "start": "20:00", "buyin": 0, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": "料金は別紙参照", "tags": ["ターボ"], "source": "semi", "verified": false },
+  { "id": "rb0701", "venueId": "v8", "name": "RGS satellite", "date": "2026-07-01", "start": "19:00", "buyin": 3000, "addon": 2000, "stack": 0, "guarantee": null, "reentry": true, "prize": null, "tags": ["サテライト"], "source": "semi", "verified": false },
+  { "id": "rb0702", "venueId": "v8", "name": "RGS satellite", "date": "2026-07-02", "start": "19:00", "buyin": 3000, "addon": 2000, "stack": 0, "guarantee": null, "reentry": true, "prize": null, "tags": ["サテライト"], "source": "semi", "verified": false },
+  { "id": "rb0703", "venueId": "v8", "name": "FST satellite", "date": "2026-07-03", "start": "19:30", "buyin": 3000, "addon": 2000, "stack": 0, "guarantee": null, "reentry": true, "prize": null, "tags": ["サテライト", "FST"], "source": "semi", "verified": false },
+  { "id": "rb0704", "venueId": "v8", "name": "RGS Highroller satellite（2枠保証）", "date": "2026-07-04", "start": "19:30", "buyin": 6000, "addon": 4000, "stack": 0, "guarantee": null, "reentry": true, "prize": "2枠保証", "tags": ["サテライト", "ハイローラー"], "source": "semi", "verified": false },
+  { "id": "rb0705", "venueId": "v8", "name": "RGS HIGHROLLER90（枠保証）", "date": "2026-07-05", "start": "", "buyin": 0, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": "枠保証・詳細は別紙参照", "tags": ["ハイローラー"], "source": "semi", "verified": false },
+  { "id": "rb0707", "venueId": "v8", "name": "FST satellite", "date": "2026-07-07", "start": "19:30", "buyin": 3000, "addon": 2000, "stack": 0, "guarantee": null, "reentry": true, "prize": null, "tags": ["サテライト", "FST"], "source": "semi", "verified": false },
+  { "id": "rb0708", "venueId": "v8", "name": "BLUE ATTACK（110000保証）", "date": "2026-07-08", "start": "19:00", "buyin": 4000, "addon": 2000, "stack": 0, "guarantee": 110000, "reentry": true, "prize": null, "tags": [], "source": "semi", "verified": false },
+  { "id": "rb0709", "venueId": "v8", "name": "ベリー×FSTチケット（230000保証）", "date": "2026-07-09", "start": "19:00", "buyin": 6000, "addon": 5000, "stack": 0, "guarantee": 230000, "reentry": true, "prize": null, "tags": ["FST"], "source": "semi", "verified": false },
+  { "id": "rb0710", "venueId": "v8", "name": "JOPT satellite（6枚保証）", "date": "2026-07-10", "start": "19:30", "buyin": 5000, "addon": 3000, "stack": 0, "guarantee": null, "reentry": true, "prize": "6枚保証", "tags": ["サテライト", "JOPT"], "source": "semi", "verified": false },
+  { "id": "rb0711", "venueId": "v8", "name": "SUPER BLUE ATTACK", "date": "2026-07-11", "start": "16:00", "buyin": 8000, "addon": 4000, "stack": 0, "guarantee": null, "reentry": true, "prize": "詳細は後日Xにて告知", "tags": [], "source": "semi", "verified": false },
+  { "id": "rb0712", "venueId": "v8", "name": "SUPER CHAMPIONSHIP SIDE EVENT", "date": "2026-07-12", "start": "", "buyin": 0, "addon": null, "stack": 0, "guarantee": null, "reentry": false, "prize": "詳細は後日Xにて告知", "tags": [], "source": "semi", "verified": false },
+  { "id": "rb0714", "venueId": "v8", "name": "FST satellite", "date": "2026-07-14", "start": "19:30", "buyin": 3000, "addon": 2000, "stack": 0, "guarantee": null, "reentry": true, "prize": null, "tags": ["サテライト", "FST"], "source": "semi", "verified": false },
+  { "id": "rb0715", "venueId": "v8", "name": "BLUE ATTACK（110000保証）", "date": "2026-07-15", "start": "19:00", "buyin": 4000, "addon": 2000, "stack": 0, "guarantee": 110000, "reentry": true, "prize": null, "tags": [], "source": "semi", "verified": false },
+  { "id": "nw0713", "venueId": "v13", "name": "WJPT チケット争奪トーナメント", "date": "2026-07-13", "start": "19:30", "buyin": 1500, "addon": null, "stack": 20000, "guarantee": null, "reentry": false, "prize": null, "tags": ["サテライト", "WJPT"], "source": "semi", "verified": false },
+  { "id": "nw0714", "venueId": "v13", "name": "フリーロールトーナメント3.0", "date": "2026-07-14", "start": "19:30", "buyin": 0, "addon": null, "stack": 30000, "guarantee": null, "reentry": false, "prize": null, "tags": ["フリーロール"], "source": "semi", "verified": false },
+  { "id": "nw0715", "venueId": "v13", "name": "WJPT チケット争奪トーナメント", "date": "2026-07-15", "start": "19:30", "buyin": 1500, "addon": null, "stack": 20000, "guarantee": null, "reentry": false, "prize": null, "tags": ["サテライト", "WJPT"], "source": "semi", "verified": false },
+  { "id": "nw0716", "venueId": "v13", "name": "WJPT チケット争奪トーナメント", "date": "2026-07-16", "start": "19:30", "buyin": 1500, "addon": null, "stack": 20000, "guarantee": null, "reentry": false, "prize": null, "tags": ["サテライト", "WJPT"], "source": "semi", "verified": false },
+  { "id": "nw0717", "venueId": "v13", "name": "フリーロールトーナメント3.0", "date": "2026-07-17", "start": "19:30", "buyin": 0, "addon": null, "stack": 30000, "guarantee": null, "reentry": false, "prize": null, "tags": ["フリーロール"], "source": "semi", "verified": false }
 ];
 
 const AREAS = [
@@ -1215,4 +1243,24 @@ const AREAS = [
   "久留米"
 ];
 
-if (typeof module !== 'undefined') { module.exports = { VENUES, TOURNAMENTS, AREAS }; }
+/* 毎週固定の曜日で開催される定期トーナメント。日付ではなく weekday(0=日〜6=土)で管理し、
+ * 公開サイト側で任意の月に展開して表示する(月ごとの入れ替え作業は不要)。
+ * RecurringTournament {
+ *   id, venueId, weekday(0-6),
+ *   name, start, lateReg,
+ *   buyin, buyinStack, reentryFee, reentryStack, addon(円|null), addonStack(点|null),
+ *   blindTime, tags
+ * }
+ */
+const RECURRING = [
+  { id: "rec_v5_mon", venueId: "v5", weekday: 1, name: "DAILY TOURNAMENT", start: "19:00", lateReg: "22:00", buyin: 3000, buyinStack: 20000, reentryFee: 2000, reentryStack: 20000, addon: 2000, addonStack: 20000, blindTime: "20min", tags: [] },
+  { id: "rec_v5_tue", venueId: "v5", weekday: 2, name: "LEJE HYPER!", start: "19:00", lateReg: "22:00", buyin: 2000, buyinStack: 20000, reentryFee: 2000, reentryStack: 20000, addon: 1000, addonStack: 20000, blindTime: "20min", tags: ["ターボ"] },
+  { id: "rec_v5_wed", venueId: "v5", weekday: 3, name: "Mystery BOUNTY", start: "19:00", lateReg: "22:00", buyin: 3000, buyinStack: 20000, reentryFee: 3000, reentryStack: 20000, addon: null, addonStack: null, blindTime: "Leje special structure", tags: ["バウンティ"] },
+  { id: "rec_v5_thu", venueId: "v5", weekday: 4, name: "HAKATA classic", start: "20:00", lateReg: "22:30", buyin: 3000, buyinStack: 30000, reentryFee: 3000, reentryStack: 30000, addon: 1000, addonStack: 15000, blindTime: "20min", tags: [] },
+  { id: "rec_v5_fri", venueId: "v5", weekday: 5, name: "FRIDAY TOURNAMENT", start: "19:00", lateReg: "22:00", buyin: 3000, buyinStack: 25000, reentryFee: 2000, reentryStack: 25000, addon: 2000, addonStack: 25000, blindTime: "25/20min", tags: [] },
+  { id: "rec_v5_sat", venueId: "v5", weekday: 6, name: "MEGA DEEP TOURNAMENT", start: "19:00", lateReg: "22:00", buyin: 3000, buyinStack: 40000, reentryFee: 3000, reentryStack: 40000, addon: null, addonStack: null, blindTime: "20min", tags: ["ディープ"] },
+  { id: "rec_v5_sun1", venueId: "v5", weekday: 0, name: "MAIN TOURNAMENT", start: "15:00", lateReg: "19:15", buyin: 5000, buyinStack: 50000, reentryFee: 5000, reentryStack: 50000, addon: null, addonStack: null, blindTime: "30min", tags: ["メイン"] },
+  { id: "rec_v5_sun2", venueId: "v5", weekday: 0, name: "3K multi TOURNAMENT", start: "20:00", lateReg: "22:30", buyin: 3000, buyinStack: 25000, reentryFee: 3000, reentryStack: 25000, addon: null, addonStack: null, blindTime: "25/20min", tags: ["ミックス"] }
+];
+
+if (typeof module !== 'undefined') { module.exports = { VENUES, TOURNAMENTS, AREAS, RECURRING }; }

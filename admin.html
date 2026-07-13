@@ -140,6 +140,7 @@
   let venues = (typeof VENUES !== 'undefined') ? JSON.parse(JSON.stringify(VENUES)) : [];
   let tours  = (typeof TOURNAMENTS !== 'undefined') ? JSON.parse(JSON.stringify(TOURNAMENTS)) : [];
   const areas = (typeof AREAS !== 'undefined') ? AREAS.slice() : [];
+  const recurring = (typeof RECURRING !== 'undefined') ? JSON.parse(JSON.stringify(RECURRING)) : [];
   let editingSourceId = null;
   let lastGen = '';
 
@@ -168,8 +169,10 @@
     }, 150);
   }
 
-  // --- 店舗の完了判定(対象月にすでにトーナメントがあるか) ---
+  // --- 店舗の完了判定(対象月にすでにトーナメントがあるか)。
+  // 曜日固定の定期スケジュール(RECURRING)を持つ店舗は月ごとの再入力が不要なので、常に「済み」扱いにする。
   function venueDone(v){
+    if (recurring.some(r => r.venueId === v.id)) return true;
     const m = $('targetMonth').value;
     return !!m && tours.some(x => x.venueId===v.id && (x.date||'').slice(0,7)===m);
   }
@@ -265,7 +268,9 @@ const TOURNAMENTS = ${j(tours)};
 
 const AREAS = ${j(areas)};
 
-if (typeof module !== 'undefined') { module.exports = { VENUES, TOURNAMENTS, AREAS }; }
+const RECURRING = ${j(recurring)};
+
+if (typeof module !== 'undefined') { module.exports = { VENUES, TOURNAMENTS, AREAS, RECURRING }; }
 `;
   }
   window.genData = () => { lastGen = buildFile(); $('preview').textContent = lastGen; $('genStatus').className='status ok'; $('genStatus').textContent='生成しました('+tours.length+'件)'; };

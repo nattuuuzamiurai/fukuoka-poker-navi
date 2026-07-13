@@ -90,6 +90,7 @@
   .dot{width:6px;height:6px;border-radius:50%;background:var(--grn)}
   .dot.semi{background:var(--gold)}
   .dot.manual{background:#a89}
+  .dot.recurring{background:#5560d0}
   .tc-actions{display:flex;gap:7px;align-items:center}
   .abtn{font-size:.76em;font-weight:700;padding:6px 12px;border-radius:8px;border:1px solid var(--bor);cursor:pointer}
   .abtn.pri{background:var(--felt);color:#fff;border-color:var(--felt)}
@@ -221,14 +222,41 @@
   const selArea = document.getElementById('sel-area');
   AREAS.forEach(a => { const o=document.createElement('option'); o.value=a; o.textContent=a; selArea.appendChild(o); });
 
+  // --- 毎週固定の定期トーナメント(RECURRING)を、日付ごとの通常トーナメントと同じ形に展開する ---
+  // 月の入れ替え作業なしで「ずっと同じトーナメントを表示」できるよう、date は表示対象の期間に合わせて都度計算する。
+  const RECURRING_LIST = (typeof RECURRING !== 'undefined') ? RECURRING : [];
+  function dateStr(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+  function expandRecurring(fromDate, toDate){
+    const out = [];
+    if (!RECURRING_LIST.length) return out;
+    const d = new Date(fromDate); d.setHours(0,0,0,0);
+    const end = new Date(toDate); end.setHours(0,0,0,0);
+    while (d <= end) {
+      const wd = d.getDay(), ds = dateStr(d);
+      RECURRING_LIST.filter(r => r.weekday === wd).forEach(r => {
+        out.push({
+          id: `${r.id}_${ds}`, venueId: r.venueId, name: r.name, date: ds, start: r.start,
+          buyin: r.buyin, addon: r.addon==null?null:r.addon, stack: r.buyinStack || 0,
+          guarantee: null, reentry: true, prize: null,
+          tags: r.tags || [], source: 'recurring', verified: true
+        });
+      });
+      d.setDate(d.getDate() + 1);
+    }
+    return out;
+  }
+  const addDays = (d,n) => { const x=new Date(d); x.setDate(x.getDate()+n); return x; };
+  // 一覧・店舗カードの「今後の開催件数」用に、今日から60日分だけ定期分を展開して結合しておく
+  const ALL_TOURNAMENTS = TOURNAMENTS.concat(expandRecurring(today, addDays(today, 60)));
+
   // stats
-  document.getElementById('stat-t').textContent = TOURNAMENTS.length;
+  document.getElementById('stat-t').textContent = ALL_TOURNAMENTS.length;
   document.getElementById('stat-v').textContent = VENUES.length;
   const todayStr = iso(today).toISOString().slice(0,10);
   const _t = new Date(); _t.setHours(0,0,0,0);
   const y=_t.getFullYear(), m=String(_t.getMonth()+1).padStart(2,'0'), dd=String(_t.getDate()).padStart(2,'0');
   const localToday = `${y}-${m}-${dd}`;
-  document.getElementById('stat-today').textContent = TOURNAMENTS.filter(t=>t.date===localToday).length;
+  document.getElementById('stat-today').textContent = ALL_TOURNAMENTS.filter(t=>t.date===localToday).length;
 
   const state = { when:'all', area:'all', tag:'all' };
 
@@ -247,7 +275,7 @@
   }
 
   function render(){
-    const rows = TOURNAMENTS
+    const rows = ALL_TOURNAMENTS
       .filter(t => inWhen(t.date))
       .filter(t => { const v=venueById[t.venueId]; return state.area==='all' || (v && v.area===state.area); })
       .filter(t => inTag(t.tags))
@@ -257,7 +285,7 @@
 
     const list = document.getElementById('list');
     if (!rows.length){
-      const msg = TOURNAMENTS.length === 0
+      const msg = ALL_TOURNAMENTS.length === 0
         ? '掲載トーナメントは順次追加中です。<br>下の掲載店舗のSNS・公式サイトから最新の開催情報をご確認ください。'
         : '条件に合うトーナメントがありません。<br>フィルタを変えてお試しください。';
       list.innerHTML = '<div class="empty">'+msg+'</div>'; return;
@@ -279,8 +307,8 @@
     if (t.reentry) tags.push(`<span class="mtag re">${t.reentry==='late'?'レイト可':'リエントリー可'}</span>`);
     (t.tags||[]).forEach(tg => tags.push(`<span class="mtag${tg==='大型'?' big':''}">${tg}</span>`));
     if (t.stack) tags.push(`<span class="mtag">${t.stack.toLocaleString()}点</span>`);
-    const srcCls = t.source==='auto'?'':(t.source==='semi'?'semi':'manual');
-    const srcLbl = t.source==='auto'?'自動取得':(t.source==='semi'?'SNS取込':'手動');
+    const srcCls = t.source==='auto'?'':(t.source==='semi'?'semi':(t.source==='recurring'?'recurring':'manual'));
+    const srcLbl = t.source==='auto'?'自動取得':(t.source==='semi'?'SNS取込':(t.source==='recurring'?'定期開催':'手動'));
     const sns = [];
     if (v.x) sns.push(`<a class="ticon x" href="${v.x}" target="_blank" rel="noopener" aria-label="X（旧Twitter）"><svg viewBox="0 0 24 24" width="13" height="13" fill="#fff"><path d="M18.9 2H22l-7.6 8.7L23 22h-6.9l-5.4-6.6L4.6 22H1.5l8.1-9.3L1 2h7.1l4.9 6.1L18.9 2Zm-1.2 18h1.9L7.4 4H5.4l12.3 16Z"/></svg></a>`);
     if (v.instagram) sns.push(`<a class="ticon ig" href="${v.instagram}" target="_blank" rel="noopener" aria-label="Instagram"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r="1.1" fill="#fff" stroke="none"/></svg></a>`);
@@ -327,8 +355,10 @@
     const prevStr = `${prevD.getFullYear()}-${String(prevD.getMonth()+1).padStart(2,'0')}`;
     const nextStr = `${nextD.getFullYear()}-${String(nextD.getMonth()+1).padStart(2,'0')}`;
 
+    const monthStart = new Date(yy, mm-1, 1), monthEnd = new Date(yy, mm, 0);
     const rows = TOURNAMENTS
       .filter(t => t.venueId===venueId && t.date.slice(0,7)===monthStr)
+      .concat(expandRecurring(monthStart, monthEnd).filter(t => t.venueId===venueId))
       .sort((a,b)=> a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
 
     const links = [];
@@ -397,7 +427,7 @@
       if (v.x) links.push(`<a class="vlink x" href="${v.x}" target="_blank" rel="noopener">X</a>`);
       if (v.line) links.push(`<a class="vlink line" href="${v.line}" target="_blank" rel="noopener">LINE</a>`);
       if (v.instagram) links.push(`<a class="vlink ig" href="${v.instagram}" target="_blank" rel="noopener">IG</a>`);
-      const upcoming = TOURNAMENTS.filter(t=>t.venueId===v.id && iso(t.date)>=today).length;
+      const upcoming = ALL_TOURNAMENTS.filter(t=>t.venueId===v.id && iso(t.date)>=today).length;
       return `<div class="vcard${v.featured?' feat':''}">
         <div class="vc-name">${v.featured?'<span class="star">★</span>':''}${v.name}</div>
         <div class="vc-area">${v.area}　|　${v.access||''}</div>
