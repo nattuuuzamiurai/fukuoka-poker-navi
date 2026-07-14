@@ -86,7 +86,7 @@ const VENUES = [
   },
   {
     "id": "v7",
-    "name": "ポーカーハウスFUXK 福岡天神店",
+    "name": "FUXK 福岡天神店",
     "area": "天神",
     "address": "福岡市中央区春吉3-21-18 2F",
     "access": "天神南駅 徒歩5分",
@@ -102,7 +102,7 @@ const VENUES = [
   },
   {
     "id": "v8",
-    "name": "RAISE BLUE 天神ポーカーハウス",
+    "name": "RAISE BLUE 天神",
     "area": "天神",
     "address": "",
     "access": "天神駅 徒歩約10分",
@@ -134,7 +134,7 @@ const VENUES = [
   },
   {
     "id": "v13",
-    "name": "アミューズメントPokerBar NUWLAND",
+    "name": "PokerBar NUWLAND",
     "area": "北九州",
     "address": "北九州市小倉北区京町2-4-27 ロックビル3F",
     "access": "小倉駅 徒歩2分",
@@ -326,7 +326,7 @@ const VENUES = [
   },
   {
     "id": "v26",
-    "name": "JOKER♠️ポーカーハウス 福岡大橋",
+    "name": "JOKER♠️ 福岡大橋",
     "area": "大橋",
     "address": "",
     "access": "大橋駅周辺",
@@ -439,7 +439,7 @@ const VENUES = [
   },
   {
     "id": "v34",
-    "name": "アミューズメントポーカー KING&QUEEN SUITED 黒崎店",
+    "name": "KING&QUEEN SUITED 黒崎店",
     "area": "北九州",
     "address": "福岡県北九州市八幡西区黒崎2-6-17 ケイズプレイス黒崎Ⅱ2F",
     "access": "JR黒崎駅 徒歩5分",
@@ -455,7 +455,7 @@ const VENUES = [
   },
   {
     "id": "v35",
-    "name": "アミューズメントポーカー A&K（Ace and King）",
+    "name": "A&K（Ace and King）",
     "area": "久留米",
     "address": "福岡県久留米市東町38-19 富田屋ビル3F",
     "access": "西鉄久留米駅 徒歩1分",
