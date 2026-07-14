@@ -2,6 +2,14 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-L7091YHTFH"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-L7091YHTFH', { send_page_view: false });
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>福岡ポーカートーナメント日程 | ふくおかポーカーナビ</title>
 <meta name="description" content="福岡県内（天神・中洲・北九州・久留米・筑豊）のアミューズメントポーカー店のトーナメント日程を一括で確認。日付・エリア・種類（サテライト/PLO/NLH）で絞り込み。">
@@ -464,6 +472,12 @@
       document.getElementById('page-list').style.display = '';
       document.getElementById('page-venue').style.display = 'none';
       document.title = '福岡ポーカートーナメント日程 | ふくおかポーカーナビ';
+    }
+    if (typeof gtag === 'function'){
+      gtag('event', 'page_view', {
+        page_path: location.pathname + location.hash,
+        page_title: document.title
+      });
     }
   }
 
