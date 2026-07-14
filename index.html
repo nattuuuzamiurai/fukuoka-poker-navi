@@ -110,6 +110,7 @@
   .tc-buyin{text-align:right;flex-shrink:0}
   .tc-buyin b{font-size:1.12em;font-weight:800}
   .tc-buyin b.unknown{font-size:.68em;font-weight:700;color:var(--mut);display:block;max-width:80px;line-height:1.3;text-align:right}
+  .tc-buyin b.free{font-size:.78em;font-weight:800;color:var(--grn);display:block;max-width:80px;line-height:1.3;text-align:right}
   .tc-buyin span{display:block;font-size:.64em;color:var(--mut);font-weight:600}
   .tc-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px;align-items:center}
   .mtag{font-size:.72em;font-weight:700;padding:2px 9px;border-radius:20px;background:var(--chip);color:#6b6055}
@@ -223,7 +224,6 @@
   <div class="disc">
     掲載情報は各店舗のSNS・公式サイト等をもとに自動/手動で収集しています。開催内容は変更される場合があるため、
     参加前に必ず各店舗の公式情報をご確認ください。当サイトはアミューズメント（賭博性のない娯楽）目的の情報を掲載します。
-    ※現在の掲載データは構造デモ用のサンプルです。
   </div>
 </footer>
 
@@ -342,7 +342,7 @@
           <div class="tc-name">${t.name}</div>
           <div class="tc-venue"><span class="area">${v.area||''}</span><a href="#venue/${t.venueId}">${v.name||''}</a></div>
         </div>
-        <div class="tc-buyin">${t.buyin?`<b>${fmt(t.buyin)}</b>`:'<b class="unknown">詳細は店舗SNSを確認</b>'}<span>${t.addon?('+AO '+fmt(t.addon)):(t.stack?('STACK '+t.stack.toLocaleString()):'')}</span></div>
+        <div class="tc-buyin">${t.buyin?`<b>${fmt(t.buyin)}</b>`:((t.tags||[]).some(tg=>tg.includes('フリーロール'))?'<b class="free">フリーロール</b>':'<b class="unknown">詳細は店舗SNSを確認</b>')}<span>${t.addon?('+AO '+fmt(t.addon)):(t.stack?('STACK '+t.stack.toLocaleString()):'')}</span></div>
       </div>
       <div class="tc-meta">${tags.join('')}</div>
       <div class="tc-foot">

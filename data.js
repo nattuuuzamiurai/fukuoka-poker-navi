@@ -112,7 +112,7 @@ const VENUES = [
     "website": "",
     "tel": "",
     "featured": false,
-    "note": "営業状況要確認・住所未確認。月・火曜定休(2026年7月カレンダーより確認)。",
+    "note": "営業継続を確認済み(2026-07-14)。住所は未確認。月・火曜定休(2026年7月カレンダーより確認)。",
     "sourceLabel": "X",
     "sourceUrl": "https://x.com/RAISEBLUE_poker"
   },
@@ -564,7 +564,8 @@ const TOURNAMENTS = [
       "WJPT"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "k0706",
@@ -808,7 +809,8 @@ const TOURNAMENTS = [
       "リング"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "k0719",
@@ -826,7 +828,8 @@ const TOURNAMENTS = [
       "リング"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "k0720",
@@ -844,7 +847,8 @@ const TOURNAMENTS = [
       "バウンティ"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "k0721",
@@ -862,7 +866,8 @@ const TOURNAMENTS = [
       "リーグ"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "k0722",
@@ -880,7 +885,8 @@ const TOURNAMENTS = [
       "リーグ"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "k0723",
@@ -898,7 +904,8 @@ const TOURNAMENTS = [
       "リーグ"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "k0724",
@@ -916,7 +923,8 @@ const TOURNAMENTS = [
       "リーグ"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "k0725",
@@ -932,7 +940,8 @@ const TOURNAMENTS = [
     "prize": null,
     "tags": [],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "k0726",
@@ -951,7 +960,8 @@ const TOURNAMENTS = [
       "決勝"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "k0727",
@@ -2193,7 +2203,8 @@ const TOURNAMENTS = [
       "初心者"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "fx0710b",
@@ -2211,7 +2222,8 @@ const TOURNAMENTS = [
       "ターボ"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "fx0711a",
@@ -2265,7 +2277,8 @@ const TOURNAMENTS = [
       "ターボ"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "fx0712b",
@@ -2283,7 +2296,8 @@ const TOURNAMENTS = [
       "ターボ"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "rb0701",
@@ -2375,7 +2389,8 @@ const TOURNAMENTS = [
       "ハイローラー"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "rb0707",
@@ -2479,7 +2494,8 @@ const TOURNAMENTS = [
     "prize": "詳細は後日Xにて告知",
     "tags": [],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "rb0714",
@@ -3672,7 +3688,8 @@ const TOURNAMENTS = [
     "prize": null,
     "tags": [],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "cc0708a",
@@ -3690,7 +3707,8 @@ const TOURNAMENTS = [
       "特別開催"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "cc0708b",
@@ -3706,7 +3724,8 @@ const TOURNAMENTS = [
     "prize": null,
     "tags": [],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "cc0709a",
@@ -3741,7 +3760,8 @@ const TOURNAMENTS = [
     "prize": null,
     "tags": [],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "cc0710a",
@@ -3776,7 +3796,8 @@ const TOURNAMENTS = [
     "prize": null,
     "tags": [],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "cc0714a",
@@ -3811,7 +3832,8 @@ const TOURNAMENTS = [
     "prize": null,
     "tags": [],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "cc0715a",
@@ -3846,7 +3868,8 @@ const TOURNAMENTS = [
     "prize": null,
     "tags": [],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "cc0716a",
@@ -3881,7 +3904,8 @@ const TOURNAMENTS = [
     "prize": null,
     "tags": [],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "cc0717a",
@@ -3916,7 +3940,8 @@ const TOURNAMENTS = [
     "prize": null,
     "tags": [],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "cc0718a",
@@ -3951,7 +3976,8 @@ const TOURNAMENTS = [
     "prize": null,
     "tags": [],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "cc0719a",
@@ -3986,7 +4012,8 @@ const TOURNAMENTS = [
     "prize": null,
     "tags": [],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "cc0720a",
@@ -4021,7 +4048,8 @@ const TOURNAMENTS = [
     "prize": null,
     "tags": [],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "cc0721a",
@@ -4056,7 +4084,8 @@ const TOURNAMENTS = [
     "prize": null,
     "tags": [],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "cc0722a",
@@ -4091,7 +4120,8 @@ const TOURNAMENTS = [
     "prize": null,
     "tags": [],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "cc0723a",
@@ -4109,7 +4139,8 @@ const TOURNAMENTS = [
       "特別開催"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "cc0723b",
@@ -4125,7 +4156,8 @@ const TOURNAMENTS = [
     "prize": null,
     "tags": [],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "cc0724a",
@@ -4143,7 +4175,8 @@ const TOURNAMENTS = [
       "特別開催"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "cc0724b",
@@ -4159,7 +4192,8 @@ const TOURNAMENTS = [
     "prize": null,
     "tags": [],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "cc0725a",
@@ -4196,7 +4230,8 @@ const TOURNAMENTS = [
       "特別開催"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "cc0725c",
@@ -4214,7 +4249,8 @@ const TOURNAMENTS = [
       "特別開催"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "cc0726a",
@@ -4232,7 +4268,8 @@ const TOURNAMENTS = [
       "特別開催"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "cc0726b",
@@ -4250,7 +4287,8 @@ const TOURNAMENTS = [
       "特別開催"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "cc0726c",
@@ -4268,7 +4306,8 @@ const TOURNAMENTS = [
       "特別開催"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "s70712",
@@ -4286,7 +4325,8 @@ const TOURNAMENTS = [
       "特別開催"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "s70713",
@@ -4304,7 +4344,8 @@ const TOURNAMENTS = [
       "サテライト"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "s70714",
@@ -4322,7 +4363,8 @@ const TOURNAMENTS = [
       "サテライト"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "s70715",
@@ -4340,7 +4382,8 @@ const TOURNAMENTS = [
       "サテライト"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "s70716",
@@ -4375,7 +4418,8 @@ const TOURNAMENTS = [
       "WJPT"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "s70718",
@@ -4393,7 +4437,8 @@ const TOURNAMENTS = [
       "ディープ"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "s70721",
@@ -4425,7 +4470,8 @@ const TOURNAMENTS = [
     "prize": null,
     "tags": [],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "s70723",
@@ -4459,7 +4505,8 @@ const TOURNAMENTS = [
       "サテライト"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "s70725",
@@ -4477,7 +4524,8 @@ const TOURNAMENTS = [
       "特別開催"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "jk0713a",
@@ -4713,7 +4761,8 @@ const TOURNAMENTS = [
     "prize": null,
     "tags": [],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "dj0702",
@@ -4747,7 +4796,8 @@ const TOURNAMENTS = [
     "prize": null,
     "tags": [],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "dj0704",
@@ -4783,7 +4833,8 @@ const TOURNAMENTS = [
       "店舗DAY1"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "dj0706",
@@ -4833,7 +4884,8 @@ const TOURNAMENTS = [
     "prize": null,
     "tags": [],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "dj0709",
@@ -4851,7 +4903,8 @@ const TOURNAMENTS = [
       "サテライト"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "dj0711",
@@ -4867,7 +4920,8 @@ const TOURNAMENTS = [
     "prize": null,
     "tags": [],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "dj0713",
@@ -4917,7 +4971,8 @@ const TOURNAMENTS = [
     "prize": null,
     "tags": [],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "dj0716",
@@ -4988,7 +5043,8 @@ const TOURNAMENTS = [
     "prize": null,
     "tags": [],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "dj0723",
@@ -5077,7 +5133,8 @@ const TOURNAMENTS = [
       "特別開催"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "dj0730",
@@ -5114,7 +5171,8 @@ const TOURNAMENTS = [
       "特別開催"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "cx0703",
@@ -5132,7 +5190,8 @@ const TOURNAMENTS = [
       "店舗DAY1"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "cx0704",
@@ -5150,7 +5209,8 @@ const TOURNAMENTS = [
       "サテライト"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "cx0711",
@@ -5168,7 +5228,8 @@ const TOURNAMENTS = [
       "特別開催"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "cx0719",
@@ -5186,7 +5247,8 @@ const TOURNAMENTS = [
       "初心者"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "cx0726",
@@ -5204,7 +5266,8 @@ const TOURNAMENTS = [
       "ターボ"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "sk0704",
@@ -5240,7 +5303,8 @@ const TOURNAMENTS = [
       "店舗DAY1"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "sk0725a",
