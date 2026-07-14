@@ -137,6 +137,7 @@
   .vc-name .star{color:var(--gold)}
   .vc-area{font-size:.76em;color:var(--mut);margin-top:3px}
   .vc-links{display:flex;gap:7px;margin-top:11px;flex-wrap:wrap}
+  .vc-cta{display:inline-block;margin-top:11px}
   .vlink{font-size:.72em;font-weight:700;padding:5px 10px;border-radius:7px;background:var(--chip);color:#6b6055}
   .vlink.x{background:#111;color:#fff}
   .vlink.line{background:#06c755;color:#fff}
@@ -151,6 +152,10 @@
     .hero h1{font-size:1.15em}
     .tc-buyin{display:none}
     .shead h2{font-size:1em}
+    .venues{grid-template-columns:repeat(4,1fr);gap:7px}
+    .vcard{padding:9px 4px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60px;cursor:pointer}
+    .vcard .vc-area,.vcard .vc-links,.vcard .vc-cta{display:none}
+    .vc-name{font-size:.68em;line-height:1.25;justify-content:center;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
   }
 </style>
 </head>
@@ -470,12 +475,12 @@
       if (v.line) links.push(`<a class="vlink line" href="${v.line}" target="_blank" rel="noopener">LINE</a>`);
       if (v.instagram) links.push(`<a class="vlink ig" href="${v.instagram}" target="_blank" rel="noopener">IG</a>`);
       const upcoming = ALL_TOURNAMENTS.filter(t=>t.venueId===v.id && iso(t.date)>=today).length;
-      return `<div class="vcard${v.featured?' feat':''}">
+      return `<div class="vcard${v.featured?' feat':''}" onclick="if(!event.target.closest('a')) location.hash='#venue/${v.id}'">
         <div class="vc-name">${v.featured?'<span class="star">★</span>':''}${v.name}</div>
         <div class="vc-area">${v.area}　|　${v.access||''}</div>
         <div class="vc-area" style="margin-top:4px;color:var(--felt);font-weight:700">今後の開催 ${upcoming}件</div>
         <div class="vc-links">${links.join('')}</div>
-        <a class="abtn pri" href="#venue/${v.id}" style="display:inline-block;margin-top:11px">今月の予定を見る →</a>
+        <a class="abtn pri vc-cta" href="#venue/${v.id}">今月の予定を見る →</a>
       </div>`;
     }).join('');
   }
