@@ -106,6 +106,11 @@
   /* TOURNAMENT CARD */
   .tcard{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:15px 16px;margin-bottom:10px;position:relative;overflow:hidden}
   .tcard.feat{border-color:var(--gold)}
+  /* 既に開始済み(サイト表示時刻より前に開始)のトーナメントは灰色にして識別しやすく */
+  .tcard.started{background:var(--chip);opacity:.62;filter:grayscale(.55)}
+  .tcard.started .tc-name,.tcard.started .tc-venue,.tcard.started .tc-venue a,.tcard.started .tc-time b,.tcard.started .tc-buyin b{color:#8b8377!important}
+  .tcard.started .tc-name::before{color:#b3ab9d}
+  .tcard.started .tc-time span{color:#a39a8b;font-weight:700}
   .tcard.feat::before{content:"PR";position:absolute;top:0;right:0;background:var(--gold);color:#3a2a06;font-size:.62em;font-weight:800;padding:3px 10px;border-bottom-left-radius:9px;letter-spacing:.05em}
   .tc-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
   .tc-time{text-align:center;flex-shrink:0}
@@ -250,6 +255,20 @@
   const today = new Date(); today.setHours(0,0,0,0);
   const iso = d => { const t=new Date(d); t.setHours(0,0,0,0); return t; };
 
+  // --- 開始時刻の扱い ---
+  // start が "HH:MM" 形式で確定しているか判定。未確定(不明)は末尾へ回すためのソートキーを返す。
+  const hasStart = t => !!(t && t.start && /^\d{1,2}:\d{2}$/.test(t.start));
+  // 1桁の時(例 "9:30")も比較できるようゼロ埋め。未確定は "99:99" で最後尾に。
+  const startKey = t => hasStart(t) ? t.start.replace(/^(\d):/, '0$1:') : '99:99';
+  // 画面を開いた「今」の時刻(HH:MM)
+  const nowHM = () => { const n=new Date(); return String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0'); };
+  // そのトーナメントがすでに開始済みか(=灰色表示にする対象か)
+  function isStarted(t){
+    if (t.date < localToday) return true;   // 過去日はすべて開始済み扱い
+    if (t.date > localToday) return false;  // 未来日はこれから
+    return hasStart(t) && startKey(t) < nowHM(); // 本日: 開始時刻を過ぎたら開始済み(ちょうどの時刻はまだトップに表示)
+  }
+
   const venueById = {};
   VENUES.forEach(v => venueById[v.id] = v);
 
@@ -317,7 +336,8 @@
       .filter(t => inWhen(t.date))
       .filter(t => { const v=venueById[t.venueId]; return state.area==='all' || (v && v.area===state.area); })
       .filter(t => inTag(t.tags))
-      .sort((a,b)=> a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
+      // 日付昇順 → 同日内は開始時刻昇順。時間未確定(不明)は startKey='99:99' で末尾へ。
+      .sort((a,b)=> a.date.localeCompare(b.date) || startKey(a).localeCompare(startKey(b)));
 
     document.getElementById('list-cnt').textContent = rows.length + '件';
 
@@ -336,6 +356,29 @@
     let html = '';
     Object.keys(groups).sort().forEach(date => { html += renderDateGroup(date, groups[date]); });
     list.innerHTML = html;
+
+    // 初回表示時のみ: 「今から後に始まるトーナメント」が画面トップに来るようスクロール。
+    // 開始済み(灰色)のカードはその上に残るので、上へスライドすれば確認できる。
+    maybeScrollToUpcoming(list);
+  }
+
+  let didInitialScroll = false;
+  function maybeScrollToUpcoming(list){
+    if (didInitialScroll || state.when!=='today') return;
+    const firstUpcoming = list.querySelector('.tcard:not(.started)');
+    const hasStarted = list.querySelector('.tcard.started');
+    if (!firstUpcoming || !hasStarted) return; // 開始済みが無ければスクロール不要
+    requestAnimationFrame(() => {
+      // 店舗ページ表示中(一覧が非表示)のときはスクロールしない
+      const pageList = document.getElementById('page-list');
+      if (didInitialScroll || (pageList && pageList.style.display === 'none')) return;
+      didInitialScroll = true;
+      const header = document.querySelector('header');
+      const filters = document.querySelector('.filters');
+      const offset = (header?header.offsetHeight:0) + (filters?filters.offsetHeight:0) + 12;
+      const y = firstUpcoming.getBoundingClientRect().top + window.pageYOffset - offset;
+      window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+    });
   }
 
   function renderTournamentCard(t){
@@ -350,9 +393,10 @@
     if (v.x) sns.push(`<a class="ticon x" href="${v.x}" target="_blank" rel="noopener" aria-label="X（旧Twitter）"><svg viewBox="0 0 24 24" width="13" height="13" fill="#fff"><path d="M18.9 2H22l-7.6 8.7L23 22h-6.9l-5.4-6.6L4.6 22H1.5l8.1-9.3L1 2h7.1l4.9 6.1L18.9 2Zm-1.2 18h1.9L7.4 4H5.4l12.3 16Z"/></svg></a>`);
     if (v.instagram) sns.push(`<a class="ticon ig" href="${v.instagram}" target="_blank" rel="noopener" aria-label="Instagram"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r="1.1" fill="#fff" stroke="none"/></svg></a>`);
     if (v.line) sns.push(`<a class="ticon line" href="${v.line}" target="_blank" rel="noopener" aria-label="公式LINE"><svg viewBox="0 0 24 24" width="14" height="14" fill="#fff"><path d="M12 3C6.5 3 2 6.6 2 11c0 3.6 3 6.7 7.1 7.7-.3 1.1-.9 3.1-1 3.5-.1.5.2.5.4.4.2-.1 3.1-2.1 4.3-2.9.4 0 .8.1 1.2.1 5.5 0 10-3.6 10-8S17.5 3 12 3z"/></svg></a>`);
-    return `<div class="tcard${v.featured?' feat':''}">
+    const started = isStarted(t);
+    return `<div class="tcard${v.featured?' feat':''}${started?' started':''}">
       <div class="tc-top">
-        <div class="tc-time"><b>${t.start||'不明'}</b><span>START</span></div>
+        <div class="tc-time"><b>${t.start||'不明'}</b><span>${started?'開始済み':'START'}</span></div>
         <div class="tc-main">
           <div class="tc-name">${t.name}</div>
           <div class="tc-venue"><span class="area">${v.area||''}</span><a href="#venue/${t.venueId}">${v.name||''}</a></div>
@@ -395,7 +439,7 @@
     const rows = TOURNAMENTS
       .filter(t => t.venueId===venueId && t.date.slice(0,7)===monthStr)
       .concat(expandRecurring(monthStart, monthEnd).filter(t => t.venueId===venueId))
-      .sort((a,b)=> a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
+      .sort((a,b)=> a.date.localeCompare(b.date) || startKey(a).localeCompare(startKey(b)));
 
     const links = [];
     if (v.website) links.push(`<a class="vlink" href="${v.website}" target="_blank" rel="noopener">公式</a>`);
