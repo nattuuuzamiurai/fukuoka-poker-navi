@@ -109,6 +109,8 @@
   /* 既に開始済み(サイト表示時刻より前に開始)のトーナメントは灰色にして識別しやすく */
   .tcard.started{background:var(--chip);opacity:.62;filter:grayscale(.55)}
   .tcard.started .tc-name,.tcard.started .tc-venue,.tcard.started .tc-venue a,.tcard.started .tc-time b,.tcard.started .tc-buyin b{color:#8b8377!important}
+  .tcard.started .tc-venue a{text-decoration-color:#c9c1b4}
+  .tcard.started .tc-venue .area{background:#e6e1d7;color:#8b8377}
   .tcard.started .tc-name::before{color:#b3ab9d}
   .tcard.started .tc-time span{color:#a39a8b;font-weight:700}
   .tcard.feat::before{content:"PR";position:absolute;top:0;right:0;background:var(--gold);color:#3a2a06;font-size:.62em;font-weight:800;padding:3px 10px;border-bottom-left-radius:9px;letter-spacing:.05em}
@@ -119,9 +121,12 @@
   .tc-main{flex:1;min-width:0}
   .tc-name{font-weight:800;font-size:1.1em;line-height:1.35;letter-spacing:.01em;color:var(--txt)}
   .tc-name::before{content:"♠";color:var(--gold);margin-right:5px;font-weight:700}
-  .tc-venue{font-size:.95em;color:var(--felt);margin-top:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-weight:800}
-  .tc-venue a{text-decoration:underline;text-decoration-color:var(--bor)}
-  .tc-venue .area{background:var(--chip);border-radius:5px;padding:1px 7px;font-weight:700;color:#6b6055;font-size:.84em}
+  /* 店舗(会場)を目立たせる: ピン + 大きめのゴールド下線リンク、エリアは緑チップ */
+  .tc-venue{font-size:1.05em;color:var(--felt);margin-top:5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-weight:800}
+  .tc-venue .vpin{font-size:.95em;line-height:1;flex-shrink:0}
+  .tc-venue a{color:var(--felt);font-size:1.05em;font-weight:800;text-decoration:underline;text-decoration-color:var(--gold);text-decoration-thickness:2px;text-underline-offset:2px}
+  .tc-venue a:hover{color:var(--gold);text-decoration-color:var(--gold)}
+  .tc-venue .area{background:#e4efe9;border-radius:5px;padding:2px 8px;font-weight:800;color:var(--felt);font-size:.8em}
   .tc-buyin{text-align:right;flex-shrink:0}
   .tc-buyin b{font-size:1.12em;font-weight:800}
   .tc-buyin b.unknown{font-size:.68em;font-weight:700;color:var(--mut);display:block;max-width:80px;line-height:1.3;text-align:right}
@@ -399,7 +404,7 @@
         <div class="tc-time"><b>${t.start||'不明'}</b><span>${started?'開始済み':'START'}</span></div>
         <div class="tc-main">
           <div class="tc-name">${t.name}</div>
-          <div class="tc-venue"><span class="area">${v.area||''}</span><a href="#venue/${t.venueId}">${v.name||''}</a></div>
+          <div class="tc-venue"><span class="vpin" aria-hidden="true">📍</span><a href="#venue/${t.venueId}">${v.name||''}</a><span class="area">${v.area||''}</span></div>
         </div>
         <div class="tc-buyin">${t.buyin?`<b>${fmt(t.buyin)}</b>`:((t.tags||[]).some(tg=>tg.includes('フリーロール'))?'<b class="free">フリーロール</b>':'<b class="unknown">詳細は店舗SNSを確認</b>')}<span>${t.addon?('+AO '+fmt(t.addon)):(t.stack?('STACK '+t.stack.toLocaleString()):'')}</span></div>
       </div>
