@@ -49,7 +49,7 @@
     --sha:0 2px 12px rgba(30,20,5,.08); --r:14px;
   }
   html{scroll-behavior:smooth}
-  body{font-family:"Hiragino Sans","Yu Gothic UI",system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.55;font-size:15px}
+  body{font-family:"Hiragino Sans","Yu Gothic UI",system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.55;font-size:15px;padding-bottom:calc(78px + env(safe-area-inset-bottom))}
   a{color:inherit;text-decoration:none}
   .wrap{max-width:1000px;margin:0 auto;padding:0 16px}
 
@@ -88,13 +88,24 @@
   .ad{background:repeating-linear-gradient(45deg,#faf8f3,#faf8f3 12px,#f3efe6 12px,#f3efe6 24px);border:1px dashed #cfc6b6;border-radius:var(--r);padding:16px;text-align:center;color:var(--mut);font-size:.8em}
   .ad b{display:block;color:#b3a892;font-size:.9em;letter-spacing:.08em;margin-bottom:2px}
 
-  /* HOUSE AD (自社サービス案内。AdSense/PR枠が入るまでの間、空の広告枠の代わりに表示) */
-  .houseAd{background:linear-gradient(135deg,var(--felt),var(--felt2));border-radius:var(--r);padding:18px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;box-shadow:var(--sha)}
-  .houseAd .ha-label{font-size:.66em;font-weight:700;letter-spacing:.06em;color:#9fc2b4;text-transform:uppercase}
-  .houseAd .ha-title{font-size:1.02em;font-weight:800;color:#fff;margin-top:2px}
-  .houseAd .ha-desc{font-size:.82em;color:#d7e5dd;margin-top:3px}
-  .houseAd .ha-body{flex:1;min-width:200px}
-  .houseAd .ha-btn{flex-shrink:0;background:var(--gold);color:#3a2a06;font-weight:800;font-size:.85em;padding:10px 20px;border-radius:24px;white-space:nowrap}
+  /* STICKY AD (自社サービス案内。AdSense/PR枠が入るまでの間、全ページ共通で画面下部に固定表示) */
+  .stickyAd{
+    position:fixed; left:0; right:0; bottom:0; z-index:50;
+    display:flex; align-items:center; gap:10px;
+    padding:9px 12px calc(9px + env(safe-area-inset-bottom));
+    background:
+      radial-gradient(120% 220% at 6% 0%, rgba(96,214,255,.20), transparent 55%),
+      radial-gradient(120% 220% at 100% 100%, rgba(200,110,255,.16), transparent 55%),
+      linear-gradient(160deg,#12101d,#191325 60%,#140f1e);
+    border-top:1px solid rgba(255,255,255,.08);
+    box-shadow:0 -4px 18px rgba(5,0,15,.35);
+  }
+  .stickyAd img{width:38px;height:38px;flex-shrink:0;filter:drop-shadow(0 0 8px rgba(120,210,255,.4))}
+  .stickyAd .sa-body{flex:1;min-width:0}
+  .stickyAd .sa-title{font-size:.8em;font-weight:800;color:#fff;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .stickyAd .sa-desc{font-size:.68em;color:#b9b6c9;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .stickyAd .sa-btn{flex-shrink:0;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#3a2a06;font-weight:800;font-size:.76em;padding:8px 14px;border-radius:18px;white-space:nowrap}
+  @media(max-width:420px){ .stickyAd .sa-desc{display:none} }
 
   /* SECTION */
   main{padding:18px 0 40px}
@@ -236,15 +247,6 @@
     </div>
     <div id="list"></div>
 
-    <div class="houseAd" style="margin-top:22px">
-      <div class="ha-body">
-        <div class="ha-label">エースハイ合同会社の関連サービス</div>
-        <div class="ha-title">その日の成績、記録してますか？</div>
-        <div class="ha-desc">ポーカートナメ成績表 — buyin・順位・収支をシンプルに記録できるトーナメント専用の成績管理アプリ(無料)</div>
-      </div>
-      <a class="ha-btn" href="https://poker-tourney-log--family.expo.app" target="_blank" rel="noopener">使ってみる →</a>
-    </div>
-
     <div class="shead" style="margin-top:34px">
       <h2>掲載店舗</h2>
       <span class="cnt" id="venue-cnt"></span>
@@ -265,6 +267,15 @@
     参加前に必ず各店舗の公式情報をご確認ください。当サイトはアミューズメント（賭博性のない娯楽）目的の情報を掲載します。
   </div>
 </footer>
+
+<div class="stickyAd" id="stickyAd">
+  <img src="img/ptl-bulldog.png" alt="">
+  <div class="sa-body">
+    <div class="sa-title">トーナメントの成績、記録してますか？</div>
+    <div class="sa-desc">ポーカートナメ成績表 — buyin・順位・収支をシンプルに記録(無料)</div>
+  </div>
+  <a class="sa-btn" href="https://poker-tourney-log--family.expo.app" target="_blank" rel="noopener">使ってみる →</a>
+</div>
 
 <script src="data.js"></script>
 <script>
