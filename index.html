@@ -88,6 +88,14 @@
   .ad{background:repeating-linear-gradient(45deg,#faf8f3,#faf8f3 12px,#f3efe6 12px,#f3efe6 24px);border:1px dashed #cfc6b6;border-radius:var(--r);padding:16px;text-align:center;color:var(--mut);font-size:.8em}
   .ad b{display:block;color:#b3a892;font-size:.9em;letter-spacing:.08em;margin-bottom:2px}
 
+  /* HOUSE AD (自社サービス案内。AdSense/PR枠が入るまでの間、空の広告枠の代わりに表示) */
+  .houseAd{background:linear-gradient(135deg,var(--felt),var(--felt2));border-radius:var(--r);padding:18px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;box-shadow:var(--sha)}
+  .houseAd .ha-label{font-size:.66em;font-weight:700;letter-spacing:.06em;color:#9fc2b4;text-transform:uppercase}
+  .houseAd .ha-title{font-size:1.02em;font-weight:800;color:#fff;margin-top:2px}
+  .houseAd .ha-desc{font-size:.82em;color:#d7e5dd;margin-top:3px}
+  .houseAd .ha-body{flex:1;min-width:200px}
+  .houseAd .ha-btn{flex-shrink:0;background:var(--gold);color:#3a2a06;font-weight:800;font-size:.85em;padding:10px 20px;border-radius:24px;white-space:nowrap}
+
   /* SECTION */
   main{padding:18px 0 40px}
   .shead{display:flex;align-items:baseline;justify-content:space-between;margin:22px 0 12px}
@@ -218,9 +226,7 @@
   </div>
 </div>
 
-<div class="adslot">
-  <div class="ad"><b>広告 / SPONSORED</b>AdSense・PR枠（集客が付いたら本命）— この位置に広告 or 店舗のPRバナー</div>
-</div>
+<!-- AdSense/PR枠が実際に決まるまでこの位置は非表示 -->
 
 <main class="wrap">
   <div id="page-list">
@@ -230,7 +236,14 @@
     </div>
     <div id="list"></div>
 
-    <div class="ad" style="margin-top:22px"><b>広告 / SPONSORED</b>AdSense・PR枠 — この位置に広告 or 店舗のPRバナー</div>
+    <div class="houseAd" style="margin-top:22px">
+      <div class="ha-body">
+        <div class="ha-label">エースハイ合同会社の関連サービス</div>
+        <div class="ha-title">その日の成績、記録してますか？</div>
+        <div class="ha-desc">ポーカートナメ成績表 — buyin・順位・収支をシンプルに記録できるトーナメント専用の成績管理アプリ(無料)</div>
+      </div>
+      <a class="ha-btn" href="https://poker-tourney-log--family.expo.app" target="_blank" rel="noopener">使ってみる →</a>
+    </div>
 
     <div class="shead" style="margin-top:34px">
       <h2>掲載店舗</h2>
@@ -241,7 +254,7 @@
 
   <div id="page-venue" style="display:none"></div>
 
-  <div class="ad" style="margin-top:26px"><b>広告 / SPONSORED</b>AdSense・PR枠 — この位置に広告 or 店舗のPRバナー</div>
+  <!-- AdSense/PR枠が実際に決まるまでこの位置は非表示 -->
 </main>
 
 <footer>
