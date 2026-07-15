@@ -75,13 +75,22 @@
 
   /* FILTER BAR */
   .filters{background:var(--sur);border-bottom:1px solid var(--bor);position:sticky;top:48px;z-index:30;box-shadow:var(--sha)}
-  .frow{display:flex;gap:8px;padding:12px 16px;max-width:1000px;margin:0 auto;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .frow{display:flex;gap:8px;padding:10px 16px 12px;max-width:1000px;margin:0 auto;overflow-x:auto;-webkit-overflow-scrolling:touch}
   .frow::-webkit-scrollbar{height:0}
-  .seg{display:flex;gap:6px}
-  .fbtn{border:1px solid var(--bor);background:var(--sur);color:var(--txt);border-radius:20px;padding:7px 14px;font-size:.83em;font-weight:600;white-space:nowrap;cursor:pointer;transition:.13s;font-family:inherit}
-  .fbtn:hover{border-color:var(--gold)}
-  .fbtn.on{background:var(--felt);color:#fff;border-color:var(--felt)}
   .fsel{border:1px solid var(--bor);border-radius:20px;padding:7px 12px;font-size:.83em;font-weight:600;background:var(--sur);color:var(--txt);cursor:pointer;font-family:inherit;outline:none}
+
+  /* DATE STRIP (日付選択) */
+  .dstrip{display:flex;gap:6px;padding:10px 16px 4px;max-width:1000px;margin:0 auto;overflow-x:auto;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
+  .dstrip::-webkit-scrollbar{height:0}
+  .dchip{scroll-snap-align:start;flex:0 0 auto;width:44px;padding:6px 0 5px;border-radius:12px;border:1px solid var(--bor);background:var(--sur);text-align:center;cursor:pointer;transition:.13s;font-family:inherit}
+  .dchip .dc-w{display:block;font-size:.64em;color:var(--mut);font-weight:700}
+  .dchip .dc-d{display:block;font-size:1.05em;font-weight:800;color:var(--txt);line-height:1.35}
+  .dchip.sun .dc-w{color:var(--red)}
+  .dchip.sat .dc-w{color:#2a6fb0}
+  .dchip.today{border-color:var(--gold)}
+  .dchip.today .dc-w{color:#b3841f}
+  .dchip.on{background:var(--felt);border-color:var(--felt)}
+  .dchip.on .dc-w,.dchip.on .dc-d{color:#fff}
 
   /* AD SLOT */
   .adslot{max-width:1000px;margin:16px auto 0;padding:0 16px}
@@ -106,6 +115,23 @@
   .stickyAd .sa-desc{font-size:.68em;color:#b9b6c9;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .stickyAd .sa-btn{flex-shrink:0;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#3a2a06;font-weight:800;font-size:.76em;padding:8px 14px;border-radius:18px;white-space:nowrap}
   @media(max-width:420px){ .stickyAd .sa-desc{display:none} }
+
+  /* AD CARD (自社サービス案内。旧AdSense/PR枠の位置にコンテンツ内カードとして表示。stickyAdとトーンを統一) */
+  .adCard{
+    display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+    text-decoration:none; border-radius:var(--r); padding:20px 22px;
+    background:
+      radial-gradient(120% 160% at 8% 0%, rgba(96,214,255,.20), transparent 55%),
+      radial-gradient(120% 160% at 100% 100%, rgba(200,110,255,.16), transparent 55%),
+      linear-gradient(160deg,#12101d,#191325 60%,#140f1e);
+    border:1px solid rgba(255,255,255,.08);
+    box-shadow:0 4px 18px rgba(5,0,15,.3);
+  }
+  .adCard img{width:56px;height:56px;flex-shrink:0;filter:drop-shadow(0 0 10px rgba(120,210,255,.4))}
+  .adCard .ac-body{flex:1;min-width:200px}
+  .adCard .ac-title{font-size:1.02em;font-weight:800;color:#fff}
+  .adCard .ac-desc{font-size:.82em;color:#b9b6c9;margin-top:4px}
+  .adCard .ac-btn{flex-shrink:0;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#3a2a06;font-weight:800;font-size:.85em;padding:10px 20px;border-radius:24px;white-space:nowrap;box-shadow:0 0 14px rgba(217,164,65,.3)}
 
   /* SECTION */
   main{padding:18px 0 40px}
@@ -222,11 +248,8 @@
 </section>
 
 <div class="filters">
+  <div class="dstrip" id="dstrip"></div>
   <div class="frow">
-    <div class="seg" id="seg-when">
-      <button class="fbtn" data-when="all">すべて</button>
-      <button class="fbtn on" data-when="today">今日</button>
-    </div>
     <select class="fsel" id="sel-area"><option value="all">全エリア</option></select>
     <select class="fsel" id="sel-tag">
       <option value="all">全種類</option>
@@ -237,7 +260,16 @@
   </div>
 </div>
 
-<!-- AdSense/PR枠が実際に決まるまでこの位置は非表示 -->
+<div class="adslot">
+  <a class="adCard" href="https://poker-tourney-log--family.expo.app" target="_blank" rel="noopener">
+    <img src="img/ptl-bulldog.png" alt="">
+    <div class="ac-body">
+      <div class="ac-title">トーナメントの成績、記録してますか？</div>
+      <div class="ac-desc">ポーカートナメ成績表 — buyin・順位・収支をシンプルに記録できるトーナメント専用の成績管理アプリ(無料)</div>
+    </div>
+    <span class="ac-btn">使ってみる →</span>
+  </a>
+</div>
 
 <main class="wrap">
   <div id="page-list">
@@ -256,7 +288,14 @@
 
   <div id="page-venue" style="display:none"></div>
 
-  <!-- AdSense/PR枠が実際に決まるまでこの位置は非表示 -->
+  <a class="adCard" style="margin:26px 0 4px" href="https://poker-tourney-log--family.expo.app" target="_blank" rel="noopener">
+    <img src="img/ptl-bulldog.png" alt="">
+    <div class="ac-body">
+      <div class="ac-title">今日の戦績、記録に残しませんか？</div>
+      <div class="ac-desc">ポーカートナメ成績表なら buyin・順位・収支をすぐ記録。無料アプリはこちら</div>
+    </div>
+    <span class="ac-btn">使ってみる →</span>
+  </a>
 </main>
 
 <footer>
@@ -271,8 +310,8 @@
 <div class="stickyAd" id="stickyAd">
   <img src="img/ptl-bulldog.png" alt="">
   <div class="sa-body">
-    <div class="sa-title">トーナメントの成績、記録してますか？</div>
-    <div class="sa-desc">ポーカートナメ成績表 — buyin・順位・収支をシンプルに記録(無料)</div>
+    <div class="sa-title">成績、記録してますか？</div>
+    <div class="sa-desc">ポーカートナメ成績表(無料) — buyin・順位・収支を記録</div>
   </div>
   <a class="sa-btn" href="https://poker-tourney-log--family.expo.app" target="_blank" rel="noopener">使ってみる →</a>
 </div>
@@ -347,13 +386,28 @@
   const localToday = `${y}-${m}-${dd}`;
   document.getElementById('stat-today').textContent = ALL_TOURNAMENTS.filter(t=>t.date===localToday).length;
 
-  const state = { when:'today', area:'all', tag:'all' };
+  const state = { selectedDate: localToday, area:'all', tag:'all' };
 
   function inWhen(dateStr){
-    const d = iso(dateStr), diff = Math.round((d - today)/86400000);
-    if (state.when==='all') return diff >= 0;
-    if (state.when==='today') return diff === 0;
-    return true;
+    return dateStr === state.selectedDate;
+  }
+
+  const DSTRIP_DAYS = 30;
+  function buildDateStrip(){
+    const wrap = document.getElementById('dstrip');
+    let html = '';
+    for (let i=0;i<DSTRIP_DAYS;i++){
+      const d = new Date(today); d.setDate(d.getDate()+i);
+      const y2=d.getFullYear(), m2=String(d.getMonth()+1).padStart(2,'0'), dd2=String(d.getDate()).padStart(2,'0');
+      const dateStr = `${y2}-${m2}-${dd2}`;
+      const wd = d.getDay();
+      const cls = ['dchip'];
+      if (dateStr === state.selectedDate) cls.push('on');
+      if (dateStr === localToday) cls.push('today');
+      if (wd===0) cls.push('sun'); if (wd===6) cls.push('sat');
+      html += `<button type="button" class="${cls.join(' ')}" data-date="${dateStr}"><span class="dc-w">${WD[wd]}</span><span class="dc-d">${d.getDate()}</span></button>`;
+    }
+    wrap.innerHTML = html;
   }
   function inTag(tags){
     if (state.tag==='all') return true;
@@ -394,7 +448,7 @@
 
   let didInitialScroll = false;
   function maybeScrollToUpcoming(list){
-    if (didInitialScroll || state.when!=='today') return;
+    if (didInitialScroll || state.selectedDate!==localToday) return;
     const firstUpcoming = list.querySelector('.tcard:not(.started)');
     const hasStarted = list.querySelector('.tcard.started');
     if (!firstUpcoming || !hasStarted) return; // 開始済みが無ければスクロール不要
@@ -579,15 +633,17 @@
   }
 
   // filter events
-  document.getElementById('seg-when').addEventListener('click', e => {
-    const b = e.target.closest('.fbtn'); if(!b) return;
-    document.querySelectorAll('#seg-when .fbtn').forEach(x=>x.classList.remove('on'));
-    b.classList.add('on'); state.when = b.dataset.when; render();
+  document.getElementById('dstrip').addEventListener('click', e => {
+    const b = e.target.closest('.dchip'); if(!b) return;
+    document.querySelectorAll('#dstrip .dchip').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); state.selectedDate = b.dataset.date; render();
+    b.scrollIntoView({inline:'center', block:'nearest', behavior:'smooth'});
   });
   selArea.addEventListener('change', e => { state.area = e.target.value; render(); });
   document.getElementById('sel-tag').addEventListener('change', e => { state.tag = e.target.value; render(); });
   window.addEventListener('hashchange', route);
 
+  buildDateStrip();
   render();
   renderVenues();
   route();
