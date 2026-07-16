@@ -74,7 +74,7 @@
   .hero .stat span{font-size:.7em;color:#c3d6cd}
 
   /* FILTER BAR */
-  .filters{background:var(--sur);border-bottom:1px solid var(--bor);position:sticky;top:48px;z-index:30;box-shadow:var(--sha)}
+  .filters{background:var(--sur);border-bottom:1px solid var(--bor);box-shadow:var(--sha)}
   .frow{display:flex;gap:8px;padding:10px 16px 12px;max-width:1000px;margin:0 auto;overflow-x:auto;-webkit-overflow-scrolling:touch}
   .frow::-webkit-scrollbar{height:0}
   .fsel{border:1px solid var(--bor);border-radius:20px;padding:7px 12px;font-size:.83em;font-weight:600;background:var(--sur);color:var(--txt);cursor:pointer;font-family:inherit;outline:none}
@@ -392,22 +392,25 @@
     return dateStr === state.selectedDate;
   }
 
-  const DSTRIP_DAYS = 30;
   function buildDateStrip(){
+    // 今日を中心に、今月の1日〜末日だけを表示する(月をまたいだ前後の日付は出さない)
     const wrap = document.getElementById('dstrip');
+    const y0 = today.getFullYear(), m0 = today.getMonth();
+    const lastDate = new Date(y0, m0+1, 0).getDate();
     let html = '';
-    for (let i=0;i<DSTRIP_DAYS;i++){
-      const d = new Date(today); d.setDate(d.getDate()+i);
-      const y2=d.getFullYear(), m2=String(d.getMonth()+1).padStart(2,'0'), dd2=String(d.getDate()).padStart(2,'0');
-      const dateStr = `${y2}-${m2}-${dd2}`;
+    for (let day=1; day<=lastDate; day++){
+      const d = new Date(y0, m0, day);
+      const dateStr = `${y0}-${String(m0+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
       const wd = d.getDay();
       const cls = ['dchip'];
       if (dateStr === state.selectedDate) cls.push('on');
       if (dateStr === localToday) cls.push('today');
       if (wd===0) cls.push('sun'); if (wd===6) cls.push('sat');
-      html += `<button type="button" class="${cls.join(' ')}" data-date="${dateStr}"><span class="dc-w">${WD[wd]}</span><span class="dc-d">${d.getDate()}</span></button>`;
+      html += `<button type="button" class="${cls.join(' ')}" data-date="${dateStr}"><span class="dc-w">${WD[wd]}</span><span class="dc-d">${day}</span></button>`;
     }
     wrap.innerHTML = html;
+    const centerChip = wrap.querySelector('.dchip.today') || wrap.querySelector('.dchip.on');
+    if (centerChip) centerChip.scrollIntoView({inline:'center', block:'nearest'});
   }
   function inTag(tags){
     if (state.tag==='all') return true;
@@ -458,8 +461,7 @@
       if (didInitialScroll || (pageList && pageList.style.display === 'none')) return;
       didInitialScroll = true;
       const header = document.querySelector('header');
-      const filters = document.querySelector('.filters');
-      const offset = (header?header.offsetHeight:0) + (filters?filters.offsetHeight:0) + 12;
+      const offset = (header?header.offsetHeight:0) + 12;
       const y = firstUpcoming.getBoundingClientRect().top + window.pageYOffset - offset;
       window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
     });
