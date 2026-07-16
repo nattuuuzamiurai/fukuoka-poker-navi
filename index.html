@@ -80,7 +80,9 @@
   .fsel{border:1px solid var(--bor);border-radius:20px;padding:7px 12px;font-size:.83em;font-weight:600;background:var(--sur);color:var(--txt);cursor:pointer;font-family:inherit;outline:none}
 
   /* DATE STRIP (日付選択) */
-  .dstrip{display:flex;gap:6px;padding:10px 16px 4px;max-width:1000px;margin:0 auto;overflow-x:auto;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
+  .dstrip-row{display:flex;align-items:stretch;gap:0;max-width:1000px;margin:0 auto;padding:10px 16px 4px}
+  .dstrip-month{flex:0 0 auto;display:flex;align-items:center;font-weight:800;color:var(--felt);font-size:.92em;padding-right:10px;margin-right:8px;border-right:1px solid var(--bor);white-space:nowrap}
+  .dstrip{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
   .dstrip::-webkit-scrollbar{height:0}
   .dchip{scroll-snap-align:start;flex:0 0 auto;width:44px;padding:6px 0 5px;border-radius:12px;border:1px solid var(--bor);background:var(--sur);text-align:center;cursor:pointer;transition:.13s;font-family:inherit}
   .dchip .dc-w{display:block;font-size:.64em;color:var(--mut);font-weight:700}
@@ -229,7 +231,7 @@
 
 <header>
   <div class="hbar" id="hbar-list">
-    <div class="logo"><span class="pip">♠</span>ふくおかポーカーナビ</div>
+    <a class="logo" href="#"><span class="pip">♠</span>ふくおかポーカーナビ</a>
   </div>
   <div class="hbar hbar-venue" id="hbar-venue" style="display:none">
     <a class="back-link" href="#">← 一覧へ戻る</a>
@@ -248,7 +250,10 @@
 </section>
 
 <div class="filters">
-  <div class="dstrip" id="dstrip"></div>
+  <div class="dstrip-row">
+    <div class="dstrip-month" id="dstripMonth"></div>
+    <div class="dstrip" id="dstrip"></div>
+  </div>
   <div class="frow">
     <select class="fsel" id="sel-area"><option value="all">全エリア</option></select>
     <select class="fsel" id="sel-tag">
@@ -300,7 +305,7 @@
 
 <footer>
   <div><b style="color:#fff">ふくおかポーカーナビ</b> — 福岡ポーカートーナメント日程アグリゲーター</div>
-  <div>運営: エースハイ合同会社　|　<a href="contact.html">お問い合わせ</a>　|　<a href="contact.html">店舗の掲載・PRについて</a>　|　<a href="privacy.html">プライバシーポリシー</a></div>
+  <div><a href="contact.html">お問い合わせ</a>　|　<a href="contact.html">店舗の掲載・PRについて</a>　|　<a href="privacy.html">プライバシーポリシー</a></div>
   <div class="disc">
     掲載情報は各店舗のSNS・公式サイト等をもとに自動/手動で収集しています。開催内容は変更される場合があるため、
     参加前に必ず各店舗の公式情報をご確認ください。当サイトはアミューズメント（賭博性のない娯楽）目的の情報を掲載します。
@@ -397,6 +402,7 @@
     const wrap = document.getElementById('dstrip');
     const y0 = today.getFullYear(), m0 = today.getMonth();
     const lastDate = new Date(y0, m0+1, 0).getDate();
+    document.getElementById('dstripMonth').textContent = (m0+1) + '月';
     let html = '';
     for (let day=1; day<=lastDate; day++){
       const d = new Date(y0, m0, day);
