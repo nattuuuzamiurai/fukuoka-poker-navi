@@ -135,6 +135,45 @@
   .adCard .ac-desc{font-size:.82em;color:#b9b6c9;margin-top:4px}
   .adCard .ac-btn{flex-shrink:0;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#3a2a06;font-weight:800;font-size:.85em;padding:10px 20px;border-radius:24px;white-space:nowrap;box-shadow:0 0 14px rgba(217,164,65,.3)}
 
+  /* WJPT 大型イベント バナー(トーナメント日程の最上部) */
+  .wjptBanner{display:block;text-decoration:none;border-radius:16px;overflow:hidden;position:relative;box-shadow:0 6px 26px rgba(0,0,0,.32);border:2px solid #d9a441;background:#0a1226;margin-bottom:6px}
+  .wjptBanner .wb-img{display:block;width:100%;height:auto}
+  .wjptBanner .wb-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 14px;background:linear-gradient(90deg,#0a1226,#122046)}
+  .wjptBanner .wb-tag{font-size:.72em;font-weight:800;letter-spacing:.05em;color:#f0c56b;display:flex;align-items:center;gap:7px}
+  .wjptBanner .wb-tag::before{content:"開催中";background:var(--red);color:#fff;font-size:.85em;padding:2px 8px;border-radius:20px;letter-spacing:.02em}
+  .wjptBanner.upcoming .wb-tag::before{content:"まもなく";background:var(--gold);color:#3a2a06}
+  .wjptBanner .wb-btn{flex-shrink:0;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#3a2a06;font-weight:800;font-size:.8em;padding:8px 16px;border-radius:20px;white-space:nowrap}
+
+  /* WJPT 専用ページ */
+  #page-wjpt{padding-top:6px}
+  .wjpt-top{border-radius:16px;overflow:hidden;border:2px solid #d9a441;box-shadow:0 6px 26px rgba(0,0,0,.3);margin-bottom:8px}
+  .wjpt-top img{display:block;width:100%;height:auto}
+  .wjpt-sub{font-size:.85em;color:var(--mut);margin:0 2px 14px;line-height:1.6}
+  .wjpt-sub a{color:var(--felt);font-weight:700;text-decoration:underline}
+  .wjpt-days{display:flex;gap:8px;margin:0 0 16px}
+  .wjpt-day{flex:1;min-width:0;padding:9px 4px 8px;border-radius:12px;border:1px solid var(--bor);background:var(--sur);text-align:center;cursor:pointer;transition:.13s;font-family:inherit}
+  .wjpt-day .wd-d{display:block;font-size:1.15em;font-weight:800;color:var(--txt);line-height:1.2}
+  .wjpt-day .wd-w{display:block;font-size:.66em;color:var(--mut);font-weight:700;margin-top:2px}
+  .wjpt-day.on{background:linear-gradient(135deg,#122046,#0a1226);border-color:#d9a441}
+  .wjpt-day.on .wd-d{color:#f0c56b}
+  .wjpt-day.on .wd-w{color:#d9a441}
+  .wjpt-tcard{display:flex;align-items:stretch;gap:0;background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);margin-bottom:10px;cursor:pointer;overflow:hidden;transition:.13s}
+  .wjpt-tcard:hover{border-color:var(--gold)}
+  .wjpt-tcard .wt-no{flex-shrink:0;width:46px;background:linear-gradient(160deg,#122046,#0a1226);color:#f0c56b;font-weight:800;font-size:.92em;display:flex;align-items:center;justify-content:center}
+  .wjpt-tcard .wt-body{flex:1;min-width:0;padding:11px 13px}
+  .wjpt-tcard .wt-name{font-size:.98em;font-weight:800;color:var(--txt)}
+  .wjpt-tcard .wt-meta{font-size:.8em;color:var(--mut);margin-top:3px;display:flex;flex-wrap:wrap;gap:4px 12px}
+  .wjpt-tcard .wt-meta b{color:var(--felt);font-weight:800}
+  .wjpt-tcard .wt-tags{margin-top:6px;display:flex;flex-wrap:wrap;gap:5px}
+  .wjpt-tcard .wt-tags span{font-size:.7em;font-weight:700;color:#7a5711;background:#fbf1d8;border:1px solid #ecd9a6;border-radius:20px;padding:2px 8px}
+  .wjpt-tcard .wt-arrow{flex-shrink:0;align-self:center;padding:0 12px;color:var(--mut);font-size:1.1em}
+  .wjpt-detail-img{width:100%;height:auto;border-radius:var(--r);box-shadow:0 4px 18px rgba(0,0,0,.18);display:block}
+  .wjpt-detail-meta{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:14px 16px;margin-bottom:14px}
+  .wjpt-detail-meta h2{font-size:1.1em;font-weight:800;margin-bottom:4px}
+  .wjpt-detail-meta .dm-sub{font-size:.82em;color:var(--mut)}
+  .wjpt-backrow{margin:2px 0 14px}
+  .wjpt-backrow a{font-size:.85em;font-weight:800;color:var(--felt);text-decoration:none}
+
   /* SECTION */
   main{padding:18px 0 40px}
   .shead{display:flex;align-items:baseline;justify-content:space-between;margin:22px 0 12px}
@@ -237,6 +276,10 @@
     <a class="back-link" href="#">← 一覧へ戻る</a>
     <div class="venue-header-name" id="venueHeaderName"></div>
   </div>
+  <div class="hbar hbar-venue" id="hbar-wjpt" style="display:none">
+    <a class="back-link" id="wjpt-back" href="#">← 一覧へ戻る</a>
+    <div class="venue-header-name" id="wjptHeaderName">WJPT</div>
+  </div>
 </header>
 
 <section class="hero">
@@ -278,6 +321,13 @@
 
 <main class="wrap">
   <div id="page-list">
+    <a class="wjptBanner" id="wjptBanner" href="#wjpt" style="display:none">
+      <img class="wb-img" src="img/wjpt/wjpt-banner.jpg" alt="WJPT West Japan Poker Tour 7.18-7.20 北九州">
+      <div class="wb-foot">
+        <span class="wb-tag">北九州・大型イベント / 全21トーナメント</span>
+        <span class="wb-btn">日程を見る →</span>
+      </div>
+    </a>
     <div class="shead">
       <h2>トーナメント日程</h2>
       <span class="cnt" id="list-cnt"></span>
@@ -292,6 +342,8 @@
   </div>
 
   <div id="page-venue" style="display:none"></div>
+
+  <div id="page-wjpt" style="display:none"></div>
 
   <a class="adCard" style="margin:26px 0 4px" href="https://poker-tourney-log--family.expo.app" target="_blank" rel="noopener">
     <img src="img/ptl-bulldog.png" alt="">
@@ -328,6 +380,46 @@
   const fmt = n => '¥' + n.toLocaleString('ja-JP');
   const today = new Date(); today.setHours(0,0,0,0);
   const iso = d => { const t=new Date(d); t.setHours(0,0,0,0); return t; };
+
+  // ===== WJPT (West Japan Poker Tour) 大型イベント 2026/7/18-20 北九州 =====
+  // 出典: 公式プレイヤーズガイド https://privatter.me/page/6a3fb763eb927
+  // 各トーナメントの詳細(ストラクチャー・プライズ等)は img/wjpt/wjpt-NN.jpg に公式シート画像を掲載。
+  const WJPT = {
+    name: 'WJPT (West Japan Poker Tour)',
+    area: '北九州',
+    days: ['2026-07-18','2026-07-19','2026-07-20'],
+    banner: 'img/wjpt/wjpt-banner.jpg',
+    guideUrl: 'https://privatter.me/page/6a3fb763eb927',
+    tournaments: [
+      { no:1,  day:'2026-07-18', name:'フリーロール',             buyin:'¥0（Re: ¥10,000）',        start:'10:00', latereg:'12:00', stack:'20,000',  tags:['フリーロール'] },
+      { no:2,  day:'2026-07-18', name:'Main Event - Day 1A',      buyin:'¥40,000（+施設料 ¥5,000）', start:'11:00', latereg:'15:00', stack:'50,000',  tags:['メインイベント'] },
+      { no:3,  day:'2026-07-18', name:'NLH Deepstack',            buyin:'¥15,000',                  start:'12:00', latereg:'15:00', stack:'40,000',  tags:['NLH'] },
+      { no:4,  day:'2026-07-18', name:'High Roller',              buyin:'¥77,000',                  start:'15:00', latereg:'19:00', stack:'50,000',  tags:['ハイローラー'] },
+      { no:5,  day:'2026-07-18', name:'PLO Championship',         buyin:'¥15,000',                  start:'17:00', latereg:'19:30', stack:'30,000',  tags:['PLO'] },
+      { no:6,  day:'2026-07-18', name:'Main Event - Day 1B',      buyin:'¥40,000（+施設料 ¥5,000）', start:'18:00', latereg:'22:00', stack:'50,000',  tags:['メインイベント'] },
+      { no:7,  day:'2026-07-18', name:'Mini High Roller Turbo',   buyin:'¥38,000',                  start:'19:30', latereg:'22:00', stack:'30,000',  tags:['ハイローラー','ターボ'] },
+      { no:8,  day:'2026-07-19', name:'フリーロール',             buyin:'¥0（Re: ¥10,000）',        start:'10:00', latereg:'12:00', stack:'20,000',  tags:['フリーロール'] },
+      { no:9,  day:'2026-07-19', name:'Main Event - Day 1C',      buyin:'¥40,000（+施設料 ¥5,000）', start:'11:00', latereg:'15:00', stack:'50,000',  tags:['メインイベント'] },
+      { no:10, day:'2026-07-19', name:'Mystery Bounty',           buyin:'¥25,000',                  start:'12:00', latereg:'16:00', stack:'30,000',  tags:['バウンティ'] },
+      { no:11, day:'2026-07-19', name:'Super High Roller',        buyin:'¥100,000',                 start:'15:00', latereg:'18:50', stack:'80,000',  tags:['ハイローラー'] },
+      { no:12, day:'2026-07-19', name:'Tag Tournament',           buyin:'¥30,000（¥15,000/1人）',   start:'17:00', latereg:'20:30', stack:'30,000',  tags:['タッグ'] },
+      { no:13, day:'2026-07-19', name:'Main Event - Day 1D',      buyin:'¥40,000（+施設料 ¥5,000）', start:'17:00', latereg:'21:00', stack:'50,000',  tags:['メインイベント'] },
+      { no:14, day:'2026-07-19', name:'Night Turbo',              buyin:'¥11,000',                  start:'20:00', latereg:'22:50', stack:'20,000',  tags:['ターボ'] },
+      { no:15, day:'2026-07-20', name:'Main Event - Day 2',       buyin:'Day1通過者のみ',           start:'10:00', latereg:'10:00', stack:'—',       tags:['メインイベント','ファイナル'] },
+      { no:16, day:'2026-07-20', name:'NLH Championship',         buyin:'¥30,000',                  start:'10:30', latereg:'15:00', stack:'30,000',  tags:['NLH'] },
+      { no:17, day:'2026-07-20', name:'Ladies Championship',      buyin:'¥15,000',                  start:'12:00', latereg:'15:00', stack:'30,000',  tags:['レディース'] },
+      { no:18, day:'2026-07-20', name:'Under30',                  buyin:'¥15,000',                  start:'14:00', latereg:'17:00', stack:'40,000',  tags:['U-30'] },
+      { no:19, day:'2026-07-20', name:'Ultimate High Roller',     buyin:'¥150,000',                 start:'15:00', latereg:'18:00', stack:'100,000', tags:['ハイローラー'] },
+      { no:20, day:'2026-07-20', name:'LASTDREAM',                buyin:'¥11,000',                  start:'17:00', latereg:'20:00', stack:'30,000',  tags:[] },
+      { no:21, day:'2026-07-20', name:'AOF',                      buyin:'¥3,000',                   start:'19:00', latereg:'20:50', stack:'15,000',  tags:['AOF'] }
+    ]
+  };
+  const wjptImg = no => `img/wjpt/wjpt-${String(no).padStart(2,'0')}.jpg`;
+  const wjptDetailById = no => WJPT.tournaments.find(t => t.no === Number(no));
+  let wjptDay = WJPT.days.includes(localTodayGlobal()) ? localTodayGlobal() : WJPT.days[0];
+  function localTodayGlobal(){
+    const n=new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
+  }
 
   // --- 開始時刻の扱い ---
   // start が "HH:MM" 形式で確定しているか判定。未確定(不明)は末尾へ回すためのソートキーを返す。
@@ -570,6 +662,65 @@
     `;
   }
 
+  // ===== WJPT 専用ページの描画 =====
+  function renderWjptDayList(){
+    const page = document.getElementById('page-wjpt');
+    const dayBtns = WJPT.days.map(d => {
+      const dt = iso(d);
+      const on = d === wjptDay ? ' on' : '';
+      const label = d===localToday ? '本日' : WD[dt.getDay()]+'曜';
+      return `<button type="button" class="wjpt-day${on}" data-wday="${d}"><span class="wd-d">${dt.getMonth()+1}/${dt.getDate()}</span><span class="wd-w">${label}</span></button>`;
+    }).join('');
+    const rows = WJPT.tournaments.filter(t => t.day === wjptDay);
+    const cards = rows.map(t => {
+      const tags = (t.tags||[]).map(tg => `<span>${tg}</span>`).join('');
+      return `<div class="wjpt-tcard" data-wno="${t.no}">
+        <div class="wt-no">#${t.no}</div>
+        <div class="wt-body">
+          <div class="wt-name">${t.name}</div>
+          <div class="wt-meta"><span>START <b>${t.start}</b></span><span>BUY-IN <b>${t.buyin}</b></span><span>STACK <b>${t.stack}</b></span></div>
+          ${tags?`<div class="wt-tags">${tags}</div>`:''}
+        </div>
+        <div class="wt-arrow">›</div>
+      </div>`;
+    }).join('');
+    page.innerHTML = `
+      <a class="wjpt-top" href="${WJPT.guideUrl}" target="_blank" rel="noopener"><img src="${WJPT.banner}" alt="WJPT West Japan Poker Tour"></a>
+      <p class="wjpt-sub">West Japan Poker Tour ＠${WJPT.area}（7/18〜7/20）。九州最大級のポーカーフェスティバル、全21トーナメント。各トーナメントをタップすると公式のストラクチャー・プライズ詳細が見られます。会場・受付・支払い方法などの詳細は<a href="${WJPT.guideUrl}" target="_blank" rel="noopener">公式プレイヤーズガイド</a>をご確認ください。</p>
+      <div class="wjpt-days">${dayBtns}</div>
+      <div id="wjpt-list">${cards}</div>
+    `;
+    page.querySelectorAll('.wjpt-day').forEach(b => b.addEventListener('click', () => {
+      wjptDay = b.dataset.wday; renderWjptDayList(); window.scrollTo({top:0,behavior:'instant'});
+    }));
+    page.querySelectorAll('.wjpt-tcard').forEach(c => c.addEventListener('click', () => {
+      location.hash = '#wjpt/t/' + c.dataset.wno;
+    }));
+  }
+
+  function renderWjptDetail(no){
+    const t = wjptDetailById(no);
+    const page = document.getElementById('page-wjpt');
+    if (!t){ location.hash = '#wjpt'; return; }
+    const dt = iso(t.day);
+    page.innerHTML = `
+      <div class="wjpt-backrow"><a href="#wjpt">← WJPT 日程へ戻る</a></div>
+      <div class="wjpt-detail-meta">
+        <h2>#${t.no} ${t.name}</h2>
+        <div class="dm-sub">${dt.getMonth()+1}/${dt.getDate()}（${WD[dt.getDay()]}）　START ${t.start}　BUY-IN ${t.buyin}　STACK ${t.stack}</div>
+      </div>
+      <img class="wjpt-detail-img" src="${wjptImg(t.no)}" alt="#${t.no} ${t.name} ストラクチャー詳細" loading="lazy">
+      <p class="wjpt-sub" style="margin-top:12px">画像は公式の告知シートです。最新情報・変更は<a href="${WJPT.guideUrl}" target="_blank" rel="noopener">公式プレイヤーズガイド</a>をご確認ください。</p>
+    `;
+  }
+
+  function parseWjptHash(){
+    if (location.hash === '#wjpt') return { view:'list' };
+    const m = location.hash.match(/^#wjpt\/t\/(\d+)$/);
+    if (m) return { view:'detail', no: Number(m[1]) };
+    return null;
+  }
+
   function parseHash(){
     const m = location.hash.match(/^#venue\/([^/]+)(?:\/(\d{4}-\d{2}))?$/);
     if (!m) return null;
@@ -577,12 +728,40 @@
   }
 
   function route(){
+    const wjpt = parseWjptHash();
     const parsed = parseHash();
     const filters = document.querySelector('.filters');
     const hero = document.querySelector('.hero');
     const headerEl = document.querySelector('header');
     const hbarList = document.getElementById('hbar-list');
     const hbarVenue = document.getElementById('hbar-venue');
+    const hbarWjpt = document.getElementById('hbar-wjpt');
+    if (wjpt){
+      filters.style.display = 'none';
+      hero.style.display = 'none';
+      headerEl.classList.add('venue-mode');
+      hbarList.style.display = 'none';
+      hbarVenue.style.display = 'none';
+      hbarWjpt.style.display = '';
+      document.getElementById('page-list').style.display = 'none';
+      document.getElementById('page-venue').style.display = 'none';
+      document.getElementById('page-wjpt').style.display = '';
+      if (wjpt.view === 'detail'){
+        renderWjptDetail(wjpt.no);
+        document.title = `WJPT #${wjpt.no} | ふくおかポーカーナビ`;
+        window.scrollTo(0,0);
+      } else {
+        renderWjptDayList();
+        document.title = 'WJPT West Japan Poker Tour | ふくおかポーカーナビ';
+        window.scrollTo(0,0);
+      }
+      if (typeof gtag === 'function'){
+        gtag('event','page_view',{ page_path: location.pathname + location.hash, page_title: document.title });
+      }
+      return;
+    }
+    hbarWjpt.style.display = 'none';
+    document.getElementById('page-wjpt').style.display = 'none';
     if (parsed){
       filters.style.display = 'none';
       hero.style.display = 'none';
@@ -651,9 +830,24 @@
   document.getElementById('sel-tag').addEventListener('change', e => { state.tag = e.target.value; render(); });
   window.addEventListener('hashchange', route);
 
+  // WJPT大型イベントのバナーは、イベント最終日(最後の開催日)まで表示する
+  function setupWjptBanner(){
+    const banner = document.getElementById('wjptBanner');
+    if (!banner) return;
+    const lastDay = WJPT.days[WJPT.days.length-1];
+    const firstDay = WJPT.days[0];
+    if (localToday <= lastDay){
+      banner.style.display = '';
+      if (localToday < firstDay) banner.classList.add('upcoming');
+    } else {
+      banner.style.display = 'none';
+    }
+  }
+
   buildDateStrip();
   render();
   renderVenues();
+  setupWjptBanner();
   route();
 })();
 </script>
