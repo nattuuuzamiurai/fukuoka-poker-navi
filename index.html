@@ -177,6 +177,72 @@
   .wjpt-backrow{margin:2px 0 14px}
   .wjpt-backrow a{font-size:.85em;font-weight:800;color:var(--felt);text-decoration:none}
 
+  /* ===== JOPT 大型イベント(2026/7/30-8/2 福岡・大名) ===== */
+  /* JOPTのブランドカラー(ティール)をアクセントにする。WJPT(ゴールド)とは配色で区別する。 */
+  :root{ --jopt:#1fb6ba; --jopt2:#5fe2e6; --jopt-dark:#0a2530; }
+  .hbar-jopt{background:transparent}
+  header.jopt-mode{background:linear-gradient(135deg,#07171d,#0e3d48)}
+  .jopt-header-name{font-weight:800;font-size:.95em;color:var(--jopt2);text-align:right;max-width:65%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+  /* JOPT バナー(トーナメント日程の最上部) */
+  .joptBanner{display:block;text-decoration:none;border-radius:16px;overflow:hidden;position:relative;box-shadow:0 6px 26px rgba(0,0,0,.3);border:2px solid var(--jopt);background:var(--jopt-dark);margin-bottom:6px}
+  .joptBanner .jb-img{display:block;width:100%;height:auto}
+  .joptBanner .jb-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 14px;background:linear-gradient(90deg,#07171d,#0e3d48)}
+  .joptBanner .jb-tag{font-size:.72em;font-weight:800;letter-spacing:.05em;color:var(--jopt2);display:flex;align-items:center;gap:7px;min-width:0;white-space:nowrap}
+  .joptBanner .jb-tag::before{content:"開催中";flex-shrink:0;white-space:nowrap;background:var(--red);color:#fff;font-size:.85em;padding:2px 8px;border-radius:20px;letter-spacing:.02em}
+  .joptBanner.upcoming .jb-tag::before{content:"まもなく";background:var(--jopt);color:#04222a}
+  .joptBanner .jb-tag .jb-desc{overflow:hidden;text-overflow:ellipsis}
+  .joptBanner .jb-btn{flex-shrink:0;background:linear-gradient(135deg,var(--jopt2),var(--jopt));color:#04222a;font-weight:800;font-size:.8em;padding:8px 16px;border-radius:20px;white-space:nowrap}
+
+  /* JOPT 専用ページ */
+  #page-jopt{padding-top:6px}
+  .jopt-top{display:block;border-radius:16px;overflow:hidden;border:2px solid var(--jopt);box-shadow:0 6px 26px rgba(0,0,0,.28);margin-bottom:8px}
+  .jopt-top img{display:block;width:100%;height:auto}
+  .jopt-sub{font-size:.85em;color:var(--mut);margin:0 2px 14px;line-height:1.6}
+  .jopt-sub a{color:#127c85;font-weight:700;text-decoration:underline}
+  .jopt-disclaimer{font-size:.78em;color:var(--mut);line-height:1.65;background:#f7f5f0;border:1px solid var(--bor);border-radius:10px;padding:10px 12px;margin:0 2px 14px}
+  .jopt-disclaimer b{color:var(--txt)}
+  .jopt-venue{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:12px 14px;margin:0 0 14px;font-size:.85em;line-height:1.7}
+  .jopt-venue b{color:#0e6a72}
+  .jopt-venue .jv-note{display:inline-block;margin-top:5px;font-size:.86em;color:var(--mut);line-height:1.6}
+  .jopt-days{display:flex;gap:8px;margin:0 0 16px}
+  .jopt-day{flex:1;min-width:0;padding:9px 4px 8px;border-radius:12px;border:1px solid var(--bor);background:var(--sur);text-align:center;cursor:pointer;transition:.13s;font-family:inherit}
+  .jopt-day .jd-d{display:block;font-size:1.15em;font-weight:800;color:var(--txt);line-height:1.2}
+  .jopt-day .jd-w{display:block;font-size:.66em;color:var(--mut);font-weight:700;margin-top:2px}
+  .jopt-day.on{background:linear-gradient(135deg,#0e3d48,#07171d);border-color:var(--jopt)}
+  .jopt-day.on .jd-d{color:var(--jopt2)}
+  .jopt-day.on .jd-w{color:var(--jopt)}
+  .jopt-tcard{display:flex;align-items:stretch;gap:0;background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);margin-bottom:10px;cursor:pointer;overflow:hidden;transition:.13s}
+  .jopt-tcard:hover{border-color:var(--jopt)}
+  .jopt-tcard .jt-no{flex-shrink:0;width:48px;background:linear-gradient(160deg,#0e3d48,#07171d);color:var(--jopt2);font-weight:800;font-size:.86em;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.2}
+  .jopt-tcard .jt-body{flex:1;min-width:0;padding:11px 13px}
+  .jopt-tcard .jt-name{font-size:.98em;font-weight:800;color:var(--txt)}
+  .jopt-tcard .jt-meta{font-size:.8em;color:var(--mut);margin-top:3px;display:flex;flex-wrap:wrap;gap:4px 12px}
+  .jopt-tcard .jt-meta b{color:#0e6a72;font-weight:800}
+  .jopt-tcard .jt-tags{margin-top:6px;display:flex;flex-wrap:wrap;gap:5px}
+  .jopt-tcard .jt-tags span{font-size:.7em;font-weight:700;color:#0e6a72;background:#e4f6f7;border:1px solid #b9e5e8;border-radius:20px;padding:2px 8px}
+  .jopt-tcard .jt-tags span.gtd{color:#7a5711;background:#fbf1d8;border-color:#ecd9a6}
+  .jopt-tcard .jt-arrow{flex-shrink:0;align-self:center;padding:0 12px;color:var(--mut);font-size:1.1em}
+  .jopt-backrow{margin:2px 0 14px}
+  .jopt-backrow a{font-size:.85em;font-weight:800;color:#0e6a72;text-decoration:none}
+  .jopt-detail-meta{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:14px 16px;margin-bottom:14px}
+  .jopt-detail-meta h2{font-size:1.1em;font-weight:800;margin-bottom:6px}
+  .jopt-detail-meta .dm-grid{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:.84em;color:var(--mut)}
+  .jopt-detail-meta .dm-grid b{color:#0e6a72;font-weight:800}
+  .jopt-detail-meta .dm-gtd{margin-top:8px;display:inline-block;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#3a2a06;font-weight:800;font-size:.8em;padding:5px 14px;border-radius:20px}
+  .jopt-detail-meta .dm-gtd-note{font-size:.75em;color:var(--mut);margin-top:4px}
+  .jopt-detail-meta .dm-note{margin-top:9px;font-size:.8em;color:var(--txt);background:#f7f5f0;border-left:3px solid var(--jopt);padding:7px 10px;border-radius:0 8px 8px 0;line-height:1.6}
+  /* ストラクチャー表 */
+  .jopt-sect{font-weight:800;font-size:.95em;color:#0e6a72;margin:0 2px 8px}
+  .jopt-struct-wrap{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);overflow-x:auto;margin-bottom:12px}
+  table.jopt-struct{border-collapse:collapse;width:100%;min-width:340px;font-size:.82em;font-variant-numeric:tabular-nums}
+  table.jopt-struct th,table.jopt-struct td{padding:7px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--bor)}
+  table.jopt-struct th{background:#eef7f8;color:#0e6a72;font-weight:800;font-size:.92em;position:sticky;top:0}
+  table.jopt-struct th:first-child,table.jopt-struct td:first-child{text-align:center;width:52px}
+  table.jopt-struct tbody tr:last-child td{border-bottom:none}
+  table.jopt-struct tr.brk td{border-bottom:2px dashed #cfe3e5}
+  table.jopt-struct td.lv{font-weight:800;color:var(--txt)}
+
   /* SECTION */
   main{padding:18px 0 40px}
   .shead{display:flex;align-items:baseline;justify-content:space-between;margin:22px 0 12px}
@@ -283,6 +349,10 @@
     <a class="back-link" id="wjpt-back" href="#">← 一覧へ戻る</a>
     <div class="venue-header-name" id="wjptHeaderName">WJPT</div>
   </div>
+  <div class="hbar hbar-jopt" id="hbar-jopt" style="display:none">
+    <a class="back-link" href="#">← 一覧へ戻る</a>
+    <div class="jopt-header-name">JOPT 福岡</div>
+  </div>
 </header>
 
 <section class="hero">
@@ -331,6 +401,13 @@
         <span class="wb-btn">日程を見る →</span>
       </div>
     </a>
+    <a class="joptBanner" id="joptBanner" href="#jopt" style="display:none">
+      <img class="jb-img" src="img/jopt/jopt-banner.jpg" alt="JOPT 2026 Fukuoka #01 7.30-8.2 UNITEDLAB 福岡・大名">
+      <div class="jb-foot">
+        <span class="jb-tag"><span class="jb-desc" id="joptBannerDesc">福岡・大名</span></span>
+        <span class="jb-btn">日程を見る →</span>
+      </div>
+    </a>
     <div class="shead">
       <h2>トーナメント日程</h2>
       <span class="cnt" id="list-cnt"></span>
@@ -347,6 +424,8 @@
   <div id="page-venue" style="display:none"></div>
 
   <div id="page-wjpt" style="display:none"></div>
+
+  <div id="page-jopt" style="display:none"></div>
 
   <a class="adCard" style="margin:26px 0 4px" href="https://poker-tourney-log--family.expo.app" target="_blank" rel="noopener">
     <img src="img/ptl-bulldog.png" alt="">
@@ -377,6 +456,7 @@
 </div>
 
 <script src="data.js"></script>
+<script src="jopt-data.js"></script>
 <script>
 (function(){
   const WD = ['日','月','火','水','木','金','土'];
@@ -724,6 +804,131 @@
     return null;
   }
 
+  // ===== JOPT 専用ページの描画 =====
+  const JOPT_AVAILABLE = typeof JOPT !== 'undefined' && JOPT && Array.isArray(JOPT.tournaments);
+
+  // 詳細ページの識別子。トーナメント番号(no)だけではメインイベント(4日程すべて"01")と
+  // Sit&Go(番号なし)が重複するため、重複分のみ日程で補って一意にする。
+  // 配列インデックスは使わない — データを更新するとURLが別のトーナメントを指してしまい、
+  // 共有済みリンクやブックマークが壊れるため。
+  function joptIdOf(t, i){
+    if (t.no === '01'){
+      const m = (t.name||'').match(/Day\s*(1A|1B|1C|2)/i);
+      return '01-day' + (m ? m[1].toLowerCase() : String(i));
+    }
+    if (!t.no) return 'sng-' + t.day.slice(5).replace('-','');
+    return t.no.toLowerCase();
+  }
+  const JOPT_IDS = JOPT_AVAILABLE ? JOPT.tournaments.map(joptIdOf) : [];
+  const joptIndexById = id => JOPT_IDS.indexOf(id);
+  let joptDay = JOPT_AVAILABLE
+    ? (JOPT.days.includes(localTodayGlobal()) ? localTodayGlobal() : JOPT.days[0])
+    : null;
+
+  function renderJoptDayList(){
+    const page = document.getElementById('page-jopt');
+    if (!JOPT_AVAILABLE){ page.innerHTML = '<div class="empty">イベント情報を読み込めませんでした。</div>'; return; }
+    const dayBtns = JOPT.days.map(d => {
+      const dt = iso(d);
+      const on = d === joptDay ? ' on' : '';
+      const label = d === localToday ? '本日' : WD[dt.getDay()] + '曜';
+      return `<button type="button" class="jopt-day${on}" data-jday="${d}"><span class="jd-d">${dt.getMonth()+1}/${dt.getDate()}</span><span class="jd-w">${label}</span></button>`;
+    }).join('');
+    const cards = JOPT.tournaments.map((t, i) => ({t, i}))
+      .filter(x => x.t.day === joptDay)
+      .map(({t, i}) => {
+        const tags = (t.tags||[]).map(tg => `<span>${tg}</span>`).join('')
+          + (t.gtd ? `<span class="gtd">${t.gtd} GTD</span>` : '');
+        const meta = [`<span>START <b>${t.start||'—'}</b></span>`];
+        if (t.buyin) meta.push(`<span>BUY-IN <b>${t.buyin}</b></span>`);
+        if (t.stack) meta.push(`<span>STACK <b>${t.stack}</b></span>`);
+        return `<div class="jopt-tcard" data-jid="${JOPT_IDS[i]}">
+          <div class="jt-no">${t.no ? '#'+t.no : 'SNG'}</div>
+          <div class="jt-body">
+            <div class="jt-name">${t.name}</div>
+            <div class="jt-meta">${meta.join('')}</div>
+            ${tags?`<div class="jt-tags">${tags}</div>`:''}
+          </div>
+          <div class="jt-arrow">›</div>
+        </div>`;
+      }).join('');
+    page.innerHTML = `
+      <a class="jopt-top" href="${JOPT.guideUrl}" target="_blank" rel="noopener"><img src="img/jopt/jopt-banner.jpg" alt="${JOPT.name}"></a>
+      <p class="jopt-sub">${JOPT.fullName}（7/30〜8/2）。全${JOPT.tournaments.length}トーナメント。各トーナメントをタップするとブラインドストラクチャーが見られます。エントリー方法・受付・最新の変更は<a href="${JOPT.guideUrl}" target="_blank" rel="noopener">公式サイト</a>および<a href="${JOPT.scheduleUrl}" target="_blank" rel="noopener">公式スケジュール</a>をご確認ください。</p>
+      <div class="jopt-disclaimer">当サイトはJOPTの主催者・公式媒体ではありません。公開情報をもとに当サイトが独自に集約した<b>非公式のまとめ</b>です。ページ内のバナーは当サイトが作成したもので、ロゴ等の権利は主催者に帰属します。掲載内容は<b>2026年7月22日時点</b>の公式情報にもとづきますが、当サイトによる転記の誤りが含まれる可能性があります。参加前に必ず公式情報をご確認ください。</div>
+      <div class="jopt-venue"><b>会場</b>　${JOPT.venue}（${JOPT.address}）<br><b>メインイベント</b>　プライズ保証 ¥15,000,000（Day 1〜Day 2 全体での保証額）<br><span class="jv-note">※主催者発表の金額です。JOPTではプライズは賞金ではなく、対象大会への参加補助を内容とする選手契約として扱われます。</span></div>
+      <div class="jopt-days">${dayBtns}</div>
+      <div id="jopt-list">${cards}</div>
+    `;
+    page.querySelectorAll('.jopt-day').forEach(b => b.addEventListener('click', () => {
+      joptDay = b.dataset.jday; renderJoptDayList(); window.scrollTo({top:0,behavior:'instant'});
+    }));
+    page.querySelectorAll('.jopt-tcard').forEach(c => c.addEventListener('click', () => {
+      location.hash = '#jopt/t/' + c.dataset.jid;
+    }));
+  }
+
+  function renderJoptDetail(id){
+    const page = document.getElementById('page-jopt');
+    const idx = JOPT_AVAILABLE ? joptIndexById(id) : -1;
+    const t = idx >= 0 ? JOPT.tournaments[idx] : null;
+    if (!t){ location.hash = '#jopt'; return; }
+    const dt = iso(t.day);
+    const meta = [];
+    if (t.start)    meta.push(`<span>START <b>${t.start}</b></span>`);
+    if (t.regClose) meta.push(`<span>登録締切 <b>${t.regClose}</b></span>`);
+    if (t.buyin)    meta.push(`<span>BUY-IN <b>${t.buyin}</b></span>`);
+    if (t.stack)    meta.push(`<span>STACK <b>${t.stack}</b></span>`);
+    if (t.levelMinutes) meta.push(`<span>1レベル <b>${t.levelMinutes}分</b></span>`);
+    const rows = (t.structure||[]).map(s => {
+      const ante = (s.ante === null || s.ante === undefined || s.ante === 0) ? '—' : s.ante.toLocaleString();
+      return `<tr class="${s.break?'brk':''}"><td class="lv">${s.lv}</td><td>${s.sb.toLocaleString()}</td><td>${s.bb.toLocaleString()}</td><td>${ante}</td><td>${s.min}分</td></tr>`;
+    }).join('');
+    // 注記は実態に合わせて出し分ける(常に同じ文言を出すと事実と食い違うため)
+    const st = t.structure || [];
+    const hasBreak = st.some(s => s.break);
+    const variesMin = st.length > 1 && new Set(st.map(s => s.min)).size > 1;
+    const structNotes = [];
+    if (hasBreak)  structNotes.push('点線は休憩の入るレベルを示します。');
+    if (variesMin) structNotes.push('レベル時間は進行に応じて変わります。');
+    // 公式PDFの全レベルを収録できなかった場合のみ、その旨とPDFリンクを明示する
+    // s02のように専用PDFが無く、別トーナメントのPDFに情報が同梱されている場合があるため、
+    // リンク文言は「どのPDFに飛ぶのか」が分かる表記にする。
+    const pdfLabel = t.structurePdfLabel || '公式ストラクチャー(PDF)';
+    const pdfLink = t.structurePdfUrl
+      ? `<a href="${t.structurePdfUrl}" target="_blank" rel="noopener">${pdfLabel}</a>`
+      : `<a href="${JOPT.scheduleUrl}" target="_blank" rel="noopener">公式スケジュール</a>`;
+    if (t.structureIncomplete){
+      structNotes.push(`この表は公開情報から取得できた範囲までです。以降のレベルは${pdfLink}をご確認ください。`);
+    }
+    const structHtml = rows
+      ? `<div class="jopt-sect">ブラインドストラクチャー</div>
+         <div class="jopt-struct-wrap"><table class="jopt-struct">
+           <thead><tr><th>Lv</th><th>SB</th><th>BB</th><th>Ante</th><th>時間</th></tr></thead>
+           <tbody>${rows}</tbody>
+         </table></div>
+         ${structNotes.length ? `<p class="jopt-sub">${structNotes.join('')}</p>` : ''}`
+      : `<p class="jopt-sub">このトーナメントのストラクチャーは公開情報から取得できませんでした。${pdfLink}をご確認ください。</p>`;
+    page.innerHTML = `
+      <div class="jopt-backrow"><a href="#jopt">← JOPT 日程へ戻る</a></div>
+      <div class="jopt-detail-meta">
+        <h2>${t.no ? '#'+t.no+' ' : ''}${t.name}</h2>
+        <div class="dm-grid"><span>${dt.getMonth()+1}/${dt.getDate()}（${WD[dt.getDay()]}）</span>${meta.join('')}</div>
+        ${t.gtd ? `<div class="dm-gtd">プライズ保証 ${t.gtd}</div><div class="dm-gtd-note">※メインイベント全体(Day 1〜Day 2)での保証額です。主催者発表の金額で、JOPTではプライズは賞金ではなく選手契約として扱われます。</div>` : ''}
+        ${t.note ? `<div class="dm-note">${t.note}</div>` : ''}
+      </div>
+      ${structHtml}
+      <p class="jopt-sub">情報は公式サイトをもとに掲載しています。最新の変更は<a href="${JOPT.guideUrl}" target="_blank" rel="noopener">JOPT公式</a>をご確認ください。</p>
+    `;
+  }
+
+  function parseJoptHash(){
+    if (location.hash === '#jopt') return { view:'list' };
+    const m = location.hash.match(/^#jopt\/t\/([a-z0-9-]+)$/i);
+    if (m) return { view:'detail', id: m[1].toLowerCase() };
+    return null;
+  }
+
   function parseHash(){
     const m = location.hash.match(/^#venue\/([^/]+)(?:\/(\d{4}-\d{2}))?$/);
     if (!m) return null;
@@ -732,6 +937,7 @@
 
   function route(){
     const wjpt = parseWjptHash();
+    const jopt = parseJoptHash();
     const parsed = parseHash();
     const filters = document.querySelector('.filters');
     const hero = document.querySelector('.hero');
@@ -739,6 +945,38 @@
     const hbarList = document.getElementById('hbar-list');
     const hbarVenue = document.getElementById('hbar-venue');
     const hbarWjpt = document.getElementById('hbar-wjpt');
+    const hbarJopt = document.getElementById('hbar-jopt');
+    if (jopt){
+      filters.style.display = 'none';
+      hero.style.display = 'none';
+      headerEl.classList.remove('venue-mode');
+      headerEl.classList.add('jopt-mode');
+      hbarList.style.display = 'none';
+      hbarVenue.style.display = 'none';
+      hbarWjpt.style.display = 'none';
+      hbarJopt.style.display = '';
+      document.getElementById('page-list').style.display = 'none';
+      document.getElementById('page-venue').style.display = 'none';
+      document.getElementById('page-wjpt').style.display = 'none';
+      document.getElementById('page-jopt').style.display = '';
+      if (jopt.view === 'detail'){
+        renderJoptDetail(jopt.id);
+        const ji = JOPT_AVAILABLE ? joptIndexById(jopt.id) : -1;
+        const t = ji >= 0 ? JOPT.tournaments[ji] : null;
+        document.title = t ? `JOPT ${t.no?'#'+t.no+' ':''}${t.name} | ふくおかポーカーナビ` : 'JOPT | ふくおかポーカーナビ';
+      } else {
+        renderJoptDayList();
+        document.title = 'JOPT 2026 Fukuoka #01 日程 | ふくおかポーカーナビ';
+      }
+      window.scrollTo(0,0);
+      if (typeof gtag === 'function'){
+        gtag('event','page_view',{ page_path: location.pathname + location.hash, page_title: document.title });
+      }
+      return;
+    }
+    hbarJopt.style.display = 'none';
+    headerEl.classList.remove('jopt-mode');
+    document.getElementById('page-jopt').style.display = 'none';
     if (wjpt){
       filters.style.display = 'none';
       hero.style.display = 'none';
@@ -847,10 +1085,33 @@
     }
   }
 
+  // JOPTバナーは「開催初日の2週間前」から「最終日」まで表示する(社長指示)。
+  // 開催前は「まもなく」バッジ、会期中は「開催中」バッジになる。
+  function setupJoptBanner(){
+    const banner = document.getElementById('joptBanner');
+    if (!banner || !JOPT_AVAILABLE) return;
+    // 件数はデータから生成する(ベタ書きするとデータ更新時に一覧側と食い違うため)
+    const desc = document.getElementById('joptBannerDesc');
+    if (desc) desc.textContent = `福岡・大名／全${JOPT.tournaments.length}トーナメント`;
+    const firstDay = JOPT.days[0];
+    const lastDay  = JOPT.days[JOPT.days.length-1];
+    const showFrom = (() => {
+      const d = iso(firstDay); d.setDate(d.getDate() - 14);
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    })();
+    if (localToday >= showFrom && localToday <= lastDay){
+      banner.style.display = '';
+      if (localToday < firstDay) banner.classList.add('upcoming');
+    } else {
+      banner.style.display = 'none';
+    }
+  }
+
   buildDateStrip();
   render();
   renderVenues();
   setupWjptBanner();
+  setupJoptBanner();
   route();
 })();
 </script>
