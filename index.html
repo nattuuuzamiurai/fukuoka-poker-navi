@@ -202,6 +202,12 @@
   .jopt-sub a{color:#127c85;font-weight:700;text-decoration:underline}
   .jopt-disclaimer{font-size:.78em;color:var(--mut);line-height:1.65;background:#f7f5f0;border:1px solid var(--bor);border-radius:10px;padding:10px 12px;margin:0 2px 14px}
   .jopt-disclaimer b{color:var(--txt)}
+  /* 会期終了後(アーカイブ)の表示 */
+  .jopt-archived{font-size:.85em;line-height:1.6;color:#5b4a1e;background:#fbf1d8;border:1px solid #ecd9a6;border-radius:10px;padding:11px 13px;margin:0 2px 12px}
+  .jopt-archived b{color:#3a2a06}
+  .jopt-archived a{color:#7a5711;font-weight:800;text-decoration:underline}
+  .jopt-top.is-archived img{filter:grayscale(.35) opacity(.85)}
+  .jopt-loading{text-align:center;color:var(--mut);font-size:.88em;padding:48px 16px}
   .jopt-venue{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:12px 14px;margin:0 0 14px;font-size:.85em;line-height:1.7}
   .jopt-venue b{color:#0e6a72}
   .jopt-venue .jv-note{display:inline-block;margin-top:5px;font-size:.86em;color:var(--mut);line-height:1.6}
@@ -458,7 +464,6 @@
 </div>
 
 <script src="data.js"></script>
-<script src="jopt-data.js"></script>
 <script>
 (function(){
   const WD = ['日','月','火','水','木','金','土'];
@@ -807,7 +812,59 @@
   }
 
   // ===== JOPT 専用ページの描画 =====
-  const JOPT_AVAILABLE = typeof JOPT !== 'undefined' && JOPT && Array.isArray(JOPT.tournaments);
+  // トーナメント本体(jopt-data.js, 約116KB)は #jopt を開いたときにだけ読み込む。
+  // ホーム画面のバナー表示判定に必要な最小限の情報だけ、ここに軽量メタとして持つ。
+  //
+  // ※ここは jopt-data.js との「二重管理」になる。データを更新して日程や件数が変わった場合、
+  //   この値が古いままでもデータ読み込み時に自動で上書きされるため画面は壊れないが、
+  //   データを読む前(ホーム画面)のバナー表示判定だけは古い値で行われる点に注意。
+  //   イベントの日程自体を差し替えるときは、ここも必ず更新すること。
+  const JOPT_META = {
+    days: ['2026-07-30','2026-07-31','2026-08-01','2026-08-02'],
+    tournamentCount: 44
+  };
+  const JOPT_BANNER_DESC = n => `福岡・大名／全${n}トーナメント`;
+
+  let joptData = null;          // 遅延読み込み後にセットされる
+  let joptLoadPromise = null;
+  function loadJoptData(){
+    if (joptData) return Promise.resolve(joptData);
+    if (joptLoadPromise) return joptLoadPromise;
+    joptLoadPromise = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'jopt-data.js';
+      s.onload = () => {
+        const d = window.JOPT_DATA;
+        // 形が想定どおりか検証してから採用する。不正なオブジェクトを joptData に残すと、
+        // 次回以降 route() の分岐をすり抜けて描画時に例外になるため。
+        if (!d || !Array.isArray(d.tournaments) || !d.tournaments.length || !Array.isArray(d.days) || !d.days.length){
+          joptData = null;
+          joptLoadPromise = null;   // onerror と同様に再試行できるようにする
+          reject(new Error('JOPT_DATA の形式が不正です'));
+          return;
+        }
+        joptData = d;
+        // 軽量メタがデータとずれていたら、常にデータ側を正とする(誤った件数・日程を出さないため)
+        JOPT_META.days = d.days.slice();
+        if (d.tournaments.length !== JOPT_META.tournamentCount){
+          JOPT_META.tournamentCount = d.tournaments.length;
+          const el = document.getElementById('joptBannerDesc');
+          if (el) el.textContent = JOPT_BANNER_DESC(JOPT_META.tournamentCount);
+        }
+        // 選択中の日がデータ側に存在しない場合に備えて必ず有効な日に寄せる
+        if (!JOPT_META.days.includes(joptDay)){
+          joptDay = JOPT_META.days.includes(localTodayGlobal()) ? localTodayGlobal() : JOPT_META.days[0];
+        }
+        resolve(joptData);
+      };
+      s.onerror = () => { joptLoadPromise = null; reject(new Error('jopt-data.js の読み込みに失敗')); };
+      document.head.appendChild(s);
+    });
+    return joptLoadPromise;
+  }
+
+  // イベント終了後(最終日を過ぎたら)はアーカイブとして残す
+  const joptIsArchived = () => localTodayGlobal() > JOPT_META.days[JOPT_META.days.length-1];
 
   // 詳細ページの識別子。トーナメント番号(no)だけではメインイベント(4日程すべて"01")と
   // Sit&Go(番号なし)が重複するため、重複分のみ日程で補って一意にする。
@@ -821,21 +878,28 @@
     if (!t.no) return 'sng-' + t.day.slice(5).replace('-','');
     return t.no.toLowerCase();
   }
-  const JOPT_IDS = JOPT_AVAILABLE ? JOPT.tournaments.map(joptIdOf) : [];
-  const joptIndexById = id => JOPT_IDS.indexOf(id);
-  let joptDay = JOPT_AVAILABLE
-    ? (JOPT.days.includes(localTodayGlobal()) ? localTodayGlobal() : JOPT.days[0])
-    : null;
+  const joptIdsOf = () => (joptData ? joptData.tournaments.map(joptIdOf) : []);
+  const joptIndexById = id => joptIdsOf().indexOf(id);
+  let joptDay = JOPT_META.days.includes(localTodayGlobal())
+    ? localTodayGlobal()
+    : JOPT_META.days[0];
 
   function renderJoptDayList(){
     const page = document.getElementById('page-jopt');
-    if (!JOPT_AVAILABLE){ page.innerHTML = '<div class="empty">イベント情報を読み込めませんでした。</div>'; return; }
+    if (!joptData){ page.innerHTML = '<div class="empty">イベント情報を読み込めませんでした。<br>時間をおいて再度お試しください。</div>'; return; }
+    const JOPT = joptData;
+    // 選択中の日が実データに無い場合(メタとのズレ等)は、必ず存在する日に寄せる。
+    // これを怠るとタブは出るのにカードが0件、という無言の故障になる。
+    if (!JOPT.days.includes(joptDay)){
+      joptDay = JOPT.days.includes(localTodayGlobal()) ? localTodayGlobal() : JOPT.days[0];
+    }
     const dayBtns = JOPT.days.map(d => {
       const dt = iso(d);
       const on = d === joptDay ? ' on' : '';
       const label = d === localToday ? '本日' : WD[dt.getDay()] + '曜';
       return `<button type="button" class="jopt-day${on}" data-jday="${d}"><span class="jd-d">${dt.getMonth()+1}/${dt.getDate()}</span><span class="jd-w">${label}</span></button>`;
     }).join('');
+    const ids = joptIdsOf();
     const cards = JOPT.tournaments.map((t, i) => ({t, i}))
       .filter(x => x.t.day === joptDay)
       .map(({t, i}) => {
@@ -844,7 +908,7 @@
         const meta = [`<span>START <b>${t.start||'—'}</b></span>`];
         if (t.buyin) meta.push(`<span>BUY-IN <b>${t.buyin}</b></span>`);
         if (t.stack) meta.push(`<span>STACK <b>${t.stack}</b></span>`);
-        return `<div class="jopt-tcard" data-jid="${JOPT_IDS[i]}">
+        return `<div class="jopt-tcard" data-jid="${ids[i]}">
           <div class="jt-no">${t.no ? '#'+t.no : 'SNG'}</div>
           <div class="jt-body">
             <div class="jt-name">${t.name}</div>
@@ -854,10 +918,12 @@
           <div class="jt-arrow">›</div>
         </div>`;
       }).join('');
+    const archived = joptIsArchived();
     page.innerHTML = `
-      <a class="jopt-top" href="${JOPT.guideUrl}" target="_blank" rel="noopener"><img src="img/jopt/jopt-banner.jpg" alt="${JOPT.name}"></a>
-      <p class="jopt-sub">${JOPT.fullName}（7/30〜8/2）。全${JOPT.tournaments.length}トーナメント。各トーナメントをタップするとブラインドストラクチャーが見られます。エントリー方法・受付・最新の変更は<a href="${JOPT.guideUrl}" target="_blank" rel="noopener">公式サイト</a>および<a href="${JOPT.scheduleUrl}" target="_blank" rel="noopener">公式スケジュール</a>をご確認ください。</p>
-      <div class="jopt-disclaimer">当サイトはJOPTの主催者・公式媒体ではありません。公開情報をもとに当サイトが独自に集約した<b>非公式のまとめ</b>です。ページ内のバナーは当サイトが作成したもので、ロゴ等の権利は主催者に帰属します。掲載内容は<b>2026年7月22日時点</b>の公式情報にもとづきますが、当サイトによる転記の誤りが含まれる可能性があります。参加前に必ず公式情報をご確認ください。</div>
+      ${archived ? '<div class="jopt-archived"><b>このイベントは終了しました。</b>以下は開催当時の日程・ストラクチャーの記録です。今後のトーナメントは<a href="#">トップページ</a>をご確認ください。</div>' : ''}
+      <a class="jopt-top${archived?' is-archived':''}" href="${JOPT.guideUrl}" target="_blank" rel="noopener"><img src="img/jopt/jopt-banner.jpg" alt="${JOPT.name}"></a>
+      <p class="jopt-sub">${JOPT.fullName}（7/30〜8/2）。全${JOPT.tournaments.length}トーナメント。各トーナメントをタップするとブラインドストラクチャーが見られます。${archived?'':'エントリー方法・受付・最新の変更は'}<a href="${JOPT.guideUrl}" target="_blank" rel="noopener">公式サイト</a>および<a href="${JOPT.scheduleUrl}" target="_blank" rel="noopener">公式スケジュール</a>${archived?'も併せてご確認ください。':'をご確認ください。'}</p>
+      <div class="jopt-disclaimer">当サイトはJOPTの主催者・公式媒体ではありません。公開情報をもとに当サイトが独自に集約した<b>非公式のまとめ</b>です。ページ内のバナーは当サイトが作成したもので、ロゴ等の権利は主催者に帰属します。掲載内容は<b>2026年7月22日時点</b>の公式情報にもとづきますが、当サイトによる転記の誤りが含まれる可能性があります。${archived?'イベント終了後は内容を更新していません。':'参加前に必ず公式情報をご確認ください。'}</div>
       <div class="jopt-venue"><b>会場</b>　${JOPT.venue}（${JOPT.address}）<br><b>メインイベント</b>　プライズ保証 ¥15,000,000（Day 1〜Day 2 全体での保証額）<br><span class="jv-note">※主催者発表の金額です。JOPTではプライズは賞金ではなく、対象大会への参加補助を内容とする選手契約として扱われます。</span></div>
       <div class="jopt-days">${dayBtns}</div>
       <div id="jopt-list">${cards}</div>
@@ -872,7 +938,9 @@
 
   function renderJoptDetail(id){
     const page = document.getElementById('page-jopt');
-    const idx = JOPT_AVAILABLE ? joptIndexById(id) : -1;
+    if (!joptData){ page.innerHTML = '<div class="empty">イベント情報を読み込めませんでした。<br>時間をおいて再度お試しください。</div>'; return; }
+    const JOPT = joptData;
+    const idx = joptIndexById(id);
     const t = idx >= 0 ? JOPT.tournaments[idx] : null;
     if (!t){ location.hash = '#jopt'; return; }
     const dt = iso(t.day);
@@ -911,8 +979,12 @@
          </table></div>
          ${structNotes.length ? `<p class="jopt-sub">${structNotes.join('')}</p>` : ''}`
       : `<p class="jopt-sub">このトーナメントのストラクチャーは公開情報から取得できませんでした。${pdfLink}をご確認ください。</p>`;
+    // 詳細ページは共有・ブックマーク・検索から単独で開かれる前提のURLのため、
+    // 終了後は一覧と同様にアーカイブである旨をここにも出す。
+    const archived = joptIsArchived();
     page.innerHTML = `
       <div class="jopt-backrow"><a href="#jopt">← JOPT 日程へ戻る</a></div>
+      ${archived ? '<div class="jopt-archived"><b>このイベントは終了しました。</b>以下は開催当時の記録です。</div>' : ''}
       <div class="jopt-detail-meta">
         <h2>${t.no ? '#'+t.no+' ' : ''}${t.name}</h2>
         <div class="dm-grid"><span>${dt.getMonth()+1}/${dt.getDate()}（${WD[dt.getDay()]}）</span>${meta.join('')}</div>
@@ -920,7 +992,9 @@
         ${t.note ? `<div class="dm-note">${t.note}</div>` : ''}
       </div>
       ${structHtml}
-      <p class="jopt-sub">情報は公式サイトをもとに掲載しています。最新の変更は<a href="${JOPT.guideUrl}" target="_blank" rel="noopener">JOPT公式</a>をご確認ください。</p>
+      <p class="jopt-sub">${archived
+        ? `情報は開催当時の公式サイトをもとに掲載したもので、イベント終了後は更新していません。掲載元: <a href="${JOPT.guideUrl}" target="_blank" rel="noopener">JOPT公式サイト</a>（開催当時）`
+        : `情報は公式サイトをもとに掲載しています。最新の変更は<a href="${JOPT.guideUrl}" target="_blank" rel="noopener">JOPT公式</a>をご確認ください。`}</p>
     `;
   }
 
@@ -960,19 +1034,35 @@
       document.getElementById('page-list').style.display = 'none';
       document.getElementById('page-venue').style.display = 'none';
       document.getElementById('page-wjpt').style.display = 'none';
-      document.getElementById('page-jopt').style.display = '';
-      if (jopt.view === 'detail'){
-        renderJoptDetail(jopt.id);
-        const ji = JOPT_AVAILABLE ? joptIndexById(jopt.id) : -1;
-        const t = ji >= 0 ? JOPT.tournaments[ji] : null;
-        document.title = t ? `JOPT ${t.no?'#'+t.no+' ':''}${t.name} | ふくおかポーカーナビ` : 'JOPT | ふくおかポーカーナビ';
+      const joptPage = document.getElementById('page-jopt');
+      joptPage.style.display = '';
+      // トーナメントデータは初回アクセス時のみ読み込む(2回目以降はキャッシュ済みで即描画)
+      const renderJopt = () => {
+        if (jopt.view === 'detail'){
+          renderJoptDetail(jopt.id);
+          const ji = joptIndexById(jopt.id);
+          const t = ji >= 0 ? joptData.tournaments[ji] : null;
+          document.title = t ? `JOPT ${t.no?'#'+t.no+' ':''}${t.name} | ふくおかポーカーナビ` : 'JOPT | ふくおかポーカーナビ';
+        } else {
+          renderJoptDayList();
+          document.title = 'JOPT 2026 Fukuoka #01 日程 | ふくおかポーカーナビ';
+        }
+        window.scrollTo(0,0);
+        if (typeof gtag === 'function'){
+          gtag('event','page_view',{ page_path: location.pathname + location.hash, page_title: document.title });
+        }
+      };
+      if (joptData){
+        renderJopt();
       } else {
-        renderJoptDayList();
-        document.title = 'JOPT 2026 Fukuoka #01 日程 | ふくおかポーカーナビ';
-      }
-      window.scrollTo(0,0);
-      if (typeof gtag === 'function'){
-        gtag('event','page_view',{ page_path: location.pathname + location.hash, page_title: document.title });
+        joptPage.innerHTML = '<div class="jopt-loading">読み込み中…</div>';
+        const requestedHash = location.hash;
+        loadJoptData()
+          .then(() => { if (location.hash === requestedHash) renderJopt(); })
+          .catch(() => {
+            if (location.hash !== requestedHash) return;
+            joptPage.innerHTML = '<div class="empty">イベント情報を読み込めませんでした。<br>通信環境をご確認のうえ、時間をおいて再度お試しください。</div>';
+          });
       }
       return;
     }
@@ -1091,12 +1181,13 @@
   // 開催前は「まもなく」バッジ、会期中は「開催中」バッジになる。
   function setupJoptBanner(){
     const banner = document.getElementById('joptBanner');
-    if (!banner || !JOPT_AVAILABLE) return;
-    // 件数はデータから生成する(ベタ書きするとデータ更新時に一覧側と食い違うため)
+    if (!banner) return;
+    // 件数は軽量メタから表示する(トーナメント本体は#joptを開くまで読み込まないため)。
+    // メタとデータがずれていた場合は loadJoptData() 側で表示を訂正する。
     const desc = document.getElementById('joptBannerDesc');
-    if (desc) desc.textContent = `福岡・大名／全${JOPT.tournaments.length}トーナメント`;
-    const firstDay = JOPT.days[0];
-    const lastDay  = JOPT.days[JOPT.days.length-1];
+    if (desc) desc.textContent = JOPT_BANNER_DESC(JOPT_META.tournamentCount);
+    const firstDay = JOPT_META.days[0];
+    const lastDay  = JOPT_META.days[JOPT_META.days.length-1];
     const showFrom = (() => {
       const d = iso(firstDay); d.setDate(d.getDate() - 14);
       return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;

@@ -2008,4 +2008,7 @@ const JOPT = {
   ]
 };
 
+// このファイルは #jopt を開いたときにだけ動的読み込みされる(index.html の loadJoptData)。
+// トップレベルの const は window に載らないため、明示的に公開する。
+if (typeof window !== 'undefined') { window.JOPT_DATA = JOPT; }
 if (typeof module !== 'undefined' && module.exports) { module.exports = JOPT; }
