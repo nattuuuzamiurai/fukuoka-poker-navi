@@ -203,10 +203,10 @@
   .jopt-disclaimer{font-size:.78em;color:var(--mut);line-height:1.65;background:#f7f5f0;border:1px solid var(--bor);border-radius:10px;padding:10px 12px;margin:0 2px 14px}
   .jopt-disclaimer b{color:var(--txt)}
   /* 会期終了後(アーカイブ)の表示 */
-  .jopt-archived{font-size:.85em;line-height:1.6;color:#5b4a1e;background:#fbf1d8;border:1px solid #ecd9a6;border-radius:10px;padding:11px 13px;margin:0 2px 12px}
-  .jopt-archived b{color:#3a2a06}
-  .jopt-archived a{color:#7a5711;font-weight:800;text-decoration:underline}
-  .jopt-top.is-archived img{filter:grayscale(.35) opacity(.85)}
+  .evt-archived{font-size:.85em;line-height:1.6;color:#5b4a1e;background:#fbf1d8;border:1px solid #ecd9a6;border-radius:10px;padding:11px 13px;margin:0 2px 12px}
+  .evt-archived b{color:#3a2a06}
+  .evt-archived a{color:#7a5711;font-weight:800;text-decoration:underline}
+  .jopt-top.is-archived img,.wjpt-top.is-archived img{filter:grayscale(.35) opacity(.85)}
   .jopt-loading{text-align:center;color:var(--mut);font-size:.88em;padding:48px 16px}
   .jopt-venue{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:12px 14px;margin:0 0 14px;font-size:.85em;line-height:1.7}
   .jopt-venue b{color:#0e6a72}
@@ -511,6 +511,24 @@
     const n=new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
   }
 
+  // ===== 大型イベント共通 =====
+  // イベントの会期は days(YYYY-MM-DD の配列)で表す。並び順に依存しないよう、
+  // 初日・最終日は配列の端ではなく最小値・最大値で求める。
+  const eventFirstDay = days => (Array.isArray(days) && days.length) ? days.reduce((a,b)=> a<b?a:b) : null;
+  const eventLastDay  = days => (Array.isArray(days) && days.length) ? days.reduce((a,b)=> a>b?a:b) : null;
+  // 会期最終日を過ぎたイベントは「アーカイブ(開催当時の記録)」として扱う。
+  // バナーの表示可否もページ内の文言の出し分けも、日付比較を各所に書かず必ずこの関数を通すこと。
+  // イベントが増えるたびに同じ判定を書き足すと、どれかに入れ忘れて
+  // 「終了したのに開催中の書き方のまま」が残るため。
+  const isEventArchived = days => {
+    const last = eventLastDay(days);
+    return !!last && localTodayGlobal() > last;
+  };
+  // アーカイブ時にページ冒頭へ出す共通の告知ボックス
+  const archivedNotice = (detail) => detail
+    ? '<div class="evt-archived"><b>このイベントは終了しました。</b>以下は開催当時の記録です。</div>'
+    : '<div class="evt-archived"><b>このイベントは終了しました。</b>以下は開催当時の日程・内容の記録です。今後のトーナメントは<a href="#">トップページ</a>をご確認ください。</div>';
+
   // --- 開始時刻の扱い ---
   // start が "HH:MM" 形式で確定しているか判定。未確定(不明)は末尾へ回すためのソートキーを返す。
   const hasStart = t => !!(t && t.start && /^\d{1,2}:\d{2}$/.test(t.start));
@@ -774,9 +792,13 @@
         <div class="wt-arrow">›</div>
       </div>`;
     }).join('');
+    const archived = isEventArchived(WJPT.days);
     page.innerHTML = `
-      <a class="wjpt-top" href="${WJPT.guideUrl}" target="_blank" rel="noopener"><img src="${WJPT.banner}" alt="WJPT West Japan Poker Tour"></a>
-      <p class="wjpt-sub">West Japan Poker Tour ＠${WJPT.area}（7/18〜7/20）。九州最大級のポーカーフェスティバル、全21トーナメント。各トーナメントをタップすると公式のストラクチャー・プライズ詳細が見られます。会場・受付・支払い方法などの詳細は<a href="${WJPT.guideUrl}" target="_blank" rel="noopener">公式プレイヤーズガイド</a>をご確認ください。</p>
+      ${archived ? archivedNotice(false) : ''}
+      <a class="wjpt-top${archived?' is-archived':''}" href="${WJPT.guideUrl}" target="_blank" rel="noopener"><img src="${WJPT.banner}" alt="WJPT West Japan Poker Tour"></a>
+      <p class="wjpt-sub">West Japan Poker Tour ＠${WJPT.area}（2026年7/18〜7/20）。九州最大級のポーカーフェスティバル、全21トーナメント。各トーナメントをタップすると公式のストラクチャー・プライズ詳細が見られます。${archived
+        ? `掲載元: <a href="${WJPT.guideUrl}" target="_blank" rel="noopener">公式プレイヤーズガイド</a>（開催当時）。`
+        : `会場・受付・支払い方法などの詳細は<a href="${WJPT.guideUrl}" target="_blank" rel="noopener">公式プレイヤーズガイド</a>をご確認ください。`}</p>
       <div class="wjpt-days">${dayBtns}</div>
       <div id="wjpt-list">${cards}</div>
     `;
@@ -793,14 +815,18 @@
     const page = document.getElementById('page-wjpt');
     if (!t){ location.hash = '#wjpt'; return; }
     const dt = iso(t.day);
+    const archived = isEventArchived(WJPT.days);
     page.innerHTML = `
       <div class="wjpt-backrow"><a href="#wjpt">← WJPT 日程へ戻る</a></div>
+      ${archived ? archivedNotice(true) : ''}
       <div class="wjpt-detail-meta">
         <h2>#${t.no} ${t.name}</h2>
         <div class="dm-sub">${dt.getMonth()+1}/${dt.getDate()}（${WD[dt.getDay()]}）　START ${t.start}　BUY-IN ${t.buyin}　STACK ${t.stack}</div>
       </div>
       <img class="wjpt-detail-img" src="${wjptImg(t.no)}" alt="#${t.no} ${t.name} ストラクチャー詳細" loading="lazy">
-      <p class="wjpt-sub" style="margin-top:12px">画像は公式の告知シートです。最新情報・変更は<a href="${WJPT.guideUrl}" target="_blank" rel="noopener">公式プレイヤーズガイド</a>をご確認ください。</p>
+      <p class="wjpt-sub" style="margin-top:12px">${archived
+        ? `画像は開催当時の公式告知シートです。イベント終了後は更新していません。掲載元: <a href="${WJPT.guideUrl}" target="_blank" rel="noopener">公式プレイヤーズガイド</a>（開催当時）。`
+        : `画像は公式の告知シートです。最新情報・変更は<a href="${WJPT.guideUrl}" target="_blank" rel="noopener">公式プレイヤーズガイド</a>をご確認ください。`}</p>
     `;
   }
 
@@ -863,8 +889,7 @@
     return joptLoadPromise;
   }
 
-  // イベント終了後(最終日を過ぎたら)はアーカイブとして残す
-  const joptIsArchived = () => localTodayGlobal() > JOPT_META.days[JOPT_META.days.length-1];
+  const joptIsArchived = () => isEventArchived(JOPT_META.days);
 
   // 詳細ページの識別子。トーナメント番号(no)だけではメインイベント(4日程すべて"01")と
   // Sit&Go(番号なし)が重複するため、重複分のみ日程で補って一意にする。
@@ -920,9 +945,9 @@
       }).join('');
     const archived = joptIsArchived();
     page.innerHTML = `
-      ${archived ? '<div class="jopt-archived"><b>このイベントは終了しました。</b>以下は開催当時の日程・ストラクチャーの記録です。今後のトーナメントは<a href="#">トップページ</a>をご確認ください。</div>' : ''}
+      ${archived ? archivedNotice(false) : ''}
       <a class="jopt-top${archived?' is-archived':''}" href="${JOPT.guideUrl}" target="_blank" rel="noopener"><img src="img/jopt/jopt-banner.jpg" alt="${JOPT.name}"></a>
-      <p class="jopt-sub">${JOPT.fullName}（7/30〜8/2）。全${JOPT.tournaments.length}トーナメント。各トーナメントをタップするとブラインドストラクチャーが見られます。${archived?'':'エントリー方法・受付・最新の変更は'}<a href="${JOPT.guideUrl}" target="_blank" rel="noopener">公式サイト</a>および<a href="${JOPT.scheduleUrl}" target="_blank" rel="noopener">公式スケジュール</a>${archived?'も併せてご確認ください。':'をご確認ください。'}</p>
+      <p class="jopt-sub">${JOPT.fullName}（2026年7/30〜8/2）。全${JOPT.tournaments.length}トーナメント。各トーナメントをタップするとブラインドストラクチャーが見られます。${archived?'':'エントリー方法・受付・最新の変更は'}<a href="${JOPT.guideUrl}" target="_blank" rel="noopener">公式サイト</a>および<a href="${JOPT.scheduleUrl}" target="_blank" rel="noopener">公式スケジュール</a>${archived?'も併せてご確認ください。':'をご確認ください。'}</p>
       <div class="jopt-disclaimer">当サイトはJOPTの主催者・公式媒体ではありません。公開情報をもとに当サイトが独自に集約した<b>非公式のまとめ</b>です。ページ内のバナーは当サイトが作成したもので、ロゴ等の権利は主催者に帰属します。掲載内容は<b>2026年7月22日時点</b>の公式情報にもとづきますが、当サイトによる転記の誤りが含まれる可能性があります。${archived?'イベント終了後は内容を更新していません。':'参加前に必ず公式情報をご確認ください。'}</div>
       <div class="jopt-venue"><b>会場</b>　${JOPT.venue}（${JOPT.address}）<br><b>メインイベント</b>　プライズ保証 ¥15,000,000（Day 1〜Day 2 全体での保証額）<br><span class="jv-note">※主催者発表の金額です。JOPTではプライズは賞金ではなく、対象大会への参加補助を内容とする選手契約として扱われます。</span></div>
       <div class="jopt-days">${dayBtns}</div>
@@ -984,7 +1009,7 @@
     const archived = joptIsArchived();
     page.innerHTML = `
       <div class="jopt-backrow"><a href="#jopt">← JOPT 日程へ戻る</a></div>
-      ${archived ? '<div class="jopt-archived"><b>このイベントは終了しました。</b>以下は開催当時の記録です。</div>' : ''}
+      ${archived ? archivedNotice(true) : ''}
       <div class="jopt-detail-meta">
         <h2>${t.no ? '#'+t.no+' ' : ''}${t.name}</h2>
         <div class="dm-grid"><span>${dt.getMonth()+1}/${dt.getDate()}（${WD[dt.getDay()]}）</span>${meta.join('')}</div>
@@ -993,7 +1018,7 @@
       </div>
       ${structHtml}
       <p class="jopt-sub">${archived
-        ? `情報は開催当時の公式サイトをもとに掲載したもので、イベント終了後は更新していません。掲載元: <a href="${JOPT.guideUrl}" target="_blank" rel="noopener">JOPT公式サイト</a>（開催当時）`
+        ? `情報は開催当時の公式サイトをもとに掲載したもので、イベント終了後は更新していません。掲載元: <a href="${JOPT.guideUrl}" target="_blank" rel="noopener">JOPT公式サイト</a>（開催当時）。`
         : `情報は公式サイトをもとに掲載しています。最新の変更は<a href="${JOPT.guideUrl}" target="_blank" rel="noopener">JOPT公式</a>をご確認ください。`}</p>
     `;
   }
@@ -1167,11 +1192,10 @@
   function setupWjptBanner(){
     const banner = document.getElementById('wjptBanner');
     if (!banner) return;
-    const lastDay = WJPT.days[WJPT.days.length-1];
-    const firstDay = WJPT.days[0];
-    if (localToday <= lastDay){
+    const firstDay = eventFirstDay(WJPT.days);
+    if (!isEventArchived(WJPT.days)){
       banner.style.display = '';
-      if (localToday < firstDay) banner.classList.add('upcoming');
+      if (localTodayGlobal() < firstDay) banner.classList.add('upcoming');
     } else {
       banner.style.display = 'none';
     }
@@ -1186,15 +1210,15 @@
     // メタとデータがずれていた場合は loadJoptData() 側で表示を訂正する。
     const desc = document.getElementById('joptBannerDesc');
     if (desc) desc.textContent = JOPT_BANNER_DESC(JOPT_META.tournamentCount);
-    const firstDay = JOPT_META.days[0];
-    const lastDay  = JOPT_META.days[JOPT_META.days.length-1];
+    const firstDay = eventFirstDay(JOPT_META.days);
     const showFrom = (() => {
       const d = iso(firstDay); d.setDate(d.getDate() - 14);
       return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     })();
-    if (localToday >= showFrom && localToday <= lastDay){
+    const today = localTodayGlobal();
+    if (today >= showFrom && !isEventArchived(JOPT_META.days)){
       banner.style.display = '';
-      if (localToday < firstDay) banner.classList.add('upcoming');
+      if (today < firstDay) banner.classList.add('upcoming');
     } else {
       banner.style.display = 'none';
     }
