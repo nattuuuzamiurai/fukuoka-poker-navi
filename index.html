@@ -334,10 +334,12 @@
     .hero h1{font-size:1.15em}
     .tc-buyin{display:none}
     .shead h2{font-size:1em}
-    .venues{grid-template-columns:repeat(4,1fr);gap:7px}
-    .vcard{padding:9px 4px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60px;cursor:pointer}
+    /* minmax(0,1fr) にしないと、店舗名の最小幅で列が広がり狭い画面(320px等)で
+       グリッドがコンテナからはみ出して横スクロールが発生する。0 を許可して確実に4列に収める。 */
+    .venues{grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+    .vcard{padding:9px 4px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60px;cursor:pointer;min-width:0}
     .vcard .vc-area,.vcard .vc-links,.vcard .vc-cta{display:none}
-    .vc-name{font-size:.68em;line-height:1.25;justify-content:center;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+    .vc-name{font-size:.68em;line-height:1.25;justify-content:center;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
   }
 </style>
 </head>
