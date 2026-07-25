@@ -3,4 +3,4 @@ Allow: /
 Disallow: /admin.html
 Disallow: /dev-server.py
 
-Sitemap: https://nattuuuzamiurai.github.io/fukuoka-poker-navi/sitemap.xml
+Sitemap: https://fukuokapoker.com/sitemap.xml
