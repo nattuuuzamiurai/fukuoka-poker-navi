@@ -22,8 +22,10 @@
 | `data.js` | 表示用の正規化済みデータ（`VENUES` / `TOURNAMENTS` / `AREAS`）とスキーマ定義 |
 | `jopt-data.js` | 大型イベント JOPT 2026 Fukuoka #01 のトーナメント・ストラクチャーデータ（約116KB）。**`#jopt` を開いたときにだけ動的読み込みされる**（全ページで読むには重いため）。`index.html` の `JOPT_META`（日程・件数）と二重管理になっており、日程を差し替える際は両方の更新が必要（件数・日程のズレはデータ読み込み時に自動訂正されるが、ホーム画面のバナー表示判定だけは `JOPT_META` の値で行われる） |
 | `fukuoka-venues.json` | 実在店の調査結果（出典・注記付き。`data.js` の VENUES の原典） |
+| `events/<slug>/index.html` | 大型イベント個別の**静的ページ**（検索流入用）。SPAのハッシュURL(`#jopt`等)はインデックスされないため、実URL(`/events/jopt-2026-fukuoka-01/` 等)でクローラブルな全日程ページを別途用意する。Event構造化データ・canonical付き |
+| `tools/gen-event-pages.js` | 上記イベント静的ページと `sitemap.xml` の**生成スクリプト**。データは `jopt-data.js` と `index.html` の `const WJPT` からそのまま読み込む（数値を手打ちしない=転記ミス防止）。実行: `node tools/gen-event-pages.js <リポジトリのパス>`。**JOPT等のデータを更新したら必ず再実行して静的ページを再生成すること**（静的ページはデータのスナップショットのため） |
 
-`data.js` を差し替えるだけでサイトが更新される設計。CDN/静的ホスティング（GitHub Pages 等）にそのまま置ける。
+`data.js` を差し替えるだけでサイトが更新される設計。CDN/静的ホスティング（GitHub Pages 等）にそのまま置ける。イベント日程を変更した場合のみ、上記 `tools/gen-event-pages.js` の再実行が必要。
 
 ## 管理コンソールの使い方（月末の更新作業）
 

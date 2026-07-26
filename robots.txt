@@ -2,5 +2,6 @@ User-agent: *
 Allow: /
 Disallow: /admin.html
 Disallow: /dev-server.py
+Disallow: /tools/
 
 Sitemap: https://fukuokapoker.com/sitemap.xml
