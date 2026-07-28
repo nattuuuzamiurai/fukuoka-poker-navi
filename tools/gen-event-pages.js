@@ -2,17 +2,19 @@
 /**
  * gen-event-pages.js
  *
- * 検索流入用に、大型イベント(JOPT / WJPT)のクローラブルな静的ページを生成する。
+ * 検索流入用に、大型イベント(JOPT / WJPT / NIPPON SERIES)のクローラブルな静的ページを生成する。
  * SPAのハッシュURL(#jopt 等)は個別ページとしてインデックスされないため、
  * /events/<slug>/index.html という実URLの静的ページを用意する。
  *
  * データは既存の検証済みソースからそのまま読み込む(数値を手打ちしない):
- *   - JOPT: jopt-data.js (window.JOPT_DATA / module.exports)
- *   - WJPT: index.html 内の const WJPT = {...} を抽出
+ *   - JOPT:          jopt-data.js (window.JOPT_DATA / module.exports)
+ *   - WJPT:          index.html 内の const WJPT = {...} を抽出
+ *   - NIPPON SERIES: nippon-series-data.js
  *
  * 生成物:
  *   - events/jopt-2026-fukuoka-01/index.html
  *   - events/wjpt-2026/index.html
+ *   - events/nippon-series-2026-fukuoka/index.html
  *   - sitemap.xml (ホーム + 各イベントページ)
  *
  * 使い方: node gen-event-pages.js <リポジトリのパス>
@@ -32,6 +34,7 @@ const TODAY = process.argv[3] || null; // 生成日(アーカイブ判定・"時
 const JOPT = require(path.join(REPO, 'jopt-data.js'));
 // 大型イベントのレジストリ(会期・掲載期間ルール)。ブラウザ側と同じファイルを使う。
 const BIG = require(path.join(REPO, 'big-events.js'));
+const NIPPON = require(path.join(REPO, 'nippon-series-data.js'));
 
 function extractWJPT(indexHtml) {
   const src = fs.readFileSync(indexHtml, 'utf8');
@@ -281,10 +284,83 @@ ${schedTable(WJPT.tournaments)}
   return pageHead({ title, desc, canonical, jsonld, image: (WJPT.banner || 'img/wjpt/wjpt-banner.jpg') }) + body + pageFoot();
 }
 
+// ---- NIPPON SERIES ページ ----
+// 列がJOPT/WJPT(バイイン・スタック)と違う(Fee / Reg Close / Prize)ため専用の表を作る。
+// Fee・Prize は公式表記のまま出す(「+ 1,000」の内訳や「保証」等の解釈を足さない)。
+function schedTableNippon(events) {
+  const byDay = {};
+  const order = [];
+  events.forEach(e => { if (!byDay[e.day]) { byDay[e.day] = []; order.push(e.day); } byDay[e.day].push(e); });
+  order.sort();
+  return order.map(day => {
+    const f = fmtDate(day);
+    const rows = byDay[day]
+      .slice()
+      .sort((a, b) => a.start.localeCompare(b.start))
+      .map(e => `      <tr>
+        <td class="no">#${esc(e.no)}<br><span style="color:var(--mut);font-size:.85em">${esc(e.variant)}</span></td>
+        <td class="start">${esc(e.start)}</td>
+        <td>${esc(e.name)}</td>
+        <td class="buyin">${esc(e.fee)}</td>
+        <td class="buyin">${esc(e.regClose)}</td>
+        <td>${esc(e.prize)}</td>
+      </tr>`).join('\n');
+    return `<h2 class="day">${f.m}月${f.d}日（${f.wd}）</h2>
+<div class="sched-wrap"><table class="sched">
+  <thead><tr><th>No.</th><th>開始</th><th>トーナメント</th><th>Fee</th><th>Reg Close</th><th>Prize</th></tr></thead>
+  <tbody>
+${rows}
+  </tbody>
+</table></div>`;
+  }).join('\n');
+}
+
+function buildNippon() {
+  const canonical = `${SITE}/events/nippon-series-2026-fukuoka/`;
+  const title = 'NIPPON SERIES FUKUOKA 2026 タイムスケジュール（8/11〜8/16 福岡・渡辺通）| ふくおかポーカーナビ';
+  const desc = `NIPPON SERIES FUKUOKA 2026（2026年8月11日〜16日・福岡 トヨタホールスカラエスパシオ）の全${NIPPON.eventCount}イベントのタイムスケジュール・Fee・登録締切・Prizeを一覧掲載。MAIN EVENT（#17）は Prize 5,000,000。`;
+  const jsonld = {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    "name": NIPPON.name,
+    "startDate": NIPPON.days[0],
+    "endDate": NIPPON.days[NIPPON.days.length - 1],
+    "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+    "eventStatus": "https://schema.org/EventScheduled",
+    "location": {
+      "@type": "Place",
+      "name": NIPPON.venue,
+      "address": { "@type": "PostalAddress", "streetAddress": "渡辺通4-8-28 F.Tビル 地下2階", "addressRegion": "福岡県", "addressLocality": "福岡市中央区", "postalCode": "810-0004", "addressCountry": "JP" }
+    },
+    "description": desc,
+    "url": canonical,
+    "isAccessibleForFree": false
+  };
+  const body = `
+<h1>NIPPON SERIES FUKUOKA 2026 タイムスケジュール</h1>
+<p class="lead">${esc(NIPPON.name)} の全${NIPPON.eventCount}イベント日程（#1〜#38）</p>
+<div class="evt-meta">
+  <b>会期</b>　2026年8月11日（火）〜8月16日（日）<br>
+  <b>会場</b>　${esc(NIPPON.venue)}（${esc(NIPPON.address)}）<br>
+  <b>アクセス</b>　${esc(NIPPON.access)}<br>
+  <b>MAIN EVENT（#17）</b>　<span class="prize">Prize 5,000,000 ＋ inゼリー １年分</span>
+</div>
+<div class="disclaimer">当サイトはNIPPON SERIESの主催者・公式媒体ではありません。公開情報をもとに当サイトが独自に集約した<b>非公式のまとめ</b>です。掲載内容は<b>2026年7月29日時点</b>の公式情報にもとづきますが、当サイトによる転記の誤りが含まれる可能性があります。Fee・Prize は公式表記のまま掲載しており、「+ 1,000」の内訳は公式に明記がないため当サイトでは言い換えていません。参加前に必ず<a href="${esc(NIPPON.siteUrl)}" target="_blank" rel="noopener">公式イベントページ</a>をご確認ください。<br>${POSITIONING}</div>
+<a class="cta" href="/#nippon">▶ 日付で絞り込んで見る<small>インタラクティブ版（日別タブ・各イベントの公式ストラクチャーへのリンクつき）</small></a>
+${schedTableNippon(NIPPON.events)}
+<p class="lead" style="margin-top:14px">※ MAIN EVENT（#17）は Day 1A〜Day 1D Last Chance と Day 2 &amp; FINAL に分かれているため、同じ番号が複数の日に登場します。ブラインドストラクチャーは公式の各トーナメントページをご確認ください。</p>
+<div class="links">
+  ▶ <a href="${esc(NIPPON.siteUrl)}" target="_blank" rel="noopener">NIPPON SERIES 公式イベントページ</a>　／　<a href="${esc(NIPPON.guidePdfUrl)}" target="_blank" rel="noopener">公式Players Guide(PDF)</a><br>
+  ▶ <a href="/">福岡の他のポーカートーナメント日程を見る</a>
+</div>`;
+  return pageHead({ title, desc, canonical, jsonld, image: 'img/nippon-series/nippon-series-banner.jpg' }) + body + pageFoot();
+}
+
 // ---- sitemap ----
 function buildSitemap() {
   const urls = [
     { loc: `${SITE}/`, freq: 'daily', pri: '1.0' },
+    { loc: `${SITE}/events/nippon-series-2026-fukuoka/`, freq: 'daily', pri: '0.8' },
     { loc: `${SITE}/events/jopt-2026-fukuoka-01/`, freq: 'daily', pri: '0.8' },
     { loc: `${SITE}/events/wjpt-2026/`, freq: 'monthly', pri: '0.3' },
   ];
@@ -309,5 +385,6 @@ function writeFile(rel, content) {
 
 writeFile('events/jopt-2026-fukuoka-01/index.html', buildJopt());
 writeFile('events/wjpt-2026/index.html', buildWjpt());
+writeFile('events/nippon-series-2026-fukuoka/index.html', buildNippon());
 writeFile('sitemap.xml', buildSitemap());
-console.log('完了。JOPT', JOPT.tournaments.length, '件 / WJPT', WJPT.tournaments.length, '件');
+console.log('完了。JOPT', JOPT.tournaments.length, '件 / WJPT', WJPT.tournaments.length, '件 / NIPPON SERIES', NIPPON.events.length, '行');

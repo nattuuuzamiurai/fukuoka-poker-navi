@@ -1,0 +1,7 @@
+# dev-server.py を実行すると生成される Python のバイトコードキャッシュ。
+# 成果物ではないのでコミットしない。
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store

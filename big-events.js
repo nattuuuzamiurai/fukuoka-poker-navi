@@ -2,22 +2,25 @@
  * big-events.js — 大型イベント(WJPT / JOPT / FST …)のレジストリと掲載期間の共通判定
  *
  * ■ このファイルが「会期(days)」と「掲載期間ルール」の唯一の正。
- *   - トップページ(index.html)のバナー
- *   - トップページのフッター「大会特集」
- *   - 静的イベントページ(events/<slug>/index.html)のフッター「大会特集」
- *   はすべて activeBigEvent() が選んだ **同じ1件** だけを表示する。
- *   判定を各所に書き散らさない(バナーとフッターが食い違う・終了した大会が残る事故を防ぐ)。
+ *   - トップページ(index.html)のバナー           … visibleBigEvents() が返す全件
+ *   - トップページのフッター「大会特集」          … footerBigEvent()   が返す1件
+ *   - 静的イベントページ(events/<slug>/)のフッター … footerBigEvent()   が返す1件
+ *   判定を各所に書き散らさない(終了した大会が出しっぱなしになる事故を防ぐ)。
  *
  * ■ 掲載期間ルール(社長指示・2026-07-29)
- *   - 掲載終了日 = そのイベントの最終日の翌日(その日は含む)
- *       … 大型大会は日付を跨いで進行することがあるため、最終日の翌日までは載せ続ける
- *   - 掲載開始日 = 直前のイベントの掲載終了日の翌日(= 直前イベントの最終日 + 2日)
- *       … 直前のイベントが無ければ下限なし
- *   ⇒ 同時に表示される大型イベントは常に **最大1件**。
- *     該当が無ければ(次の大会が未登録なら)何も表示しない。
+ *   各イベントの掲載ウィンドウは **他のイベントを一切参照せず独立** して決まる。
+ *     - 掲載開始日 = そのイベントの **初日 − 14日**
+ *     - 掲載終了日 = そのイベントの **最終日 + 1日**(その日は含む)
+ *         … 大型大会は日付を跨いで進行することがあるため、最終日の翌日までは載せ続ける
+ *   ⇒ 掲載期間は **重なってよい**。トップのバナーは同時に複数件出る(社長了承済み)。
+ *   ⇒ 逆に、どのウィンドウにも入らない期間はバナー0件になる(例: 2026-08-18〜09-04)。
+ *      これは仕様であってバグではない。埋めようとしないこと。
+ *
+ * ■ フッターの「大会特集」だけは掲載ウィンドウに縛られない(footerBigEvent を参照)。
+ *   バナーが0件の期間でも「次の大会」を1件出し続ける。
  *
  * ■ 大会を追加するときは下の BIG_EVENTS に1エントリ足すだけでよい。
- *   掲載期間は前後のイベントから自動計算されるので、個別の表示ロジックは書かないこと。
+ *   掲載期間は会期から自動計算されるので、個別の表示ロジックは書かないこと。
  *   詳しい手順は README.md「大型イベントの追加手順と掲載期間ルール」を参照。
  * ============================================================ */
 
@@ -44,6 +47,17 @@ const BIG_EVENTS = [
     // 件数はデータ読み込み後に index.html 側が上書きする(jopt-data.js は #jopt を開くまで読まないため)
     bannerDesc: '福岡・大名／全44トーナメント',
     bannerClass: 'ev-jopt'
+  },
+  {
+    id: 'nippon',
+    label: 'NIPPON SERIES 福岡 2026',
+    days: ['2026-08-11', '2026-08-12', '2026-08-13', '2026-08-14', '2026-08-15', '2026-08-16'],
+    featureUrl: '/events/nippon-series-2026-fukuoka/',
+    hash: '#nippon',
+    banner: 'img/nippon-series/nippon-series-banner.svg',
+    bannerAlt: 'NIPPON SERIES FUKUOKA 2026 8.11-8.16 福岡 トヨタホールスカラエスパシオ',
+    bannerDesc: '福岡・渡辺通／全38イベント',
+    bannerClass: 'ev-nippon'
   },
   {
     id: 'fst',
@@ -75,44 +89,100 @@ function shiftDateStr(ymd, n) {
 // イベントの会期は days(YYYY-MM-DD の配列)で表す。並び順に依存しないよう端ではなく最小値・最大値で求める。
 const eventFirstDay = days => (Array.isArray(days) && days.length) ? days.reduce((a, b) => a < b ? a : b) : null;
 const eventLastDay = days => (Array.isArray(days) && days.length) ? days.reduce((a, b) => a > b ? a : b) : null;
-// 掲載終了日 = 会期最終日の翌日。大型大会は日付を跨いで進行することがあるため、
-// この日までは「まだ開催中」として扱う(バナーも特集ページの文言も同じ日に切り替わる)。
+// ★★ 掲載ウィンドウと「開催中/終了」の判定は、しきい値が意図的に1日ずれている ★★
+//   これはバグではなく社長指示による仕様(2026-07-29)。将来「ズレている」と思って揃えないこと。
+//
+//   ┌ 掲載ウィンドウ(出すか出さないか) … 最終日の【翌日】まで = eventShowUntil()
+//   │   大型大会は日付を跨いで進行することがあるため、翌日までは載せ続ける。
+//   └ 開催中/終了(どう見せるか)        … 最終日までが開催中、【翌日から終了】 = isEventArchived()
+//       社長の言葉:「掲載してほしいだけで次の日はバナーは終了でいいです」
+//
+//   ⇒ 最終日の翌日は「バナーは出るが、終了状態(暗転・終了バッジ)で表示される」が正解。
+//     同じ日、イベント専用ページには通常どおり「このイベントは終了しました」を出す。
+
+// 掲載開始日 = 会期初日の14日前 / 掲載終了日 = 会期最終日の翌日(どちらもその日を含む)
+const BANNER_LEAD_DAYS = 14;
+const eventShowFrom = days => {
+  const first = eventFirstDay(days);
+  return first ? shiftDateStr(first, -BANNER_LEAD_DAYS) : null;
+};
 const eventShowUntil = days => {
   const last = eventLastDay(days);
   return last ? shiftDateStr(last, 1) : null;
 };
-// 掲載終了日を過ぎたイベントは「アーカイブ(開催当時の記録)」として扱う。
-// バナーの表示可否もページ内の文言の出し分けも、日付比較を各所に書かず必ずこの関数を通すこと。
+// 会期最終日を過ぎたイベントは「終了(アーカイブ=開催当時の記録)」として扱う。
+// バナーの見た目もページ内の文言の出し分けも、日付比較を各所に書かず必ずこの関数を通すこと。
 const isEventArchived = (days, today) => {
-  const until = eventShowUntil(days);
-  return !!until && (today || localTodayGlobal()) > until;
+  const last = eventLastDay(days);
+  return !!last && (today || localTodayGlobal()) > last;
+};
+// 会期中(初日〜最終日)か
+const isEventOngoing = (days, today) => {
+  const t = today || localTodayGlobal();
+  const first = eventFirstDay(days), last = eventLastDay(days);
+  return !!first && t >= first && t <= last;
 };
 
 // ---- 掲載期間(掲載開始日〜掲載終了日)の計算 ----
-// レジストリの並び順には依存させず、必ず「最終日」でソートしてから前後関係を決める。
-// 戻り値: [{ event, from(null=下限なし), to }] を最終日の昇順で返す。
+// 各イベント独立。他イベントを参照しないので、レジストリの並び順にも依存しない。
+// 戻り値: [{ event, from, to }] を掲載開始日の昇順で返す。
 function bigEventWindows(events) {
-  const list = (events || BIG_EVENTS)
+  return (events || BIG_EVENTS)
+    .filter(e => eventFirstDay(e.days) && eventLastDay(e.days))
+    .map(e => ({ event: e, from: eventShowFrom(e.days), to: eventShowUntil(e.days) }))
+    .sort((a, b) => a.from.localeCompare(b.from));
+}
+
+// トップのバナー領域に出すイベント(0件〜複数件)。掲載ウィンドウに入っているものすべて。
+// 並び順は ①開催中 → ②まもなく(初日の近い順) → ③終了(猶予日) で、終了したものを末尾に置く。
+function visibleBigEvents(today, events) {
+  const t = today || localTodayGlobal();
+  const rank = e => isEventOngoing(e.days, t) ? 0 : (isEventArchived(e.days, t) ? 2 : 1);
+  return bigEventWindows(events)
+    .filter(w => t >= w.from && t <= w.to)
+    .map(w => w.event)
+    .sort((a, b) => {
+      const ra = rank(a), rb = rank(b);
+      if (ra !== rb) return ra - rb;
+      // 開催中どうしは終わりが早い順、まもなくは初日が近い順、終了は新しい順
+      if (ra === 0) return eventLastDay(a.days).localeCompare(eventLastDay(b.days));
+      if (ra === 1) return eventFirstDay(a.days).localeCompare(eventFirstDay(b.days));
+      return eventLastDay(b.days).localeCompare(eventLastDay(a.days));
+    });
+}
+
+// フッター「大会特集」に出す1件。開催中があればそれ(複数なら最終日が早い方)、
+// 無ければ次の大会(初日が最も近い未来)。どちらも無ければ null。
+// ※ここは掲載ウィンドウ(初日−14日)に縛られない。バナーが0件の期間でも
+//   「次の大会」を出し続けるため(社長指示・2026-07-29)。バナーと一致しない日がある。
+//   猶予日(最終日の翌日)のイベントは終了扱いなので「開催中」には含めない。
+function footerBigEvent(today, events) {
+  const t = today || localTodayGlobal();
+  const list = (events || BIG_EVENTS).filter(e => eventFirstDay(e.days) && eventLastDay(e.days));
+  const ongoing = list.filter(e => isEventOngoing(e.days, t))
+    .sort((a, b) => eventLastDay(a.days).localeCompare(eventLastDay(b.days)));
+  if (ongoing.length) return ongoing[0];
+  const upcoming = list.filter(e => t < eventFirstDay(e.days))
+    .sort((a, b) => eventFirstDay(a.days).localeCompare(eventFirstDay(b.days)));
+  return upcoming.length ? upcoming[0] : null;
+}
+
+// ---- 大型一覧(#majors)に並べるイベント ----
+// 未開催・開催中は全件、終了済みは【新しい順に maxArchived 件まで】(既定3件)。それより古いものは出さない。
+// 並びは会期の古い順(画面の上から 過去 → 未来)。
+// レジストリにエントリを足せば自動でここに載るので、一覧側に個別の書き足しは不要。
+function bigEventListForIndex(today, maxArchived) {
+  const t = today || localTodayGlobal();
+  const max = (maxArchived === undefined || maxArchived === null) ? 3 : maxArchived;
+  const sorted = BIG_EVENTS
     .filter(e => eventLastDay(e.days))
     .slice()
     .sort((a, b) => eventLastDay(a.days).localeCompare(eventLastDay(b.days)));
-  let prevTo = null;
-  return list.map(e => {
-    const to = eventShowUntil(e.days);                    // 最終日の翌日まで掲載
-    const from = prevTo ? shiftDateStr(prevTo, 1) : null; // 直前イベントの掲載終了日の翌日から
-    prevTo = to;
-    return { event: e, from, to };
-  });
-}
-
-// 今日(または指定日)に掲載すべき大型イベントを1件だけ返す。該当が無ければ null。
-// 掲載期間は互いに重ならないよう組み立てているので、最初に一致したものを返せばよい。
-// ※会期が完全に重なる大会を登録すると from > to の空区間になり、その大会は表示されない。
-//   同時期の大会を並べたい場合はこのルール自体の見直しが必要(社長確認事項)。
-function activeBigEvent(today, events) {
-  const t = today || localTodayGlobal();
-  const hit = bigEventWindows(events).find(w => (w.from === null || t >= w.from) && t <= w.to);
-  return hit ? hit.event : null;
+  const ended = sorted.filter(e => isEventArchived(e.days, t));
+  const live = sorted.filter(e => !isEventArchived(e.days, t));
+  // slice(-0) は配列全体を返してしまうため、0件指定は明示的に空配列にする(境界のバグ防止)
+  const keptEnded = max <= 0 ? [] : ended.slice(-max);
+  return keptEnded.concat(live).map(e => ({ event: e, archived: isEventArchived(e.days, t) }));
 }
 
 function bigEventById(id) {
@@ -125,12 +195,12 @@ function bigEventDays(id) {
 
 // ---- フッター「大会特集」の描画(トップページ・静的ページ共通) ----
 // 開催中の大会、開催中が無ければ次の大会を1件だけ出す。該当が無ければ行ごと隠す。
-// バナーと同じ activeBigEvent() を使うので、両者は必ず一致する。
+// トップのバナー(visibleBigEvents)とは判定条件が違うため、一致しない日がある(仕様)。
 function mountBigEventFooter(elId, today) {
   if (typeof document === 'undefined') return null;
   const el = document.getElementById(elId || 'evtFeature');
   if (!el) return null;
-  const ev = activeBigEvent(today);
+  const ev = footerBigEvent(today);
   if (!ev) { el.innerHTML = ''; el.style.display = 'none'; return null; }
   el.innerHTML = '大会特集: <a href="' + ev.featureUrl + '">' + ev.label + '</a>';
   el.style.display = '';
@@ -139,8 +209,10 @@ function mountBigEventFooter(elId, today) {
 
 if (typeof module !== 'undefined') {
   module.exports = {
-    BIG_EVENTS, localTodayGlobal, shiftDateStr,
-    eventFirstDay, eventLastDay, eventShowUntil, isEventArchived,
-    bigEventWindows, activeBigEvent, bigEventById, bigEventDays
+    BIG_EVENTS, BANNER_LEAD_DAYS, localTodayGlobal, shiftDateStr,
+    eventFirstDay, eventLastDay, eventShowFrom, eventShowUntil,
+    isEventArchived, isEventOngoing,
+    bigEventWindows, visibleBigEvents, footerBigEvent,
+    bigEventListForIndex, bigEventById, bigEventDays
   };
 }

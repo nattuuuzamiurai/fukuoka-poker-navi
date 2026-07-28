@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  NIPPON SERIES FUKUOKA 2026 バナー
+  当サイト(ふくおかポーカーナビ)が作成したバナーです。公式素材ではありません。
+  ロゴ・大会名等の権利は主催者に帰属します。
+  公式のバナー画像が入手できたら、このファイルを差し替えるか
+  big-events.js の nippon エントリの banner を新しいパスに変更してください(参照はそこ1箇所)。
+  寸法は WJPT / JOPT / FST のバナー(1024x412)に合わせています。
+  配色は赤基調(WJPT=ゴールド / JOPT=ティール / FST=濃紺 と区別)。
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 412" width="1024" height="412"
+     role="img" aria-label="NIPPON SERIES FUKUOKA 2026 2026年8月11日から16日 福岡 トヨタホールスカラエスパシオ">
+  <defs>
+    <linearGradient id="nsBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6d0b13"/>
+      <stop offset="0.5" stop-color="#c4141f"/>
+      <stop offset="1" stop-color="#7d0e16"/>
+    </linearGradient>
+    <radialGradient id="nsGlowA" cx="0.9" cy="0.1" r="0.8">
+      <stop offset="0" stop-color="#ff8a72" stop-opacity="0.38"/>
+      <stop offset="1" stop-color="#ff8a72" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="nsGlowB" cx="0.05" cy="1" r="0.85">
+      <stop offset="0" stop-color="#3a0207" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#3a0207" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="nsPill" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.10"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 背景 -->
+  <rect width="1024" height="412" fill="url(#nsBg)"/>
+  <rect width="1024" height="412" fill="url(#nsGlowA)"/>
+  <rect width="1024" height="412" fill="url(#nsGlowB)"/>
+
+  <!-- 左: エンブレム(白丸の中に「日本」/ 下にワードマーク) -->
+  <g>
+    <circle cx="168" cy="168" r="88" fill="#ffffff"/>
+    <circle cx="168" cy="168" r="88" fill="none" stroke="#ffd9d4" stroke-width="3" stroke-opacity="0.5"/>
+    <text x="168" y="154" text-anchor="middle" font-family="'Hiragino Sans','Yu Gothic UI',system-ui,sans-serif"
+          font-size="52" font-weight="800" letter-spacing="2" fill="#c4141f">日</text>
+    <text x="168" y="212" text-anchor="middle" font-family="'Hiragino Sans','Yu Gothic UI',system-ui,sans-serif"
+          font-size="52" font-weight="800" letter-spacing="2" fill="#c4141f">本</text>
+    <text x="168" y="300" text-anchor="middle" font-family="'Hiragino Sans','Yu Gothic UI',system-ui,sans-serif"
+          font-size="17" font-weight="800" letter-spacing="3.2" fill="#ffffff">NIPPON SERIES</text>
+  </g>
+
+  <!-- 右: 大会名・会期・会場 -->
+  <g>
+    <text x="306" y="122" font-family="'Hiragino Sans','Yu Gothic UI',system-ui,sans-serif"
+          font-size="25" font-weight="800" letter-spacing="3" fill="#ffd9d4">NIPPON SERIES FUKUOKA 2026</text>
+
+    <text x="306" y="228" font-family="'Hiragino Sans','Yu Gothic UI',system-ui,sans-serif"
+          font-size="94" font-weight="800" letter-spacing="1" fill="#ffffff">8.11</text>
+    <rect x="574" y="196" width="46" height="9" fill="#ffd9d4"/>
+    <text x="646" y="228" font-family="'Hiragino Sans','Yu Gothic UI',system-ui,sans-serif"
+          font-size="94" font-weight="800" letter-spacing="1" fill="#ffffff">8.16</text>
+
+    <text x="306" y="276" font-family="'Hiragino Sans','Yu Gothic UI',system-ui,sans-serif"
+          font-size="26" font-weight="700" fill="#ffe4e0">福岡 トヨタホールスカラエスパシオ（渡辺通）</text>
+
+    <rect x="306" y="298" width="546" height="46" rx="23" fill="url(#nsPill)" stroke="#ffd9d4" stroke-opacity="0.55" stroke-width="2"/>
+    <text x="579" y="329" text-anchor="middle" font-family="'Hiragino Sans','Yu Gothic UI',system-ui,sans-serif"
+          font-size="23" font-weight="800" letter-spacing="0.5" fill="#ffffff">全38イベント ／ MAIN EVENT Prize 5,000,000</text>
+  </g>
+</svg>

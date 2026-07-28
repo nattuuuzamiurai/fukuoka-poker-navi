@@ -77,9 +77,22 @@
 
   /* FILTER BAR */
   .filters{background:var(--sur);border-bottom:1px solid var(--bor);box-shadow:var(--sha)}
+  /* 横に要素が増えても各コントロールが潰れないよう flex-shrink:0。
+     はみ出す分は .frow 自身が横スクロールする(ページ全体には横スクロールを出さない)。 */
   .frow{display:flex;gap:8px;padding:10px 16px 12px;max-width:1000px;margin:0 auto;overflow-x:auto;-webkit-overflow-scrolling:touch}
   .frow::-webkit-scrollbar{height:0}
-  .fsel{border:1px solid var(--bor);border-radius:20px;padding:7px 12px;font-size:.83em;font-weight:600;background:var(--sur);color:var(--txt);cursor:pointer;font-family:inherit;outline:none}
+  .fsel{flex-shrink:0;border:1px solid var(--bor);border-radius:20px;padding:7px 12px;font-size:.83em;font-weight:600;background:var(--sur);color:var(--txt);cursor:pointer;font-family:inherit;outline:none}
+  /* 「大型一覧」ボタン(大型イベントのバナー一覧 #majors へ) */
+  .fbtn{flex-shrink:0;display:inline-flex;align-items:center;gap:5px;border:1px solid var(--gold);border-radius:20px;padding:7px 14px;font-size:.83em;font-weight:800;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#3a2a06;cursor:pointer;font-family:inherit;white-space:nowrap;text-decoration:none}
+  .fbtn::before{content:"♠";font-weight:700}
+  /* 320px級の狭い端末では3つ並べると行からはみ出す(行は横スクロールするが押しにくい)。
+     余白と装飾を詰めて1画面に収める。 */
+  @media(max-width:360px){
+    .frow{gap:6px}
+    .fsel{padding:7px 9px;font-size:.8em}
+    .fbtn{padding:7px 10px;font-size:.8em}
+    .fbtn::before{display:none}
+  }
 
   /* DATE STRIP (日付選択) */
   .dstrip-row{display:flex;align-items:stretch;gap:0;max-width:1000px;margin:0 auto;padding:10px 16px 4px}
@@ -148,8 +161,13 @@
   .evtBanner .eb-tag .eb-desc{overflow:hidden;text-overflow:ellipsis}
   .evtBanner.upcoming .eb-tag::before{content:"まもなく";background:var(--ev-ac);color:var(--ev-on)}
   .evtBanner .eb-btn{flex-shrink:0;background:linear-gradient(135deg,var(--ev-ac2),var(--ev-ac));color:var(--ev-on);font-weight:800;font-size:.8em;padding:8px 16px;border-radius:20px;white-space:nowrap}
+  /* 終了した大会の見せ方。会期最終日の翌日はまだ掲載するが、この「終了」表示になる(big-events.js の説明を参照)。
+     大型一覧(#majors)の終了済みイベントにも同じスタイルを使う。 */
+  .evtBanner.is-archived{filter:grayscale(.8) opacity(.55)}
+  .evtBanner.is-archived .eb-tag::before{content:"終了";background:#6b6055;color:#fff}
   .evtBanner.ev-wjpt{--ev-bd:#d9a441;--ev-bg:#0a1226;--ev-bg2:#122046;--ev-fg:#f0c56b;--ev-ac:var(--gold);--ev-ac2:var(--gold2);--ev-on:#3a2a06}
   .evtBanner.ev-jopt{--ev-bd:var(--jopt);--ev-bg:#07171d;--ev-bg2:#0e3d48;--ev-fg:var(--jopt2);--ev-ac:var(--jopt);--ev-ac2:var(--jopt2);--ev-on:#04222a}
+  .evtBanner.ev-nippon{--ev-bd:var(--ns);--ev-bg:#5c0910;--ev-bg2:#a8111c;--ev-fg:#ffd9d4;--ev-ac:var(--ns);--ev-ac2:var(--ns2);--ev-on:#fff}
   .evtBanner.ev-fst{--ev-bd:var(--fst);--ev-bg:#070c22;--ev-bg2:#1a2455;--ev-fg:var(--fst2);--ev-ac:var(--fst);--ev-ac2:var(--fst2);--ev-on:#fff}
 
   /* WJPT 専用ページ */
@@ -269,6 +287,45 @@
   .fst-links{font-size:.86em;line-height:2;margin:4px 2px 6px}
   .fst-links a{color:var(--fst-txt);font-weight:700;text-decoration:underline}
 
+  /* ===== NIPPON SERIES FUKUOKA 2026 大型イベント 2026/8/11-16 福岡・渡辺通 ===== */
+  /* アクセントは赤。WJPT(ゴールド)・JOPT(ティール)・FST(濃紺)とは配色で区別する。 */
+  :root{ --ns:#c4141f; --ns2:#ff6b5c; --ns-txt:#a8111c; }
+  header.nippon-mode{background:linear-gradient(135deg,#5c0910,#c4141f)}
+  .ns-header-name{font-weight:800;font-size:.95em;color:#ffd9d4;text-align:right;max-width:65%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #page-nippon{padding-top:6px}
+  .ns-top{display:block;border-radius:16px;overflow:hidden;border:2px solid var(--ns);box-shadow:0 6px 26px rgba(0,0,0,.28);margin-bottom:8px}
+  .ns-top img{display:block;width:100%;height:auto}
+  .ns-top.is-archived img{filter:grayscale(.35) opacity(.85)}
+  .ns-sub{font-size:.85em;color:var(--mut);margin:0 2px 14px;line-height:1.6}
+  .ns-sub a{color:var(--ns-txt);font-weight:700;text-decoration:underline}
+  .ns-venue{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:12px 14px;margin:0 0 14px;font-size:.85em;line-height:1.7}
+  .ns-venue b{color:var(--ns-txt)}
+  .ns-venue .nv-note{display:inline-block;margin-top:5px;font-size:.86em;color:var(--mut);line-height:1.6}
+  .ns-days{display:flex;gap:6px;margin:0 0 16px}
+  .ns-day{flex:1;min-width:0;padding:9px 2px 8px;border-radius:12px;border:1px solid var(--bor);background:var(--sur);text-align:center;cursor:pointer;transition:.13s;font-family:inherit}
+  .ns-day .nd-d{display:block;font-size:1.05em;font-weight:800;color:var(--txt);line-height:1.2}
+  .ns-day .nd-w{display:block;font-size:.62em;color:var(--mut);font-weight:700;margin-top:2px}
+  .ns-day.on{background:linear-gradient(135deg,#a8111c,#5c0910);border-color:var(--ns)}
+  .ns-day.on .nd-d{color:#ffd9d4}
+  .ns-day.on .nd-w{color:#ff9d92}
+  .ns-tcard{display:flex;align-items:stretch;gap:0;background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);margin-bottom:10px;overflow:hidden;transition:.13s;text-decoration:none;color:inherit}
+  .ns-tcard:hover{border-color:var(--ns)}
+  .ns-tcard .nt-no{flex-shrink:0;width:52px;background:linear-gradient(160deg,#a8111c,#5c0910);color:#fff;font-weight:800;font-size:.86em;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;line-height:1.25}
+  .ns-tcard .nt-no span{font-size:.72em;font-weight:700;color:#ffb3aa;letter-spacing:.02em}
+  .ns-tcard .nt-body{flex:1;min-width:0;padding:11px 13px}
+  .ns-tcard .nt-name{font-size:.98em;font-weight:800;color:var(--txt);overflow-wrap:anywhere}
+  .ns-tcard .nt-meta{font-size:.8em;color:var(--mut);margin-top:3px;display:flex;flex-wrap:wrap;gap:4px 12px}
+  .ns-tcard .nt-meta b{color:var(--ns-txt);font-weight:800}
+  .ns-tcard .nt-prize{margin-top:6px;font-size:.78em;font-weight:700;color:#7a5711;background:#fbf1d8;border:1px solid #ecd9a6;border-radius:20px;padding:2px 10px;display:inline-block;overflow-wrap:anywhere}
+  .ns-tcard .nt-arrow{flex-shrink:0;align-self:center;padding:0 12px;color:var(--mut);font-size:1em}
+  .ns-sect{font-weight:800;font-size:.95em;color:var(--ns-txt);margin:0 2px 8px}
+
+  /* ===== 大型一覧(#majors) ===== */
+  #page-majors{padding-top:6px}
+  .majors-lead{font-size:.85em;color:var(--mut);margin:0 2px 14px;line-height:1.6}
+  .majors-list .evtBanner{margin-bottom:14px}
+  .majors-empty{text-align:center;color:var(--mut);padding:40px 16px;font-size:.9em}
+
   /* SECTION */
   main{padding:18px 0 40px}
   .shead{display:flex;align-items:baseline;justify-content:space-between;margin:22px 0 12px}
@@ -385,6 +442,14 @@
     <a class="back-link" href="#">← 一覧へ戻る</a>
     <div class="fst-header-name">FST 福岡</div>
   </div>
+  <div class="hbar" id="hbar-nippon" style="display:none">
+    <a class="back-link" href="#">← 一覧へ戻る</a>
+    <div class="ns-header-name">NIPPON SERIES 福岡</div>
+  </div>
+  <div class="hbar" id="hbar-majors" style="display:none">
+    <a class="back-link" href="#">← 一覧へ戻る</a>
+    <div class="venue-header-name" style="color:var(--gold2)">大型大会 一覧</div>
+  </div>
 </header>
 
 <section class="hero">
@@ -410,6 +475,7 @@
       <option value="PLO">PLO</option>
       <option value="NLH">NLH（通常）</option>
     </select>
+    <a class="fbtn" href="#majors">大型一覧</a>
   </div>
 </div>
 
@@ -449,6 +515,10 @@
   <div id="page-jopt" style="display:none"></div>
 
   <div id="page-fst" style="display:none"></div>
+
+  <div id="page-nippon" style="display:none"></div>
+
+  <div id="page-majors" style="display:none"></div>
 
   <a class="adCard" style="margin:26px 0 4px" href="https://poker-tourney-log--family.expo.app" target="_blank" rel="noopener">
     <img src="img/ptl-bulldog.png" alt="">
@@ -538,6 +608,26 @@
   // イベントが増えるたびに同じ判定を書き足すと、どれかに入れ忘れて
   // 「終了したのに開催中の書き方のまま」が残るため。
   //
+  // 外部サイトから転記した文字列をHTMLに埋める前にエスケープする(& や < が混じるため)
+  const escHtml = s => String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+  // 大型イベントのバナー1枚分のHTML。トップのバナー領域と大型一覧(#majors)の両方で使い、
+  // 見た目と「開催中/まもなく/終了」の出し分けを1か所に集約する。
+  function bigEventBannerHtml(ev){
+    const today = localTodayGlobal();
+    const cls = ['evtBanner', ev.bannerClass];
+    if (isEventArchived(ev.days)) cls.push('is-archived');       // 終了 → 暗転+「終了」バッジ
+    else if (today < eventFirstDay(ev.days)) cls.push('upcoming'); // 未開催 → 「まもなく」バッジ
+    return `<a class="${cls.join(' ')}" href="${ev.hash}">
+        <img class="eb-img" src="${ev.banner}" alt="${escHtml(ev.bannerAlt)}">
+        <div class="eb-foot">
+          <span class="eb-tag"><span class="eb-desc">${escHtml(ev.bannerDesc)}</span></span>
+          <span class="eb-btn">日程を見る →</span>
+        </div>
+      </a>`;
+  }
+
   // アーカイブ時にページ冒頭へ出す共通の告知ボックス
   const archivedNotice = (detail) => detail
     ? '<div class="evt-archived"><b>このイベントは終了しました。</b>以下は開催当時の記録です。</div>'
@@ -846,47 +936,60 @@
   };
   const JOPT_BANNER_DESC = n => `福岡・大名／全${n}トーナメント`;
 
-  let joptData = null;          // 遅延読み込み後にセットされる
-  let joptLoadPromise = null;
-  function loadJoptData(){
-    if (joptData) return Promise.resolve(joptData);
-    if (joptLoadPromise) return joptLoadPromise;
-    joptLoadPromise = new Promise((resolve, reject) => {
+  // --- 大型イベントの重いデータの遅延読み込み(JOPT / NIPPON SERIES 共通) ---
+  // 全ページで読むには重いデータを、その特集ページを開いたときにだけ <script> で追加読み込みする。
+  // 読み込み済み・読み込み中はキャッシュを返す。失敗時はキャッシュを消して再試行できるようにする。
+  const eventDataCache = {};    // src -> データ本体
+  const eventDataPending = {};  // src -> 読み込み中のPromise
+  function loadEventData(src, globalName, isValid){
+    if (eventDataCache[src]) return Promise.resolve(eventDataCache[src]);
+    if (eventDataPending[src]) return eventDataPending[src];
+    eventDataPending[src] = new Promise((resolve, reject) => {
       const s = document.createElement('script');
-      s.src = 'jopt-data.js';
+      s.src = src;
       s.onload = () => {
-        const d = window.JOPT_DATA;
-        // 形が想定どおりか検証してから採用する。不正なオブジェクトを joptData に残すと、
+        const d = window[globalName];
+        // 形が想定どおりか検証してから採用する。不正なオブジェクトをキャッシュに残すと、
         // 次回以降 route() の分岐をすり抜けて描画時に例外になるため。
-        if (!d || !Array.isArray(d.tournaments) || !d.tournaments.length || !Array.isArray(d.days) || !d.days.length){
-          joptData = null;
-          joptLoadPromise = null;   // onerror と同様に再試行できるようにする
-          reject(new Error('JOPT_DATA の形式が不正です'));
+        if (!isValid(d)){
+          eventDataPending[src] = null;   // onerror と同様に再試行できるようにする
+          reject(new Error(globalName + ' の形式が不正です'));
           return;
         }
-        joptData = d;
-        // 軽量メタ・レジストリがデータとずれていたら、常にデータ側を正とする
-        // (誤った件数・日程を出さないため)。レジストリを直したらバナーとフッターも描き直す。
-        const reg = bigEventById('jopt');
-        let regChanged = false;
-        if (reg && reg.days.join(',') !== d.days.join(',')){ reg.days = d.days.slice(); regChanged = true; }
-        JOPT_META.days = d.days.slice();
-        if (d.tournaments.length !== JOPT_META.tournamentCount){
-          JOPT_META.tournamentCount = d.tournaments.length;
-          if (reg) reg.bannerDesc = JOPT_BANNER_DESC(JOPT_META.tournamentCount);
-          regChanged = true;
-        }
-        if (regChanged){ renderBigEventBanner(); mountBigEventFooter('evtFeature'); }
-        // 選択中の日がデータ側に存在しない場合に備えて必ず有効な日に寄せる
-        if (!JOPT_META.days.includes(joptDay)){
-          joptDay = JOPT_META.days.includes(localTodayGlobal()) ? localTodayGlobal() : JOPT_META.days[0];
-        }
-        resolve(joptData);
+        eventDataCache[src] = d;
+        resolve(d);
       };
-      s.onerror = () => { joptLoadPromise = null; reject(new Error('jopt-data.js の読み込みに失敗')); };
+      s.onerror = () => { eventDataPending[src] = null; reject(new Error(src + ' の読み込みに失敗')); };
       document.head.appendChild(s);
     });
-    return joptLoadPromise;
+    return eventDataPending[src];
+  }
+
+  let joptData = null;          // 遅延読み込み後にセットされる
+  function loadJoptData(){
+    return loadEventData(
+      'jopt-data.js', 'JOPT_DATA',
+      d => !!d && Array.isArray(d.tournaments) && d.tournaments.length > 0 && Array.isArray(d.days) && d.days.length > 0
+    ).then(d => {
+      joptData = d;
+      // 軽量メタ・レジストリがデータとずれていたら、常にデータ側を正とする
+      // (誤った件数・日程を出さないため)。レジストリを直したらバナーとフッターも描き直す。
+      const reg = bigEventById('jopt');
+      let regChanged = false;
+      if (reg && reg.days.join(',') !== d.days.join(',')){ reg.days = d.days.slice(); regChanged = true; }
+      JOPT_META.days = d.days.slice();
+      if (d.tournaments.length !== JOPT_META.tournamentCount){
+        JOPT_META.tournamentCount = d.tournaments.length;
+        if (reg) reg.bannerDesc = JOPT_BANNER_DESC(JOPT_META.tournamentCount);
+        regChanged = true;
+      }
+      if (regChanged){ renderBigEventBanner(); mountBigEventFooter('evtFeature'); }
+      // 選択中の日がデータ側に存在しない場合に備えて必ず有効な日に寄せる
+      if (!JOPT_META.days.includes(joptDay)){
+        joptDay = JOPT_META.days.includes(localTodayGlobal()) ? localTodayGlobal() : JOPT_META.days[0];
+      }
+      return d;
+    });
   }
 
   const joptIsArchived = () => isEventArchived(JOPT_META.days);
@@ -1117,68 +1220,189 @@
     return location.hash === '#fst' ? { view:'list' } : null;
   }
 
+  // ===== NIPPON SERIES FUKUOKA 2026 専用ページ =====
+  // 出典(一次情報): 公式イベントページ https://nippon-series.jp/event-nippon-series-fukuoka-2026
+  // 全38イベントのデータ(nippon-series-data.js, 約13KB)は #nippon を開いたときにだけ読み込む。
+  // ブラインドストラクチャーは当サイトに転記せず、各カードから公式の個別ページへ送る。
+  let nipponData = null;
+  function loadNipponData(){
+    return loadEventData(
+      'nippon-series-data.js', 'NIPPON_SERIES_DATA',
+      d => !!d && Array.isArray(d.events) && d.events.length > 0 && Array.isArray(d.days) && d.days.length > 0
+    ).then(d => {
+      nipponData = d;
+      // レジストリの会期がデータとずれていたらデータ側を正とし、バナー・フッターを描き直す
+      const reg = bigEventById('nippon');
+      if (reg && reg.days.join(',') !== d.days.join(',')){
+        reg.days = d.days.slice();
+        renderBigEventBanner();
+        mountBigEventFooter('evtFeature');
+      }
+      if (!d.days.includes(nipponDay)){
+        nipponDay = d.days.includes(localTodayGlobal()) ? localTodayGlobal() : d.days[0];
+      }
+      return d;
+    });
+  }
+  const NIPPON_DAYS = bigEventDays('nippon');
+  let nipponDay = NIPPON_DAYS.includes(localTodayGlobal()) ? localTodayGlobal() : NIPPON_DAYS[0];
+
+  function renderNipponPage(){
+    const page = document.getElementById('page-nippon');
+    if (!nipponData){ page.innerHTML = '<div class="empty">イベント情報を読み込めませんでした。<br>時間をおいて再度お試しください。</div>'; return; }
+    const NS = nipponData;
+    // 選択中の日が実データに無い場合は必ず存在する日に寄せる(タブは出るのに0件、を防ぐ)
+    if (!NS.days.includes(nipponDay)){
+      nipponDay = NS.days.includes(localTodayGlobal()) ? localTodayGlobal() : NS.days[0];
+    }
+    const archived = isEventArchived(NS.days);
+    const dayBtns = NS.days.map(d => {
+      const dt = iso(d);
+      const on = d === nipponDay ? ' on' : '';
+      const label = d === localToday ? '本日' : WD[dt.getDay()] + '曜';
+      return `<button type="button" class="ns-day${on}" data-nday="${d}"><span class="nd-d">${dt.getMonth()+1}/${dt.getDate()}</span><span class="nd-w">${label}</span></button>`;
+    }).join('');
+    const cards = NS.events.filter(e => e.day === nipponDay).map(e => {
+      const meta = [
+        `<span>START <b>${escHtml(e.start)}</b></span>`,
+        `<span>Fee <b>${escHtml(e.fee)}</b></span>`,
+        `<span>Reg Close <b>${escHtml(e.regClose)}</b></span>`,
+        `<span>${escHtml(e.drinks)} ／ Voucher ${escHtml(e.voucher)}</span>`
+      ].join('');
+      return `<a class="ns-tcard" href="${escHtml(e.url)}" target="_blank" rel="noopener">
+        <div class="nt-no">#${escHtml(e.no)}<span>${escHtml(e.variant)}</span></div>
+        <div class="nt-body">
+          <div class="nt-name">${escHtml(e.name)}</div>
+          <div class="nt-meta">${meta}</div>
+          ${e.prize ? `<div class="nt-prize">Prize ${escHtml(e.prize)}</div>` : ''}
+        </div>
+        <div class="nt-arrow">↗</div>
+      </a>`;
+    }).join('');
+    page.innerHTML = `
+      ${archived ? archivedNotice(false) : ''}
+      <a class="ns-top${archived?' is-archived':''}" href="${NS.siteUrl}" target="_blank" rel="noopener"><img src="${bigEventById('nippon').banner}" alt="${escHtml(NS.name)}"></a>
+      <p class="ns-sub">${escHtml(NS.name)}（2026年8/11〜8/16・${escHtml(NS.venue)}）。全${NS.eventCount}イベント。各カードをタップすると<b>公式サイトの詳細・ブラインドストラクチャー</b>が開きます。${archived
+        ? `掲載元: <a href="${NS.siteUrl}" target="_blank" rel="noopener">公式イベントページ</a>（開催当時）。`
+        : `エントリー方法・受付・最新の変更は<a href="${NS.siteUrl}" target="_blank" rel="noopener">公式イベントページ</a>および<a href="${NS.guidePdfUrl}" target="_blank" rel="noopener">公式Players Guide(PDF)</a>をご確認ください。`}</p>
+      <div class="evt-disclaimer">当サイトはNIPPON SERIESの主催者・公式媒体ではありません。公開情報をもとに当サイトが独自に集約した<b>非公式のまとめ</b>です。ページ内のバナーは当サイトが作成したもので、ロゴ等の権利は主催者に帰属します。掲載内容は<b>2026年7月29日時点</b>の公式情報にもとづきますが、当サイトによる転記の誤りが含まれる可能性があります。${archived?'イベント終了後は内容を更新していません。':'参加前に必ず公式情報をご確認ください。'}</div>
+      <div class="ns-venue">
+        <b>会場</b>　${escHtml(NS.venue)}（${escHtml(NS.address)}）<br>
+        <b>アクセス</b>　${escHtml(NS.access)}
+        <span class="nv-note">※Fee・Prize は公式表記のまま掲載しています（例「25,000 + 1,000」）。「+ 1,000」の内訳は公式に明記がないため、当サイトでは言い換えていません。<br>※MAIN EVENT（#17）は Day 1A〜Day 1D と Day 2 &amp; FINAL に分かれているため、同じ番号のカードが複数の日に出ます。</span>
+      </div>
+      <div class="ns-sect">タイムスケジュール</div>
+      <div class="ns-days">${dayBtns}</div>
+      <div id="nippon-list">${cards}</div>
+    `;
+    page.querySelectorAll('.ns-day').forEach(b => b.addEventListener('click', () => {
+      nipponDay = b.dataset.nday; renderNipponPage(); window.scrollTo({top:0,behavior:'instant'});
+    }));
+  }
+
+  function parseNipponHash(){
+    return location.hash === '#nippon' ? { view:'list' } : null;
+  }
+
+  // ===== 大型一覧(#majors) =====
+  // レジストリ(BIG_EVENTS)の大型イベントをバナーで縦に並べる。
+  // 終了済みは暗転させ、新しい順に MAJORS_ARCHIVED_LIMIT 件までだけ出す(それ以前は出さない)。
+  // レジストリにエントリを足せば自動でここに載る(一覧側に個別の書き足しは不要)。
+  const MAJORS_ARCHIVED_LIMIT = 3;
+  function renderMajorsPage(){
+    const page = document.getElementById('page-majors');
+    const list = bigEventListForIndex(null, MAJORS_ARCHIVED_LIMIT);
+    const banners = list.map(x => bigEventBannerHtml(x.event)).join('');
+    page.innerHTML = `
+      <div class="shead"><h2>大型大会 一覧</h2><span class="cnt">${list.length}件</span></div>
+      <p class="majors-lead">当サイトが特集している福岡の大型ポーカー大会です。バナーをタップすると各大会の日程ページへ移動します。<br>終了した大会は<b>暗く表示</b>し、新しいものから${MAJORS_ARCHIVED_LIMIT}件までを掲載しています（それより前の大会は表示していません）。</p>
+      ${banners ? `<div class="majors-list">${banners}</div>` : '<div class="majors-empty">掲載中の大型大会はありません。</div>'}
+    `;
+  }
+
+  function parseMajorsHash(){
+    return location.hash === '#majors' ? { view:'list' } : null;
+  }
+
   function parseHash(){
     const m = location.hash.match(/^#venue\/([^/]+)(?:\/(\d{4}-\d{2}))?$/);
     if (!m) return null;
     return { venueId: m[1], month: m[2] || localToday.slice(0,7) };
   }
 
+  // ページ(#page-xxx)とヘッダーバー(#hbar-xxx)は必ずこの関数だけで切り替える。
+  // 以前は分岐ごとに「他のページを隠す」を手書きしていたが、ページが増えるたびに
+  // 隠し忘れ(2ページ同時表示)が起きるため、対象を一覧で持って一括で出し分ける。
+  const PAGE_IDS = ['page-list','page-venue','page-wjpt','page-jopt','page-fst','page-nippon','page-majors'];
+  const HBAR_IDS = ['hbar-list','hbar-venue','hbar-wjpt','hbar-jopt','hbar-fst','hbar-nippon','hbar-majors'];
+  const HEADER_MODES = ['venue-mode','jopt-mode','fst-mode','nippon-mode'];
+  function showPage(pageId, hbarId, headerMode, showTopChrome){
+    PAGE_IDS.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = (id === pageId) ? '' : 'none'; });
+    HBAR_IDS.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = (id === hbarId) ? '' : 'none'; });
+    const headerEl = document.querySelector('header');
+    HEADER_MODES.forEach(m => headerEl.classList.toggle(m, m === headerMode));
+    // ヒーローと絞り込みバーはトップ(一覧)でだけ出す
+    document.querySelector('.filters').style.display = showTopChrome ? '' : 'none';
+    document.querySelector('.hero').style.display = showTopChrome ? '' : 'none';
+  }
+  function sendPageView(){
+    if (typeof gtag === 'function'){
+      gtag('event','page_view',{ page_path: location.pathname + location.hash, page_title: document.title });
+    }
+  }
+
   function route(){
     const wjpt = parseWjptHash();
     const jopt = parseJoptHash();
     const fst  = parseFstHash();
+    const nippon = parseNipponHash();
+    const majors = parseMajorsHash();
     const parsed = parseHash();
-    const filters = document.querySelector('.filters');
-    const hero = document.querySelector('.hero');
-    const headerEl = document.querySelector('header');
-    const hbarList = document.getElementById('hbar-list');
-    const hbarVenue = document.getElementById('hbar-venue');
-    const hbarWjpt = document.getElementById('hbar-wjpt');
-    const hbarJopt = document.getElementById('hbar-jopt');
-    const hbarFst = document.getElementById('hbar-fst');
-    // FSTは他のイベントページより先に処理し、直後に必ず後始末する。
-    // こうしておくと以降の分岐(JOPT/WJPT/店舗)にFSTの片付けを書き足さずに済む。
     if (fst){
-      filters.style.display = 'none';
-      hero.style.display = 'none';
-      headerEl.classList.remove('venue-mode');
-      headerEl.classList.remove('jopt-mode');
-      headerEl.classList.add('fst-mode');
-      hbarList.style.display = 'none';
-      hbarVenue.style.display = 'none';
-      hbarWjpt.style.display = 'none';
-      hbarJopt.style.display = 'none';
-      hbarFst.style.display = '';
-      document.getElementById('page-list').style.display = 'none';
-      document.getElementById('page-venue').style.display = 'none';
-      document.getElementById('page-wjpt').style.display = 'none';
-      document.getElementById('page-jopt').style.display = 'none';
-      document.getElementById('page-fst').style.display = '';
+      showPage('page-fst', 'hbar-fst', 'fst-mode', false);
       renderFstPage();
       document.title = 'FST 2026 福岡（FUKUOKA SUPER TOURNAMENT 9/19〜9/23）| ふくおかポーカーナビ';
       window.scrollTo(0,0);
-      if (typeof gtag === 'function'){
-        gtag('event','page_view',{ page_path: location.pathname + location.hash, page_title: document.title });
+      sendPageView();
+      return;
+    }
+    if (majors){
+      showPage('page-majors', 'hbar-majors', null, false);
+      renderMajorsPage();
+      document.title = '福岡の大型ポーカー大会 一覧 | ふくおかポーカーナビ';
+      window.scrollTo(0,0);
+      sendPageView();
+      return;
+    }
+    if (nippon){
+      showPage('page-nippon', 'hbar-nippon', 'nippon-mode', false);
+      const nipponPage = document.getElementById('page-nippon');
+      document.title = 'NIPPON SERIES FUKUOKA 2026 日程（8/11〜8/16 福岡）| ふくおかポーカーナビ';
+      // データは初回アクセス時のみ読み込む(2回目以降はキャッシュ済みで即描画)
+      if (nipponData){
+        renderNipponPage();
+        window.scrollTo(0,0);
+        sendPageView();
+      } else {
+        nipponPage.innerHTML = '<div class="jopt-loading">読み込み中…</div>';
+        const requestedHash = location.hash;
+        loadNipponData()
+          .then(() => {
+            if (location.hash !== requestedHash) return;
+            renderNipponPage();
+            window.scrollTo(0,0);
+            sendPageView();
+          })
+          .catch(() => {
+            if (location.hash !== requestedHash) return;
+            nipponPage.innerHTML = '<div class="empty">イベント情報を読み込めませんでした。<br>通信環境をご確認のうえ、時間をおいて再度お試しください。</div>';
+          });
       }
       return;
     }
-    hbarFst.style.display = 'none';
-    headerEl.classList.remove('fst-mode');
-    document.getElementById('page-fst').style.display = 'none';
     if (jopt){
-      filters.style.display = 'none';
-      hero.style.display = 'none';
-      headerEl.classList.remove('venue-mode');
-      headerEl.classList.add('jopt-mode');
-      hbarList.style.display = 'none';
-      hbarVenue.style.display = 'none';
-      hbarWjpt.style.display = 'none';
-      hbarJopt.style.display = '';
-      document.getElementById('page-list').style.display = 'none';
-      document.getElementById('page-venue').style.display = 'none';
-      document.getElementById('page-wjpt').style.display = 'none';
+      showPage('page-jopt', 'hbar-jopt', 'jopt-mode', false);
       const joptPage = document.getElementById('page-jopt');
-      joptPage.style.display = '';
       // トーナメントデータは初回アクセス時のみ読み込む(2回目以降はキャッシュ済みで即描画)
       const renderJopt = () => {
         if (jopt.view === 'detail'){
@@ -1191,9 +1415,7 @@
           document.title = 'JOPT 2026 Fukuoka #01 日程 | ふくおかポーカーナビ';
         }
         window.scrollTo(0,0);
-        if (typeof gtag === 'function'){
-          gtag('event','page_view',{ page_path: location.pathname + location.hash, page_title: document.title });
-        }
+        sendPageView();
       };
       if (joptData){
         renderJopt();
@@ -1209,45 +1431,23 @@
       }
       return;
     }
-    hbarJopt.style.display = 'none';
-    headerEl.classList.remove('jopt-mode');
-    document.getElementById('page-jopt').style.display = 'none';
     if (wjpt){
-      filters.style.display = 'none';
-      hero.style.display = 'none';
-      headerEl.classList.add('venue-mode');
-      hbarList.style.display = 'none';
-      hbarVenue.style.display = 'none';
-      hbarWjpt.style.display = '';
-      document.getElementById('page-list').style.display = 'none';
-      document.getElementById('page-venue').style.display = 'none';
-      document.getElementById('page-wjpt').style.display = '';
+      showPage('page-wjpt', 'hbar-wjpt', 'venue-mode', false);
       if (wjpt.view === 'detail'){
         renderWjptDetail(wjpt.no);
         document.title = `WJPT #${wjpt.no} | ふくおかポーカーナビ`;
-        window.scrollTo(0,0);
       } else {
         renderWjptDayList();
         document.title = 'WJPT West Japan Poker Tour | ふくおかポーカーナビ';
-        window.scrollTo(0,0);
       }
-      if (typeof gtag === 'function'){
-        gtag('event','page_view',{ page_path: location.pathname + location.hash, page_title: document.title });
-      }
+      window.scrollTo(0,0);
+      sendPageView();
       return;
     }
-    hbarWjpt.style.display = 'none';
-    document.getElementById('page-wjpt').style.display = 'none';
     if (parsed){
-      filters.style.display = 'none';
-      hero.style.display = 'none';
-      headerEl.classList.add('venue-mode');
-      hbarList.style.display = 'none';
-      hbarVenue.style.display = '';
+      showPage('page-venue', 'hbar-venue', 'venue-mode', false);
       const v = venueById[parsed.venueId];
       document.getElementById('venueHeaderName').textContent = v ? v.name : '店舗詳細';
-      document.getElementById('page-list').style.display = 'none';
-      document.getElementById('page-venue').style.display = '';
       renderVenuePage(parsed.venueId, parsed.month);
       const groups = [...document.querySelectorAll('#page-venue .dgroup')];
       const fromToday = groups.find(g => g.dataset.date >= localToday);
@@ -1258,21 +1458,10 @@
         window.scrollTo(0,0);
       }
     } else {
-      filters.style.display = '';
-      hero.style.display = '';
-      headerEl.classList.remove('venue-mode');
-      hbarList.style.display = '';
-      hbarVenue.style.display = 'none';
-      document.getElementById('page-list').style.display = '';
-      document.getElementById('page-venue').style.display = 'none';
+      showPage('page-list', 'hbar-list', null, true);
       document.title = '福岡ポーカートーナメント日程 | ふくおかポーカーナビ';
     }
-    if (typeof gtag === 'function'){
-      gtag('event', 'page_view', {
-        page_path: location.pathname + location.hash,
-        page_title: document.title
-      });
-    }
+    sendPageView();
   }
 
   function renderVenues(){
@@ -1306,25 +1495,15 @@
   document.getElementById('sel-tag').addEventListener('change', e => { state.tag = e.target.value; render(); });
   window.addEventListener('hashchange', route);
 
-  // 大型イベントのバナーは、掲載中の1件だけを出す(該当が無ければ何も出さない)。
-  // どのイベントを出すか・いつまで出すかの判定は big-events.js の activeBigEvent() に一本化しており、
-  // フッターの「大会特集」も同じ関数を使うので、両者は必ず一致する。
-  // 会期前は「まもなく」バッジ、会期中〜最終日の翌日は「開催中」バッジになる。
+  // 大型イベントのバナーは、掲載ウィンドウ(初日の14日前〜最終日の翌日)に入っているものを
+  // すべて縦に並べる。0件のことも複数件のこともある(社長了承済み・big-events.js の説明を参照)。
+  // 並び順(開催中→まもなく→終了)の決定は big-events.js の visibleBigEvents() に一本化する。
   function renderBigEventBanner(){
     const slot = document.getElementById('bigEventBanner');
-    if (!slot) return null;
-    const ev = activeBigEvent();
-    if (!ev){ slot.innerHTML = ''; return null; }
-    const upcoming = localTodayGlobal() < eventFirstDay(ev.days) ? ' upcoming' : '';
-    slot.innerHTML = `
-      <a class="evtBanner ${ev.bannerClass}${upcoming}" href="${ev.hash}">
-        <img class="eb-img" src="${ev.banner}" alt="${ev.bannerAlt}">
-        <div class="eb-foot">
-          <span class="eb-tag"><span class="eb-desc">${ev.bannerDesc}</span></span>
-          <span class="eb-btn">日程を見る →</span>
-        </div>
-      </a>`;
-    return ev;
+    if (!slot) return [];
+    const evs = visibleBigEvents();
+    slot.innerHTML = evs.map(bigEventBannerHtml).join('');
+    return evs;
   }
 
   buildDateStrip();
