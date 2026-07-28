@@ -30,12 +30,15 @@ const TODAY = process.argv[3] || null; // 生成日(アーカイブ判定・"時
 
 // ---- データ読み込み ----
 const JOPT = require(path.join(REPO, 'jopt-data.js'));
+// 大型イベントのレジストリ(会期・掲載期間ルール)。ブラウザ側と同じファイルを使う。
+const BIG = require(path.join(REPO, 'big-events.js'));
 
 function extractWJPT(indexHtml) {
   const src = fs.readFileSync(indexHtml, 'utf8');
   const m = src.match(/const WJPT = (\{[\s\S]*?\n  \});/);
   if (!m) throw new Error('index.html から WJPT を抽出できませんでした');
-  const sandbox = {};
+  // WJPT.days は big-events.js のレジストリを参照しているため、同じ関数を sandbox に渡す
+  const sandbox = { bigEventDays: BIG.bigEventDays };
   vm.createContext(sandbox);
   return vm.runInContext('(' + m[1] + ')', sandbox);
 }
@@ -148,11 +151,17 @@ ${JSON.stringify(jsonld, null, 2)}
 }
 
 function pageFoot() {
+  // 「大会特集」は掲載中の1件だけを出す。どの大会かは日によって変わるので、
+  // 生成時に焼き込まず big-events.js の判定をブラウザ側で走らせる
+  // (静的ページは再生成しない限り更新されないため、焼き込むと古い大会が残り続ける)。
   return `</main>
 <footer>
   <div><b style="color:#fff">ふくおかポーカーナビ</b> — 福岡ポーカートーナメント日程アグリゲーター</div>
-  <div style="margin-top:6px"><a href="/">トップ</a>　|　<a href="/events/jopt-2026-fukuoka-01/">JOPT 2026 福岡</a>　|　<a href="/events/wjpt-2026/">WJPT 2026</a>　|　<a href="/contact.html">お問い合わせ</a>　|　<a href="/privacy.html">プライバシーポリシー</a></div>
+  <div style="margin-top:6px"><a href="/">トップ</a>　|　<a href="/contact.html">お問い合わせ</a>　|　<a href="/privacy.html">プライバシーポリシー</a></div>
+  <div id="evtFeature" style="display:none"></div>
 </footer>
+<script src="/big-events.js"></script>
+<script>if (typeof mountBigEventFooter === 'function') mountBigEventFooter('evtFeature');</script>
 <div class="stickyAd">
   <img src="/img/jopt/jopt-banner.jpg" alt="" width="38" height="38" style="object-fit:cover;border-radius:8px">
   <div class="sa-body">

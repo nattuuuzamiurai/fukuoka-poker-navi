@@ -137,15 +137,20 @@
   .adCard .ac-desc{font-size:.82em;color:#b9b6c9;margin-top:4px}
   .adCard .ac-btn{flex-shrink:0;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#3a2a06;font-weight:800;font-size:.85em;padding:10px 20px;border-radius:24px;white-space:nowrap;box-shadow:0 0 14px rgba(217,164,65,.3)}
 
-  /* WJPT 大型イベント バナー(トーナメント日程の最上部) */
-  .wjptBanner{display:block;text-decoration:none;border-radius:16px;overflow:hidden;position:relative;box-shadow:0 6px 26px rgba(0,0,0,.32);border:2px solid #d9a441;background:#0a1226;margin-bottom:6px}
-  .wjptBanner .wb-img{display:block;width:100%;height:auto}
-  .wjptBanner .wb-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 14px;background:linear-gradient(90deg,#0a1226,#122046)}
-  .wjptBanner .wb-tag{font-size:.72em;font-weight:800;letter-spacing:.05em;color:#f0c56b;display:flex;align-items:center;gap:7px;min-width:0;white-space:nowrap}
-  .wjptBanner .wb-tag::before{content:"開催中";flex-shrink:0;white-space:nowrap;background:var(--red);color:#fff;font-size:.85em;padding:2px 8px;border-radius:20px;letter-spacing:.02em}
-  .wjptBanner .wb-tag .wb-desc{overflow:hidden;text-overflow:ellipsis}
-  .wjptBanner.upcoming .wb-tag::before{content:"まもなく";background:var(--gold);color:#3a2a06}
-  .wjptBanner .wb-btn{flex-shrink:0;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#3a2a06;font-weight:800;font-size:.8em;padding:8px 16px;border-radius:20px;white-space:nowrap}
+  /* ===== 大型イベント バナー(トーナメント日程の最上部) =====
+     WJPT / JOPT / FST で共通の1コンポーネント。配色だけを .ev-<id> の CSS変数で切り替える。
+     どのイベントを出すかは big-events.js の activeBigEvent() が決める(常に最大1件)。 */
+  .evtBanner{display:block;text-decoration:none;border-radius:16px;overflow:hidden;position:relative;box-shadow:0 6px 26px rgba(0,0,0,.32);border:2px solid var(--ev-bd);background:var(--ev-bg);margin-bottom:6px}
+  .evtBanner .eb-img{display:block;width:100%;height:auto}
+  .evtBanner .eb-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 14px;background:linear-gradient(90deg,var(--ev-bg),var(--ev-bg2))}
+  .evtBanner .eb-tag{font-size:.72em;font-weight:800;letter-spacing:.05em;color:var(--ev-fg);display:flex;align-items:center;gap:7px;min-width:0;white-space:nowrap}
+  .evtBanner .eb-tag::before{content:"開催中";flex-shrink:0;white-space:nowrap;background:var(--red);color:#fff;font-size:.85em;padding:2px 8px;border-radius:20px;letter-spacing:.02em}
+  .evtBanner .eb-tag .eb-desc{overflow:hidden;text-overflow:ellipsis}
+  .evtBanner.upcoming .eb-tag::before{content:"まもなく";background:var(--ev-ac);color:var(--ev-on)}
+  .evtBanner .eb-btn{flex-shrink:0;background:linear-gradient(135deg,var(--ev-ac2),var(--ev-ac));color:var(--ev-on);font-weight:800;font-size:.8em;padding:8px 16px;border-radius:20px;white-space:nowrap}
+  .evtBanner.ev-wjpt{--ev-bd:#d9a441;--ev-bg:#0a1226;--ev-bg2:#122046;--ev-fg:#f0c56b;--ev-ac:var(--gold);--ev-ac2:var(--gold2);--ev-on:#3a2a06}
+  .evtBanner.ev-jopt{--ev-bd:var(--jopt);--ev-bg:#07171d;--ev-bg2:#0e3d48;--ev-fg:var(--jopt2);--ev-ac:var(--jopt);--ev-ac2:var(--jopt2);--ev-on:#04222a}
+  .evtBanner.ev-fst{--ev-bd:var(--fst);--ev-bg:#070c22;--ev-bg2:#1a2455;--ev-fg:var(--fst2);--ev-ac:var(--fst);--ev-ac2:var(--fst2);--ev-on:#fff}
 
   /* WJPT 専用ページ */
   #page-wjpt{padding-top:6px}
@@ -179,20 +184,10 @@
 
   /* ===== JOPT 大型イベント(2026/7/30-8/2 福岡・大名) ===== */
   /* JOPTのブランドカラー(ティール)をアクセントにする。WJPT(ゴールド)とは配色で区別する。 */
-  :root{ --jopt:#1fb6ba; --jopt2:#5fe2e6; --jopt-dark:#0a2530; }
+  :root{ --jopt:#1fb6ba; --jopt2:#5fe2e6; }
   .hbar-jopt{background:transparent}
   header.jopt-mode{background:linear-gradient(135deg,#07171d,#0e3d48)}
   .jopt-header-name{font-weight:800;font-size:.95em;color:var(--jopt2);text-align:right;max-width:65%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-
-  /* JOPT バナー(トーナメント日程の最上部) */
-  .joptBanner{display:block;text-decoration:none;border-radius:16px;overflow:hidden;position:relative;box-shadow:0 6px 26px rgba(0,0,0,.3);border:2px solid var(--jopt);background:var(--jopt-dark);margin-bottom:6px}
-  .joptBanner .jb-img{display:block;width:100%;height:auto}
-  .joptBanner .jb-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 14px;background:linear-gradient(90deg,#07171d,#0e3d48)}
-  .joptBanner .jb-tag{font-size:.72em;font-weight:800;letter-spacing:.05em;color:var(--jopt2);display:flex;align-items:center;gap:7px;min-width:0;white-space:nowrap}
-  .joptBanner .jb-tag::before{content:"開催中";flex-shrink:0;white-space:nowrap;background:var(--red);color:#fff;font-size:.85em;padding:2px 8px;border-radius:20px;letter-spacing:.02em}
-  .joptBanner.upcoming .jb-tag::before{content:"まもなく";background:var(--jopt);color:#04222a}
-  .joptBanner .jb-tag .jb-desc{overflow:hidden;text-overflow:ellipsis}
-  .joptBanner .jb-btn{flex-shrink:0;background:linear-gradient(135deg,var(--jopt2),var(--jopt));color:#04222a;font-weight:800;font-size:.8em;padding:8px 16px;border-radius:20px;white-space:nowrap}
 
   /* JOPT 専用ページ */
   #page-jopt{padding-top:6px}
@@ -206,7 +201,7 @@
   .evt-archived{font-size:.85em;line-height:1.6;color:#5b4a1e;background:#fbf1d8;border:1px solid #ecd9a6;border-radius:10px;padding:11px 13px;margin:0 2px 12px}
   .evt-archived b{color:#3a2a06}
   .evt-archived a{color:#7a5711;font-weight:800;text-decoration:underline}
-  .jopt-top.is-archived img,.wjpt-top.is-archived img{filter:grayscale(.35) opacity(.85)}
+  .jopt-top.is-archived img,.wjpt-top.is-archived img,.fst-top.is-archived img{filter:grayscale(.35) opacity(.85)}
   .jopt-loading{text-align:center;color:var(--mut);font-size:.88em;padding:48px 16px}
   .jopt-venue{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:12px 14px;margin:0 0 14px;font-size:.85em;line-height:1.7}
   .jopt-venue b{color:#0e6a72}
@@ -248,6 +243,31 @@
   table.jopt-struct tbody tr:last-child td{border-bottom:none}
   table.jopt-struct tr.brk td{border-bottom:2px dashed #cfe3e5}
   table.jopt-struct td.lv{font-weight:800;color:var(--txt)}
+
+  /* ===== FST (FUKUOKA SUPER TOURNAMENT) 大型イベント 2026/9/19-23 福岡・渡辺通 ===== */
+  /* アクセントはクリムゾン。WJPT(ゴールド)・JOPT(ティール)とは配色で区別する。 */
+  :root{ --fst:#e0304a; --fst2:#ff6b7f; --fst-txt:#b3243a; }
+  header.fst-mode{background:linear-gradient(135deg,#070c22,#1a2455)}
+  .fst-header-name{font-weight:800;font-size:.95em;color:var(--fst2);text-align:right;max-width:65%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #page-fst{padding-top:6px}
+  .fst-top{display:block;border-radius:16px;overflow:hidden;border:2px solid var(--fst);box-shadow:0 6px 26px rgba(0,0,0,.28);margin-bottom:8px}
+  .fst-top img{display:block;width:100%;height:auto}
+  .fst-sub{font-size:.85em;color:var(--mut);margin:0 2px 14px;line-height:1.6}
+  .fst-sub a{color:var(--fst-txt);font-weight:700;text-decoration:underline}
+  .fst-venue{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:12px 14px;margin:0 0 14px;font-size:.85em;line-height:1.7}
+  .fst-venue b{color:var(--fst-txt)}
+  /* 未発表の情報がある旨の告知(推測で埋めず「未発表」と明示するための枠) */
+  .fst-tba{font-size:.84em;line-height:1.7;color:#6d2530;background:#fdeaee;border:1px solid #f6c3cd;border-radius:10px;padding:11px 13px;margin:0 2px 14px}
+  .fst-tba b{color:#8e1524}
+  .fst-sect{font-weight:800;font-size:.95em;color:var(--fst-txt);margin:20px 2px 8px}
+  .fst-ecard{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:13px 15px;margin-bottom:10px}
+  .fst-ecard h3{font-size:1.02em;font-weight:800;color:var(--txt)}
+  .fst-ecard .fe-prize{display:inline-block;margin-top:7px;background:linear-gradient(135deg,var(--fst2),var(--fst));color:#fff;font-weight:800;font-size:.82em;padding:4px 13px;border-radius:20px}
+  .fst-ecard .fe-row{display:flex;gap:10px;font-size:.85em;line-height:1.7;margin-top:5px}
+  .fst-ecard .fe-k{flex:0 0 5.6em;color:var(--mut);font-weight:700}
+  .fst-ecard .fe-v{flex:1;min-width:0;overflow-wrap:anywhere}
+  .fst-links{font-size:.86em;line-height:2;margin:4px 2px 6px}
+  .fst-links a{color:var(--fst-txt);font-weight:700;text-decoration:underline}
 
   /* SECTION */
   main{padding:18px 0 40px}
@@ -361,6 +381,10 @@
     <a class="back-link" href="#">← 一覧へ戻る</a>
     <div class="jopt-header-name">JOPT 福岡</div>
   </div>
+  <div class="hbar" id="hbar-fst" style="display:none">
+    <a class="back-link" href="#">← 一覧へ戻る</a>
+    <div class="fst-header-name">FST 福岡</div>
+  </div>
 </header>
 
 <section class="hero">
@@ -402,20 +426,9 @@
 
 <main class="wrap">
   <div id="page-list">
-    <a class="wjptBanner" id="wjptBanner" href="#wjpt" style="display:none">
-      <img class="wb-img" src="img/wjpt/wjpt-banner.jpg" alt="WJPT West Japan Poker Tour 7.18-7.20 北九州">
-      <div class="wb-foot">
-        <span class="wb-tag"><span class="wb-desc">北九州・全21トーナメント</span></span>
-        <span class="wb-btn">日程を見る →</span>
-      </div>
-    </a>
-    <a class="joptBanner" id="joptBanner" href="#jopt" style="display:none">
-      <img class="jb-img" src="img/jopt/jopt-banner.jpg" alt="JOPT 2026 Fukuoka #01 7.30-8.2 UNITEDLAB 福岡・大名">
-      <div class="jb-foot">
-        <span class="jb-tag"><span class="jb-desc" id="joptBannerDesc">福岡・大名</span></span>
-        <span class="jb-btn">日程を見る →</span>
-      </div>
-    </a>
+    <!-- 大型イベントのバナー。掲載中の1件だけを big-events.js のレジストリから描画する
+         (renderBigEventBanner)。該当が無ければ空のまま。 -->
+    <div id="bigEventBanner"></div>
     <div class="shead">
       <h2>トーナメント日程</h2>
       <span class="cnt" id="list-cnt"></span>
@@ -435,6 +448,8 @@
 
   <div id="page-jopt" style="display:none"></div>
 
+  <div id="page-fst" style="display:none"></div>
+
   <a class="adCard" style="margin:26px 0 4px" href="https://poker-tourney-log--family.expo.app" target="_blank" rel="noopener">
     <img src="img/ptl-bulldog.png" alt="">
     <div class="ac-body">
@@ -447,7 +462,9 @@
 
 <footer>
   <div><b style="color:#fff">ふくおかポーカーナビ</b> — 福岡ポーカートーナメント日程アグリゲーター</div>
-  <div>大会特集: <a href="events/jopt-2026-fukuoka-01/">JOPT 2026 福岡</a>　|　<a href="events/wjpt-2026/">WJPT 2026</a></div>
+  <!-- 大会特集は「開催中、無ければ次の大会」を1件だけ出す(バナーと必ず一致する)。
+       中身は big-events.js の mountBigEventFooter() が入れる。該当が無ければ行ごと非表示。 -->
+  <div id="evtFeature" style="display:none"></div>
   <div><a href="contact.html">お問い合わせ</a>　|　<a href="contact.html">店舗の掲載・PRについて</a>　|　<a href="privacy.html">プライバシーポリシー</a></div>
   <div class="disc">
     掲載情報は各店舗・主催者のSNS・公式サイト等をもとに自動/手動で収集しています。開催内容は変更される場合があるため、
@@ -466,6 +483,8 @@
   <a class="sa-btn" href="https://poker-tourney-log--family.expo.app" target="_blank" rel="noopener">使ってみる →</a>
 </div>
 
+<!-- 大型イベントのレジストリと掲載期間ルール。data.js より先に読む(バナー・フッターの判定に使う) -->
+<script src="big-events.js"></script>
 <script src="data.js"></script>
 <script>
 (function(){
@@ -480,7 +499,8 @@
   const WJPT = {
     name: 'WJPT (West Japan Poker Tour)',
     area: '北九州',
-    days: ['2026-07-18','2026-07-19','2026-07-20'],
+    // 会期は big-events.js のレジストリを唯一の正とする(掲載期間の判定と食い違わないようにするため)
+    days: bigEventDays('wjpt'),
     banner: 'img/wjpt/wjpt-banner.jpg',
     guideUrl: 'https://privatter.me/page/6a3fb763eb927',
     tournaments: [
@@ -510,23 +530,14 @@
   const wjptImg = no => `img/wjpt/wjpt-${String(no).padStart(2,'0')}.jpg`;
   const wjptDetailById = no => WJPT.tournaments.find(t => t.no === Number(no));
   let wjptDay = WJPT.days.includes(localTodayGlobal()) ? localTodayGlobal() : WJPT.days[0];
-  function localTodayGlobal(){
-    const n=new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
-  }
 
   // ===== 大型イベント共通 =====
-  // イベントの会期は days(YYYY-MM-DD の配列)で表す。並び順に依存しないよう、
-  // 初日・最終日は配列の端ではなく最小値・最大値で求める。
-  const eventFirstDay = days => (Array.isArray(days) && days.length) ? days.reduce((a,b)=> a<b?a:b) : null;
-  const eventLastDay  = days => (Array.isArray(days) && days.length) ? days.reduce((a,b)=> a>b?a:b) : null;
-  // 会期最終日を過ぎたイベントは「アーカイブ(開催当時の記録)」として扱う。
-  // バナーの表示可否もページ内の文言の出し分けも、日付比較を各所に書かず必ずこの関数を通すこと。
+  // レジストリ(BIG_EVENTS)と日付ヘルパー(localTodayGlobal / eventFirstDay / eventLastDay /
+  // isEventArchived / activeBigEvent)は big-events.js に集約している。
+  // バナー・フッター・ページ内文言の出し分けは、日付比較を各所に書かず必ずそれらを通すこと。
   // イベントが増えるたびに同じ判定を書き足すと、どれかに入れ忘れて
   // 「終了したのに開催中の書き方のまま」が残るため。
-  const isEventArchived = days => {
-    const last = eventLastDay(days);
-    return !!last && localTodayGlobal() > last;
-  };
+  //
   // アーカイブ時にページ冒頭へ出す共通の告知ボックス
   const archivedNotice = (detail) => detail
     ? '<div class="evt-archived"><b>このイベントは終了しました。</b>以下は開催当時の記録です。</div>'
@@ -825,12 +836,12 @@
   // トーナメント本体(jopt-data.js, 約116KB)は #jopt を開いたときにだけ読み込む。
   // ホーム画面のバナー表示判定に必要な最小限の情報だけ、ここに軽量メタとして持つ。
   //
-  // ※ここは jopt-data.js との「二重管理」になる。データを更新して日程や件数が変わった場合、
-  //   この値が古いままでもデータ読み込み時に自動で上書きされるため画面は壊れないが、
-  //   データを読む前(ホーム画面)のバナー表示判定だけは古い値で行われる点に注意。
-  //   イベントの日程自体を差し替えるときは、ここも必ず更新すること。
+  // ※件数(tournamentCount)は jopt-data.js との「二重管理」になる。データを更新して件数が
+  //   変わった場合、この値が古いままでもデータ読み込み時に自動で上書きされるため画面は壊れないが、
+  //   データを読む前(ホーム画面)のバナー表記だけは古い値で出る点に注意。
+  //   会期(days)は big-events.js のレジストリを唯一の正とする。
   const JOPT_META = {
-    days: ['2026-07-30','2026-07-31','2026-08-01','2026-08-02'],
+    days: bigEventDays('jopt'),
     tournamentCount: 44
   };
   const JOPT_BANNER_DESC = n => `福岡・大名／全${n}トーナメント`;
@@ -854,13 +865,18 @@
           return;
         }
         joptData = d;
-        // 軽量メタがデータとずれていたら、常にデータ側を正とする(誤った件数・日程を出さないため)
+        // 軽量メタ・レジストリがデータとずれていたら、常にデータ側を正とする
+        // (誤った件数・日程を出さないため)。レジストリを直したらバナーとフッターも描き直す。
+        const reg = bigEventById('jopt');
+        let regChanged = false;
+        if (reg && reg.days.join(',') !== d.days.join(',')){ reg.days = d.days.slice(); regChanged = true; }
         JOPT_META.days = d.days.slice();
         if (d.tournaments.length !== JOPT_META.tournamentCount){
           JOPT_META.tournamentCount = d.tournaments.length;
-          const el = document.getElementById('joptBannerDesc');
-          if (el) el.textContent = JOPT_BANNER_DESC(JOPT_META.tournamentCount);
+          if (reg) reg.bannerDesc = JOPT_BANNER_DESC(JOPT_META.tournamentCount);
+          regChanged = true;
         }
+        if (regChanged){ renderBigEventBanner(); mountBigEventFooter('evtFeature'); }
         // 選択中の日がデータ側に存在しない場合に備えて必ず有効な日に寄せる
         if (!JOPT_META.days.includes(joptDay)){
           joptDay = JOPT_META.days.includes(localTodayGlobal()) ? localTodayGlobal() : JOPT_META.days[0];
@@ -1014,6 +1030,93 @@
     return null;
   }
 
+  // ===== FST (FUKUOKA SUPER TOURNAMENT) 専用ページ =====
+  // 出典: 主催者(株式会社FST)の公式告知。2026-07-29時点で判明している内容だけを掲載する。
+  // 個別トーナメントの本数・ストラクチャー・レイトレジ時刻・大会のナンバリング等は
+  // 一次情報で確認できていないため書かない(推測を載せない)。発表され次第ここに追記する。
+  const FST = {
+    name: 'FST（FUKUOKA SUPER TOURNAMENT）',
+    catchCopy: '究極を、遊べ。',
+    days: bigEventDays('fst'),     // 会期は big-events.js のレジストリを唯一の正とする
+    banner: 'img/fst/fst-banner.svg',  // 当サイトが作成したバナー(公式素材ではない)
+    venue: 'ホテルニューオータニ博多（The New Otani）',
+    address: '〒810-0004 福岡県福岡市中央区渡辺通1-1-2',
+    organizer: '株式会社FST',
+    x: 'https://x.com/fst_202408',
+    instagram: 'https://www.instagram.com/fst_fukuoka/',
+    asOf: '2026年7月29日',
+    events: [
+      { name:'MAIN EVENT', prize:'¥15,000,000',
+        entry:'¥50,000 ／ FSTチケット2枚 ／ ¥25,000＋FSTチケット1枚',
+        sched:[['Day 1','9/19〜9/21'],['Day 2','9/21'],['FINAL','9/22']] },
+      { name:'CHAMPIONSHIP', prize:'¥8,000,000',
+        entry:'¥30,000 ／ FSTチケット2枚 ／ ¥20,000＋FSTチケット1枚',
+        sched:[['Day 1','9/21〜9/23'],['FINAL','9/23']] }
+    ]
+  };
+
+  // サイト内に登録済みの「FSTサテライト」(data.js で tags に "FST" を持つトーナメント)の
+  // 今後の開催分。専用ページからサテライトへの導線として出す。
+  function fstSatellites(limit){
+    return ALL_TOURNAMENTS
+      .filter(t => (t.tags||[]).includes('FST') && t.date >= localToday)
+      .sort((a,b)=> a.date.localeCompare(b.date) || startKey(a).localeCompare(startKey(b)))
+      .slice(0, limit || 20);
+  }
+
+  function renderFstPage(){
+    const page = document.getElementById('page-fst');
+    const archived = isEventArchived(FST.days);
+    const first = eventFirstDay(FST.days), last = eventLastDay(FST.days);
+    const period = `${iso(first).getMonth()+1}/${iso(first).getDate()}〜${iso(last).getMonth()+1}/${iso(last).getDate()}`;
+
+    const cards = FST.events.map(e => `
+      <div class="fst-ecard">
+        <h3>${e.name}</h3>
+        <div class="fe-prize">Prize Total ${e.prize}</div>
+        <div class="fe-row"><span class="fe-k">エントリー</span><span class="fe-v">${e.entry}</span></div>
+        ${e.sched.map(([k,v]) => `<div class="fe-row"><span class="fe-k">${k}</span><span class="fe-v">${v}</span></div>`).join('')}
+      </div>`).join('');
+
+    const sat = fstSatellites();
+    let satHtml;
+    if (sat.length){
+      const groups = {};
+      sat.forEach(t => { (groups[t.date] = groups[t.date] || []).push(t); });
+      satHtml = Object.keys(groups).sort().map(d => renderDateGroup(d, groups[d])).join('');
+    } else {
+      satHtml = '<div class="empty">現在、サイトに登録されている今後のFSTサテライトはありません。<br>各店舗のSNS・公式情報もあわせてご確認ください。</div>';
+    }
+
+    page.innerHTML = `
+      ${archived ? archivedNotice(false) : ''}
+      <a class="fst-top${archived?' is-archived':''}" href="${FST.x}" target="_blank" rel="noopener"><img src="${FST.banner}" alt="${FST.name} ${period} ${FST.venue}"></a>
+      <p class="fst-sub">${FST.name}（2026年9/19〜9/23・${FST.venue}）。「${FST.catchCopy}」を掲げた怒涛の5日間開催。${archived
+        ? `以下は開催当時に公開されていた情報の記録です。`
+        : `現時点で公表されているのは MAIN EVENT と CHAMPIONSHIP の概要のみです。最新情報は<a href="${FST.x}" target="_blank" rel="noopener">公式X（@fst_202408）</a>をご確認ください。`}</p>
+      <div class="evt-disclaimer">当サイトはFSTの主催者・公式媒体ではありません。公開情報をもとに当サイトが独自に集約した<b>非公式のまとめ</b>です。ページ内のバナーは当サイトが作成したもので、ロゴ・大会名等の権利は主催者に帰属します。掲載内容は<b>${FST.asOf}時点</b>の公式告知にもとづきますが、当サイトによる転記の誤りが含まれる可能性があります。${archived?'イベント終了後は内容を更新していません。':'参加前に必ず公式情報をご確認ください。'}</div>
+      <div class="fst-venue">
+        <b>会期</b>　2026年9月19日（土）・20日（日）・21日（月）・22日（火）・23日（水）の5日間<br>
+        <b>会場</b>　${FST.venue}<br>
+        <b>住所</b>　${FST.address}<br>
+        <b>主催</b>　${FST.organizer}
+      </div>
+      ${archived ? '' : `<div class="fst-tba"><b>個別トーナメントの詳細は未発表です。</b>タイムスケジュール・ストラクチャー・レイトレジ締切・サイドイベントの本数などは公表され次第、このページに掲載します。</div>`}
+      <div class="fst-sect">発表済みのトーナメント</div>
+      ${cards}
+      <div class="fst-links">
+        ▶ <a href="${FST.x}" target="_blank" rel="noopener">公式X（@fst_202408）</a>　／　<a href="${FST.instagram}" target="_blank" rel="noopener">公式Instagram</a>
+      </div>
+      <div class="fst-sect">サイト内の今後のFSTサテライト</div>
+      <p class="fst-sub">当サイトに登録されている、県内各店のFSTサテライト(チケット獲得トーナメント)の直近の開催予定です。開催内容は変更される場合があるため、参加前に各店舗の公式情報をご確認ください。</p>
+      ${satHtml}
+    `;
+  }
+
+  function parseFstHash(){
+    return location.hash === '#fst' ? { view:'list' } : null;
+  }
+
   function parseHash(){
     const m = location.hash.match(/^#venue\/([^/]+)(?:\/(\d{4}-\d{2}))?$/);
     if (!m) return null;
@@ -1023,6 +1126,7 @@
   function route(){
     const wjpt = parseWjptHash();
     const jopt = parseJoptHash();
+    const fst  = parseFstHash();
     const parsed = parseHash();
     const filters = document.querySelector('.filters');
     const hero = document.querySelector('.hero');
@@ -1031,6 +1135,36 @@
     const hbarVenue = document.getElementById('hbar-venue');
     const hbarWjpt = document.getElementById('hbar-wjpt');
     const hbarJopt = document.getElementById('hbar-jopt');
+    const hbarFst = document.getElementById('hbar-fst');
+    // FSTは他のイベントページより先に処理し、直後に必ず後始末する。
+    // こうしておくと以降の分岐(JOPT/WJPT/店舗)にFSTの片付けを書き足さずに済む。
+    if (fst){
+      filters.style.display = 'none';
+      hero.style.display = 'none';
+      headerEl.classList.remove('venue-mode');
+      headerEl.classList.remove('jopt-mode');
+      headerEl.classList.add('fst-mode');
+      hbarList.style.display = 'none';
+      hbarVenue.style.display = 'none';
+      hbarWjpt.style.display = 'none';
+      hbarJopt.style.display = 'none';
+      hbarFst.style.display = '';
+      document.getElementById('page-list').style.display = 'none';
+      document.getElementById('page-venue').style.display = 'none';
+      document.getElementById('page-wjpt').style.display = 'none';
+      document.getElementById('page-jopt').style.display = 'none';
+      document.getElementById('page-fst').style.display = '';
+      renderFstPage();
+      document.title = 'FST 2026 福岡（FUKUOKA SUPER TOURNAMENT 9/19〜9/23）| ふくおかポーカーナビ';
+      window.scrollTo(0,0);
+      if (typeof gtag === 'function'){
+        gtag('event','page_view',{ page_path: location.pathname + location.hash, page_title: document.title });
+      }
+      return;
+    }
+    hbarFst.style.display = 'none';
+    headerEl.classList.remove('fst-mode');
+    document.getElementById('page-fst').style.display = 'none';
     if (jopt){
       filters.style.display = 'none';
       hero.style.display = 'none';
@@ -1172,47 +1306,36 @@
   document.getElementById('sel-tag').addEventListener('change', e => { state.tag = e.target.value; render(); });
   window.addEventListener('hashchange', route);
 
-  // WJPT大型イベントのバナーは、イベント最終日(最後の開催日)まで表示する
-  function setupWjptBanner(){
-    const banner = document.getElementById('wjptBanner');
-    if (!banner) return;
-    const firstDay = eventFirstDay(WJPT.days);
-    if (!isEventArchived(WJPT.days)){
-      banner.style.display = '';
-      if (localTodayGlobal() < firstDay) banner.classList.add('upcoming');
-    } else {
-      banner.style.display = 'none';
-    }
-  }
-
-  // JOPTバナーは「開催初日の2週間前」から「最終日」まで表示する(社長指示)。
-  // 開催前は「まもなく」バッジ、会期中は「開催中」バッジになる。
-  function setupJoptBanner(){
-    const banner = document.getElementById('joptBanner');
-    if (!banner) return;
-    // 件数は軽量メタから表示する(トーナメント本体は#joptを開くまで読み込まないため)。
-    // メタとデータがずれていた場合は loadJoptData() 側で表示を訂正する。
-    const desc = document.getElementById('joptBannerDesc');
-    if (desc) desc.textContent = JOPT_BANNER_DESC(JOPT_META.tournamentCount);
-    const firstDay = eventFirstDay(JOPT_META.days);
-    const showFrom = (() => {
-      const d = iso(firstDay); d.setDate(d.getDate() - 14);
-      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    })();
-    const today = localTodayGlobal();
-    if (today >= showFrom && !isEventArchived(JOPT_META.days)){
-      banner.style.display = '';
-      if (today < firstDay) banner.classList.add('upcoming');
-    } else {
-      banner.style.display = 'none';
-    }
+  // 大型イベントのバナーは、掲載中の1件だけを出す(該当が無ければ何も出さない)。
+  // どのイベントを出すか・いつまで出すかの判定は big-events.js の activeBigEvent() に一本化しており、
+  // フッターの「大会特集」も同じ関数を使うので、両者は必ず一致する。
+  // 会期前は「まもなく」バッジ、会期中〜最終日の翌日は「開催中」バッジになる。
+  function renderBigEventBanner(){
+    const slot = document.getElementById('bigEventBanner');
+    if (!slot) return null;
+    const ev = activeBigEvent();
+    if (!ev){ slot.innerHTML = ''; return null; }
+    const upcoming = localTodayGlobal() < eventFirstDay(ev.days) ? ' upcoming' : '';
+    slot.innerHTML = `
+      <a class="evtBanner ${ev.bannerClass}${upcoming}" href="${ev.hash}">
+        <img class="eb-img" src="${ev.banner}" alt="${ev.bannerAlt}">
+        <div class="eb-foot">
+          <span class="eb-tag"><span class="eb-desc">${ev.bannerDesc}</span></span>
+          <span class="eb-btn">日程を見る →</span>
+        </div>
+      </a>`;
+    return ev;
   }
 
   buildDateStrip();
   render();
   renderVenues();
-  setupWjptBanner();
-  setupJoptBanner();
+  // JOPTのバナー説明文だけは件数を含むため、軽量メタの値でレジストリを更新してから描画する
+  // (トーナメント本体は #jopt を開くまで読まない。ズレていれば loadJoptData() 側で訂正される)
+  const joptReg = bigEventById('jopt');
+  if (joptReg) joptReg.bannerDesc = JOPT_BANNER_DESC(JOPT_META.tournamentCount);
+  renderBigEventBanner();
+  mountBigEventFooter('evtFeature');
   route();
 })();
 </script>
