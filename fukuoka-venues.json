@@ -2,7 +2,22 @@
   "_meta": {
     "description": "福岡県内アミューズメントポーカー店の実在調査結果（出典付き）。data.js の VENUES はこれを元に生成。公開前に各店舗の公式情報で住所・SNS・営業状況を再確認すること。",
     "collectedAt": "2026-07-10",
-    "count": 29,
+    "count": 35,
+    "additions": [
+      {
+        "collectedAt": "2026-07-29",
+        "count": 6,
+        "venues": [
+          "むさぽ福岡（MUSASHI POKER ROOM 福岡店）",
+          "RAFTEL CASINO（ラフテルカジノ 福岡今泉店）",
+          "アミューズメントバー SAVE天神店",
+          "KAJI BAR",
+          "TripleBarrel 折尾店",
+          "POKER Studio DEEP BLUE"
+        ],
+        "note": "venues配列の末尾6件は2026-07-29に品質管理部が裏取りした追加分。初回29件(collectedAt: 2026-07-10)とは調査日が異なる。各件の確度(high/medium)と残課題は個々のnoteに記載。"
+      }
+    ],
     "caveats": [
       "ポータル(poker.dmm.com 等)・公式サイト/SNS本体はボット対策で直接取得が403のため、店舗詳細はWeb検索の要約経由。住所番地・SNSハンドル・営業時間に軽微な誤りが残る可能性あり。",
       "じゃんけんポーカー天神店=移転中の情報／RAISE BLUE=2025年11月に重要告知 → 営業状況要確認。",
@@ -539,6 +554,122 @@
         "https://www.instagram.com/ace_and_king259/"
       ],
       "note": "2026年7月Grand Open(新規開店)の久留米エリア新店。西鉄久留米駅を降りて徒歩1分。初心者講習毎日開催。FREEROLLイベント実績あり。営業時間: 月-金17:30-24:00、土日13:30-24:00。KENポーカー(久留米/v21)と同エリアの別店舗。Google店舗情報(クチコミ5.0・1件)で確認。"
+    },
+    {
+      "name": "むさぽ福岡（MUSASHI POKER ROOM 福岡店）",
+      "area": "大名",
+      "city": "福岡市中央区",
+      "address": "福岡県福岡市中央区大名1丁目3-29 Daimyo582 2階",
+      "access": "地下鉄空港線 赤坂駅 徒歩5分（天神駅 徒歩8分）",
+      "website": "https://web.pokerroom634.com/fukuoka/",
+      "x": "https://x.com/634poker_fuk",
+      "instagram": "",
+      "line": "",
+      "tel": "092-401-6177",
+      "holds_tournaments": true,
+      "sources": [
+        "https://web.pokerroom634.com/fukuoka/",
+        "https://www.pokerroom634.com/official/game_information/store/Fukuoka",
+        "https://light-three.com/hakata-poker/",
+        "https://x.com/634poker_fuk"
+      ],
+      "note": "確度high。全国チェーンMUSASHI POKER ROOMの福岡店で2026年4月25日オープン。営業時間: 平日15:00〜24:00／土日12:00〜24:00・年中無休。施設利用料は平日500円・土日祝1,000円＋1ドリンク600円〜。トーナメントは随時開催で日程は公式Xで告知。Instagramは全国ブランド共通アカウントのみで福岡店専用が存在しないため空欄とした。公式サイトは web.pokerroom634.com（2026年2月公開の新HP）と旧 www.634pokerroom.com が併存しており、新HP側を採用。"
+    },
+    {
+      "name": "RAFTEL CASINO（ラフテルカジノ 福岡今泉店）",
+      "area": "今泉",
+      "city": "福岡市中央区",
+      "address": "福岡県福岡市中央区今泉1丁目23-4 新天神ビル301",
+      "access": "西鉄福岡（天神）駅 徒歩圏内",
+      "website": "",
+      "x": "https://x.com/casinoRAFTEL",
+      "instagram": "https://www.instagram.com/raftelcasino/",
+      "line": "",
+      "tel": "",
+      "holds_tournaments": true,
+      "sources": [
+        "https://www.instagram.com/raftelcasino/",
+        "https://light-three.com/hakata-poker/",
+        "https://x.com/casinoRAFTEL"
+      ],
+      "note": "確度medium。2026年3月28日オープン。ポーカー5卓＋ブラックジャック・バカラ。営業時間: 平日17:00〜24:00／土日祝14:00〜24:00。★住所を記載しているのは light-three.com の1件のみで、店舗公式チャネル(X/Instagram)には住所の記載がない。掲載後に現地確認またはDMでの住所最終確認を推奨。電話番号・公式サイト・LINEは未発見。公式Instagramのプロフィールに公式Xへのリンクがあり、両アカウントが同一店舗のものであることは確認済み。"
+    },
+    {
+      "name": "アミューズメントバー SAVE天神店",
+      "area": "天神",
+      "city": "福岡市中央区",
+      "address": "福岡県福岡市中央区天神3-6-16 オフィスニューガイアCRAIR 8F",
+      "access": "地下鉄空港線 天神駅 徒歩5分（赤坂駅 徒歩8分）",
+      "website": "https://fbfg900.gorp.jp/",
+      "x": "https://x.com/bar_save_",
+      "instagram": "",
+      "line": "",
+      "tel": "092-791-2900",
+      "holds_tournaments": false,
+      "sources": [
+        "https://fbfg900.gorp.jp/",
+        "https://map.yahoo.co.jp/v3/place/UAfIss5tGOw",
+        "https://light-three.com/hakata-poker/",
+        "https://my.beyond-ss.com/pokerroom-hukuoka/"
+      ],
+      "note": "確度high（営業状況）。親不孝通りの総合アミューズメントバー。ポーカーのほかダーツ・ボードゲーム・ビデオゲーム等を提供。営業時間: 月〜木・日・祝20:00〜翌3:00／金・土・祝前日20:00〜翌5:00。正式店名は「アミューズメントバー SAVE天神店」(「アミューズメントゲームバー」は旧称／通称)。公式ページに「ポーカーもできます!!! テキサスホールデムやブラックジャックなど超初心者向けです」とあり、ポーカー専門店ではない。トーナメント開催の記載は公式・第三者いずれのソースにも無いため holds_tournaments:false とした。電話はぐるなび転送番号050-5487-0779ではなく店舗直通092-791-2900を採用。ビル名は「CRAIR」「クレール」の2表記が混在。"
+    },
+    {
+      "name": "KAJI BAR",
+      "area": "北九州",
+      "city": "北九州市小倉北区",
+      "address": "福岡県北九州市小倉北区鍛冶町1-5-11 4F",
+      "access": "北九州モノレール 平和通駅 徒歩3分（JR小倉駅 徒歩約5分）",
+      "website": "https://kajibarkokura.owst.jp/",
+      "x": "https://x.com/KAJIBAR1",
+      "instagram": "https://www.instagram.com/kajibar_9876/",
+      "line": "",
+      "tel": "093-521-9876",
+      "holds_tournaments": false,
+      "sources": [
+        "https://kajibarkokura.owst.jp/",
+        "https://www.hotpepper.jp/strJ001232528/",
+        "https://www.instagram.com/kajibar_9876/"
+      ],
+      "note": "確度high（営業状況）。2019年10月オープンのアミューズメントバー。ポーカーのほかブラックジャック・ルーレット・バカラ・ダーツ等。営業時間: 月〜土21:00〜翌3:00、日・祝定休。総席数40席、時間無制限飲み放題4,950円。営業中の根拠=ホットペッパー掲載情報が2026/04/17更新、2026年7月・8月のネット予約カレンダーが稼働中。★X(@KAJIBAR1)は実在を確認済みだが店舗公式サイトからリンクされておらず、店舗本人のアカウントであるという確証は弱い。Instagram(@kajibar_9876)はハンドルが店舗電話番号の下4桁と一致しており確度は高い。トーナメント開催は未確認のため holds_tournaments:false とした。"
+    },
+    {
+      "name": "TripleBarrel 折尾店",
+      "area": "北九州",
+      "city": "北九州市八幡西区",
+      "address": "〒807-0825 福岡県北九州市八幡西区折尾1丁目14-10 2F",
+      "access": "JR折尾駅 徒歩4分（西日本シティ銀行の隣）",
+      "website": "https://triplebarrel.jimdofree.com/",
+      "x": "https://x.com/triple_orio",
+      "instagram": "https://www.instagram.com/triple_orio/",
+      "line": "https://line.me/ti/g2/63zIY0X8gSNxLGGI1maPFT-hTd6WuON4UWwvZg",
+      "tel": "080-3374-8686",
+      "holds_tournaments": true,
+      "sources": [
+        "https://triplebarrel.jimdofree.com/%E3%82%A2%E3%82%AF%E3%82%BB%E3%82%B9-%E3%81%8A%E5%95%8F%E5%90%88%E3%81%9B/",
+        "https://www.instagram.com/triple_orio/",
+        "https://x.com/triple_orio"
+      ],
+      "note": "確度high。2025年1月オープンの折尾エリア初のポーカー店で、掲載済みTripleBarrel小倉店の姉妹店。公式サイト「アクセス・お問合せ」に折尾店の住所・TEL・交通が小倉店と別に明記されている。営業時間18:30〜25:00は折尾店専用LINEオープンチャットの説明文から2026-07-29に直接取得(検索エンジンのキャッシュには18:30〜24:00という古い表記が残るので注意)。ボードゲーム多数・初心者講習あり。トーナメントは公式料金ページに「リングチップ10,000点でトーナメント参加費1,000円分の割引券」とあり運用前提。2025年2月グランドオープントーナメント、2026年2月にFSTサテライト開催を確認。★定期開催の曜日・時刻は未特定で、月次日程は公式X/Instagram/オープンチャットの確認が必要。line欄は小倉店の既存データと同様にLINEオープンチャットのURL(折尾店単独のLINE公式アカウントは無し)。"
+    },
+    {
+      "name": "POKER Studio DEEP BLUE",
+      "area": "京築",
+      "city": "行橋市",
+      "address": "福岡県行橋市中央3丁目5-36 田町ビル3F",
+      "access": "JR行橋駅 徒歩約4分",
+      "website": "https://www.poker-deepblue.com/",
+      "x": "",
+      "instagram": "https://www.instagram.com/deepblue824",
+      "line": "",
+      "tel": "",
+      "holds_tournaments": true,
+      "sources": [
+        "https://www.poker-deepblue.com/",
+        "https://www.poker-deepblue.com/services-3",
+        "https://www.instagram.com/deepblue824"
+      ],
+      "note": "確度high。2025年5月オープンの行橋初のカジノ専門店。風営法5号許可取得、換金・景品交換なし。営業時間19:00〜24:00。2026年1月にポーカーテーブルをリニューアル。18歳未満入店不可、ポーカーをしない飲みのみの来店は不可。決済は現金・キャリア決済・クレジットカード。初心者プランあり。★トーナメントの曜日・時刻・参加費は非公開で、公式Q&Aも「告知はInstagramで行う」としているため月次日程はInstagram確認が必要。住所は公式サイト本文が「行橋市中3丁目5-36」だが、同ページのGoogleマップ導線・日本郵便・国土地理院ジオコーダのいずれからも正式表記は「中央3-5-36」と確認したためそちらを採用(公式サイト本文は「央」の脱字と判断)。店舗の電話番号は公式サイト・SNSのどこにも記載なし。新エリア「京築」の第1号店。"
     }
   ]
 }
