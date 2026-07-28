@@ -145,8 +145,8 @@ const VENUES = [
     "tel": "",
     "featured": false,
     "note": "NLH中心・毎日開催",
-    "sourceLabel": "",
-    "sourceUrl": ""
+    "sourceLabel": "X",
+    "sourceUrl": "https://x.com/nuwimazine/"
   },
   {
     "id": "v14",
@@ -8487,6 +8487,118 @@ const TOURNAMENTS = [
     "source": "semi",
     "verified": false,
     "lowConfidence": true
+  },
+  {
+    "id": "nw0727",
+    "venueId": "v13",
+    "name": "NUWLAND FREEPASS / DEEP",
+    "date": "2026-07-27",
+    "start": "19:30",
+    "buyin": 0,
+    "addon": null,
+    "stack": 40000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ディープ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "nw0728",
+    "venueId": "v13",
+    "name": "FSTチケットサテライト",
+    "date": "2026-07-28",
+    "start": "19:30",
+    "buyin": 3000,
+    "addon": null,
+    "stack": 30000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "サテライト",
+      "FST"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "nw0729",
+    "venueId": "v13",
+    "name": "フリーロールトーナメント3.0",
+    "date": "2026-07-29",
+    "start": "19:30",
+    "buyin": 0,
+    "addon": null,
+    "stack": 30000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "フリーロール"
+    ],
+    "source": "semi",
+    "verified": false,
+    "lowConfidence": true
+  },
+  {
+    "id": "nw0730",
+    "venueId": "v13",
+    "name": "FST チケット&フリーパス争奪トーナメント",
+    "date": "2026-07-30",
+    "start": "19:30",
+    "buyin": 1500,
+    "addon": null,
+    "stack": 20000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "サテライト",
+      "FST"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "nw0731",
+    "venueId": "v13",
+    "name": "FST チケット&フリーパス争奪トーナメント",
+    "date": "2026-07-31",
+    "start": "19:30",
+    "buyin": 1500,
+    "addon": null,
+    "stack": 20000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "サテライト",
+      "FST"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "nw0801",
+    "venueId": "v13",
+    "name": "フリーロールトーナメント3.0",
+    "date": "2026-08-01",
+    "start": "19:30",
+    "buyin": 0,
+    "addon": null,
+    "stack": 30000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "フリーロール"
+    ],
+    "source": "semi",
+    "verified": false
   }
 ];
 
