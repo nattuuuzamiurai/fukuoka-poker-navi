@@ -3657,6 +3657,22 @@ const TOURNAMENTS = [
     "lowConfidence": true
   },
   {
+    "id": "cc0706a",
+    "venueId": "v22",
+    "name": "深夜トナメ",
+    "date": "2026-07-06",
+    "start": "23:30",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [],
+    "source": "semi",
+    "verified": false
+  },
+  {
     "id": "cc0707a",
     "venueId": "v22",
     "name": "FPC x AJPC Satellite（5枚保証）",
