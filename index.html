@@ -217,11 +217,26 @@
   .ec-dot[aria-current="true"]{width:20px;border-radius:4px;background:var(--felt)}
   /* 矢印: タッチ環境ではスワイプが自然なので、広い画面でだけ補助として出す */
   .ec-arrow{display:none}
+  /* 全スライドが一度に収まっている(＝スクロールの必要がない)ときは操作UIを出さない。
+     PC幅で2枚とも全部見えているのに矢印・ドットがあると「動くはず」と誤解させるため。
+     判定は実測(track.scrollWidth <= clientWidth)で、枚数や画面幅を決め打ちしない。 */
+  .evtCarousel.ec-fits .ec-arrow,
+  .evtCarousel.ec-fits .ec-dots{display:none}
+
+  /* PC幅ではバナー画像(1024×412)がそのまま伸びて1枚390px超になり、
+     「トーナメント日程」の見出しがファーストビューから外れる。1枚の横幅に上限を設けて抑える。
+     ★この上限は【2枚が丸ごと収まる幅のときだけ】掛けること(min-width:1000px)。
+       中途半端に掛けると「次の1枚が大きく覗くが最後まで見えない」状態になり、
+       2枚目の「日程を見る →」ピルが縦に切れる(520px指定でこれが起きた。実測で確認済み)。
+       ・1000px以上 … トラック968px に 470×2 + gap10 = 950px が収まる → 2枚とも全表示・操作UIなし
+       ・720〜999px … 上限なし(幅86%)。覗きは約14%で、次の1枚のCTAまでは見えないので切れない
+       ・720px未満  … モバイル。この指定の影響を受けない
+       3件以上に増えれば1000px以上でも収まらなくなるが、その時は自動でスライド表示に戻る(.ec-fits)。 */
+  @media(min-width:1000px){
+    .ec-slide{max-width:470px}
+  }
+
   @media(min-width:720px){
-    /* PC幅ではバナー画像(1024×412)がそのまま伸びて1枚390px超になり、
-       「トーナメント日程」の見出しがファーストビューから外れる。1枚の横幅に上限を設けて抑える。
-       モバイルは 86%(375pxで約295px)で上限に当たらないため、この指定の影響を受けない。 */
-    .ec-slide{max-width:520px}
     .ec-arrow{
       display:flex; align-items:center; justify-content:center;
       position:absolute; top:calc(50% - 6px); transform:translateY(-50%); z-index:2;
@@ -604,6 +619,15 @@
 
 <footer>
   <div><b style="color:#fff">ふくおかポーカーナビ</b> — 福岡ポーカートーナメント日程アグリゲーター</div>
+  <!-- 【恒久リンク行】レジストリの全大会への内部リンク。下の「大会特集」とは役割が別物で、
+       こちらは日付に関係なく常に全件出す。静的イベントページ(events/<slug>/)への
+       クロール経路＝SEOの土台なので、【日付や件数を理由に消さないこと】。
+       ★JSを実行しないクローラにも拾わせるため、ここに静的リンクを直接書いてある。
+         レジストリ(BIG_EVENTS)に大会を足すと mountBigEventLinks() が実行時に描き直すので
+         表示上は自動で増えるが、静的な既定値としてこの行にも1行足しておくこと。
+       リンク先は featureUrl。静的ページを持つ大会は静的URL、持たない大会(FST)はハッシュURL。
+       events/<slug>/ 側の同じ行は tools/gen-event-pages.js の permanentEventLinks() が生成する。 -->
+  <div id="evtLinks" style="margin-top:2px">大会ページ: <a href="/events/wjpt-2026/">WJPT 2026</a>　|　<a href="/events/jopt-2026-fukuoka-01/">JOPT 2026 福岡</a>　|　<a href="/events/nippon-series-2026-fukuoka/">NIPPON SERIES 福岡 2026</a>　|　<a href="/#fst">FST 2026 福岡</a></div>
   <!-- 大会特集は「開催中、無ければ次の大会」を1件だけ出す。
        中身は big-events.js の mountBigEventFooter() が入れる。該当が無ければ行ごと非表示。
        ★ここはトップのバナー(visibleBigEvents)とは判定条件が違うため、
@@ -1583,6 +1607,15 @@
   const prefersReducedMotion = () =>
     typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  // 現在のカルーセルのリサイズ処理。バナーを描き直すたびに差し替える(0件・1件のときは null)。
+  // window へのリスナー登録はここ1回だけにして、再描画で溜まっていかないようにする。
+  let carouselOnResize = null;
+  let carouselResizeRaf = 0;
+  window.addEventListener('resize', () => {
+    if (!carouselOnResize || carouselResizeRaf) return;
+    carouselResizeRaf = requestAnimationFrame(() => { carouselResizeRaf = 0; if (carouselOnResize) carouselOnResize(); });
+  });
+
   function renderBigEventBanner(){
     const slot = document.getElementById('bigEventBanner');
     if (!slot) return [];
@@ -1593,6 +1626,7 @@
     slot.dataset.evIds = ids;
     slot.dataset.index = '0';
     slot.className = '';
+    carouselOnResize = null;                                         // カルーセルが無い間はリサイズ処理も外す
     if (!evs.length){ slot.innerHTML = ''; return evs; }             // 0件 → :empty で領域ごと非表示
     if (evs.length === 1){ slot.innerHTML = bigEventBannerHtml(evs[0]); return evs; }
 
@@ -1610,6 +1644,21 @@
     return evs;
   }
 
+  // フッターの【恒久リンク行】をレジストリから描き直す。
+  // HTML側にも同じ内容を静的に書いてある(JSなしのクローラ向け)。ここはその上書きで、
+  // レジストリに大会を足したときにHTMLを直し忘れても表示だけは追従させるためのもの。
+  // 「大会特集」(mountBigEventFooter)とは別物 — あちらは1件、こちらは常に全件。
+  function mountBigEventLinks(){
+    const el = document.getElementById('evtLinks');
+    if (!el || typeof BIG_EVENTS === 'undefined') return;
+    const links = BIG_EVENTS.slice()
+      .filter(e => eventFirstDay(e.days))
+      .sort((a, b) => eventFirstDay(a.days).localeCompare(eventFirstDay(b.days)))  // 会期の古い順
+      .map(e => `<a href="${e.featureUrl}">${escHtml(e.label)}</a>`)
+      .join('　|　');
+    if (links) el.innerHTML = '大会ページ: ' + links;
+  }
+
   // カルーセルの操作(スワイプ / 矢印 / ドット)と現在位置の同期。
   // 自動スライドは実装しない — トップの自動スクロールは 6f9eddb で意図的に廃止している。
   function initBigEventCarousel(slot, startIndex){
@@ -1621,6 +1670,15 @@
     if (!track || slides.length < 2) return;
     let index = startIndex || 0;
     let touched = false;
+
+    // 全スライドが一度に収まっているか(＝横スクロールの必要がないか)。
+    // 収まっているときは操作UIを隠す(.ec-fits)。画面幅で決め打ちせず実測で判定するので、
+    // レジストリが3件以上に増えれば自動的にスライド表示へ戻る。
+    function updateFits(){
+      const fits = track.scrollWidth <= track.clientWidth + 1;
+      slot.classList.toggle('ec-fits', fits);
+      return fits;
+    }
 
     // 「いま何枚目か」はトラック中央に最も近いスライドで決める。
     // 最後の1枚はスクロール範囲の都合でスナップ位置まで届かないことがあり、
@@ -1641,7 +1699,8 @@
     // 押した瞬間その要素がフォーカス不能になり、フォーカスが body に落ちて
     // 次のTabがページ先頭からやり直しになるため(キーボード操作が壊れる)。
     function sync(){
-      index = currentIndex();
+      // 全部見えているときは「何枚目」の概念が無いので先頭固定にする
+      index = slot.classList.contains('ec-fits') ? 0 : currentIndex();
       slot.dataset.index = String(index);
       dots.forEach((d, i) => d.setAttribute('aria-current', i === index ? 'true' : 'false'));
       if (prev) prev.setAttribute('aria-disabled', index <= 0 ? 'true' : 'false');
@@ -1676,12 +1735,17 @@
     if (next) next.addEventListener('click', () => { if (arrowOff(next)) return; touched = true; goTo(index + 1, true); });
     dots.forEach(d => d.addEventListener('click', () => { touched = true; goTo(Number(d.dataset.i), true); }));
 
+    updateFits();
     if (index) goTo(index, false);
     sync();
+    // 画面幅が変わると「収まるかどうか」も変わるので測り直す(PC⇄狭幅のリサイズ・回転)。
+    // 再描画のたびに window へリスナーを足さないよう、実体は1つに保って差し替える。
+    carouselOnResize = () => { updateFits(); sync(); };
 
     // 「横に動かせる」ことを伝えるヒント。ごく短く1回だけ、少し動いて戻るだけ。
     // prefers-reduced-motion: reduce では必ず動かさない。ユーザーが先に触ったらやらない。
-    if (!prefersReducedMotion() && index === 0){
+    // 全部見えている(スクロール不要)ときは動かす意味がないのでやらない。
+    if (!prefersReducedMotion() && index === 0 && !slot.classList.contains('ec-fits')){
       setTimeout(() => {
         if (touched || track.scrollLeft > 2) return;
         const snap = track.style.scrollSnapType;
@@ -1703,6 +1767,7 @@
   const joptReg = bigEventById('jopt');
   if (joptReg) joptReg.bannerDesc = JOPT_BANNER_DESC(JOPT_META.tournamentCount);
   renderBigEventBanner();
+  mountBigEventLinks();
   mountBigEventFooter('evtFeature');
   route();
 })();
