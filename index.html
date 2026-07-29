@@ -96,7 +96,21 @@
 
   /* DATE STRIP (日付選択) */
   .dstrip-row{display:flex;align-items:stretch;gap:0;max-width:1000px;margin:0 auto;padding:10px 16px 4px}
-  .dstrip-month{flex:0 0 auto;display:flex;align-items:center;font-weight:800;color:var(--felt);font-size:.92em;padding-right:10px;margin-right:8px;border-right:1px solid var(--bor);white-space:nowrap}
+  /* 月の切り替え。ボタンの高さは日付チップより低く保つこと(この行の高さ＝下の見出しのY座標が変わるため)。
+     ドロップダウンは position:absolute なので、この wrap の外に overflow:hidden を足さないこと。 */
+  .dstrip-month-wrap{position:relative;flex:0 0 auto;display:flex;align-items:center;padding-right:10px;margin-right:8px;border-right:1px solid var(--bor)}
+  .dstrip-month{display:inline-flex;align-items:center;gap:5px;font-family:inherit;font-weight:800;color:var(--felt);font-size:.92em;white-space:nowrap;background:var(--sur);border:1px solid var(--bor);border-radius:20px;padding:5px 10px;line-height:1.25;cursor:pointer;outline:none}
+  .dstrip-month .dm-caret{font-size:.62em;color:var(--mut);line-height:1;transition:.13s}
+  .dstrip-month:hover{border-color:var(--gold)}
+  .dstrip-month:focus-visible{border-color:var(--felt);box-shadow:0 0 0 3px rgba(15,61,46,.18)}
+  .dstrip-month[aria-expanded="true"]{background:var(--felt);border-color:var(--felt);color:#fff}
+  .dstrip-month[aria-expanded="true"] .dm-caret{color:#fff;transform:rotate(180deg)}
+  .dmonth-menu{position:absolute;top:calc(100% + 5px);left:0;z-index:45;display:block;min-width:118px;max-height:262px;overflow-y:auto;background:var(--sur);border:1px solid var(--bor);border-radius:12px;box-shadow:0 8px 22px rgba(30,20,5,.18);padding:5px}
+  .dmonth-menu[hidden]{display:none}
+  .dm-opt{display:flex;align-items:center;width:100%;min-height:42px;text-align:left;font-family:inherit;font-size:.9em;font-weight:700;color:var(--txt);background:none;border:0;border-radius:9px;padding:8px 14px;white-space:nowrap;cursor:pointer}
+  .dm-opt:hover{background:#f1efe8}
+  .dm-opt.on{background:var(--felt);color:#fff}
+  .dm-opt:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
   .dstrip{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
   .dstrip::-webkit-scrollbar{height:0}
   .dchip{scroll-snap-align:start;flex:0 0 auto;width:44px;padding:6px 0 5px;border-radius:12px;border:1px solid var(--bor);background:var(--sur);text-align:center;cursor:pointer;transition:.13s;font-family:inherit}
@@ -556,7 +570,15 @@
 
 <div class="filters">
   <div class="dstrip-row">
-    <div class="dstrip-month" id="dstripMonth"></div>
+    <!-- 月の切り替え(社長指示・2026-07-30「7のところ押したら何月って選択できるように」)。
+         選択肢は ALL_TOURNAMENTS から自動導出する(buildMonthMenu)。月をハードコードしないこと。 -->
+    <div class="dstrip-month-wrap">
+      <button type="button" class="dstrip-month" id="dstripMonth"
+              aria-haspopup="listbox" aria-expanded="false" aria-controls="dstripMonthMenu">
+        <span id="dstripMonthLabel"></span><span class="dm-caret" aria-hidden="true">▼</span>
+      </button>
+      <div class="dmonth-menu" id="dstripMonthMenu" role="listbox" aria-label="表示する月を選ぶ" hidden></div>
+    </div>
     <div class="dstrip" id="dstrip"></div>
   </div>
   <div class="frow">
@@ -809,18 +831,49 @@
   const localToday = `${y}-${m}-${dd}`;
   document.getElementById('stat-today').textContent = ALL_TOURNAMENTS.filter(t=>t.date===localToday).length;
 
-  const state = { selectedDate: localToday, area:'all', tag:'all' };
+  // state.month(YYYY-MM) = 日付ストリップに並べている月。既定は今月。
+  const state = { selectedDate: localToday, month: localToday.slice(0,7), area:'all', tag:'all' };
+
+  // ---- 月の切り替え(日付ストリップ左の「7月 ▼」) ----
+  // ★ 選択肢は ALL_TOURNAMENTS から自動導出する。月を書き並べない(データが増えれば選択肢も自動で増える)。
+  //   今月だけはデータが0件でも必ず入れる(「今日」に戻る導線を消さないため)。
+  const thisMonth = localToday.slice(0,7);
+  const thisYear = Number(localToday.slice(0,4));
+  const isYmd = d => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
+  function monthsWithData(){
+    const set = {};
+    ALL_TOURNAMENTS.forEach(t => { if (t && isYmd(t.date)) set[t.date.slice(0,7)] = true; });
+    set[thisMonth] = true;
+    return Object.keys(set).sort();
+  }
+  // 今年の月は「8月」、他の年は「2027年1月」と年を付けて区別する
+  function monthLabel(ym){
+    const y = Number(ym.slice(0,4)), m = Number(ym.slice(5,7));
+    return (y === thisYear ? '' : y + '年') + m + '月';
+  }
+  // 月を切り替えたときに選ぶ日。今月なら今日、他の月はその月で最初に開催がある日(1日が空でも中身のある画面になる)。
+  // 該当が無ければその月の1日。
+  function defaultDateOfMonth(ym){
+    if (ym === thisMonth) return localToday;
+    let first = null;
+    ALL_TOURNAMENTS.forEach(t => {
+      if (t && isYmd(t.date) && t.date.slice(0,7) === ym && (first === null || t.date < first)) first = t.date;
+    });
+    return first || (ym + '-01');
+  }
 
   function inWhen(dateStr){
     return dateStr === state.selectedDate;
   }
 
   function buildDateStrip(){
-    // 今日を中心に、今月の1日〜末日だけを表示する(月をまたいだ前後の日付は出さない)
+    // state.month の1日〜末日だけを表示する(月をまたいだ前後の日付は出さない)
     const wrap = document.getElementById('dstrip');
-    const y0 = today.getFullYear(), m0 = today.getMonth();
+    const y0 = Number(state.month.slice(0,4)), m0 = Number(state.month.slice(5,7)) - 1;
     const lastDate = new Date(y0, m0+1, 0).getDate();
-    document.getElementById('dstripMonth').textContent = (m0+1) + '月';
+    document.getElementById('dstripMonthLabel').textContent = monthLabel(state.month);
+    document.getElementById('dstripMonth')
+      .setAttribute('aria-label', '表示する月: ' + monthLabel(state.month) + '（押すと他の月を選べます）');
     let html = '';
     for (let day=1; day<=lastDate; day++){
       const d = new Date(y0, m0, day);
@@ -833,6 +886,7 @@
       html += `<button type="button" class="${cls.join(' ')}" data-date="${dateStr}"><span class="dc-w">${WD[wd]}</span><span class="dc-d">${day}</span></button>`;
     }
     wrap.innerHTML = html;
+    // 今月は「今日」を中央に(従来どおり)。今日を含まない月では「選択中の日」を中央に。
     const centerChip = wrap.querySelector('.dchip.today') || wrap.querySelector('.dchip.on');
     if (centerChip) centerChip.scrollIntoView({inline:'center', block:'nearest'});
   }
@@ -1640,6 +1694,70 @@
   selArea.addEventListener('change', e => { state.area = e.target.value; render(); });
   document.getElementById('sel-tag').addEventListener('change', e => { state.tag = e.target.value; render(); });
   window.addEventListener('hashchange', route);
+
+  // ---- 月の切り替えメニュー ----
+  // ネイティブ <select> ではなくボタン+ドロップダウンにしている。理由:
+  //   ①「7のところを押したら選べる」という指示どおり、日付ストリップの月表示そのものを押させたい
+  //   ② 選択肢は数個しかないので、OSのホイールピッカーより1タップで選び切れるほうが速い
+  //   ③ 開いている状態(アクティブな色・▼の反転)を自前で出せる
+  //   ④ aria-haspopup / aria-expanded を明示でき、キーボード操作も仕様どおりに書ける
+  // 大型イベントのバナー・大型一覧・フッターの大会特集は「今日」基準の別機能で、月の選択とは無関係。
+  const monthBtn = document.getElementById('dstripMonth');
+  const monthMenu = document.getElementById('dstripMonthMenu');
+  const monthMenuOpen = () => !monthMenu.hidden;
+  function buildMonthMenu(){
+    // 開くたびに作り直す(データを後から足しても選択肢が追従する)
+    monthMenu.innerHTML = monthsWithData().map(ym => {
+      const on = ym === state.month;
+      return `<button type="button" role="option" class="dm-opt${on?' on':''}" data-ym="${ym}"`
+        + ` aria-selected="${on}" tabindex="-1">${monthLabel(ym)}</button>`;
+    }).join('');
+  }
+  function openMonthMenu(){
+    buildMonthMenu();
+    monthMenu.hidden = false;
+    monthBtn.setAttribute('aria-expanded','true');
+    const cur = monthMenu.querySelector('.dm-opt.on') || monthMenu.querySelector('.dm-opt');
+    if (cur) cur.focus();
+  }
+  function closeMonthMenu(focusBack){
+    if (!monthMenuOpen()) return;
+    monthMenu.hidden = true;
+    monthBtn.setAttribute('aria-expanded','false');
+    if (focusBack) monthBtn.focus();
+  }
+  function selectMonth(ym){
+    closeMonthMenu(true);
+    if (!ym || ym === state.month) return;
+    state.month = ym;
+    state.selectedDate = defaultDateOfMonth(ym);
+    buildDateStrip();
+    render();
+  }
+  monthBtn.addEventListener('click', () => { monthMenuOpen() ? closeMonthMenu(false) : openMonthMenu(); });
+  monthBtn.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp'){ e.preventDefault(); if (!monthMenuOpen()) openMonthMenu(); }
+    else if (e.key === 'Escape') closeMonthMenu(false);
+  });
+  monthMenu.addEventListener('click', e => {
+    const b = e.target.closest ? e.target.closest('.dm-opt') : null;
+    if (b) selectMonth(b.dataset.ym);
+  });
+  monthMenu.addEventListener('keydown', e => {
+    const opts = Array.prototype.slice.call(monthMenu.querySelectorAll('.dm-opt'));
+    if (!opts.length) return;
+    const i = opts.indexOf(document.activeElement);
+    if (e.key === 'Escape'){ e.preventDefault(); closeMonthMenu(true); }
+    else if (e.key === 'ArrowDown'){ e.preventDefault(); (opts[i+1] || opts[0]).focus(); }
+    else if (e.key === 'ArrowUp'){ e.preventDefault(); (i > 0 ? opts[i-1] : opts[opts.length-1]).focus(); }
+    else if (e.key === 'Home'){ e.preventDefault(); opts[0].focus(); }
+    else if (e.key === 'End'){ e.preventDefault(); opts[opts.length-1].focus(); }
+    else if (e.key === 'Tab'){ closeMonthMenu(false); }   // フォーカスが外へ出るので閉じる(移動自体は妨げない)
+  });
+  document.addEventListener('click', e => {                // 外側クリックで閉じる
+    if (!monthMenuOpen()) return;
+    if (!(e.target.closest && e.target.closest('.dstrip-month-wrap'))) closeMonthMenu(false);
+  });
 
   // 大型イベントのバナーは、掲載ウィンドウ(初日の14日前〜最終日の翌日)に入っているものを
   // すべて出す。0件のことも複数件のこともある(社長了承済み・big-events.js の説明を参照)。
