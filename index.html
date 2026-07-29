@@ -148,7 +148,6 @@
   .adCard .ac-body{flex:1;min-width:200px}
   .adCard .ac-title{font-size:1.02em;font-weight:800;color:#fff}
   .adCard .ac-desc{font-size:.82em;color:#b9b6c9;margin-top:4px}
-  .adCard .ac-desc .nw{white-space:nowrap}
   .adCard .ac-btn{flex-shrink:0;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#3a2a06;font-weight:800;font-size:.85em;padding:10px 20px;border-radius:24px;white-space:nowrap;box-shadow:0 0 14px rgba(217,164,65,.3)}
   /* トップ(大型バナーの上)の広告カードだけ高さを詰める(社長指示・2026-07-29)。
      位置は変えない。折り返しを止めて1行に収めることで約200px → 約110px になる。
@@ -159,16 +158,19 @@
   .adslot .adCard .ac-title{font-size:.92em;line-height:1.35}
   .adslot .adCard .ac-desc{font-size:.75em;margin-top:2px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .adslot .adCard .ac-btn{font-size:.78em;padding:9px 15px}
-  /* 320px級では画像とボタンに幅を取られて本文が3行に折り返すため、その分だけさらに詰める */
+  /* 320px級では画像とボタンに幅を取られて見出しが3行に折り返す(＝カードが高くなる)。
+     本文の情報量を削らずに済ませるため、文言ではなく寸法側を詰めて本文の幅を確保する。 */
   @media(max-width:360px){
-    .adslot .adCard{gap:10px;padding:12px}
-    .adslot .adCard img{width:38px;height:38px}
-    .adslot .adCard .ac-btn{font-size:.74em;padding:8px 12px}
+    .adslot .adCard{gap:9px;padding:11px}
+    .adslot .adCard img{width:34px;height:34px}
+    .adslot .adCard .ac-title{font-size:.84em}
+    .adslot .adCard .ac-btn{font-size:.7em;padding:7px 9px}
   }
 
   /* ===== 大型イベント バナー(トーナメント日程の最上部) =====
-     WJPT / JOPT / FST で共通の1コンポーネント。配色だけを .ev-<id> の CSS変数で切り替える。
-     どのイベントを出すかは big-events.js の activeBigEvent() が決める(常に最大1件)。 */
+     WJPT / JOPT / FST / NIPPON SERIES で共通の1コンポーネント。配色だけを .ev-<id> の CSS変数で切り替える。
+     どのイベントを出すかは big-events.js の visibleBigEvents() が決める。
+     掲載ウィンドウが重なると【複数件】返るため、2件以上のときは下の .evtCarousel で横スライドにする。 */
   .evtBanner{display:block;text-decoration:none;border-radius:16px;overflow:hidden;position:relative;box-shadow:0 6px 26px rgba(0,0,0,.32);border:2px solid var(--ev-bd);background:var(--ev-bg);margin-bottom:6px}
   .evtBanner .eb-img{display:block;width:100%;height:auto}
   .evtBanner .eb-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 14px;background:linear-gradient(90deg,var(--ev-bg),var(--ev-bg2))}
@@ -216,6 +218,10 @@
   /* 矢印: タッチ環境ではスワイプが自然なので、広い画面でだけ補助として出す */
   .ec-arrow{display:none}
   @media(min-width:720px){
+    /* PC幅ではバナー画像(1024×412)がそのまま伸びて1枚390px超になり、
+       「トーナメント日程」の見出しがファーストビューから外れる。1枚の横幅に上限を設けて抑える。
+       モバイルは 86%(375pxで約295px)で上限に当たらないため、この指定の影響を受けない。 */
+    .ec-slide{max-width:520px}
     .ec-arrow{
       display:flex; align-items:center; justify-content:center;
       position:absolute; top:calc(50% - 6px); transform:translateY(-50%); z-index:2;
@@ -224,7 +230,10 @@
       font-size:1.25em; line-height:1; font-family:inherit; transition:.15s;
     }
     .ec-arrow:hover{background:rgba(20,18,14,.85)}
-    .ec-arrow[disabled]{opacity:.22; cursor:default}
+    /* 端では押せなくするが、disabled属性は使わない(押した瞬間フォーカスが body に飛び、
+       次のTabがページ先頭からやり直しになるため)。見た目だけ落として動作はJS側で止める。 */
+    .ec-arrow[aria-disabled="true"]{opacity:.22; cursor:default}
+    .ec-arrow[aria-disabled="true"]:hover{background:rgba(20,18,14,.55)}
     .ec-prev{left:6px}
     .ec-next{right:6px}
   }
@@ -544,9 +553,10 @@
   <a class="adCard" href="https://poker-tourney-log--family.expo.app" target="_blank" rel="noopener">
     <img src="img/ptl-bulldog.png" alt="">
     <div class="ac-body">
-      <div class="ac-title">トナメの成績、記録してますか？</div>
-      <!-- 狭い画面で「（無」「料）」に割れるのを防ぐため括弧だけ折り返し禁止にしている -->
-      <div class="ac-desc">ポーカートナメ成績表<span class="nw">（無料）</span></div>
+      <div class="ac-title">トーナメントの成績、記録してますか？</div>
+      <!-- 「何ができるアプリか」は必ず残すこと(ここは最も露出の多い枠でCTRに効く)。
+           高さを詰めた分、2行に収まる長さにまとめてある。 -->
+      <div class="ac-desc">buyin・順位・収支を記録できる無料アプリ</div>
     </div>
     <span class="ac-btn">使ってみる →</span>
   </a>
@@ -594,8 +604,12 @@
 
 <footer>
   <div><b style="color:#fff">ふくおかポーカーナビ</b> — 福岡ポーカートーナメント日程アグリゲーター</div>
-  <!-- 大会特集は「開催中、無ければ次の大会」を1件だけ出す(バナーと必ず一致する)。
-       中身は big-events.js の mountBigEventFooter() が入れる。該当が無ければ行ごと非表示。 -->
+  <!-- 大会特集は「開催中、無ければ次の大会」を1件だけ出す。
+       中身は big-events.js の mountBigEventFooter() が入れる。該当が無ければ行ごと非表示。
+       ★ここはトップのバナー(visibleBigEvents)とは判定条件が違うため、
+         【バナーとフッターが一致しない日がある】。これは意図的な仕様であってバグではない。
+         フッターは掲載ウィンドウ(初日−14日〜最終日+1日)に縛られず、
+         バナーが0件の期間でも「次の大会」を出し続ける(big-events.js の footerBigEvent を参照)。 -->
   <div id="evtFeature" style="display:none"></div>
   <div><a href="contact.html">お問い合わせ</a>　|　<a href="contact.html">店舗の掲載・PRについて</a>　|　<a href="privacy.html">プライバシーポリシー</a></div>
   <div class="disc">
@@ -665,7 +679,9 @@
 
   // ===== 大型イベント共通 =====
   // レジストリ(BIG_EVENTS)と日付ヘルパー(localTodayGlobal / eventFirstDay / eventLastDay /
-  // isEventArchived / activeBigEvent)は big-events.js に集約している。
+  // isEventArchived / isEventOngoing)、および「どこに何を出すか」の判定
+  // (visibleBigEvents=トップのバナー / footerBigEvent=フッターの大会特集 /
+  //  bigEventListForIndex=大型一覧)は big-events.js に集約している。
   // バナー・フッター・ページ内文言の出し分けは、日付比較を各所に書かず必ずそれらを通すこと。
   // イベントが増えるたびに同じ判定を書き足すと、どれかに入れ忘れて
   // 「終了したのに開催中の書き方のまま」が残るため。
@@ -1620,14 +1636,18 @@
       });
       return best;
     }
-    // スワイプ・矢印・ドットのどれで動いても、ここを通って表示を1つに揃える
+    // スワイプ・矢印・ドットのどれで動いても、ここを通って表示を1つに揃える。
+    // 端の矢印は disabled ではなく aria-disabled で無効化する。disabled にすると
+    // 押した瞬間その要素がフォーカス不能になり、フォーカスが body に落ちて
+    // 次のTabがページ先頭からやり直しになるため(キーボード操作が壊れる)。
     function sync(){
       index = currentIndex();
       slot.dataset.index = String(index);
       dots.forEach((d, i) => d.setAttribute('aria-current', i === index ? 'true' : 'false'));
-      if (prev) prev.disabled = index <= 0;
-      if (next) next.disabled = index >= slides.length - 1;
+      if (prev) prev.setAttribute('aria-disabled', index <= 0 ? 'true' : 'false');
+      if (next) next.setAttribute('aria-disabled', index >= slides.length - 1 ? 'true' : 'false');
     }
+    const arrowOff = btn => !btn || btn.getAttribute('aria-disabled') === 'true';
     function goTo(i, smooth){
       const t = Math.max(0, Math.min(slides.length - 1, i));
       track.scrollTo({
@@ -1652,8 +1672,8 @@
       const i = el ? slides.indexOf(el) : -1;
       if (i >= 0 && i !== index) goTo(i, false);
     });
-    if (prev) prev.addEventListener('click', () => { touched = true; goTo(index - 1, true); });
-    if (next) next.addEventListener('click', () => { touched = true; goTo(index + 1, true); });
+    if (prev) prev.addEventListener('click', () => { if (arrowOff(prev)) return; touched = true; goTo(index - 1, true); });
+    if (next) next.addEventListener('click', () => { if (arrowOff(next)) return; touched = true; goTo(index + 1, true); });
     dots.forEach(d => d.addEventListener('click', () => { touched = true; goTo(Number(d.dataset.i), true); }));
 
     if (index) goTo(index, false);

@@ -28,7 +28,6 @@ const REPO = process.argv[2];
 if (!REPO) { console.error('リポジトリのパスを指定してください'); process.exit(1); }
 
 const SITE = 'https://fukuokapoker.com';
-const TODAY = process.argv[3] || null; // 生成日(アーカイブ判定・"時点"表記用)。未指定なら呼び出し側で渡す
 
 // ---- データ読み込み ----
 const JOPT = require(path.join(REPO, 'jopt-data.js'));
@@ -153,14 +152,32 @@ ${JSON.stringify(jsonld, null, 2)}
 <main class="wrap">`;
 }
 
-function pageFoot() {
-  // 「大会特集」は掲載中の1件だけを出す。どの大会かは日によって変わるので、
-  // 生成時に焼き込まず big-events.js の判定をブラウザ側で走らせる
-  // (静的ページは再生成しない限り更新されないため、焼き込むと古い大会が残り続ける)。
+// フッターの恒久内部リンク行。レジストリの全大会を会期の古い順に並べる。
+// ★ これは日付で消えてはいけない(SEOのクロール経路・内部リンク評価の土台)。
+//   「大会特集」(=その日1件・JS描画)とは役割が別物なので、片方を理由にもう片方を消さないこと。
+//   リンク先は featureUrl。静的ページがある大会は静的URL、無い大会(FST等)はトップのハッシュURLになる。
+//   レジストリに1エントリ足せばこの行にも自動で増える。
+function permanentEventLinks(currentPath) {
+  return BIG.BIG_EVENTS
+    .slice()
+    .sort((a, b) => String(BIG.eventFirstDay(a.days)).localeCompare(String(BIG.eventFirstDay(b.days))))
+    .map(e => e.featureUrl === currentPath
+      // 自分自身のページでは自己リンクにせず現在地として示す
+      ? `<span aria-current="page" style="color:#cfd6d1">${esc(e.label)}</span>`
+      : `<a href="${e.featureUrl}">${esc(e.label)}</a>`)
+    .join('　|　');
+}
+
+// currentPath: そのページ自身のパス(自己リンクを避けるため)。省略すると全件がリンクになる。
+function pageFoot(currentPath) {
+  // 恒久リンク行(全大会・日付に関係なく常に出す)と、
+  // 「大会特集」(掲載中の1件だけ・日によって変わるのでブラウザ側で判定)は【両方】出す。
+  // 後者は生成時に焼き込まない(静的ページは再生成しない限り更新されず、古い大会が残り続けるため)。
   return `</main>
 <footer>
   <div><b style="color:#fff">ふくおかポーカーナビ</b> — 福岡ポーカートーナメント日程アグリゲーター</div>
-  <div style="margin-top:6px"><a href="/">トップ</a>　|　<a href="/contact.html">お問い合わせ</a>　|　<a href="/privacy.html">プライバシーポリシー</a></div>
+  <div style="margin-top:6px"><a href="/">トップ</a>　|　${permanentEventLinks(currentPath)}</div>
+  <div style="margin-top:6px"><a href="/contact.html">お問い合わせ</a>　|　<a href="/privacy.html">プライバシーポリシー</a></div>
   <div id="evtFeature" style="display:none"></div>
 </footer>
 <script src="/big-events.js"></script>
@@ -246,7 +263,7 @@ ${schedTable(JOPT.tournaments)}
   ▶ <a href="${esc(JOPT.guideUrl)}" target="_blank" rel="noopener">JOPT公式サイト</a>${JOPT.scheduleUrl ? `　／　<a href="${esc(JOPT.scheduleUrl)}" target="_blank" rel="noopener">公式スケジュール</a>` : ''}<br>
   ▶ <a href="/">福岡の他のポーカートーナメント日程を見る</a>
 </div>`;
-  return pageHead({ title, desc, canonical, jsonld }) + body + pageFoot();
+  return pageHead({ title, desc, canonical, jsonld }) + body + pageFoot('/events/jopt-2026-fukuoka-01/');
 }
 
 // ---- WJPTページ(終了済み=アーカイブ) ----
@@ -281,7 +298,7 @@ ${schedTable(WJPT.tournaments)}
 <div class="links">
   ▶ <a href="/">福岡の今後のポーカートーナメント日程を見る</a>
 </div>`;
-  return pageHead({ title, desc, canonical, jsonld, image: (WJPT.banner || 'img/wjpt/wjpt-banner.jpg') }) + body + pageFoot();
+  return pageHead({ title, desc, canonical, jsonld, image: (WJPT.banner || 'img/wjpt/wjpt-banner.jpg') }) + body + pageFoot('/events/wjpt-2026/');
 }
 
 // ---- NIPPON SERIES ページ ----
@@ -353,7 +370,7 @@ ${schedTableNippon(NIPPON.events)}
   ▶ <a href="${esc(NIPPON.siteUrl)}" target="_blank" rel="noopener">NIPPON SERIES 公式イベントページ</a>　／　<a href="${esc(NIPPON.guidePdfUrl)}" target="_blank" rel="noopener">公式Players Guide(PDF)</a><br>
   ▶ <a href="/">福岡の他のポーカートーナメント日程を見る</a>
 </div>`;
-  return pageHead({ title, desc, canonical, jsonld, image: 'img/nippon-series/nippon-series-banner.jpg' }) + body + pageFoot();
+  return pageHead({ title, desc, canonical, jsonld, image: 'img/nippon-series/nippon-series-banner.jpg' }) + body + pageFoot('/events/nippon-series-2026-fukuoka/');
 }
 
 // ---- sitemap ----
