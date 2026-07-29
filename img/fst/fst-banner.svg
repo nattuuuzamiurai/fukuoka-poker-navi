@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  FST (FUKUOKA SUPER TOURNAMENT) 2026 バナー
+  FST 5.0 (FUKUOKA SUPER TOURNAMENT) 2026 バナー
   当サイト(ふくおかポーカーナビ)が作成したバナーです。公式素材ではありません。
   ロゴ・大会名等の権利は主催者(株式会社FST)に帰属します。
   公式のバナー画像が入手できたら、このファイルを差し替えるか
@@ -8,7 +8,7 @@
   寸法は WJPT / JOPT のバナー(1024x412)に合わせています。
 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 412" width="1024" height="412"
-     role="img" aria-label="FST FUKUOKA SUPER TOURNAMENT 2026年9月19日から23日 ホテルニューオータニ博多">
+     role="img" aria-label="FST 5.0 FUKUOKA SUPER TOURNAMENT 2026年9月19日から23日 ホテルニューオータニ博多">
   <defs>
     <linearGradient id="fstBg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#05081c"/>
@@ -48,6 +48,12 @@
           font-size="16" font-weight="700" letter-spacing="3.4" fill="#ff8fa0">FUKUOKA SUPER</text>
     <text x="168" y="330" text-anchor="middle" font-family="'Hiragino Sans','Yu Gothic UI',system-ui,sans-serif"
           font-size="16" font-weight="700" letter-spacing="3.4" fill="#ff8fa0">TOURNAMENT</text>
+    <!-- 大会のナンバリング。公式X @fst_202408 の告知で「FST 5.0」を確認済み
+         (出典は big-events.js / index.html の const FST のコメントを参照)。
+         次回大会でナンバリングが変わったら、この数字と上の aria-label の両方を直すこと。 -->
+    <rect x="94" y="348" width="148" height="36" rx="18" fill="url(#fstPill)"/>
+    <text x="168" y="373" text-anchor="middle" font-family="'Hiragino Sans','Yu Gothic UI',system-ui,sans-serif"
+          font-size="23" font-weight="800" letter-spacing="1" fill="#ffffff">FST 5.0</text>
   </g>
 
   <!-- 右: 大会名・会期・会場 -->

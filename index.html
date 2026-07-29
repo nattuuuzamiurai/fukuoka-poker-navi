@@ -198,10 +198,12 @@
      ※ 自動スライドは入れない(トップの自動スクロールは 6f9eddb で廃止済み)。
      ※ 大型一覧(#majors)は縦並びのまま。横にするのはこのトップのバナー領域だけ。 */
   #bigEventBanner:empty{display:none}
-  .evtCarousel{position:relative}
+  /* --ec-gap: スライド間の余白。スライド幅の上限(下の max-width の calc)でも同じ値を使うため、
+     数字を2箇所に書かないよう変数にしてある。ここを変えれば上限も自動で追従する。 */
+  .evtCarousel{position:relative; --ec-gap:10px}
   .ec-track{
     position:relative;                 /* スライドの offsetLeft をそのままスクロール量として使う */
-    display:flex; gap:10px;
+    display:flex; gap:var(--ec-gap);
     overflow-x:auto; overscroll-behavior-x:contain;
     scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;
     scrollbar-width:none;
@@ -223,15 +225,22 @@
   .evtCarousel.ec-fits .ec-arrow,
   .evtCarousel.ec-fits .ec-dots{display:none}
 
-  /* PC幅ではバナー画像(1024×412)がそのまま伸びて1枚390px超になり、
+  /* 画面が広いと、バナー画像(1024×412)がそのまま伸びて1枚が高くなり、直下の
      「トーナメント日程」の見出しがファーストビューから外れる。1枚の横幅に上限を設けて抑える。
-     ★この上限は【2枚が丸ごと収まる幅のときだけ】掛けること(min-width:1000px)。
-       中途半端に掛けると「次の1枚が大きく覗くが最後まで見えない」状態になり、
-       2枚目の「日程を見る →」ピルが縦に切れる(520px指定でこれが起きた。実測で確認済み)。
+     ★この上限は【2枚が丸ごと収まる幅になるときだけ】掛けること。
+       中途半端に掛けると「次の1枚が大きく覗くのに最後まで見えない」状態になり、
+       2枚目の「日程を見る →」ピルが縦に切れる(520px固定でこれが起きた。実測で確認済み)。
        ・1000px以上 … トラック968px に 470×2 + gap10 = 950px が収まる → 2枚とも全表示・操作UIなし
-       ・720〜999px … 上限なし(幅86%)。覗きは約14%で、次の1枚のCTAまでは見えないので切れない
-       ・720px未満  … モバイル。この指定の影響を受けない
-       3件以上に増えれば1000px以上でも収まらなくなるが、その時は自動でスライド表示に戻る(.ec-fits)。 */
+       ・720〜999px … (100% − gap) ÷ 2。2枚 + gap がトラック幅に【ちょうど】収まる値なので、
+                      「途中で切れる幅」が原理的に発生しない(固定pxを置かないのはこのため)。
+                      例: 768px幅ならトラック736px → 1枚363px(従来は86%＝633px)
+       ・720px未満  … モバイル。この指定の影響を受けない(＝モバイルの見た目は1pxも変わらない)
+       3件以上に増えれば収まらなくなるが、その時は自動でスライド表示に戻る(.ec-fits の実測判定)。
+       このとき peek(次の1枚のちら見せ)は無くなるが、無くなるのは「全部見えている＝スライド不要」の
+       ときだけで、そのときは .ec-fits がドット・矢印も消す。3件以上ならドット・矢印が出る。 */
+  @media(min-width:720px) and (max-width:999.98px){
+    .ec-slide{max-width:calc((100% - var(--ec-gap)) / 2)}
+  }
   @media(min-width:1000px){
     .ec-slide{max-width:470px}
   }
@@ -523,7 +532,7 @@
   </div>
   <div class="hbar" id="hbar-fst" style="display:none">
     <a class="back-link" href="#">← 一覧へ戻る</a>
-    <div class="fst-header-name">FST 福岡</div>
+    <div class="fst-header-name">FST 5.0 福岡</div>
   </div>
   <div class="hbar" id="hbar-nippon" style="display:none">
     <a class="back-link" href="#">← 一覧へ戻る</a>
@@ -623,11 +632,14 @@
        こちらは日付に関係なく常に全件出す。静的イベントページ(events/<slug>/)への
        クロール経路＝SEOの土台なので、【日付や件数を理由に消さないこと】。
        ★JSを実行しないクローラにも拾わせるため、ここに静的リンクを直接書いてある。
-         レジストリ(BIG_EVENTS)に大会を足すと mountBigEventLinks() が実行時に描き直すので
-         表示上は自動で増えるが、静的な既定値としてこの行にも1行足しておくこと。
+       ★★ 下の #evtLinks の中身は【自動生成】。手で書き換えないこと。★★
+         events/<slug>/ 側の同じ行とまったく同じ関数(tools/gen-event-pages.js の
+         permanentEventLinks())から作られ、`node tools/gen-event-pages.js <repo>` を実行すると
+         この1行だけが差し替わる。以前は「静的ページは自動・トップは手作業」で分かれていたため、
+         片方だけ直して片方を忘れる事故が2回起きた。ズレは `--check` を付けた実行で検出できる。
        リンク先は featureUrl。静的ページを持つ大会は静的URL、持たない大会(FST)はハッシュURL。
-       events/<slug>/ 側の同じ行は tools/gen-event-pages.js の permanentEventLinks() が生成する。 -->
-  <div id="evtLinks" style="margin-top:2px">大会ページ: <a href="/events/wjpt-2026/">WJPT 2026</a>　|　<a href="/events/jopt-2026-fukuoka-01/">JOPT 2026 福岡</a>　|　<a href="/events/nippon-series-2026-fukuoka/">NIPPON SERIES 福岡 2026</a>　|　<a href="/#fst">FST 2026 福岡</a></div>
+       実行時には mountBigEventLinks() が同じ内容で描き直す(JSありの環境向けの二重の保険)。 -->
+  <div id="evtLinks" style="margin-top:2px">大会ページ: <a href="/events/wjpt-2026/">WJPT 2026</a>　|　<a href="/events/jopt-2026-fukuoka-01/">JOPT 2026 福岡</a>　|　<a href="/events/nippon-series-2026-fukuoka/">NIPPON SERIES 福岡 2026</a>　|　<a href="/#fst">FST 5.0 2026 福岡</a></div>
   <!-- 大会特集は「開催中、無ければ次の大会」を1件だけ出す。
        中身は big-events.js の mountBigEventFooter() が入れる。該当が無ければ行ごと非表示。
        ★ここはトップのバナー(visibleBigEvents)とは判定条件が違うため、
@@ -1085,7 +1097,9 @@
         if (reg) reg.bannerDesc = JOPT_BANNER_DESC(JOPT_META.tournamentCount);
         regChanged = true;
       }
-      if (regChanged){ renderBigEventBanner(); mountBigEventFooter('evtFeature'); }
+      // レジストリを書き換えたら、レジストリから描いているものは【全部】描き直す。
+      // 恒久リンク行は会期の古い順に並べるので、days が変わると並び順が変わりうる(mountBigEventLinks)。
+      if (regChanged){ renderBigEventBanner(); mountBigEventLinks(); mountBigEventFooter('evtFeature'); }
       // 選択中の日がデータ側に存在しない場合に備えて必ず有効な日に寄せる
       if (!JOPT_META.days.includes(joptDay)){
         joptDay = JOPT_META.days.includes(localTodayGlobal()) ? localTodayGlobal() : JOPT_META.days[0];
@@ -1237,10 +1251,31 @@
 
   // ===== FST (FUKUOKA SUPER TOURNAMENT) 専用ページ =====
   // 出典: 主催者(株式会社FST)の公式告知。2026-07-29時点で判明している内容だけを掲載する。
-  // 個別トーナメントの本数・ストラクチャー・レイトレジ時刻・大会のナンバリング等は
+  //
+  // ■ 大会のナンバリングは「FST 5.0」。主催者公式X(@fst_202408)の告知2件で確認した(2026-07-29確認)。
+  //   ① https://x.com/fst_202408/status/2079519350244225267 (2026-07-21)
+  //      「【FST5.0ディーラー大募集】…【大会概要】📍ホテルニューオータニ博多 🗓️2026年9月19日-9月23日」
+  //      → ナンバリングと会期(9/19-23)・会場が【同一投稿の中で】結び付いている。ここが決め手。
+  //   ② https://x.com/fst_202408/status/2079538571380429235 (2026-07-21・固定ポスト)
+  //      「【FST 5.0 Prize情報解禁】🏆Main Event 賞金総額 1,500万 🏆Championship 賞金総額 800万」
+  //      → 下の events[] のPrize(¥15,000,000 / ¥8,000,000)と一致する。②が①と同じ大会である裏取り。
+  //   ③ 公式Xのプロフィール(表示名「FUKUOKA SUPER TOURNAMENT 9/19-9/23」/ 説明「📍ホテルニューオータニ博多
+  //      【 2026.09.19-23 】」)と、そこからリンクされた公式Linktree(https://linktr.ee/fukuokasupertounament)の
+  //      「2026.9 ホテルニューオータニ」「FST4.0 アルバム(＝前回大会)」。次回が5.0であることと矛盾しない。
+  //   ※ 公式Instagram(https://www.instagram.com/fst_fukuoka/)はログイン必須で機械的に確認できなかった。
+  //
+  // ■ 表記ゆれ: 公式は「FST 5.0」(②のPrize告知)と「FST5.0」(①のディーラー募集)の両方を使っている。
+  //   ローマ数字表記(FST Ⅴ)は現行の公式アカウント上では確認できなかった。
+  //   当サイトは読みやすい「FST 5.0」を主表記とし、「FST5.0」は fst-venue(データ欄)の【外】に
+  //   注記の一文として1回だけ置く(検索での取りこぼし防止)。データ欄に併記すると
+  //   「FST 5.0（…／公式表記は「FST 5.0」「FST5.0」）」のように循環的で読みにくくなるため。
+  //   表記ゆれで別ページを作ったり、あちこちに乱発したりはしない。
+  //
+  // 個別トーナメントの本数・ストラクチャー・レイトレジ時刻等は
   // 一次情報で確認できていないため書かない(推測を載せない)。発表され次第ここに追記する。
   const FST = {
-    name: 'FST（FUKUOKA SUPER TOURNAMENT）',
+    edition: 'FST 5.0',
+    name: 'FST 5.0（FUKUOKA SUPER TOURNAMENT）',
     catchCopy: '究極を、遊べ。',
     days: bigEventDays('fst'),     // 会期は big-events.js のレジストリを唯一の正とする
     banner: 'img/fst/fst-banner.svg',  // 当サイトが作成したバナー(公式素材ではない)
@@ -1301,11 +1336,17 @@
         : `現時点で公表されているのは MAIN EVENT と CHAMPIONSHIP の概要のみです。最新情報は<a href="${FST.x}" target="_blank" rel="noopener">公式X（@fst_202408）</a>をご確認ください。`}</p>
       <div class="evt-disclaimer">当サイトはFSTの主催者・公式媒体ではありません。公開情報をもとに当サイトが独自に集約した<b>非公式のまとめ</b>です。ページ内のバナーは当サイトが作成したもので、ロゴ・大会名等の権利は主催者に帰属します。掲載内容は<b>${FST.asOf}時点</b>の公式告知にもとづきますが、当サイトによる転記の誤りが含まれる可能性があります。${archived?'イベント終了後は内容を更新していません。':'参加前に必ず公式情報をご確認ください。'}</div>
       <div class="fst-venue">
+        <b>大会名</b>　${FST.edition}（FUKUOKA SUPER TOURNAMENT）<br>
         <b>会期</b>　2026年9月19日（土）・20日（日）・21日（月）・22日（火）・23日（水）の5日間<br>
         <b>会場</b>　${FST.venue}<br>
         <b>住所</b>　${FST.address}<br>
         <b>主催</b>　${FST.organizer}
       </div>
+      <!-- 未スペース表記「FST5.0」で検索する人を拾うための一文。
+           上の「大会名」欄はデータ欄なので値だけを置き、表記ゆれの補足はこちらに逃がしている
+           (同じ行に FST 5.0 が何度も出ると循環的で読みにくいため)。この一文を消すと
+           「FST5.0」がHTMLから消えて未スペース検索を取りこぼすので、消すなら代替を用意すること。 -->
+      <p class="fst-sub" style="margin-top:-8px">※ 公式では「FST5.0」（スペースなし）とも表記されます。</p>
       ${archived ? '' : `<div class="fst-tba"><b>個別トーナメントの詳細は未発表です。</b>タイムスケジュール・ストラクチャー・レイトレジ締切・サイドイベントの本数などは公表され次第、このページに掲載します。</div>`}
       <div class="fst-sect">発表済みのトーナメント</div>
       ${cards}
@@ -1333,11 +1374,13 @@
       d => !!d && Array.isArray(d.events) && d.events.length > 0 && Array.isArray(d.days) && d.days.length > 0
     ).then(d => {
       nipponData = d;
-      // レジストリの会期がデータとずれていたらデータ側を正とし、バナー・フッターを描き直す
+      // レジストリの会期がデータとずれていたらデータ側を正とし、レジストリから描いているものを描き直す。
+      // 恒久リンク行は会期の古い順に並べるので、days が変わると並び順が変わりうる(mountBigEventLinks)。
       const reg = bigEventById('nippon');
       if (reg && reg.days.join(',') !== d.days.join(',')){
         reg.days = d.days.slice();
         renderBigEventBanner();
+        mountBigEventLinks();
         mountBigEventFooter('evtFeature');
       }
       if (!d.days.includes(nipponDay)){
@@ -1463,7 +1506,8 @@
     if (fst){
       showPage('page-fst', 'hbar-fst', 'fst-mode', false);
       renderFstPage();
-      document.title = 'FST 2026 福岡（FUKUOKA SUPER TOURNAMENT 9/19〜9/23）| ふくおかポーカーナビ';
+      // 「FST 5.0」で検索する人を取りこぼさないため、ナンバリングをタイトル先頭に置く。
+      document.title = 'FST 5.0（FUKUOKA SUPER TOURNAMENT 2026 福岡 9/19〜9/23）日程 | ふくおかポーカーナビ';
       window.scrollTo(0,0);
       sendPageView();
       return;
@@ -1645,17 +1689,35 @@
   }
 
   // フッターの【恒久リンク行】をレジストリから描き直す。
-  // HTML側にも同じ内容を静的に書いてある(JSなしのクローラ向け)。ここはその上書きで、
-  // レジストリに大会を足したときにHTMLを直し忘れても表示だけは追従させるためのもの。
+  // HTML側にも同じ内容が静的に書いてある(JSなしのクローラが見るのはそちらだけ)。ここはその上書きで、
+  // レジストリの会期が実データで訂正されたときに並び順まで追従させるためのもの。
   // 「大会特集」(mountBigEventFooter)とは別物 — あちらは1件、こちらは常に全件。
+  let evtLinksSelfChecked = false;   // 自己点検は初回の1度だけ(下記の理由による)
   function mountBigEventLinks(){
     const el = document.getElementById('evtLinks');
     if (!el || typeof BIG_EVENTS === 'undefined') return;
-    const links = BIG_EVENTS.slice()
+    const list = BIG_EVENTS.slice()
       .filter(e => eventFirstDay(e.days))
-      .sort((a, b) => eventFirstDay(a.days).localeCompare(eventFirstDay(b.days)))  // 会期の古い順
-      .map(e => `<a href="${e.featureUrl}">${escHtml(e.label)}</a>`)
-      .join('　|　');
+      .sort((a, b) => eventFirstDay(a.days).localeCompare(eventFirstDay(b.days)));  // 会期の古い順
+    // 【自己点検】HTMLに直書きされている静的リンクがレジストリとズレていないか、上書きする前に比べる。
+    //   ズレていても画面はこの関数が描き直すので【見た目は正常なまま】で、JSを実行しないクローラに
+    //   対してだけリンクが欠ける ―― 目視では気づけない壊れ方をするため、必ずコンソールに出す。
+    //   直し方は `node tools/gen-event-pages.js <リポジトリのパス>` を実行するだけ。
+    //   ※ 初回のみ。2回目以降(JOPT/NIPPONの実データでレジストリを訂正した後)は、
+    //     HTMLと食い違っていて当たり前なので点検しない(誤検知を出さない)。
+    if (!evtLinksSelfChecked){
+      evtLinksSelfChecked = true;
+      const inHtml = Array.prototype.slice.call(el.querySelectorAll('a'))
+        .map(a => a.getAttribute('href') + ' ' + a.textContent).join(' | ');
+      const wanted = list.map(e => e.featureUrl + ' ' + e.label).join(' | ');
+      if (inHtml !== wanted){
+        console.warn('[恒久リンク行] index.html の静的リンクがレジストリとズレています'
+          + '（JSを実行しないクローラにだけ影響し、画面では気づけません）。'
+          + '`node tools/gen-event-pages.js <リポジトリのパス>` を実行して同期してください。'
+          + '\n  HTML: ' + inHtml + '\n  期待: ' + wanted);
+      }
+    }
+    const links = list.map(e => `<a href="${e.featureUrl}">${escHtml(e.label)}</a>`).join('　|　');
     if (links) el.innerHTML = '大会ページ: ' + links;
   }
 
