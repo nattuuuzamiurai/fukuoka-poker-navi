@@ -148,7 +148,23 @@
   .adCard .ac-body{flex:1;min-width:200px}
   .adCard .ac-title{font-size:1.02em;font-weight:800;color:#fff}
   .adCard .ac-desc{font-size:.82em;color:#b9b6c9;margin-top:4px}
+  .adCard .ac-desc .nw{white-space:nowrap}
   .adCard .ac-btn{flex-shrink:0;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#3a2a06;font-weight:800;font-size:.85em;padding:10px 20px;border-radius:24px;white-space:nowrap;box-shadow:0 0 14px rgba(217,164,65,.3)}
+  /* トップ(大型バナーの上)の広告カードだけ高さを詰める(社長指示・2026-07-29)。
+     位置は変えない。折り返しを止めて1行に収めることで約200px → 約110px になる。
+     ページ下部の .adCard と固定表示の .stickyAd はこの指定の対象外(セレクタを .adslot 配下に限定)。 */
+  .adslot .adCard{gap:12px;padding:13px 14px;flex-wrap:nowrap}
+  .adslot .adCard img{width:44px;height:44px}
+  .adslot .adCard .ac-body{min-width:0}
+  .adslot .adCard .ac-title{font-size:.92em;line-height:1.35}
+  .adslot .adCard .ac-desc{font-size:.75em;margin-top:2px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .adslot .adCard .ac-btn{font-size:.78em;padding:9px 15px}
+  /* 320px級では画像とボタンに幅を取られて本文が3行に折り返すため、その分だけさらに詰める */
+  @media(max-width:360px){
+    .adslot .adCard{gap:10px;padding:12px}
+    .adslot .adCard img{width:38px;height:38px}
+    .adslot .adCard .ac-btn{font-size:.74em;padding:8px 12px}
+  }
 
   /* ===== 大型イベント バナー(トーナメント日程の最上部) =====
      WJPT / JOPT / FST で共通の1コンポーネント。配色だけを .ev-<id> の CSS変数で切り替える。
@@ -169,6 +185,49 @@
   .evtBanner.ev-jopt{--ev-bd:var(--jopt);--ev-bg:#07171d;--ev-bg2:#0e3d48;--ev-fg:var(--jopt2);--ev-ac:var(--jopt);--ev-ac2:var(--jopt2);--ev-on:#04222a}
   .evtBanner.ev-nippon{--ev-bd:var(--ns);--ev-bg:#5c0910;--ev-bg2:#a8111c;--ev-fg:#ffd9d4;--ev-ac:var(--ns);--ev-ac2:var(--ns2);--ev-on:#fff}
   .evtBanner.ev-fst{--ev-bd:var(--fst);--ev-bg:#070c22;--ev-bg2:#1a2455;--ev-fg:var(--fst2);--ev-ac:var(--fst);--ev-ac2:var(--fst2);--ev-on:#fff}
+
+  /* ===== 大型バナーの横スライド(カルーセル) 社長指示・2026-07-29 =====
+     掲載中の大会が【2件以上】のときだけカルーセルにする。縦に積むと1件につき約195px、
+     直下の「トーナメント日程」見出しが押し下げられてファーストビューから消えるため、
+     縦方向の占有は常にバナー1枚分に固定する。
+     1件のときはカルーセルUI(ドット・矢印)を出さず従来どおり1枚だけ置き、0件は領域ごと消す。
+     実装は外部ライブラリなし。ネイティブの横スクロール + CSS scroll-snap のみ。
+     ※ 横に流れるのは .ec-track の中だけ。ページ全体に横スクロールを出さないこと。
+     ※ 自動スライドは入れない(トップの自動スクロールは 6f9eddb で廃止済み)。
+     ※ 大型一覧(#majors)は縦並びのまま。横にするのはこのトップのバナー領域だけ。 */
+  #bigEventBanner:empty{display:none}
+  .evtCarousel{position:relative}
+  .ec-track{
+    position:relative;                 /* スライドの offsetLeft をそのままスクロール量として使う */
+    display:flex; gap:10px;
+    overflow-x:auto; overscroll-behavior-x:contain;
+    scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  .ec-track::-webkit-scrollbar{height:0}
+  /* 幅を100%より狭くして【次の1枚の左端を覗かせる(peek)】。
+     「まだ続きがある」ことが一番伝わるので、この余白は削らないこと。 */
+  .ec-slide{flex:0 0 86%; min-width:0; scroll-snap-align:start}
+  .ec-slide .evtBanner{margin-bottom:0}
+  /* ドットインジケーター: 何枚あるか / いま何枚目かを示す */
+  .ec-dots{display:flex; justify-content:center; align-items:center; gap:7px; padding:9px 0 2px}
+  .ec-dot{width:7px;height:7px;padding:0;border:none;border-radius:50%;background:#cfc6b6;cursor:pointer;transition:.15s;font-family:inherit}
+  .ec-dot[aria-current="true"]{width:20px;border-radius:4px;background:var(--felt)}
+  /* 矢印: タッチ環境ではスワイプが自然なので、広い画面でだけ補助として出す */
+  .ec-arrow{display:none}
+  @media(min-width:720px){
+    .ec-arrow{
+      display:flex; align-items:center; justify-content:center;
+      position:absolute; top:calc(50% - 6px); transform:translateY(-50%); z-index:2;
+      width:34px; height:34px; padding:0 0 3px; border-radius:50%; cursor:pointer;
+      border:1px solid rgba(255,255,255,.4); background:rgba(20,18,14,.55); color:#fff;
+      font-size:1.25em; line-height:1; font-family:inherit; transition:.15s;
+    }
+    .ec-arrow:hover{background:rgba(20,18,14,.85)}
+    .ec-arrow[disabled]{opacity:.22; cursor:default}
+    .ec-prev{left:6px}
+    .ec-next{right:6px}
+  }
 
   /* WJPT 専用ページ */
   #page-wjpt{padding-top:6px}
@@ -479,12 +538,15 @@
   </div>
 </div>
 
+<!-- トップの自社広告枠。位置(大型バナーより上)は変えない。
+     高さを詰めた分だけ文言も短くしてある(`.adslot .adCard` のCSSを参照)。 -->
 <div class="adslot">
   <a class="adCard" href="https://poker-tourney-log--family.expo.app" target="_blank" rel="noopener">
     <img src="img/ptl-bulldog.png" alt="">
     <div class="ac-body">
-      <div class="ac-title">トーナメントの成績、記録してますか？</div>
-      <div class="ac-desc">ポーカートナメ成績表 — buyin・順位・収支をシンプルに記録できるトーナメント専用の成績管理アプリ(無料)</div>
+      <div class="ac-title">トナメの成績、記録してますか？</div>
+      <!-- 狭い画面で「（無」「料）」に割れるのを防ぐため括弧だけ折り返し禁止にしている -->
+      <div class="ac-desc">ポーカートナメ成績表<span class="nw">（無料）</span></div>
     </div>
     <span class="ac-btn">使ってみる →</span>
   </a>
@@ -492,8 +554,8 @@
 
 <main class="wrap">
   <div id="page-list">
-    <!-- 大型イベントのバナー。掲載中の1件だけを big-events.js のレジストリから描画する
-         (renderBigEventBanner)。該当が無ければ空のまま。 -->
+    <!-- 大型イベントのバナー。big-events.js のレジストリから renderBigEventBanner() が描画する。
+         0件=空(領域ごと非表示) / 1件=バナー1枚 / 2件以上=横スライド(カルーセル)。中身はJS生成。 -->
     <div id="bigEventBanner"></div>
     <div class="shead">
       <h2>トーナメント日程</h2>
@@ -1496,14 +1558,121 @@
   window.addEventListener('hashchange', route);
 
   // 大型イベントのバナーは、掲載ウィンドウ(初日の14日前〜最終日の翌日)に入っているものを
-  // すべて縦に並べる。0件のことも複数件のこともある(社長了承済み・big-events.js の説明を参照)。
+  // すべて出す。0件のことも複数件のこともある(社長了承済み・big-events.js の説明を参照)。
   // 並び順(開催中→まもなく→終了)の決定は big-events.js の visibleBigEvents() に一本化する。
+  //
+  // 【2件以上のときは縦に積まず横スライドにする(社長指示・2026-07-29)】
+  // 縦積みだとバナー1件につき約195px、直下の「トーナメント日程」見出しが下がってしまうため。
+  // 1件のときはカルーセルUI(ドット・矢印)を出さない。レジストリに大会を足せば枚数は自動で増える。
+  const prefersReducedMotion = () =>
+    typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
   function renderBigEventBanner(){
     const slot = document.getElementById('bigEventBanner');
     if (!slot) return [];
     const evs = visibleBigEvents();
-    slot.innerHTML = evs.map(bigEventBannerHtml).join('');
+    // JOPT/NIPPONのデータ読み込み後に描き直すことがある。並びが変わっていなければ表示中の枚を保つ。
+    const ids = evs.map(e => e.id).join(',');
+    const keep = (slot.dataset.evIds === ids) ? Number(slot.dataset.index || 0) : 0;
+    slot.dataset.evIds = ids;
+    slot.dataset.index = '0';
+    slot.className = '';
+    if (!evs.length){ slot.innerHTML = ''; return evs; }             // 0件 → :empty で領域ごと非表示
+    if (evs.length === 1){ slot.innerHTML = bigEventBannerHtml(evs[0]); return evs; }
+
+    slot.className = 'evtCarousel';
+    slot.innerHTML = `
+      <div class="ec-track" role="group" aria-label="開催中・開催予定の大型大会 ${evs.length}件（横スクロールできます）">
+        ${evs.map(ev => `<div class="ec-slide">${bigEventBannerHtml(ev)}</div>`).join('')}
+      </div>
+      <button class="ec-arrow ec-prev" type="button" aria-label="前の大会を表示">‹</button>
+      <button class="ec-arrow ec-next" type="button" aria-label="次の大会を表示">›</button>
+      <div class="ec-dots">
+        ${evs.map((ev, i) => `<button class="ec-dot" type="button" data-i="${i}" aria-label="${escHtml(ev.label)}を表示（${i + 1}／${evs.length}枚目）"></button>`).join('')}
+      </div>`;
+    initBigEventCarousel(slot, Math.min(keep, evs.length - 1));
     return evs;
+  }
+
+  // カルーセルの操作(スワイプ / 矢印 / ドット)と現在位置の同期。
+  // 自動スライドは実装しない — トップの自動スクロールは 6f9eddb で意図的に廃止している。
+  function initBigEventCarousel(slot, startIndex){
+    const track = slot.querySelector('.ec-track');
+    const slides = Array.prototype.slice.call(slot.querySelectorAll('.ec-slide'));
+    const dots = Array.prototype.slice.call(slot.querySelectorAll('.ec-dot'));
+    const prev = slot.querySelector('.ec-prev');
+    const next = slot.querySelector('.ec-next');
+    if (!track || slides.length < 2) return;
+    let index = startIndex || 0;
+    let touched = false;
+
+    // 「いま何枚目か」はトラック中央に最も近いスライドで決める。
+    // 最後の1枚はスクロール範囲の都合でスナップ位置まで届かないことがあり、
+    // scrollLeft の一致で判定すると指スワイプ時にズレるため。
+    function currentIndex(){
+      const box = track.getBoundingClientRect();
+      const center = box.left + box.width / 2;
+      let best = 0, bestD = Infinity;
+      slides.forEach((s, i) => {
+        const r = s.getBoundingClientRect();
+        const d = Math.abs(r.left + r.width / 2 - center);
+        if (d < bestD){ bestD = d; best = i; }
+      });
+      return best;
+    }
+    // スワイプ・矢印・ドットのどれで動いても、ここを通って表示を1つに揃える
+    function sync(){
+      index = currentIndex();
+      slot.dataset.index = String(index);
+      dots.forEach((d, i) => d.setAttribute('aria-current', i === index ? 'true' : 'false'));
+      if (prev) prev.disabled = index <= 0;
+      if (next) next.disabled = index >= slides.length - 1;
+    }
+    function goTo(i, smooth){
+      const t = Math.max(0, Math.min(slides.length - 1, i));
+      track.scrollTo({
+        left: slides[t].offsetLeft - slides[0].offsetLeft,
+        behavior: (smooth && !prefersReducedMotion()) ? 'smooth' : 'auto'
+      });
+    }
+
+    let raf = 0;
+    track.addEventListener('scroll', () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => { raf = 0; sync(); });
+    }, { passive: true });
+    ['pointerdown', 'touchstart', 'wheel', 'keydown'].forEach(t =>
+      track.addEventListener(t, () => { touched = true; }, { passive: true }));
+    // Tabでバナーに移ったとき、そのバナーまでトラックを送る。
+    // Chromeはスナップ付きの横スクローラーを自動では送ってくれず、
+    // 「フォーカスはあるのに画面外」になってキーボード操作が実質壊れるため。
+    track.addEventListener('focusin', e => {
+      touched = true;
+      const el = e.target && e.target.closest ? e.target.closest('.ec-slide') : null;
+      const i = el ? slides.indexOf(el) : -1;
+      if (i >= 0 && i !== index) goTo(i, false);
+    });
+    if (prev) prev.addEventListener('click', () => { touched = true; goTo(index - 1, true); });
+    if (next) next.addEventListener('click', () => { touched = true; goTo(index + 1, true); });
+    dots.forEach(d => d.addEventListener('click', () => { touched = true; goTo(Number(d.dataset.i), true); }));
+
+    if (index) goTo(index, false);
+    sync();
+
+    // 「横に動かせる」ことを伝えるヒント。ごく短く1回だけ、少し動いて戻るだけ。
+    // prefers-reduced-motion: reduce では必ず動かさない。ユーザーが先に触ったらやらない。
+    if (!prefersReducedMotion() && index === 0){
+      setTimeout(() => {
+        if (touched || track.scrollLeft > 2) return;
+        const snap = track.style.scrollSnapType;
+        track.style.scrollSnapType = 'none';   // スナップに引き戻されて動かないのを防ぐ
+        track.scrollTo({ left: 34, behavior: 'smooth' });
+        setTimeout(() => {
+          track.scrollTo({ left: 0, behavior: 'smooth' });
+          setTimeout(() => { track.style.scrollSnapType = snap; sync(); }, 520);
+        }, 430);
+      }, 700);
+    }
   }
 
   buildDateStrip();
