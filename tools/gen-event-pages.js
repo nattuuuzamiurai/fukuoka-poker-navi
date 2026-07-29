@@ -16,15 +16,22 @@
  *   - events/wjpt-2026/index.html
  *   - events/nippon-series-2026-fukuoka/index.html
  *   - sitemap.xml (ホーム + 各イベントページ)
+ *   - index.html の【恒久リンク行(#evtLinks)だけ】を上書き同期する
+ *       … このスクリプトが index.html を触るのはこの1行だけ。他の箇所には一切手を出さない。
  *
- * 使い方: node gen-event-pages.js <リポジトリのパス>
+ * 使い方:
+ *   node gen-event-pages.js <リポジトリのパス>            … 生成/同期する
+ *   node gen-event-pages.js <リポジトリのパス> --check     … 書き込まず、ディスクの内容と一致するかだけ見る
+ *                                                          (一致しなければ非ゼロ終了。CI・レビュー用)
  */
 
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 
-const REPO = process.argv[2];
+const args = process.argv.slice(2);
+const CHECK = args.includes('--check');
+const REPO = args.filter(a => !a.startsWith('--'))[0];
 if (!REPO) { console.error('リポジトリのパスを指定してください'); process.exit(1); }
 
 const SITE = 'https://fukuokapoker.com';
@@ -157,15 +164,87 @@ ${JSON.stringify(jsonld, null, 2)}
 //   「大会特集」(=その日1件・JS描画)とは役割が別物なので、片方を理由にもう片方を消さないこと。
 //   リンク先は featureUrl。静的ページがある大会は静的URL、無い大会(FST等)はトップのハッシュURLになる。
 //   レジストリに1エントリ足せばこの行にも自動で増える。
-function permanentEventLinks(currentPath) {
+// ★ トップ(index.html)の #evtLinks もこの同じ関数から作る(buildIndexHtml)。
+//   2箇所を別々に手で書いていた頃に、片方だけ直して片方を忘れる事故が2回起きているため。
+const LINK_SEP = '　|　';
+function permanentEventLinksList() {
   return BIG.BIG_EVENTS
     .slice()
     .sort((a, b) => String(BIG.eventFirstDay(a.days)).localeCompare(String(BIG.eventFirstDay(b.days))))
-    .map(e => e.featureUrl === currentPath
+    .map(e => ({ url: e.featureUrl, label: esc(e.label) }));
+}
+function permanentEventLinks(currentPath) {
+  return permanentEventLinksList()
+    .map(e => e.url === currentPath
       // 自分自身のページでは自己リンクにせず現在地として示す
-      ? `<span aria-current="page" style="color:#cfd6d1">${esc(e.label)}</span>`
-      : `<a href="${e.featureUrl}">${esc(e.label)}</a>`)
-    .join('　|　');
+      ? `<span aria-current="page" style="color:#cfd6d1">${e.label}</span>`
+      : `<a href="${e.url}">${e.label}</a>`)
+    .join(LINK_SEP);
+}
+
+// ---- トップページ(index.html)の恒久リンク行(#evtLinks)を同期する ----
+// 【なぜスクリプト側でやるのか】
+//   静的ページの恒久リンク行は permanentEventLinks() が自動生成するのに、トップの #evtLinks だけは
+//   「HTMLにも1行足しておくこと」という手作業の運用だった。忘れると、画面はJS(mountBigEventLinks)が
+//   描き直すので正常に見えるのに、JSを実行しないクローラに対してだけリンクが欠ける。
+//   ＝ 目視で気づけない壊れ方をするうえ、実際に2回発生している(1回目=両方、2回目=トップだけ見落とし)。
+//   そこで「人が覚えている」に頼るのをやめ、リンクの出どころを permanentEventLinks() 1つに統一した。
+//   大会を追加したときにやることは「big-events.js に1エントリ足して、このスクリプトを実行する」だけ。
+const INDEX_LINKS_PREFIX = '大会ページ: ';
+// 置換対象は「行頭にある <div id="evtLinks" …>…</div> の1行」だけ。
+// ★ 行頭アンカー(^ + m フラグ)は必須。これが無いと、HTMLコメントの中に書いた
+//   `<div id="evtLinks">` という【説明のための文字列】にまで当たってコメントごと破壊する
+//   (このスクリプトを書いた当日に実際にやらかした)。
+const INDEX_LINKS_RE = /^(\s*<div id="evtLinks"[^>]*>)([^\n]*?)(<\/div>)$/m;
+const INDEX_LINKS_RE_G = new RegExp(INDEX_LINKS_RE.source, 'gm');
+function buildIndexHtml() {
+  const src = fs.readFileSync(path.join(REPO, 'index.html'), 'utf8');
+  // 「見つからない」も「複数見つかる」も、どちらも意図しない状態なので黙って通さず必ず落とす。
+  const hits = src.match(INDEX_LINKS_RE_G) || [];
+  if (hits.length !== 1) {
+    throw new Error(`index.html の恒久リンク行(<div id="evtLinks">…</div>)が ${hits.length} 件見つかりました。`
+      + '1件だけ、独立した1行として置いてください（トップの恒久リンク行を同期できません）。');
+  }
+  return src.replace(INDEX_LINKS_RE, (_m, open, _inner, close) =>
+    open + INDEX_LINKS_PREFIX + permanentEventLinks() + close);
+}
+
+// ---- 検査: 生成物とトップの恒久リンク行がレジストリと一致しているか ----
+// 生成(または --check)の最後に必ず走らせる。1件でも食い違ったら異常終了させ、
+// 「気づかないまま公開される」経路を塞ぐ。人の記憶ではなくこの検査が最後の砦。
+function parseLinkRow(segment, selfUrl) {
+  return segment.split(LINK_SEP).map(chunk => {
+    const a = chunk.match(/<a href="([^"]+)">([\s\S]*?)<\/a>/);
+    if (a) return { url: a[1], label: a[2] };
+    const s = chunk.match(/<span aria-current="page"[^>]*>([\s\S]*?)<\/span>/);
+    if (s) return { url: selfUrl, label: s[1] };
+    return { url: null, label: chunk };
+  });
+}
+function verifyPermanentLinks(files) {
+  const expected = JSON.stringify(permanentEventLinksList());
+  const problems = [];
+  const check = (name, actual) => {
+    const got = JSON.stringify(actual);
+    if (got !== expected) problems.push(`${name}\n    期待: ${expected}\n    実際: ${got}`);
+  };
+
+  const im = files['index.html'].match(INDEX_LINKS_RE);
+  if (!im) problems.push('index.html: #evtLinks が見つからない');
+  else if (im[2].indexOf(INDEX_LINKS_PREFIX) !== 0) problems.push('index.html: #evtLinks の見出し文字列が想定と違う');
+  else check('index.html #evtLinks', parseLinkRow(im[2].slice(INDEX_LINKS_PREFIX.length), null));
+
+  Object.keys(files).filter(f => f.startsWith('events/')).forEach(rel => {
+    const m = files[rel].match(/<a href="\/">トップ<\/a>　\|　([\s\S]*?)<\/div>/);
+    if (!m) { problems.push(`${rel}: 恒久リンク行が見つからない`); return; }
+    check(`${rel} 恒久リンク行`, parseLinkRow(m[1], '/' + rel.replace(/index\.html$/, '')));
+  });
+
+  if (problems.length) {
+    console.error('\n✗ 恒久リンク行がレジストリと一致しません:\n  - ' + problems.join('\n  - '));
+    process.exit(1);
+  }
+  console.log('検査: 恒久リンク行はトップ・静的ページとも一致（' + permanentEventLinksList().length + '件）');
 }
 
 // currentPath: そのページ自身のパス(自己リンクを避けるため)。省略すると全件がリンクになる。
@@ -183,7 +262,11 @@ function pageFoot(currentPath) {
 <script src="/big-events.js"></script>
 <script>if (typeof mountBigEventFooter === 'function') mountBigEventFooter('evtFeature');</script>
 <div class="stickyAd">
-  <img src="/img/jopt/jopt-banner.jpg" alt="" width="38" height="38" style="object-fit:cover;border-radius:8px">
+  <!-- 自社アプリ(ポーカートナメ成績表)の広告なので、アイコンは【必ず自社のもの】を使う。
+       以前はJOPTのバナー画像を焼き込んでいたため、日本シリーズのページでも自社広告の横に
+       JOPTのブランドが出ていた(他社イベントのページに別の他社ロゴを載せる形になり不適切)。
+       トップページ(index.html)の .stickyAd と同じ画像・同じ指定に揃えること。 -->
+  <img src="/img/ptl-bulldog.png" alt="" width="38" height="38">
   <div class="sa-body">
     <div class="sa-title">成績、記録してますか？</div>
     <div class="sa-desc">ポーカートナメ成績表(無料) — buyin・順位・収支を記録</div>
@@ -392,16 +475,39 @@ ${urls.map(u => `  <url>
 `;
 }
 
-// ---- 書き出し ----
-function writeFile(rel, content) {
-  const p = path.join(REPO, rel);
-  fs.mkdirSync(path.dirname(p), { recursive: true });
-  fs.writeFileSync(p, content, 'utf8');
-  console.log('生成:', rel, `(${content.length} bytes)`);
-}
+// ---- 書き出し / 検査 ----
+// 出力はいったん全部メモリ上で組み立ててから、まとめて書く(--check のときは書かずに突き合わせる)。
+// --check は「big-events.js を直したのに再生成を忘れた」「生成物を手で書き換えた」を検出するためのもの。
+const files = {
+  'events/jopt-2026-fukuoka-01/index.html': buildJopt(),
+  'events/wjpt-2026/index.html': buildWjpt(),
+  'events/nippon-series-2026-fukuoka/index.html': buildNippon(),
+  'sitemap.xml': buildSitemap(),
+  'index.html': buildIndexHtml()      // 恒久リンク行(#evtLinks)だけを差し替えたもの
+};
 
-writeFile('events/jopt-2026-fukuoka-01/index.html', buildJopt());
-writeFile('events/wjpt-2026/index.html', buildWjpt());
-writeFile('events/nippon-series-2026-fukuoka/index.html', buildNippon());
-writeFile('sitemap.xml', buildSitemap());
-console.log('完了。JOPT', JOPT.tournaments.length, '件 / WJPT', WJPT.tournaments.length, '件 / NIPPON SERIES', NIPPON.events.length, '行');
+verifyPermanentLinks(files);
+
+if (CHECK) {
+  const stale = Object.keys(files).filter(rel => {
+    let cur = null;
+    try { cur = fs.readFileSync(path.join(REPO, rel), 'utf8'); } catch (e) { /* 未生成 */ }
+    return cur !== files[rel];
+  });
+  if (stale.length) {
+    console.error('\n✗ 生成物がレジストリと一致しません（node tools/gen-event-pages.js <repo> を実行してください）:\n  - ' + stale.join('\n  - '));
+    process.exit(1);
+  }
+  console.log('検査: 生成物はすべて最新（' + Object.keys(files).length + 'ファイル）');
+} else {
+  Object.keys(files).forEach(rel => {
+    const p = path.join(REPO, rel);
+    let cur = null;
+    try { cur = fs.readFileSync(p, 'utf8'); } catch (e) { /* 未生成 */ }
+    if (cur === files[rel]) { console.log('据置:', rel, `(${files[rel].length} 文字・変更なし)`); return; }
+    fs.mkdirSync(path.dirname(p), { recursive: true });
+    fs.writeFileSync(p, files[rel], 'utf8');
+    console.log('生成:', rel, `(${files[rel].length} 文字)`);
+  });
+  console.log('完了。JOPT', JOPT.tournaments.length, '件 / WJPT', WJPT.tournaments.length, '件 / NIPPON SERIES', NIPPON.events.length, '行');
+}

@@ -61,15 +61,22 @@ const BIG_EVENTS = [
   },
   {
     id: 'fst',
-    label: 'FST 2026 福岡',
+    // ナンバリング「5.0」は主催者公式X(@fst_202408)の2026-07-21の告知で確認済み。
+    //   https://x.com/fst_202408/status/2079519350244225267
+    //     「【FST5.0ディーラー大募集】…【大会概要】📍ホテルニューオータニ博多 🗓️2026年9月19日-9月23日」
+    //     → ナンバリングと会期・会場が同一投稿で結び付いている(過去大会との取り違えなし)
+    // 表記の詳細と他の裏取りは index.html の const FST のコメントを参照。
+    label: 'FST 5.0 2026 福岡',
     days: ['2026-09-19', '2026-09-20', '2026-09-21', '2026-09-22', '2026-09-23'],
     // FSTはまだ個別トーナメントが未発表のため静的ページを作っていない。
     // 発表後に events/fst-2026-fukuoka/ を作ったら、この featureUrl をそちらに差し替える。
     featureUrl: '/#fst',
     hash: '#fst',
     banner: 'img/fst/fst-banner.svg',
-    bannerAlt: 'FST FUKUOKA SUPER TOURNAMENT 9.19-9.23 ホテルニューオータニ博多',
-    bannerDesc: '福岡・渡辺通／怒涛の5日間',
+    bannerAlt: 'FST 5.0 FUKUOKA SUPER TOURNAMENT 9.19-9.23 ホテルニューオータニ博多',
+    // 狭い画面では末尾から省略されるため、他の大会と同じく【場所を先頭】に置く語順は崩さない
+    // (「FST 5.0」を先頭にすると320pxで場所が消える。ナンバリングはバナー画像とaltにも入っている)。
+    bannerDesc: '福岡・渡辺通／FST 5.0の5日間',
     bannerClass: 'ev-fst'
   }
 ];
