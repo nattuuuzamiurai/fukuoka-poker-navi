@@ -497,7 +497,7 @@ const VENUES = [
     "website": "",
     "tel": "",
     "featured": false,
-    "note": "2026年3月28日オープン。ポーカー5卓＋ブラックジャック・バカラ。平日17:00〜24:00／土日祝14:00〜24:00。",
+    "note": "2026年3月28日オープン。ポーカー5卓＋ブラックジャック・バカラ。平日17:00〜24:00／土日祝14:00〜24:00。住所は第三者情報のため要確認。",
     "sourceLabel": "X",
     "sourceUrl": "https://x.com/casinoRAFTEL"
   },
@@ -523,7 +523,7 @@ const VENUES = [
     "area": "北九州",
     "address": "福岡県北九州市小倉北区鍛冶町1-5-11 4F",
     "access": "北九州モノレール 平和通駅 徒歩3分（JR小倉駅 徒歩約5分）",
-    "x": "https://x.com/KAJIBAR1",
+    "x": "",
     "line": "",
     "instagram": "https://www.instagram.com/kajibar_9876/",
     "website": "https://kajibarkokura.owst.jp/",
@@ -545,7 +545,7 @@ const VENUES = [
     "website": "https://triplebarrel.jimdofree.com/",
     "tel": "080-3374-8686",
     "featured": false,
-    "note": "2025年1月オープン、折尾エリア初のポーカー店。掲載中のTripleBarrel小倉店の姉妹店。18:30〜25:00。ボードゲーム多数・初心者講習あり。",
+    "note": "2025年1月オープン、折尾エリア初のポーカー店とされる。掲載中のTripleBarrel小倉店の姉妹店。18:30〜25:00。ボードゲーム多数・初心者講習あり。",
     "sourceLabel": "X",
     "sourceUrl": "https://x.com/triple_orio"
   },
@@ -557,13 +557,13 @@ const VENUES = [
     "access": "JR行橋駅 徒歩約4分",
     "x": "",
     "line": "",
-    "instagram": "https://www.instagram.com/deepblue824",
+    "instagram": "https://www.instagram.com/deepblue824/",
     "website": "https://www.poker-deepblue.com/",
     "tel": "",
     "featured": false,
-    "note": "2025年5月オープン、行橋初のカジノ専門店。風営法5号許可取得、換金・景品交換なし。19:00〜24:00。トーナメント定期開催（日程はInstagramで告知）。初心者プランあり。",
+    "note": "2025年5月オープン。公式サイトが「行橋初のカジノ専門店」を掲げる。公式サイトによると風俗営業5号許可を取得済みで、チップの換金・景品交換は一切なし。19:00〜24:00。トーナメント定期開催（日程はInstagramで告知）。初心者プランあり。",
     "sourceLabel": "Instagram",
-    "sourceUrl": "https://www.instagram.com/deepblue824"
+    "sourceUrl": "https://www.instagram.com/deepblue824/"
   }
 ];
 
