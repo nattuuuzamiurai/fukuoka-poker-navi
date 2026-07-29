@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  FST (FUKUOKA SUPER TOURNAMENT) 2026 バナー
+  当サイト(ふくおかポーカーナビ)が作成したバナーです。公式素材ではありません。
+  ロゴ・大会名等の権利は主催者(株式会社FST)に帰属します。
+  公式のバナー画像が入手できたら、このファイルを差し替えるか
+  big-events.js の fst エントリの banner を新しいパスに変更してください(参照はそこ1箇所)。
+  寸法は WJPT / JOPT のバナー(1024x412)に合わせています。
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 412" width="1024" height="412"
+     role="img" aria-label="FST FUKUOKA SUPER TOURNAMENT 2026年9月19日から23日 ホテルニューオータニ博多">
+  <defs>
+    <linearGradient id="fstBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#05081c"/>
+      <stop offset="0.52" stop-color="#131c48"/>
+      <stop offset="1" stop-color="#05081c"/>
+    </linearGradient>
+    <radialGradient id="fstGlowA" cx="0.86" cy="0.12" r="0.75">
+      <stop offset="0" stop-color="#e0304a" stop-opacity="0.42"/>
+      <stop offset="1" stop-color="#e0304a" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="fstGlowB" cx="0.08" cy="0.95" r="0.8">
+      <stop offset="0" stop-color="#3d5ad6" stop-opacity="0.36"/>
+      <stop offset="1" stop-color="#3d5ad6" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="fstPill" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#e0304a"/>
+      <stop offset="1" stop-color="#ff6b7f"/>
+    </linearGradient>
+    <linearGradient id="fstEdge" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff6b7f"/>
+      <stop offset="1" stop-color="#e0304a"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 背景 -->
+  <rect width="1024" height="412" fill="url(#fstBg)"/>
+  <rect width="1024" height="412" fill="url(#fstGlowA)"/>
+  <rect width="1024" height="412" fill="url(#fstGlowB)"/>
+
+  <!-- 左: エンブレム(ダイヤ型 + FST) -->
+  <g>
+    <path d="M168 84 L262 180 L168 276 L74 180 Z" fill="none" stroke="url(#fstEdge)" stroke-width="4"/>
+    <path d="M168 106 L242 180 L168 254 L94 180 Z" fill="#ffffff" fill-opacity="0.05"/>
+    <text x="168" y="202" text-anchor="middle" font-family="'Hiragino Sans','Yu Gothic UI',system-ui,sans-serif"
+          font-size="58" font-weight="800" letter-spacing="4" fill="#ffffff">FST</text>
+    <text x="168" y="308" text-anchor="middle" font-family="'Hiragino Sans','Yu Gothic UI',system-ui,sans-serif"
+          font-size="16" font-weight="700" letter-spacing="3.4" fill="#ff8fa0">FUKUOKA SUPER</text>
+    <text x="168" y="330" text-anchor="middle" font-family="'Hiragino Sans','Yu Gothic UI',system-ui,sans-serif"
+          font-size="16" font-weight="700" letter-spacing="3.4" fill="#ff8fa0">TOURNAMENT</text>
+  </g>
+
+  <!-- 右: 大会名・会期・会場 -->
+  <g>
+    <text x="306" y="122" font-family="'Hiragino Sans','Yu Gothic UI',system-ui,sans-serif"
+          font-size="26" font-weight="800" letter-spacing="3.6" fill="#ff8fa0">FUKUOKA SUPER TOURNAMENT</text>
+
+    <text x="306" y="228" font-family="'Hiragino Sans','Yu Gothic UI',system-ui,sans-serif"
+          font-size="94" font-weight="800" letter-spacing="1" fill="#ffffff">9.19</text>
+    <rect x="574" y="196" width="46" height="9" fill="#ff6b7f"/>
+    <text x="646" y="228" font-family="'Hiragino Sans','Yu Gothic UI',system-ui,sans-serif"
+          font-size="94" font-weight="800" letter-spacing="1" fill="#ffffff">9.23</text>
+
+    <text x="306" y="276" font-family="'Hiragino Sans','Yu Gothic UI',system-ui,sans-serif"
+          font-size="26" font-weight="700" fill="#c6cff2">2026 FUKUOKA　／　ホテルニューオータニ博多</text>
+
+    <rect x="306" y="298" width="432" height="46" rx="23" fill="url(#fstPill)"/>
+    <text x="522" y="329" text-anchor="middle" font-family="'Hiragino Sans','Yu Gothic UI',system-ui,sans-serif"
+          font-size="24" font-weight="800" letter-spacing="1" fill="#ffffff">究極を、遊べ。 怒涛の5日間開催</text>
+  </g>
+</svg>

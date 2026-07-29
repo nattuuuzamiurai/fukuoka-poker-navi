@@ -6,6 +6,11 @@
     <priority>1.0</priority>
   </url>
   <url>
+    <loc>https://fukuokapoker.com/events/nippon-series-2026-fukuoka/</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://fukuokapoker.com/events/jopt-2026-fukuoka-01/</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
