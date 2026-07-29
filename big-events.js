@@ -74,9 +74,10 @@ const BIG_EVENTS = [
     hash: '#fst',
     banner: 'img/fst/fst-banner.svg',
     bannerAlt: 'FST 5.0 FUKUOKA SUPER TOURNAMENT 9.19-9.23 ホテルニューオータニ博多',
-    // 狭い画面では末尾から省略されるため、他の大会と同じく【場所を先頭】に置く語順は崩さない
-    // (「FST 5.0」を先頭にすると320pxで場所が消える。ナンバリングはバナー画像とaltにも入っている)。
-    bannerDesc: '福岡・渡辺通／FST 5.0の5日間',
+    // ★ここにナンバリング(FST 5.0)を入れないこと。キャプションは狭い画面で末尾が省略されるため、
+    //   「FST 5.」のように【数字の途中で切れる】(トップ375px・#majors で実測)。
+    //   ナンバリングはバナー画像内のバッジと bannerAlt が持っているので、ここで重ねる必要はない。
+    bannerDesc: '福岡・渡辺通／怒涛の5日間',
     bannerClass: 'ev-fst'
   }
 ];
