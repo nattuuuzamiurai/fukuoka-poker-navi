@@ -1,0 +1,94 @@
+name: Instagram 監視(公式API非対応店舗の日程自動反映)
+
+# 公式サイトAPIが無い6店舗(v40/v20/v18/v21/v34/v35)のInstagramを監視し、
+# 新しい月間スケジュール告知を検知したら data.js に自動反映する。
+# 詳細設計は tools/sns-monitor-instagram.js のコメントと README の
+# 「データ取得アーキテクチャ → Instagram監視(パイロット)」章を参照。
+#
+# 【頻度高めに起動するが、実際にInstagramへアクセスするのは一部の実行だけ】
+# スクリプト自身が「今日この店をチェックする日か」「今この時間帯か」を店舗ID+日付から
+# 決定論的に判定し、条件が合わない実行は即座に何もせず終了する(検知されにくくする設計。
+# 詳細は tools/sns-schedule.js)。そのため毎時トリガーしてもCIリソースの浪費にはならない。
+#
+# 【シークレットが無い間は安全に何もしない】
+# INSTAGRAM_SESSION_COOKIE が未設定なら、スケジュール判定のログだけ出して即終了する
+# (Playwrightのブラウザインストールも走らない)。実運用を始めるにはシークレットの登録が必要
+# (下記「必要なシークレット」、および README 参照)。
+
+on:
+  schedule:
+    # cronはUTC。毎時13分に起動(頻度高めに起動しつつ、キリの良い時刻を避ける)
+    - cron: '13 * * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'true にすると data.js / sns-monitor-state.json を書き換えずに実行する'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+# 同時実行を防ぐ(手動実行とcronが重なって同じ店に二重アクセスするのを避ける)
+concurrency:
+  group: sns-monitor-instagram
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリを取得
+        uses: actions/checkout@v4
+
+      - name: Node.js をセットアップ
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: 依存パッケージをインストール
+        run: npm ci
+
+      # Instagramセッションが無い間はどうせ何もしないため、重いブラウザ本体の
+      # ダウンロードを毎時走らせない(シークレットが設定されて初めてインストールする)。
+      - name: Playwright(Chromium)をインストール
+        if: ${{ secrets.INSTAGRAM_SESSION_COOKIE != '' }}
+        run: npx playwright install --with-deps chromium
+
+      - name: Instagramを巡回して data.js を更新
+        env:
+          INSTAGRAM_SESSION_COOKIE: ${{ secrets.INSTAGRAM_SESSION_COOKIE }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          DASHBOARD_WRITE_TOKEN: ${{ secrets.DASHBOARD_WRITE_TOKEN }}
+        run: |
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            node tools/sns-monitor-instagram.js --dry-run
+          else
+            node tools/sns-monitor-instagram.js
+          fi
+
+      # 壊れたdata.jsをコミットして本番サイトを白画面にしないための最終ゲート。
+      - name: 出力の妥当性を確認
+        run: |
+          node --check data.js
+          node -e 'const d=require("./data.js");
+            if(new Set(d.TOURNAMENTS.map(t=>t.id)).size!==d.TOURNAMENTS.length) throw new Error("id重複");'
+
+      # data.jsのスナップショットである店舗静的ページ・sitemap.xmlを追随させる
+      # (差分が無ければ生成物も変わらないので、常に実行してよい。import-waitinglist.ymlと同じ考え方)。
+      - name: 店舗静的ページ / sitemap を再生成
+        run: |
+          node tools/gen-venue-pages.js .
+          node tools/gen-venue-pages.js . --check
+
+      - name: 差分があればコミット & プッシュ
+        run: |
+          if git diff --quiet; then
+            echo "差分なし。コミットしません。"
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: Instagram監視で新しい告知を検知・反映 ($(TZ=Asia/Tokyo date +%Y-%m-%d))"
+          git push

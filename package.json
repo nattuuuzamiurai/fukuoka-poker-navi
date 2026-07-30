@@ -1,0 +1,15 @@
+{
+  "name": "fukuoka-poker-navi-tools",
+  "private": true,
+  "version": "1.0.0",
+  "description": "サイト運用の自動化ツール群(公開サイト本体はビルド不要の静的ファイル)。ここに定義するのは Node のツールスクリプトが使う依存のみ。",
+  "scripts": {
+    "test": "node --test tools/*.test.js"
+  },
+  "dependencies": {
+    "playwright": "^1.48.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

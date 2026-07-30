@@ -5,3 +5,10 @@ __pycache__/
 
 # macOS
 .DS_Store
+
+# Node(tools/sns-monitor-instagram.js 等が使う Playwright 等の依存)
+# package.json / package-lock.json はコミットするが、node_modules と
+# Playwright がダウンロードするブラウザ本体はコミットしない(CIで都度インストールする)。
+node_modules/
+.cache/
+

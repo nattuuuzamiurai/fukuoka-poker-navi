@@ -1,0 +1,82 @@
+{
+  "_comment": "tools/sns-monitor-instagram.js が読み書きする巡回状態。admin-state.json(店舗確認メモ)とは別物で、巡回に必要な最小限の情報のみを持つ。フィールドの意味は README『データ取得アーキテクチャ → Instagram監視(パイロット)』章、および tools/sns-schedule.js のコメントを参照。手で編集しない(このファイルはワークフローが自動更新する)。ただし _pausedReason だけは、ブロック検知後に人手で復旧させる際に null へ戻す運用(README参照)。",
+  "_pausedReason": null,
+  "v40": {
+    "handle": "triple_orio",
+    "cadenceType": "monthly",
+    "cycleAnchor": "2026-07-31",
+    "observedIntervals": [],
+    "lastFoundPostDate": null,
+    "lastFoundPostUrl": null,
+    "nextCheckWindow": { "start": "2026-07-28", "end": "2026-08-03" },
+    "missThresholdDate": "2026-08-03",
+    "consecutiveMisses": 0,
+    "lastAttemptDate": null,
+    "missReportedForCycle": false
+  },
+  "v20": {
+    "handle": "king2485queen",
+    "cadenceType": "monthly",
+    "cycleAnchor": "2026-07-31",
+    "observedIntervals": [],
+    "lastFoundPostDate": null,
+    "lastFoundPostUrl": null,
+    "nextCheckWindow": { "start": "2026-07-28", "end": "2026-07-31" },
+    "missThresholdDate": "2026-07-31",
+    "consecutiveMisses": 0,
+    "lastAttemptDate": null,
+    "missReportedForCycle": false
+  },
+  "v18": {
+    "handle": "pokerbar_iris",
+    "cadenceType": "monthly",
+    "cycleAnchor": "2026-07-31",
+    "observedIntervals": [],
+    "lastFoundPostDate": null,
+    "lastFoundPostUrl": null,
+    "nextCheckWindow": { "start": "2026-07-28", "end": "2026-08-03" },
+    "missThresholdDate": "2026-08-03",
+    "consecutiveMisses": 0,
+    "lastAttemptDate": null,
+    "missReportedForCycle": false
+  },
+  "v21": {
+    "handle": "kurume_ken_poker",
+    "cadenceType": "monthly",
+    "cycleAnchor": "2026-07-31",
+    "observedIntervals": [],
+    "lastFoundPostDate": null,
+    "lastFoundPostUrl": null,
+    "nextCheckWindow": { "start": "2026-07-28", "end": "2026-08-03" },
+    "missThresholdDate": "2026-08-03",
+    "consecutiveMisses": 0,
+    "lastAttemptDate": null,
+    "missReportedForCycle": false
+  },
+  "v34": {
+    "handle": "king806queenkurosaki",
+    "cadenceType": "monthly",
+    "cycleAnchor": "2026-07-31",
+    "observedIntervals": [],
+    "lastFoundPostDate": null,
+    "lastFoundPostUrl": null,
+    "nextCheckWindow": { "start": "2026-07-28", "end": "2026-08-05" },
+    "missThresholdDate": "2026-08-05",
+    "consecutiveMisses": 0,
+    "lastAttemptDate": null,
+    "missReportedForCycle": false
+  },
+  "v35": {
+    "handle": "ace_and_king259",
+    "cadenceType": "monthly",
+    "cycleAnchor": "2026-07-31",
+    "observedIntervals": [],
+    "lastFoundPostDate": null,
+    "lastFoundPostUrl": null,
+    "nextCheckWindow": { "start": "2026-07-28", "end": "2026-08-05" },
+    "missThresholdDate": "2026-08-05",
+    "consecutiveMisses": 0,
+    "lastAttemptDate": null,
+    "missReportedForCycle": false
+  }
+}

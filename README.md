@@ -49,6 +49,12 @@ AdSense/PR枠が埋まるまでの間、自社アプリの導線を3か所に置
 | `tools/gen-venue-pages.js` | 店舗静的ページと**トップの店舗リンク行（`index.html` の `#venueLinks` 1行）**の**生成スクリプト**。データは `data.js` の `VENUES` / `TOURNAMENTS` / `RECURRING` からそのまま読み込む。実行: `node tools/gen-venue-pages.js <リポジトリのパス>`（`--check` あり）。**`data.js` を更新したら必ず再実行すること**（下記「`data.js` を更新したら」） |
 | `tools/gen-sitemap.js` | **`sitemap.xml` の唯一の所有者**。トップ＋イベントページ＋店舗ページの全URLをここだけで組み立てる（詳細は下記「sitemap.xml の所有者」）。単独実行も可: `node tools/gen-sitemap.js <リポジトリのパス>`（`--check` あり） |
 | `tools/site-shell.js` | 静的ページ共通の「外側」（`<head>`・GA4タグ・共通CSS・ヘッダー・フッター・自社広告・大会の恒久リンク行）。イベントページと店舗ページで骨格が食い違わないよう、出どころを1つにしてある。**純粋なモジュールで、require しても何も書き込まない** |
+| `sns-monitor-state.json` | Instagram監視（パイロット）の巡回状態。手で編集しない（`_pausedReason`を除く）。詳細は下記「データ取得アーキテクチャ → Instagram監視（パイロット）」 |
+| `tools/sns-monitor-instagram.js` | Instagram監視の本体（`node tools/sns-monitor-instagram.js`。`--dry-run` / `--schedule-only` あり）。GitHub Actions（`.github/workflows/sns-monitor-instagram.yml`）から毎時呼ばれる |
+| `tools/sns-schedule.js` | 巡回スケジュール判定の純粋関数群（I/Oなし・単体テスト可能）。「今日この店をチェックする日か」「今この時間帯か」の抽選と、発見/見送りによるウィンドウの学習を持つ |
+| `tools/tournament-merge.js` | `data.js` への安全なupsert共通ロジック（Waitinglist自動取込 = PR #11 と同じ安全設計。詳細はファイル冒頭コメント） |
+| `tools/instagram-browser.js` / `tools/instagram-oembed.js` / `tools/instagram-vision.js` | Instagram監視が使うPlaywright操作・oEmbed取得・Vision抽出の各モジュール |
+| `tools/dashboard-report.js` | 異常検知時にダッシュボード（`acehigh-dashboard`）へ直接報告するモジュール |
 
 `data.js` を差し替えるだけでサイトが更新される設計。CDN/静的ホスティング（GitHub Pages 等）にそのまま置ける。
 ただし静的ページ（`events/` `venues/` `sitemap.xml`）はデータのスナップショットなので、下記の再生成が必要。
@@ -293,8 +299,127 @@ Claude APIキーは初回だけ「詳細設定」で登録すればよい（こ�
 |---|---|---|
 | 店舗公式サイト / Googleビジネス | ◎ 自動 | 定期クロール → HTML/構造化データをパース |
 | X（旧Twitter） | △ 条件付き | API有料枠 or 公開タイムラインの限定取得。店舗アカウントを購読 |
-| Instagram | △ 困難 | ログイン壁＋規約。公開投稿の範囲で限定的に |
+| **Instagram**（対象6店舗のみ） | ◎ **自動（パイロット・未稼働）** | ヘッドレスブラウザで巡回・監視。下記「Instagram監視（パイロット）」参照。**シークレット未設定のため実運用はまだ開始できていない** |
+| Instagram（上記以外の店舗） | △ 困難 | ログイン壁＋規約。公開投稿の範囲で限定的に |
 | **公式LINE 配信** | ✕ **不可** | 他店のブロードキャストを外部取得する公開手段は存在しない |
+
+### Instagram監視（パイロット・`tools/sns-monitor-instagram.js`）
+
+公式サイトAPIが無い店舗のうち、Instagramで月間スケジュールを告知している6店舗（下表）を対象に、
+投稿を監視して新しい告知画像を検知し、`data.js` に自動反映するパイロット。社長がToS(利用規約)上の
+グレーゾーン・アカウント停止等のリスクを承知のうえで実施を承認済み。そのぶん「検知されにくくする」
+「異常の兆候があれば即座に人間に知らせて止まる」を設計の中心に置いている。
+
+**対象6店舗**（すべて `cadence: "monthly"`。週次/半月次の店舗は今回のパイロット対象外）:
+
+| venueId | 店名 | Instagramハンドル | 傾向 |
+|---|---|---|---|
+| `v40` | TripleBarrel 折尾店 | `triple_orio` | 月中旬〜月末に散発。標準的な月末型 |
+| `v20` | KING&QUEEN SUITED 直方店 | `king2485queen` | 確度高：月末20日代後半〜末日に翌月分を投稿 |
+| `v18` | Poker Bar IRIS | `pokerbar_iris` | 月末前には登録される実績あり |
+| `v21` | KENポーカー（久留米） | `kurume_ken_poker` | 月末前には登録される実績あり |
+| `v34` | KING&QUEEN SUITED 黒崎店 | `king806queenkurosaki` | やや遅め。月末になっても翌月分が未発表なことがある |
+| `v35` | A&K（Ace and King） | `ace_and_king259` | やや遅め。同上 |
+
+#### 巡回スケジュール（検知されにくくする核心部分・`tools/sns-schedule.js`）
+
+- GitHub Actions は**毎時**トリガーする（`.github/workflows/sns-monitor-instagram.yml`）が、実際にInstagramへ
+  アクセスするのは一部の実行だけ。スクリプト内部で「今日この店をチェックする日か」「今この時間帯か」を
+  **店舗ID＋日付から決定論的な疑似乱数**で判定し、条件が合わない実行は即座に何もせず終了する（ネットワーク
+  アクセスなし）。同じ日に複数回ワークフローが動いても、その日の判定結果は変わらない
+  （多重実行の防止は状態ファイルの `lastAttemptDate` が担う）。
+- チェック日の実行確率は、`nextCheckWindow.start`（初日・低確率）→ `nextCheckWindow.end`（終端・確率100%＝必須実行）
+  へ線形に上がる。終端を過ぎても `missThresholdDate + 7日` の猶予（`GRACE_DAYS`）まではチェックを続ける
+  （でないと「毎回ちょっと遅い店」の実測を学習できない）。
+- 複数店舗が同じ日にチェック対象になっても、店舗ごとに独立したランダム遅延（1〜5分）を挟み、まとめて
+  連続アクセスしない。
+- **学習**: 新しい投稿を見つけたら、その月の基準日（月末）からの実測ズレ（日数、早ければ負・遅ければ正）を
+  `observedIntervals` に積み、次サイクルの `nextCheckWindow` / `missThresholdDate` をその実績に合わせて
+  算出し直す（安全マージンを加えつつ、狭すぎ・広すぎを防ぐ下限も設ける）。ある店が毎回同じくらい遅れて
+  投稿することが繰り返し観測されれば、それを「正常」として学習し `missThresholdDate` 自体を後ろへずらして
+  いくため、いつまでも同じ理由で報告し続けることはない。
+- 状態は `sns-monitor-state.json`（このリポジトリ直下。`fukuoka-poker-admin` の `admin-state.json` とは別物で、
+  巡回に必要な最小限の情報のみを持つ）に持つ。手で編集しない前提（ワークフローが自動更新する）。
+  `_pausedReason` だけは例外で、ブロック検知後に人間が原因に対処したうえで `null` に戻す運用（下記）。
+
+#### 認証：ユーザー名/パスワードではなく「セッションCookie注入」（`tools/instagram-browser.js`）
+
+**社長個人のInstagramアカウント**を使うため、毎回ユーザー名＋パスワードでログインする方式は採用していない。
+GitHub Actionsのランナーは既知のデータセンターIPレンジから通信するため、そのやり方だと「異常なログイン試行」
+として二段階認証・本人確認チャレンジが高確率で発生し、(a) 巡回が失敗する (b) 社長個人のアカウントに
+「見慣れない場所からログインがありました」という本人向け警告が飛ぶ、という望ましくない事態になりやすい。
+
+そのため、**社長が普段使うブラウザで一度ログイン済みのセッションCookieをヘッドレスブラウザに注入する**方式に
+している（ログイン処理そのものは行わない）。
+
+- シークレット名: `INSTAGRAM_SESSION_COOKIE`。Playwrightの `storageState` 形式
+  （`{ "cookies": [...], "origins": [...] }`）、またはCookie配列単体のJSON文字列のどちらでも読み込める。
+- 運用: 社長が普段お使いのブラウザでInstagramにログインした状態からCookieをエクスポートし（ブラウザ拡張等で
+  storageStateやCookie一覧を書き出す）、そのJSONをそのままこのシークレットの値として登録する。
+- Cookieはいずれ失効する。失効・ブロックの兆候（ログイン画面へのリダイレクト、本人確認チャレンジ、
+  「アカウントが一時的に制限されています」等の文言）を検知したら、**再試行や別経路を試さずその場で中止**し、
+  最優先報告（下記）に回したうえで `sns-monitor-state.json` の `_pausedReason` に理由を書き込み、**以降の
+  すべての巡回を停止する**（同じ失効Cookieで毎時アクセスし続けることを避けるため）。人間がCookieを更新した
+  あと、`_pausedReason` を `null` に戻してコミットすれば運用を再開できる。
+
+#### 検知〜反映の流れ
+
+1. プロフィールを開き（ログイン状態）、フィード投稿部分をスクリーンショット
+2. Visionモデルに渡し、`lastFoundPostDate` より新しい投稿があるか・月間スケジュール告知らしきものかを判定
+3. 新着ならプロフィール上のリンクから投稿のパーマリンクを特定
+4. **Instagram公式oEmbed**（`https://www.facebook.com/instagram_oembed?url=<投稿URL>`。2026年6月からトークン
+   不要と案内されているが、実運用開始前に実際のレスポンスを要確認）でその投稿の埋め込みHTMLを取得し、
+   ヘッドレスブラウザでレンダリング・スクリーンショットする（プロフィール全体よりVision抽出の精度が
+   上がるため）。oEmbedが使えない場合は、開いている投稿ページを直接スクリーンショットするフォールバックに
+   自動で切り替わる（`tools/instagram-oembed.js`）
+5. その画像をVisionモデルに渡し、[Tournament スキーマ](#tournament-スキーマ) に正規化
+6. `data.js` へ upsert する。**Waitinglist自動取込（PR #11 / `tools/import-waitinglist.js`。本PR作成時点で
+   未マージ）と同じ安全設計を踏襲**している（対象venue以外・過去日には一切触れない／書き込み直前に他店データが
+   変化していないか自己チェック／取得失敗時は `data.js` を書き換えずに失敗として終了）。PR #11 がまだ
+   マージされておらず共有モジュール化できないため、upsertロジックは `tools/tournament-merge.js` に独立して
+   実装している（PR #11 マージ後、両スクリプトで共通化する余地がある）
+7. 書き込みは `source: "auto"`, `verified: false` で行う（確度の低さはこのフラグで担保し、公開UIの
+   「(未確認)」表示に委ねる）
+
+ハイライト／ストーリーズは対象外（フィード投稿の監視のみ）。
+
+#### 異常時の報告（`tools/dashboard-report.js`）
+
+無人実行（GitHub Actions）から、ダッシュボード（`acehigh-dashboard`, public repo）の専用ファイル
+`sns_monitor_alerts.json` に、GitHub Contents APIで直接書き込む
+（`.claude/scripts/hr-watch-daemon.js` が `hr_session_watch_status.json` を書いているのと同じ発想。ただし
+GitHub Actionsのランナーは `acehigh-dashboard` のローカルcloneを持たないため、git clone/pushではなく
+Contents APIで対象ファイル1つだけを読み書きする)。書く内容は venueId・種別・時刻・短い理由のみで、
+社内の作業内容は書かない。
+
+報告対象:
+1. **最優先・即時**: ログイン画面へのリダイレクト・本人確認チャレンジ・制限文言などブロックの兆候を検知した場合
+   （`type: "block_suspected"`）。検知と同時に `_pausedReason` を設定し、以降の巡回を全店舗停止する
+2. その店の `missThresholdDate` を過ぎても新着が見つからない場合（`type: "missed_deadline"`。1サイクル1回のみ）
+3. 猶予（`missThresholdDate + 7日`）を過ぎても見つからないまま次サイクルへ回した場合
+   （`type: "cycle_give_up"`。連続回数は `consecutiveMisses` で追跡）
+
+`DASHBOARD_WRITE_TOKEN`（`acehigh-dashboard` への contents:write 権限を持つ GitHub PAT）が未設定の間は、
+書き込みをスキップしログにだけ内容を残す（安全側のデフォルト）。
+
+#### 必要なシークレット（現時点ではすべて未設定＝実運用は未開始）
+
+| シークレット名 | 用途 | 状態 |
+|---|---|---|
+| `INSTAGRAM_SESSION_COOKIE` | 巡回に使う社長個人アカウントのセッションCookie（`storageState`形式かCookie配列のJSON） | 未設定 |
+| `ANTHROPIC_API_KEY` | Vision抽出（Anthropic Messages API）。**元の指示書には無かったが実装上必須**と判明したシークレット。`admin.html` は人がClaude Codeのチャットで読み込む運用のため、プログラムから呼ぶAPIキーはこのリポジトリにこれまで存在しなかった | 未設定 |
+| `ANTHROPIC_VISION_MODEL`（任意） | Vision抽出に使うモデルIDの上書き（未設定時は `tools/instagram-vision.js` の `DEFAULT_MODEL`。運用開始前に有効なモデルIDか要確認） | 未設定（既定値を使用） |
+| `DASHBOARD_WRITE_TOKEN` | `acehigh-dashboard` への異常報告の書き込み用 GitHub PAT | 未設定 |
+
+いずれかが未設定でもワークフローは失敗せず、安全に何もせず終了する（`INSTAGRAM_SESSION_COOKIE` が主判定。
+`ANTHROPIC_API_KEY`/`DASHBOARD_WRITE_TOKEN` はそれぞれの呼び出し箇所で個別にガードしている）。
+
+#### 新規依存: Playwright
+
+Waitinglist自動取込（PR #11）は「外部依存なしのグローバルfetch」を売りにしていたが、今回はヘッドレスブラウザ
+でのログイン状態の再現・スクリーンショットが必須なため、Playwrightを新規に依存追加した（`package.json`）。
+CIでは `npx playwright install --with-deps chromium` を都度実行する（`INSTAGRAM_SESSION_COOKIE` 未設定の間は
+このインストール自体もスキップし、無駄なCI時間を使わない）。
 
 ### 半自動パイプライン（LINE / IG 等の埋め合わせ）
 
@@ -342,6 +467,7 @@ Claude APIキーは初回だけ「詳細設定」で登録すればよい（こ�
 - [x] 実店舗データの投入（福岡県内アミューズ店20店を調査・反映 → `fukuoka-venues.json` / `data.js`）
 - [ ] 各店の実開催日程を admin.html で継続登録（告知の取り込み運用）
 - [ ] 自動クローラ：公式サイト/Googleビジネスの定期取得（GitHub Actions cron 等）
+- [ ] 自動クローラ（パイロット）：**Instagram監視**（`tools/sns-monitor-instagram.js` ＋ `.github/workflows/sns-monitor-instagram.yml`・毎時トリガー、実アクセスは店舗ごとの巡回スケジュールに従う）。対象6店舗（`v40`/`v20`/`v18`/`v21`/`v34`/`v35`）。**必要シークレット未設定のため実運用は未開始**（詳細は上の「データ取得アーキテクチャ → Instagram監視（パイロット）」）
 - [ ] LINE公式アカウント連携：新着トーナメントの自動プッシュ配信
 - [x] SEO：**大会**個別ページの静的生成（`events/<slug>/` ・Event構造化データ）
 - [x] SEO：**店舗**個別ページの静的生成（`venues/<slug>/` 全35店・LocalBusiness構造化データ・`sitemap.xml` 登録・トップからの静的内部リンク）
