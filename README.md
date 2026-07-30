@@ -428,7 +428,7 @@ GET https://api.waitinglist-poker.com/v1/game-schedules/tournament?storeId=<stor
 [tools/tournament-merge.js で安全にupsert]  … 対象店舗以外・過去日には一切触れない、
       │                                        書き込み前に自己チェック、失敗時は書き換えない
       ▼
-[data.js へ反映](source: 'auto', verified: false) → サイト反映
+[data.js へ反映](source: 'semi', verified: false) → サイト反映
 ```
 
 - **実行**: GitHub Actions `.github/workflows/monitor-instagram-apify.yml` が**毎日 07:10 JST**
@@ -451,12 +451,17 @@ GET https://api.waitinglist-poker.com/v1/game-schedules/tournament?storeId=<stor
   3. 書き込み直前の自己チェック(対象外店舗・過去日エントリが変化していないか)
   4. 新着が無い・新着はあってもスケジュール告知らしくない・Vision抽出が0件、のいずれかの場合は
      `data.js`を書き換えずに正常終了する(`apify-monitor-state.json`の確認済み投稿日時のみ進める)
-- **既知の設計上の割り切り**: `source: 'auto'` はWaitinglist取込みと同じ「取得結果=その時点の
-  完全な今後のスケジュール」という前提のupsert規則を使う。Instagramの1投稿がWaitinglistのAPIほど
-  常に全体を網羅しているとは限らないため、ある投稿が一部の日程しか含まない場合、その投稿を
-  処理した回で以前この経路で取り込んだが今回の投稿には写っていない分が消えることがある
-  (店舗が次の投稿で改めて全体を載せれば復元される)。人手情報(GTD/プライズ/pinnedTags/人手タグ)は
-  引き継がれるため消えない。問題が頻発するようなら `source: 'semi'` に倒す変更を検討する
+- **`source: 'semi'`を使う理由(2026-07-31修正: 品質管理部のレビューで致命的バグを検出)**:
+  当初は`source: 'auto'`(Waitinglist取込みと同じ「取得結果=その時点の完全な今後のスケジュール」
+  という前提のupsert規則)を使っていたが、対象店舗の一部(例: pokerbar_iris)は「1投稿1イベント」
+  形式でInstagramに投稿しており、1回の投稿取得結果が今後の全日程を含まない。このため`'auto'`だと、
+  前回別の投稿から検知して取り込んだ未来日エントリが、今回のマージ(今回の投稿には写っていない)で
+  消えてしまう不具合が実データ・実コードで再現した(Run1でイベントA追加→Run2で別投稿からイベントB
+  検知→イベントAが消滅)。`source: 'semi'`(tools/import-venue-image.jsと同じ、「対応する
+  (date,start)が無いものは残す」規則)に変更したことで、複数投稿にまたがる日程が消えずに
+  積み上がっていく。人手情報(GTD/プライズ/pinnedTags/人手タグ)は引き継がれるため消えない。
+  一方で、店舗側の告知投稿が削除されたり日程が中止・変更されたりしても自動では消えないため、
+  古いエントリが残っていないか定期的にadmin.html側で確認すること
 - **必要な環境変数(GitHub Secrets)**: `APIFY_API_TOKEN`(Apify呼び出し用)、`ANTHROPIC_API_KEY`
   (Vision抽出用)。いずれもコードには直書きしていない
 - **⚠ 静的ページの再生成は、このワークフローには入っていない**(Waitinglist取込みと同じ理由。

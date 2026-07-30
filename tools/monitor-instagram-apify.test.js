@@ -116,7 +116,9 @@ test('runMonitor: 実データ(v40等)を使った統合テストで、新着ス
 
     const added = result.arr.find((t) => t.venueId === 'v40' && t.name === 'Apify統合テスト大会');
     assert.ok(added, '新着投稿から抽出したトーナメントが追加されていること');
-    assert.equal(added.source, 'auto');
+    // source: 'semi'を使う理由は本体側のコメント参照(1投稿1イベント形式の店舗があるため
+    // 'auto'だと前回検知分が消える。回帰テストは下記「1投稿1イベント形式」のテストを参照)
+    assert.equal(added.source, 'semi');
     assert.equal(added.verified, false);
     assert.equal(added.date, futureDate);
     assert.ok(added.id.startsWith('ig-v40-'));
@@ -146,6 +148,84 @@ test('runMonitor: 実データ(v40等)を使った統合テストで、新着ス
   } finally {
     fs.unlinkSync(tmpDataJs);
   }
+});
+
+// 回帰テスト(2026-07-31): 品質管理部がPR #16で発見した致命的バグの再発防止。
+// pokerbar_iris等は「1投稿1イベント」形式で運用されており、1回の取得結果が今後の全日程を
+// 含むとは限らない。`source: 'auto'`のままだと、tools/tournament-merge.jsのmergeStoreが
+// 「対象店舗のautoエントリは毎回全部作り直す(取得結果に無いものは消す)」規則を適用するため、
+// 1回目のマージで追加した未来日エントリが、2回目のマージ(別投稿・別イベントの検知)で
+// 消えてしまう。`source: 'semi'`に修正したことで、対応する(date,start)が無いものは残る規則が
+// 適用され、この消失が起きないことを確認する。
+test('runMonitor: 1投稿1イベント形式で2回連続の新着投稿があっても、1回目に追加した未来日エントリが2回目のマージ後も残っている(回帰テスト)', async () => {
+  const store = monitor.STORES.find((s) => s.handle === 'pokerbar_iris');
+  assert.ok(store, 'pokerbar_iris がSTORESに存在すること(テストの前提)');
+
+  const today = '2026-07-31';
+  const dateA = '2026-08-10';
+  const dateB = '2026-08-17';
+
+  // 1回目: イベントAのみを含む投稿を検知
+  const fetchLibRun1 = {
+    async fetchInstagramPosts(handle) {
+      if (handle !== store.handle) return [];
+      return [
+        {
+          permalink: 'https://www.instagram.com/p/EVENTA/',
+          imageUrl: 'https://example.com/a.jpg',
+          postedAt: '2026-07-25T10:00:00.000Z',
+          caption: '8/10 スケジュールのお知らせ',
+        },
+      ];
+    },
+  };
+  const visionLibRun1 = {
+    async extractTournaments() {
+      return [{ date: dateA, start: '19:00', name: 'イベントA', buyin: 3000, tags: [] }];
+    },
+  };
+
+  const run1 = await monitor.runMonitor(
+    { stores: [store], before: [], today, state: {} },
+    { fetchLib: fetchLibRun1, visionLib: visionLibRun1, mergeLib, downloadImage: async () => Buffer.from('a') }
+  );
+
+  const addedA = run1.arr.find((t) => t.venueId === store.venueId && t.name === 'イベントA');
+  assert.ok(addedA, '1回目でイベントAが追加されていること');
+  assert.equal(addedA.source, 'semi');
+  assert.equal(addedA.date, dateA);
+
+  // 2回目: イベントAとは別の投稿でイベントBのみを検知(1投稿1イベント形式なのでイベントAは含まない)
+  const fetchLibRun2 = {
+    async fetchInstagramPosts(handle) {
+      if (handle !== store.handle) return [];
+      return [
+        {
+          permalink: 'https://www.instagram.com/p/EVENTB/',
+          imageUrl: 'https://example.com/b.jpg',
+          postedAt: '2026-07-28T10:00:00.000Z',
+          caption: '8/17 日程決まりました!',
+        },
+      ];
+    },
+  };
+  const visionLibRun2 = {
+    async extractTournaments() {
+      return [{ date: dateB, start: '19:00', name: 'イベントB', buyin: 3000, tags: [] }];
+    },
+  };
+
+  const run2 = await monitor.runMonitor(
+    { stores: [store], before: run1.arr, today, state: run1.state },
+    { fetchLib: fetchLibRun2, visionLib: visionLibRun2, mergeLib, downloadImage: async () => Buffer.from('b') }
+  );
+
+  const stillA = run2.arr.find((t) => t.venueId === store.venueId && t.name === 'イベントA');
+  const addedB = run2.arr.find((t) => t.venueId === store.venueId && t.name === 'イベントB');
+  assert.ok(stillA, '2回目のマージ後も1回目に追加したイベントAが残っていること(本題の回帰確認)');
+  assert.equal(stillA.date, dateA);
+  assert.ok(addedB, '2回目でイベントBが追加されていること');
+  assert.equal(addedB.date, dateB);
 });
 
 test('runMonitor: 新着はあるがスケジュール告知らしくない投稿はVision抽出せず、data.jsは変化しない(状態のみ進む)', async () => {

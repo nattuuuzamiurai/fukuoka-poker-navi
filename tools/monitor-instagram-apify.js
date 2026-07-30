@@ -15,7 +15,7 @@
  *      取りこぼしより誤検知の方が実害が小さいため広めに拾う。実際にトーナメント情報が読み取れるかは
  *      後段のVision抽出が0件かどうかで最終判断される)
  *   4. 抽出結果を tools/tournament-merge.js で `data.js` へ安全にupsertする
- *      (`source: 'auto', verified: false`。PR #11(import-waitinglist.js)・PR #14と同じ安全設計:
+ *      (`source: 'semi', verified: false`。PR #11(import-waitinglist.js)・PR #14と同じ安全設計:
  *       対象venue以外・過去日には一切触れない、書き込み前に自己チェック、失敗時は書き換えない)
  *   5. 新着の有無・処理成否に関わらず、Apify呼び出し自体が失敗した店舗が1つでもあれば、
  *      このスクリプトは**どの店舗のぶんも** data.js / 状態ファイルを書き換えずに異常終了する
@@ -30,14 +30,17 @@
  *   APIFY_API_TOKEN     … Apify呼び出しに必須(tools/fetch-venue-posts-apify.js参照)
  *   ANTHROPIC_API_KEY   … Vision抽出に必須(tools/venue-schedule-vision.js参照)
  *
- * 【既知の設計上の割り切り】`source: 'auto'` は「取得結果=その時点の完全な今後のスケジュール」という
- * 前提のupsert規則(tools/tournament-merge.jsのmergeStore、Waitinglist取込みと同じ規則)を使う。
- * Waitinglistの公開APIと違い、Instagramの1投稿が今後の全日程を必ず含むとは限らないため、
- * ある投稿が一部の日程しか含まない場合、その投稿を処理した回で「以前この経路で取り込んだが
- * 今回の投稿には写っていない」自動取込み分が消えることがある(店舗が次の投稿で改めて
- * 全体を載せれば復元される)。人手情報(GTD/プライズ/pinnedTags/人手タグ)は引き継がれるため消えない。
- * この割り切りで問題が頻発するようなら、`source: 'semi'`(tools/import-venue-image.jsと同じ、
- * 「対応が無いものは残す」規則)に倒す変更を検討すること。
+ * 【source: 'semi' を使う理由(2026-07-31修正: 'auto'で運用していた際に致命的なデータ消失バグが発生)】
+ * `source: 'auto'`(tools/tournament-merge.jsのmergeStore、Waitinglist取込みと同じ規則)は
+ * 「今回の取得結果=その時点の完全な今後のスケジュール」を前提に、対象店舗の今日以降のautoエントリを
+ * 毎回全部作り直す(=取得結果に無いものは消す)。Waitinglistの公開APIは月間の全日程を毎回返すためこの
+ * 前提が成り立つが、対象店舗の一部(例: pokerbar_iris)は「1投稿1イベント」形式でInstagramに投稿しており、
+ * 1回の投稿が今後の全日程を含まない。この状態で`source: 'auto'`を使うと、前回検知した投稿由来の
+ * エントリ(まだ未来日)が、今回のマージで「取得結果に無い」と判定されて消えてしまう
+ * (実データ・実コードで再現: Run1でイベントA追加→Run2で別投稿からイベントB検知→イベントAが消滅)。
+ * そのため`source: 'semi'`(tools/import-venue-image.jsと同じ、「対応する(date,start)が無いものは残す」
+ * 規則)を使う。これにより複数投稿にまたがる日程が積み上がっていき、店舗側の告知投稿が消えたり
+ * 日程自体が中止・変更されたりした場合は、admin.html等で人手による整理が必要になる。
  */
 
 'use strict';
@@ -134,7 +137,13 @@ function slugify(name) {
   return s || 'post';
 }
 
-/** Vision抽出の素の結果1件 → Tournamentスキーマ(source: 'auto', verified: false)。 */
+/**
+ * Vision抽出の素の結果1件 → Tournamentスキーマ(source: 'semi', verified: false)。
+ * `source: 'auto'`ではなく`'semi'`にしているのは、対象店舗が「1投稿1イベント」形式で運用されており
+ * 1回の投稿取得結果が今後の全日程を含むとは限らないため(詳細は本ファイル冒頭のコメント参照)。
+ * `'semi'`ならtools/tournament-merge.jsのmergeStoreで「対応する(date,start)が無いものは残す」
+ * 規則が適用され、複数投稿にまたがる日程が消えずに積み上がっていく。
+ */
 function toTournament(t, venueId) {
   const start = t.start || '00:00';
   return {
@@ -150,7 +159,7 @@ function toTournament(t, venueId) {
     reentry: t.reentry === 'late' ? 'late' : Boolean(t.reentry),
     prize: t.prize || null,
     tags: Array.isArray(t.tags) ? t.tags : [],
-    source: 'auto',
+    source: 'semi',
     verified: false,
   };
 }
