@@ -5,9 +5,12 @@
  * Waitinglist(DMMポーカーのイベントカレンダーの裏側)の公開APIから、
  * 対象店舗のトーナメント日程を取得して `data.js` の TOURNAMENTS に upsert する。
  *
- * 認証不要のJSON APIで、Origin/Refererを付けて叩くだけで取れる:
+ * 認証不要の公開JSON APIで、そのまま叩くだけで取れる:
  *   GET https://api.waitinglist-poker.com/v1/game-schedules/tournament?storeId=<displayId>&limit=100&page=1
  *   → { totalRecords: number, tournaments: [...] }
+ *
+ * リクエストは USER_AGENT で当サイトのボットとして名乗る(ブラウザを詐称しない)。
+ * ページ間は1秒あけ、1日1回だけ実行する。
  *
  * 使い方:
  *   node tools/import-waitinglist.js               … data.js を書き換える
@@ -55,6 +58,11 @@ const STORES = [
 ];
 
 const API_BASE = 'https://api.waitinglist-poker.com/v1/game-schedules/tournament';
+
+// 名乗り。ブラウザのふりをせず「当サイトのボット」であることと連絡先を示す。
+// 相手が正体を確認して遮断・連絡の判断ができる状態にしておくため。
+const USER_AGENT = 'fukuokapoker.com-bot/1.0 (+https://fukuokapoker.com/contact.html)';
+
 const PAGE_LIMIT = 100;          // APIのlimit上限
 const PAGE_INTERVAL_MS = 1000;   // ページ間の待ち時間(礼儀)
 const REQUEST_TIMEOUT_MS = 20000;
@@ -102,12 +110,14 @@ async function fetchPageOnce(displayId, page) {
   const url = `${API_BASE}?storeId=${encodeURIComponent(displayId)}&limit=${PAGE_LIMIT}&page=${page}`;
   const res = await fetch(url, {
     headers: {
-      Origin: 'https://poker.dmm.com',
-      Referer: 'https://poker.dmm.com/',
       Accept: 'application/json',
-      'User-Agent':
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 ' +
-        '(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+      // ★ ブラウザを詐称しない。実体は GitHub Actions から毎日1回動く当サイトのボットなので、
+      //   そのとおりに名乗り、問い合わせ先も添える。
+      //   相手側が「これは何者か」を確認して、遮断したい・連絡したいと思ったときに
+      //   それができる状態にしておくのが筋であるため
+      //   (調査時は Origin/Referer を付けたブラウザのふりをして叩いていたが、
+      //    外さなくても同じ 200 と同じ件数が返ることを確認したうえで削除した)。
+      'User-Agent': USER_AGENT,
     },
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });

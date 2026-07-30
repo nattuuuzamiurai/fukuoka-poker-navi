@@ -64,4 +64,9 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
           git commit -m "chore: Waitinglistから日程を自動取得 ($(TZ=Asia/Tokyo date +%Y-%m-%d))"
+          # checkout から push までの間に main が進むと push が弾かれる。
+          # 誰も Actions を見ていないと取込みが静かに止まりサイトが古いまま残るので、
+          # push の直前に rebase して取り込む(このジョブが触るのは data.js だけなので
+          # 他の作業と行が衝突する可能性は低い。衝突したらジョブを失敗させて人が気づけるようにする)。
+          git pull --rebase
           git push

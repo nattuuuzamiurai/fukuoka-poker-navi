@@ -304,11 +304,14 @@ DMMポーカーのイベントカレンダーは Waitinglist の埋め込みで�
 
 ```
 GET https://api.waitinglist-poker.com/v1/game-schedules/tournament?storeId=<storeId>&limit=100&page=1
-    Origin: https://poker.dmm.com / Referer: https://poker.dmm.com/
+    User-Agent: fukuokapoker.com-bot/1.0 (+https://fukuokapoker.com/contact.html)
 → { totalRecords, tournaments: [...] }   ※limit最大100・pageは1始まり。ページ間は1秒あける
 ```
 
-- **実行**: GitHub Actions `.github/workflows/import-waitinglist.yml` が**毎日 06:23 JST**（cronは `23 21 * * *` UTC）に実行。手動実行（`workflow_dispatch`）も可。差分があるときだけ `github-actions[bot]` がコミット＆プッシュする
+- **取得のマナー（方針）**: **ブラウザを詐称しない。** 実体は GitHub Actions から1日1回動く当サイトのボットなので、そのとおり名乗り、問い合わせ先（`contact.html`）をUAに含める。相手側が「これは何者か」を確認して、遮断したい・連絡したいと思ったときにそれができる状態にしておくため。
+  - 調査時は `Origin: https://poker.dmm.com` / `Referer: https://poker.dmm.com/` とブラウザのUAを付けて叩いていたが、**外しても同じ HTTP 200 で同じ件数が返る**ことを確認したうえで削除した（2026-07-31検証）。認証もトークンも不要な公開エンドポイントで、`api.waitinglist-poker.com` と `poker.dmm.com` のどちらにも `robots.txt` は存在しない（404）
+  - 1日1回・ページ間1秒・対象1店舗（105件を2リクエスト）で、相手の負荷は無視できる範囲に収めている
+- **実行**: GitHub Actions `.github/workflows/import-waitinglist.yml` が**毎日 06:23 JST**（cronは `23 21 * * *` UTC）に実行。手動実行（`workflow_dispatch`）も可。差分があるときだけ `github-actions[bot]` がコミット＆プッシュする（push直前に `git pull --rebase` して、checkout〜pushの間に main が進んでも静かに止まらないようにしている）
 - **対象店舗**: スクリプト冒頭の `STORES` 配列で管理。**1行足すだけで店舗を増やせる**。現在有効なのは `v3` のみ（他はコメントで控えてある）
 
   | venueId | storeId | data.js の店名 | APIの店名 | 状態 |
@@ -378,8 +381,13 @@ GET https://api.waitinglist-poker.com/v1/game-schedules/tournament?storeId=<stor
 [レビュー(任意) → data.js へ upsert] → サイト反映
 ```
 
-各トーナメントは `source`（`auto`/`semi`/`manual`）と `verified` を持ち、UIで取得元をドット表示する。
-未確認データは「(未確認)」と明示し、信頼性を担保する。
+各トーナメントは `source`（`auto`/`semi`/`manual`）と `verified` を持つ。
+
+> **⚠ `source` / `verified` はデータ側だけの項目で、現時点では画面に出していない（未実装）。**
+> `index.html` にも `tools/venue-schedule.js` にも `t.source` / `t.verified` を読む箇所は無い。
+> 実際に画面へ出ている信頼性の表示は **`lowConfidence` の「⚠ 要確認」バッジだけ**（一覧カードと店舗静的ページの両方）。
+> なお `verified` は全609件が `false` のままで、「確認済み」を意味する運用も回っていない。
+> 取得元のドット表示・「(未確認)」表記は**構想であって実装ではない**ので、実装済みだと誤解しないこと。
 
 ### Tournament スキーマ
 
