@@ -698,6 +698,15 @@
          フッターは掲載ウィンドウ(初日−14日〜最終日+1日)に縛られず、
          バナーが0件の期間でも「次の大会」を出し続ける(big-events.js の footerBigEvent を参照)。 -->
   <div id="evtFeature" style="display:none"></div>
+  <!-- 【店舗リンク行】掲載店舗の静的ページ(venues/<slug>/)への内部リンク。
+       ★JSを実行しないクローラにも拾わせるため、ここに静的リンクを直接書いてある。
+         上の「掲載店舗」カードは renderVenues() がJSで描いているので、JS無しでは
+         /venues/<slug>/ へのリンクが1本も見えず、クロール経路がsitemapだけになる。
+         上の #evtLinks(大会)と同じ理由・同じ作りで、店舗について同じことをしている。
+       ★★ 中身は【自動生成】。手で書き換えないこと。★★
+         `node tools/gen-venue-pages.js <repo>` を実行するとこの1行だけが差し替わる。
+         店舗を足せば自動で増える。ズレは `--check` を付けた実行で検出できる。 -->
+  <div id="venueLinks" style="margin-top:6px;line-height:2">店舗ページ: 【天神】<a href="/venues/kkpoker-fukuoka/">KKPOKER FUKUOKA</a>・<a href="/venues/grand-mirage-poker/">グランドミラージュポーカー</a>・<a href="/venues/fuxk-fukuoka-tenjin/">FUXK 福岡天神店</a>・<a href="/venues/raise-blue-tenjin/">RAISE BLUE 天神</a>・<a href="/venues/alice-the-poker-room/">ALICE the Poker room（アリス）</a>・<a href="/venues/seventwo-tenjin/">72 -SevenTwo-</a>・<a href="/venues/save-tenjin/">アミューズメントバー SAVE天神店</a>　【中洲】<a href="/venues/m-holdem-nakasu/">m HOLD'EM 中洲</a>・<a href="/venues/onecasino-fukuoka-nakasu/">ONECASINO 福岡中洲</a>・<a href="/venues/casino-bar-leje-hakata/">Casino bar Leje 博多店</a>・<a href="/venues/casino-blow-nishi-nakasu/">CASINO BLOW 西中洲</a>・<a href="/venues/crownclown-nakasu/">CRownCLown（クラウンクラウン）</a>・<a href="/venues/aria-nakasu/">ARIA 中洲</a>・<a href="/venues/bar-betty-nakasu/">BAR BETTY（バーベティ）</a>　【西中洲】<a href="/venues/bon-nishi-nakasu/">梵 bon 西中洲</a>　【大名】<a href="/venues/roots-fukuoka/">ROOTS FUKUOKA</a>・<a href="/venues/musashi-poker-room-fukuoka/">むさぽ福岡（MUSASHI POKER ROOM 福岡店）</a>　【今泉】<a href="/venues/casinox-fukuoka-imaizumi/">CasinoX（カジノックス）福岡今泉店</a>・<a href="/venues/raftel-casino-fukuoka-imaizumi/">RAFTEL CASINO（ラフテルカジノ 福岡今泉店）</a>　【大橋】<a href="/venues/joker-fukuoka-ohashi/">JOKER♠️ 福岡大橋</a>・<a href="/venues/the-dojo-fukuoka/">THE DOJO</a>　【博多】<a href="/venues/poker-room-sky/">Poker room SKY</a>　【北九州】<a href="/venues/pokerbar-nuwland/">PokerBar NUWLAND</a>・<a href="/venues/triplebarrel-kokura/">TripleBarrel 小倉店</a>・<a href="/venues/texas-holdem-3000/">てきさすほーるでむ。</a>・<a href="/venues/texas-holdem-aa/">テキサスホールデムAA</a>・<a href="/venues/poker-bar-iris/">Poker Bar IRIS</a>・<a href="/venues/casino-arrows-kokura/">CASINO Arrows 小倉店</a>・<a href="/venues/king-queen-suited-kurosaki/">KING&amp;QUEEN SUITED 黒崎店</a>・<a href="/venues/kaji-bar-kokura/">KAJI BAR</a>・<a href="/venues/triplebarrel-orio/">TripleBarrel 折尾店</a>　【京築】<a href="/venues/poker-studio-deep-blue-yukuhashi/">POKER Studio DEEP BLUE</a>　【筑豊】<a href="/venues/king-queen-suited-nogata/">KING&amp;QUEEN SUITED 直方店</a>　【久留米】<a href="/venues/ken-poker-kurume/">KENポーカー（久留米）</a>・<a href="/venues/ace-and-king-kurume/">A&amp;K（Ace and King）</a></div>
   <div><a href="contact.html">お問い合わせ</a>　|　<a href="contact.html">店舗の掲載・PRについて</a>　|　<a href="privacy.html">プライバシーポリシー</a></div>
   <div class="disc">
     掲載情報は各店舗・主催者のSNS・公式サイト等をもとに自動/手動で収集しています。開催内容は変更される場合があるため、
@@ -1756,12 +1765,25 @@
       if (v.line) links.push(`<a class="vlink line" href="${v.line}" target="_blank" rel="noopener">LINE</a>`);
       if (v.instagram) links.push(`<a class="vlink ig" href="${v.instagram}" target="_blank" rel="noopener">IG</a>`);
       const upcoming = ALL_TOURNAMENTS.filter(t=>t.venueId===v.id && iso(t.date)>=today).length;
-      return `<div class="vcard${v.featured?' feat':''}" onclick="if(!event.target.closest('a')) location.hash='#venue/${v.id}'">
+      // 店舗カードのリンク先は【静的ページ /venues/<slug>/】。SPA内遷移(#venue/<id>)ではなく
+      // ページ遷移になる。独立URLでないとインデックスされず、店舗を増やしてもSEO効果が
+      // トップ内のテキスト増加で止まってしまうため、カードからは実URLへ送る。
+      // ハッシュURL(#venue/<id>)のルート自体は既存リンク・ブックマーク互換のため残してあり、
+      // 静的ページ側から「月別カレンダー」として相互にリンクしている。
+      //
+      // ★ slug が無い店は【必ず】ハッシュURLに落とす。
+      //   admin.html + dev-server.py は生成スクリプト(tools/gen-venue-pages.js)を通さずに
+      //   data.js を保存するため、店舗を追加して slug を付け忘れた data.js が配信され得る。
+      //   フォールバック無しだと /venues/undefined/ という404リンクがトップに並ぶ。
+      //   ハッシュURLならその店の月別カレンダーは開けるので、閲覧者の行き先は失われない
+      //   (静的ページの欠落自体は gen-venue-pages.js が slug 未設定で異常終了して知らせる)。
+      const vurl = v.slug ? `/venues/${v.slug}/` : `#venue/${v.id}`;
+      return `<div class="vcard${v.featured?' feat':''}" onclick="if(!event.target.closest('a')) location.href='${vurl}'">
         <div class="vc-name">${v.featured?'<span class="star">★</span>':''}${v.name}</div>
         <div class="vc-area">${v.area}　|　${v.access||''}</div>
         <div class="vc-area" style="margin-top:4px;color:var(--felt);font-weight:700">今後の開催 ${upcoming}件</div>
         <div class="vc-links">${links.join('')}</div>
-        <a class="abtn pri vc-cta" href="#venue/${v.id}">今月の予定を見る →</a>
+        <a class="abtn pri vc-cta" href="${vurl}">日程・アクセスを見る →</a>
       </div>`;
     }).join('');
   }
