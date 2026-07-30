@@ -1,0 +1,11 @@
+{
+  "generatedBy": "tools/import-waitinglist.js",
+  "stores": [
+    {
+      "venueId": "v3",
+      "displayId": "4018492",
+      "label": "m HOLD'EM 中洲",
+      "source": "waitinglist"
+    }
+  ]
+}

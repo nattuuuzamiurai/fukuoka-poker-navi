@@ -20,6 +20,12 @@
  *
  * 対象店舗を増やすときは下の STORES に1行足すだけでよい。
  *
+ * 【副産物】リポジトリ直下に auto-import-stores.json を書き出す。
+ *   掲載管理コンソール(別リポジトリ fukuoka-poker-admin・ローカル専用)が読んで
+ *   「この店は自動取得なので手入力不要」を出すための機械可読リスト。
+ *   中身は STORES から作るだけで、APIの応答にも実行時刻にも依存しない
+ *   (タイムスタンプを入れると日次実行のたびに差分が出てコミットが増える)。
+ *
  * 【安全弁】外部APIの一時障害でサイトのデータが消えるのを防ぐため、次のいずれかが起きたら
  * data.js を一切書き換えずに非ゼロ終了する。「HTTP 200だが中身が壊れている」部分障害も止める:
  *   1. fetch失敗 / HTTP 200以外 / レスポンス形状が想定外
@@ -69,6 +75,8 @@ const REQUEST_TIMEOUT_MS = 20000;
 const MAX_ATTEMPTS = 3;          // 一時的な失敗のリトライ回数
 const RETRY_BASE_MS = 3000;      // リトライ間隔(3秒 → 6秒)
 const DATA_JS = path.join(__dirname, '..', 'data.js');
+// 掲載管理コンソール向けの「自動取得している店」のリスト(下記 writeStoreList)
+const STORES_JSON = path.join(__dirname, '..', 'auto-import-stores.json');
 
 const DRY_RUN = process.argv.includes('--dry-run');
 // 件数の急減ガードを人の判断で外すためのフラグ(閉店・長期休業など正当な減少のとき)
@@ -249,6 +257,47 @@ function readDataJs() {
 function writeDataJs(file, tournaments) {
   const out = file.src.slice(0, file.jsonStart) + JSON.stringify(tournaments, null, 2) + file.src.slice(file.jsonEnd);
   fs.writeFileSync(DATA_JS, out);
+}
+
+// ---------- 自動取得の対象店リスト(掲載管理コンソール向け) ----------
+
+/**
+ * 有効な STORES の内容を auto-import-stores.json に書き出す。
+ *
+ * 【何のためか】掲載管理コンソール(別リポジトリ fukuoka-poker-admin・ローカル専用)に
+ *   「この店は自動取得なので手入力不要」を出すため。コンソールがこのスクリプトの
+ *   STORES 配列をパースするのは壊れやすいので、機械可読な形で公開サイト側に置く。
+ *
+ * 【毎回同じ内容になること】入れるのは STORES から取れる値だけ。生成日時・取得件数などの
+ *   「実行するたびに変わる値」は入れない。入れると、日程に変化が無い日でもこのファイルだけが
+ *   差分になり、日次実行のたびに無意味なコミットが増える(ワークフローの差分判定は
+ *   git status --porcelain なので、1バイトでも変われば必ずコミットされる)。
+ *   → STORES を書き換えたときだけ差分が出る。
+ *
+ * 内容が変わらないときは書き込み自体を行わない(mtimeも動かさない)。
+ *
+ * 【書くのは実行が最後まで通ったときだけ】このスクリプトは「途中で異常を見つけたら何も書き換えない」
+ *   を通している。ワークフローでは途中で落ちればコミット自体が走らないので、
+ *   早く書いても遅く書いても結果は同じ。それなら人がローカルで失敗させたときに
+ *   作業ツリーが汚れないほうがよいので、成功時にだけ書く。
+ *   dryRun=true では書かずに「ズレているか」だけを返す。
+ */
+function writeStoreList(dryRun) {
+  const json = JSON.stringify({
+    generatedBy: 'tools/import-waitinglist.js',
+    stores: STORES.map((s) => ({
+      venueId: s.venueId,
+      displayId: s.displayId,
+      label: s.label,
+      source: 'waitinglist',
+    })),
+  }, null, 2) + '\n';
+
+  let cur = null;
+  try { cur = fs.readFileSync(STORES_JSON, 'utf8'); } catch (e) { /* 未生成 */ }
+  if (cur === json) return false;
+  if (!dryRun) fs.writeFileSync(STORES_JSON, json);
+  return true;
 }
 
 // ---------- upsert ----------
@@ -506,8 +555,18 @@ async function main() {
 
   if (DRY_RUN) {
     console.log('[import-waitinglist] --dry-run のため data.js は書き換えていません。');
+    if (writeStoreList(true)) {
+      console.log('[import-waitinglist] auto-import-stores.json は STORES とズレています（--dry-run 無しで実行すると更新されます）。');
+    }
     return;
   }
+
+  // 5) 掲載管理コンソール向けの対象店リスト。
+  //    data.js に差分があるかどうかとは無関係に、常に STORES と一致させる
+  //    (下の「変更が無いため書き換えていません」で早期returnする前に処理すること)。
+  const storeListChanged = writeStoreList(false);
+  console.log(`[import-waitinglist] auto-import-stores.json: ${storeListChanged ? '更新しました' : '変更なし'}（対象 ${STORES.length}店）`);
+
   if (!changed) {
     console.log('[import-waitinglist] 変更が無いため data.js は書き換えていません。');
     return;

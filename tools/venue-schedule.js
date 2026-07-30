@@ -16,8 +16,21 @@
  *
  * 【日付に依存させない理由】
  *   判定に「今日」を使うと、データを1文字も触っていないのに翌日には --check が落ちる。
- *   判定はすべて dataRange() が返す固定の期間内で行う。閲覧時に「今日以降」へ描き直すのは
+ *   判定はすべて venueRange() が返す固定の期間内で行う。閲覧時に「今日以降」へ描き直すのは
  *   ブラウザ側の仕事で、静的HTMLの中身とは分けている。
+ *
+ * 【焼き込む期間は店舗ごとに独立させる】
+ *   以前は「data.js 全体の最小日〜最大日」を1つ作って全店で使い回していた。これには2つの害があった。
+ *     - 事実として不正確 … 9月分の日程を持つのが1店だけでも、他の34店のページに
+ *       「※ この一覧は2026年7月〜9月の掲載分です」と出て、9月分の定期開催行まで焼き込まれる。
+ *     - 波及が全店に及ぶ … 1店に1件足しただけで35ページ全部が書き換わる。実測で、
+ *       9月の1件が消えると36ファイル、2027年3月の大会が1件載ると venues/ が 1.1MB→1.4MB。
+ *       無人の日次自動取込でこれを毎朝やると、venues/ を触る他の作業と競合が常態化する。
+ *   そこで期間は venueRange() が【その店の日付つきトーナメントだけ】から決める。
+ *   1店の変更はその店のページにしか届かず、見出しもその店の実データと一致する。
+ *   ★ ブラウザ側(SCHEDULE_JS)はこの期間を使わない。閲覧時の窓は
+ *     gen-venue-pages.js が埋め込むスクリプトが「今日〜max(掲載最終日, 今日+60日)」として
+ *     その場で決めている。したがってこの変更で公開サイトの描画は変わらない。
  */
 
 const vm = require('vm');
@@ -118,16 +131,25 @@ const SCHED = vm.runInNewContext(SCHEDULE_JS
   + '\n;({ vpRows: vpRows, vpScheduleHtml: vpScheduleHtml, vpToIso: vpToIso, vpParse: vpParse })');
 
 // ---- 静的側に焼き込む期間 ----
-// data.js に載っている日付の範囲(月単位に丸めたもの)。実行日に依存させない。
-function dataRange(TOURNAMENTS) {
-  const dates = TOURNAMENTS.map(t => t.date).filter(Boolean).sort();
-  if (!dates.length) {
-    // 日付つきトーナメントが1件も無い状態。定期分だけでも出せるよう当月を使う。
-    throw new Error('TOURNAMENTS が空です。焼き込む期間を決められません。');
+
+/**
+ * YYYY-MM-DD の配列 → 月単位に丸めた期間。1件も無ければ null。実行日に依存させない。
+ *
+ * 【書式を検査する理由】並べ替えは文字列の辞書順で行う(その書式なら辞書順=時系列順になる)。
+ *   ゼロ埋めされていない日付が1件混ざると前提が崩れ、'2026-9-5' が '2026-10-01' より後ろに
+ *   並んで from > to の逆転した期間と「2026年10月〜9月」という見出しが静かに出来上がる。
+ *   data.js のスキーマはゼロ埋めを要求しているので、外れた入力は黙って通さず落とす。
+ */
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+function monthRange(dates) {
+  const sorted = dates.filter(Boolean).slice().sort();
+  const bad = sorted.filter(d => !ISO_DATE.test(String(d)));
+  if (bad.length) {
+    throw new Error(`日付は YYYY-MM-DD（ゼロ埋め）で書いてください。想定外の値: ${bad.slice(0, 3).join(', ')}`);
   }
-  const first = dates[0], last = dates[dates.length - 1];
-  const [fy, fm] = first.split('-').map(Number);
-  const [ly, lm] = last.split('-').map(Number);
+  if (!sorted.length) return null;
+  const [fy, fm] = sorted[0].split('-').map(Number);
+  const [ly, lm] = sorted[sorted.length - 1].split('-').map(Number);
   const lastDay = new Date(Date.UTC(ly, lm, 0)).getUTCDate();
   return {
     from: `${fy}-${String(fm).padStart(2, '0')}-01`,
@@ -135,12 +157,87 @@ function dataRange(TOURNAMENTS) {
     label: (fy === ly && fm === lm) ? `${fy}年${fm}月` : `${fy}年${fm}月〜${ly === fy ? '' : ly + '年'}${lm}月`
   };
 }
+
 /**
- * RANGE 内にその店の掲載行が1行でもあるか。
- * 実行日に依存しない(RANGE は data.js の日付範囲そのもの)。
+ * 定期開催(RECURRING)しか持たない店に使う代表期間。
+ *
+ * 【なぜ必要か】その店由来の日付が1つも無いので、店舗別の期間を作れない。
+ *   かといって期間を決めないとページが空になる(定期開催は日付に展開して初めて行になる)。
+ *
+ * 【窓の長さが1ヶ月である理由】
+ *   定期開催は毎週繰り返すので、1ヶ月あればその店の全曜日が1回以上出る。
+ *   3ヶ月分並べても同じ行が増えるだけで情報は増えない(むしろ重複コンテンツになる)。
+ *
+ * 【窓を「サイト全体の掲載期間の先頭の月」に置く理由】
+ *   ★ サイズの問題ではない。1ヶ月窓なら最終月に置いても行数はほぼ同じ
+ *     (実測: 先頭月35行 / 最終月34行。2027年3月の外れ値がある状態でも最終月窓35行)。
+ *     「最終日側に置くと数倍に膨らむ」のは窓の長さを固定しない場合の話で、ここには当てはまらない。
+ *   最終月に置けない本当の理由は2つ:
+ *     - 遠い未来の月を、あたかもその月の開催予定であるかのように表示してしまう
+ *       (どこかの店に2027年3月の大会が1件載っただけで、定期開催しかない店のページに
+ *        2027年3月の日付が並ぶ)。その店のデータとは何の関係もない月である。
+ *     - 他店の最遠日が動くたびにこの3店のページも書き換わる = 今回直した波及が戻る。
+ *
+ * 【この選び方の代償(必ず理解しておくこと)】
+ *   先頭の月はサイト全体の最古の掲載日で、日次の自動取込では動かない
+ *   (取込は今日以降しか作らず、過去日のエントリには一切触れないため)。
+ *   つまり【起点は放っておくと永久に動かず、焼き込まれる月は古びていく。自己修復しない】。
+ *   例: 6ヶ月ぶんの取込を重ねても v5 の窓は 2026-07-01〜2026-07-31 のまま。
+ *   そのため呼び出し側(gen-venue-pages.js)は、この期間を
+ *   「◯月の掲載分です」のような【時が経つと嘘になる断定】に使ってはいけない。
+ *   定期開催しかない店では「毎週の定期開催を1ヶ月ぶん日付に展開した例」として出すこと
+ *   (recurringOnly フラグを返しているのはこの分岐のため)。
+ *   古い月が並ぶこと自体を解消したい場合は、過去日の焼き込み下限を入れる等の別の手当てが要る。
+ *
+ * 【全店ぶんを見ることについて】
+ *   全店の日付を見るのはこの1ヶ月の起点を決めるためだけで、行の中身は各店のRECURRINGのみ。
+ *   ただし「1店の変更が他店に波及しない」は、この3店に関しては構造的な保証ではなく
+ *   「取込が過去日を作らない/消さない」という別の性質に依存している(上記)。
+ * 該当は v5 / v19 / v41 の3店(2026-07-31時点)。
  */
-function hasSchedule(TOURNAMENTS, RECURRING, venueId, RANGE) {
-  return SCHED.vpRows(TOURNAMENTS, RECURRING, venueId, RANGE.from, RANGE.to).length > 0;
+function recurringOnlyRange(TOURNAMENTS) {
+  const all = monthRange(TOURNAMENTS.map(t => t.date));
+  if (!all) {
+    // data.js に日付つきトーナメントが1件も無い。起点が決められないので黙って何かを焼かない。
+    throw new Error('TOURNAMENTS が空です。定期開催のみの店舗に焼き込む期間を決められません。');
+  }
+  const [y, m] = all.from.split('-').map(Number);
+  const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  return {
+    from: all.from,
+    to: `${y}-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`,
+    label: `${y}年${m}月`
+  };
 }
 
-module.exports = { SCHEDULE_JS, SCHED, dataRange, hasSchedule };
+/**
+ * その店の静的ページに焼き込む期間。【店舗別】。
+ *   - 日付つきトーナメントがある店 … その店の日付の範囲(月単位に丸めたもの)。他店の影響を受けない
+ *   - 定期開催しか無い店           … recurringOnlyRange()(上記。全店の最古月に依存する点に注意)
+ *   - どちらも無い店               … null(焼き込む日程が無い。期間の見出しも出さない)
+ *
+ * 返り値の recurringOnly は「この期間はその店のデータから決まったものではなく、
+ * 定期開催を展開して見せるための代表期間である」という印。
+ * これが true のとき、期間を「◯月の掲載分です」と断定に使ってはいけない(上記の代償を参照)。
+ */
+function venueRange(TOURNAMENTS, RECURRING, venueId) {
+  const own = monthRange(TOURNAMENTS.filter(t => t.venueId === venueId).map(t => t.date));
+  if (own) return { ...own, recurringOnly: false };
+  if (RECURRING.some(r => r.venueId === venueId)) {
+    return { ...recurringOnlyRange(TOURNAMENTS), recurringOnly: true };
+  }
+  return null;
+}
+
+/**
+ * その店に掲載中の日程が1行でもあるか。
+ * 期間の決定ごとこの関数が持つ(呼び出し側が別々に期間を作ると基準がズレるため)。
+ * 実行日に依存しない(期間は data.js の日付そのものから決まる)。
+ */
+function hasSchedule(TOURNAMENTS, RECURRING, venueId) {
+  const range = venueRange(TOURNAMENTS, RECURRING, venueId);
+  if (!range) return false;
+  return SCHED.vpRows(TOURNAMENTS, RECURRING, venueId, range.from, range.to).length > 0;
+}
+
+module.exports = { SCHEDULE_JS, SCHED, monthRange, venueRange, hasSchedule };

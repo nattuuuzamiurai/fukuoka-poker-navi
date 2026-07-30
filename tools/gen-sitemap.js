@@ -34,7 +34,7 @@ const shell = require('./site-shell.js');
 const { SITE } = shell;
 // 「その店に掲載中の日程があるか」の判定は venue-schedule.js が所有する。
 // gen-venue-pages.js の title/description の分岐と同じ基準を使うため。
-const { dataRange, hasSchedule } = require('./venue-schedule.js');
+const { hasSchedule } = require('./venue-schedule.js');
 
 // URLごとの changefreq / priority。日付には依存させない(上記の理由)。
 const HOME = { freq: 'daily', pri: '1.0' };
@@ -69,9 +69,10 @@ function buildSitemap(REPO) {
   //   日程が1件でも入れば次の生成で自動的に載る(手当ては不要)。
   // 【判定の所有者】venue-schedule.js の hasSchedule()。gen-venue-pages.js の
   //   title/description の分岐とまったく同じ基準を使う(基準が分かれるとズレる)。
-  const RANGE = dataRange(DATA.TOURNAMENTS);
+  //   判定に使う期間も hasSchedule() の中(venueRange)で決まる。ここで期間を作って渡すと、
+  //   店舗別になった期間の作り方が2箇所に分かれて、また基準がズレる。
   DATA.VENUES
-    .filter(v => hasSchedule(DATA.TOURNAMENTS, DATA.RECURRING, v.id, RANGE))
+    .filter(v => hasSchedule(DATA.TOURNAMENTS, DATA.RECURRING, v.id))
     .forEach(v => urls.push({ loc: `${SITE}/venues/${v.slug}/`, ...VENUE }));
 
   return `<?xml version="1.0" encoding="UTF-8"?>
