@@ -96,7 +96,27 @@
 
   /* DATE STRIP (日付選択) */
   .dstrip-row{display:flex;align-items:stretch;gap:0;max-width:1000px;margin:0 auto;padding:10px 16px 4px}
-  .dstrip-month{flex:0 0 auto;display:flex;align-items:center;font-weight:800;color:var(--felt);font-size:.92em;padding-right:10px;margin-right:8px;border-right:1px solid var(--bor);white-space:nowrap}
+  /* 月の切り替え。ボタンの高さは日付チップより低く保つこと(この行の高さ＝下の見出しのY座標が変わるため)。
+     ドロップダウンは position:absolute なので、この wrap の外に overflow:hidden を足さないこと。 */
+  .dstrip-month-wrap{position:relative;flex:0 0 auto;display:flex;align-items:center;padding-right:10px;margin-right:8px;border-right:1px solid var(--bor)}
+  .dstrip-month{display:inline-flex;align-items:center;gap:5px;font-family:inherit;font-weight:800;color:var(--felt);font-size:.92em;white-space:nowrap;background:var(--sur);border:1px solid var(--bor);border-radius:20px;padding:5px 10px;line-height:1.25;cursor:pointer;outline:none}
+  .dstrip-month .dm-caret{font-size:.62em;color:var(--mut);line-height:1;transition:.13s}
+  .dstrip-month:focus-visible{border-color:var(--felt);box-shadow:0 0 0 3px rgba(15,61,46,.18)}
+  .dstrip-month[aria-expanded="true"]{background:var(--felt);border-color:var(--felt);color:#fff}
+  .dstrip-month[aria-expanded="true"] .dm-caret{color:#fff;transform:rotate(180deg)}
+  .dmonth-menu{position:absolute;top:calc(100% + 5px);left:0;z-index:45;display:block;min-width:118px;max-height:262px;overflow-y:auto;background:var(--sur);border:1px solid var(--bor);border-radius:12px;box-shadow:0 8px 22px rgba(30,20,5,.18);padding:5px}
+  .dmonth-menu[hidden]{display:none}
+  /* タップ領域は44px以上を確保する(iOS HIG の推奨値。42pxだと押しにくい)。
+     メニューは position:absolute なので、ここを変えても下の見出しのY座標には影響しない。 */
+  .dm-opt{display:flex;align-items:center;width:100%;min-height:44px;text-align:left;font-family:inherit;font-size:.9em;font-weight:700;color:var(--txt);background:none;border:0;border-radius:9px;padding:8px 14px;white-space:nowrap;cursor:pointer}
+  .dm-opt.on{background:var(--felt);color:#fff}
+  /* :hover は必ず hover 可能な環境だけに限定する。タッチ端末(iOS Safari)では
+     タップ後に hover 状態が居座り、他所を触るまで色が残って「選択中」に見えるため。 */
+  @media(hover:hover){
+    .dstrip-month:hover{border-color:var(--gold)}
+    .dm-opt:hover{background:#f1efe8}
+  }
+  .dm-opt:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
   .dstrip{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
   .dstrip::-webkit-scrollbar{height:0}
   .dchip{scroll-snap-align:start;flex:0 0 auto;width:44px;padding:6px 0 5px;border-radius:12px;border:1px solid var(--bor);background:var(--sur);text-align:center;cursor:pointer;transition:.13s;font-family:inherit}
@@ -556,7 +576,15 @@
 
 <div class="filters">
   <div class="dstrip-row">
-    <div class="dstrip-month" id="dstripMonth"></div>
+    <!-- 月の切り替え(社長指示・2026-07-30「7のところ押したら何月って選択できるように」)。
+         選択肢は ALL_TOURNAMENTS から自動導出する(buildMonthMenu)。月をハードコードしないこと。 -->
+    <div class="dstrip-month-wrap">
+      <button type="button" class="dstrip-month" id="dstripMonth"
+              aria-haspopup="listbox" aria-expanded="false" aria-controls="dstripMonthMenu">
+        <span id="dstripMonthLabel"></span><span class="dm-caret" aria-hidden="true">▼</span>
+      </button>
+      <div class="dmonth-menu" id="dstripMonthMenu" role="listbox" aria-label="表示する月を選ぶ" hidden></div>
+    </div>
     <div class="dstrip" id="dstrip"></div>
   </div>
   <div class="frow">
@@ -637,9 +665,10 @@
          permanentEventLinks())から作られ、`node tools/gen-event-pages.js <repo>` を実行すると
          この1行だけが差し替わる。以前は「静的ページは自動・トップは手作業」で分かれていたため、
          片方だけ直して片方を忘れる事故が2回起きた。ズレは `--check` を付けた実行で検出できる。
-       リンク先は featureUrl。静的ページを持つ大会は静的URL、持たない大会(FST)はハッシュURL。
+       リンク先は featureUrl(レジストリの値)。現時点では全4大会とも静的ページを持つ。
+         静的ページを持たない大会を足したときだけ、その大会はハッシュURL(/#xxx)になる。
        実行時には mountBigEventLinks() が同じ内容で描き直す(JSありの環境向けの二重の保険)。 -->
-  <div id="evtLinks" style="margin-top:2px">大会ページ: <a href="/events/wjpt-2026/">WJPT 2026</a>　|　<a href="/events/jopt-2026-fukuoka-01/">JOPT 2026 福岡</a>　|　<a href="/events/nippon-series-2026-fukuoka/">NIPPON SERIES 福岡 2026</a>　|　<a href="/#fst">FST 5.0 2026 福岡</a></div>
+  <div id="evtLinks" style="margin-top:2px">大会ページ: <a href="/events/wjpt-2026/">WJPT 2026</a>　|　<a href="/events/jopt-2026-fukuoka-01/">JOPT 2026 福岡</a>　|　<a href="/events/nippon-series-2026-fukuoka/">NIPPON SERIES 福岡 2026</a>　|　<a href="/events/fst-2026-fukuoka/">FST 5.0 2026 福岡</a></div>
   <!-- 大会特集は「開催中、無ければ次の大会」を1件だけ出す。
        中身は big-events.js の mountBigEventFooter() が入れる。該当が無ければ行ごと非表示。
        ★ここはトップのバナー(visibleBigEvents)とは判定条件が違うため、
@@ -792,8 +821,26 @@
     return out;
   }
   const addDays = (d,n) => { const x=new Date(d); x.setDate(x.getDate()+n); return x; };
-  // 一覧・店舗カードの「今後の開催件数」用に、今日から60日分だけ定期分を展開して結合しておく
+  // 店舗カードの「今後の開催件数」・FSTサテライト・月の選択肢の導出用に、
+  // 今日から60日分だけ定期分を展開して結合しておく。
+  // ★ 日付ストリップの一覧描画にこれを直接使わないこと。60日で切れているため、
+  //   選択できる月の後ろのほうの日が「開催が登録されているのに0件」に見える。
+  //   一覧は必ず monthTournaments() を通すこと(下のコメント参照)。
   const ALL_TOURNAMENTS = TOURNAMENTS.concat(expandRecurring(today, addDays(today, 60)));
+
+  // 指定した月(YYYY-MM)の全日ぶんのトーナメント。絶対日程 + その月に必要な範囲だけ展開した定期分。
+  // 定期分を展開する範囲は max(月初, 今日)〜月末:
+  //   - 今月      … 今日〜月末(過去の日に定期分を出さない従来の挙動を維持する)
+  //   - 未来の月  … 月初〜月末(60日の先で切れない)
+  //   - 過去の月  … 範囲が空になるので絶対日程のみ
+  // ALL_TOURNAMENTS(60日固定)と違い月ごとに引き直すので、どの月を選んでも欠けが出ない。
+  function monthTournaments(ym){
+    const y = Number(ym.slice(0,4)), m = Number(ym.slice(5,7));
+    const mStart = new Date(y, m-1, 1), mEnd = new Date(y, m, 0);
+    const from = mStart > today ? mStart : today;   // 今月は今日から。過去月は from > mEnd で空になる
+    return TOURNAMENTS.filter(t => t && typeof t.date === 'string' && t.date.slice(0,7) === ym)
+      .concat(expandRecurring(from, mEnd));
+  }
 
   // stats
   const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -809,18 +856,58 @@
   const localToday = `${y}-${m}-${dd}`;
   document.getElementById('stat-today').textContent = ALL_TOURNAMENTS.filter(t=>t.date===localToday).length;
 
-  const state = { selectedDate: localToday, area:'all', tag:'all' };
+  // state.month(YYYY-MM) = 日付ストリップに並べている月。既定は今月。
+  const state = { selectedDate: localToday, month: localToday.slice(0,7), area:'all', tag:'all' };
+
+  // ---- 月の切り替え(日付ストリップ左の「7月 ▼」) ----
+  // ★ 選択肢は ALL_TOURNAMENTS から自動導出する。月を書き並べない(データが増えれば選択肢も自動で増える)。
+  //   今月だけはデータが0件でも必ず入れる(「今日」に戻る導線を消さないため)。
+  //
+  // ★★ 不変条件: ここで選択肢に出した月は、monthTournaments(月) で【全日ぶん】のデータが
+  //   揃っていなければならない。選択肢に出す = 利用者がその月の全日を開ける、ということなので、
+  //   一部の日だけデータが欠けていると「開催が登録されているのに0件」と嘘を表示してしまう。
+  //   実際、一覧が ALL_TOURNAMENTS(今日から60日で打ち切り)を直接見ていたときに
+  //   9月末2日・10月30日ぶんが空表示になる不具合を出している。
+  //   選択肢を増やす/描画元を変えるときは、この不変条件が保てているか必ず確認すること。
+  const thisMonth = localToday.slice(0,7);
+  const thisYear = Number(localToday.slice(0,4));
+  const isYmd = d => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
+  function monthsWithData(){
+    const set = {};
+    ALL_TOURNAMENTS.forEach(t => { if (t && isYmd(t.date)) set[t.date.slice(0,7)] = true; });
+    set[thisMonth] = true;
+    return Object.keys(set).sort();
+  }
+  // 今年の月は「8月」、他の年は「2027年1月」と年を付けて区別する
+  function monthLabel(ym){
+    const y = Number(ym.slice(0,4)), m = Number(ym.slice(5,7));
+    return (y === thisYear ? '' : y + '年') + m + '月';
+  }
+  // 月を切り替えたときに選ぶ日。今月なら今日、他の月はその月で最初に開催がある日(1日が空でも中身のある画面になる)。
+  // 該当が無ければその月の1日。
+  function defaultDateOfMonth(ym){
+    if (ym === thisMonth) return localToday;
+    let first = null;
+    // 一覧と同じ monthTournaments() を見る。ALL_TOURNAMENTS だと60日で切れた月の
+    // 「最初の開催日」を取り違える(空の日を初期選択にしてしまう)。
+    monthTournaments(ym).forEach(t => {
+      if (t && isYmd(t.date) && t.date.slice(0,7) === ym && (first === null || t.date < first)) first = t.date;
+    });
+    return first || (ym + '-01');
+  }
 
   function inWhen(dateStr){
     return dateStr === state.selectedDate;
   }
 
   function buildDateStrip(){
-    // 今日を中心に、今月の1日〜末日だけを表示する(月をまたいだ前後の日付は出さない)
+    // state.month の1日〜末日だけを表示する(月をまたいだ前後の日付は出さない)
     const wrap = document.getElementById('dstrip');
-    const y0 = today.getFullYear(), m0 = today.getMonth();
+    const y0 = Number(state.month.slice(0,4)), m0 = Number(state.month.slice(5,7)) - 1;
     const lastDate = new Date(y0, m0+1, 0).getDate();
-    document.getElementById('dstripMonth').textContent = (m0+1) + '月';
+    document.getElementById('dstripMonthLabel').textContent = monthLabel(state.month);
+    document.getElementById('dstripMonth')
+      .setAttribute('aria-label', '表示する月: ' + monthLabel(state.month) + '（押すと他の月を選べます）');
     let html = '';
     for (let day=1; day<=lastDate; day++){
       const d = new Date(y0, m0, day);
@@ -833,8 +920,18 @@
       html += `<button type="button" class="${cls.join(' ')}" data-date="${dateStr}"><span class="dc-w">${WD[wd]}</span><span class="dc-d">${day}</span></button>`;
     }
     wrap.innerHTML = html;
+    // 今月は「今日」を中央に(従来どおり)。今日を含まない月では「選択中の日」を中央に。
+    // ★ ここで scrollIntoView() を使わないこと。
+    //   同メソッドは「順次フォーカスナビゲーションの開始点」をそのチップへ移してしまうため、
+    //   読み込み直後の最初の Tab が日付チップから始まってしまい、DOM上その手前にある
+    //   月ボタン(#dstripMonth)とヘッダーのロゴにキーボードで到達できなくなる(Chromiumで実測)。
+    //   横スクロール量を自分で出せば、見た目は同じまま、この副作用だけを避けられる
+    //   (端の日はブラウザ側が自動でクランプするので、中央に寄り切らないのは従来と同じ)。
     const centerChip = wrap.querySelector('.dchip.today') || wrap.querySelector('.dchip.on');
-    if (centerChip) centerChip.scrollIntoView({inline:'center', block:'nearest'});
+    if (centerChip) {
+      const sr = wrap.getBoundingClientRect(), cr = centerChip.getBoundingClientRect();
+      wrap.scrollLeft += (cr.left + cr.width/2) - (sr.left + sr.width/2);
+    }
   }
   function inTag(tags){
     if (state.tag==='all') return true;
@@ -843,7 +940,8 @@
   }
 
   function render(){
-    const rows = ALL_TOURNAMENTS
+    // 描画元は「選択中の月」の全日ぶん。ALL_TOURNAMENTS(60日で打ち切り)を使わないこと。
+    const rows = monthTournaments(state.month)
       .filter(t => inWhen(t.date))
       .filter(t => { const v=venueById[t.venueId]; return state.area==='all' || (v && v.area===state.area); })
       .filter(t => inTag(t.tags))
@@ -1284,6 +1382,8 @@
     organizer: '株式会社FST',
     x: 'https://x.com/fst_202408',
     instagram: 'https://www.instagram.com/fst_fukuoka/',
+    // 公式Xのプロフィールからリンクされている公式Linktree(URLのスペルは公式のまま。tounament は原文)
+    linktree: 'https://linktr.ee/fukuokasupertounament',
     asOf: '2026年7月29日',
     events: [
       { name:'MAIN EVENT', prize:'¥15,000,000',
@@ -1351,7 +1451,7 @@
       <div class="fst-sect">発表済みのトーナメント</div>
       ${cards}
       <div class="fst-links">
-        ▶ <a href="${FST.x}" target="_blank" rel="noopener">公式X（@fst_202408）</a>　／　<a href="${FST.instagram}" target="_blank" rel="noopener">公式Instagram</a>
+        ▶ <a href="${FST.x}" target="_blank" rel="noopener">公式X（@fst_202408）</a>　／　<a href="${FST.linktree}" target="_blank" rel="noopener">公式Linktree</a>　／　<a href="${FST.instagram}" target="_blank" rel="noopener">公式Instagram</a>
       </div>
       <div class="fst-sect">サイト内の今後のFSTサテライト</div>
       <p class="fst-sub">当サイトに登録されている、県内各店のFSTサテライト(チケット獲得トーナメント)の直近の開催予定です。開催内容は変更される場合があるため、参加前に各店舗の公式情報をご確認ください。</p>
@@ -1639,7 +1739,84 @@
   });
   selArea.addEventListener('change', e => { state.area = e.target.value; render(); });
   document.getElementById('sel-tag').addEventListener('change', e => { state.tag = e.target.value; render(); });
-  window.addEventListener('hashchange', route);
+  // ページを切り替えるときは月メニューを必ず閉じる。開いたまま別ページへ移ると
+  // aria-expanded="true" のまま残り、トップに戻ったときに開きっぱなしで見えるため。
+  window.addEventListener('hashchange', () => { closeMonthMenu(false); route(); });
+
+  // ---- 月の切り替えメニュー ----
+  // ネイティブ <select> ではなくボタン+ドロップダウンにしている。理由:
+  //   ①「7のところを押したら選べる」という指示どおり、日付ストリップの月表示そのものを押させたい
+  //   ② 選択肢は数個しかないので、OSのホイールピッカーより1タップで選び切れるほうが速い
+  //   ③ 開いている状態(アクティブな色・▼の反転)を自前で出せる
+  //   ④ aria-haspopup / aria-expanded を明示でき、キーボード操作も仕様どおりに書ける
+  // 大型イベントのバナー・大型一覧・フッターの大会特集は「今日」基準の別機能で、月の選択とは無関係。
+  const monthBtn = document.getElementById('dstripMonth');
+  const monthMenu = document.getElementById('dstripMonthMenu');
+  const monthMenuOpen = () => !monthMenu.hidden;
+  function buildMonthMenu(){
+    // 開くたびに作り直す(データを後から足しても選択肢が追従する)
+    monthMenu.innerHTML = monthsWithData().map(ym => {
+      const on = ym === state.month;
+      return `<button type="button" role="option" class="dm-opt${on?' on':''}" data-ym="${ym}"`
+        + ` aria-selected="${on}" tabindex="-1">${monthLabel(ym)}</button>`;
+    }).join('');
+  }
+  function openMonthMenu(){
+    buildMonthMenu();
+    monthMenu.hidden = false;
+    monthBtn.setAttribute('aria-expanded','true');
+    const cur = monthMenu.querySelector('.dm-opt.on') || monthMenu.querySelector('.dm-opt');
+    if (cur) cur.focus();
+  }
+  function closeMonthMenu(focusBack){
+    if (!monthMenuOpen()) return;
+    monthMenu.hidden = true;
+    monthBtn.setAttribute('aria-expanded','false');
+    if (focusBack) monthBtn.focus();
+  }
+  function selectMonth(ym){
+    closeMonthMenu(true);
+    if (!ym || ym === state.month) return;
+    state.month = ym;
+    state.selectedDate = defaultDateOfMonth(ym);
+    buildDateStrip();
+    render();
+  }
+  monthBtn.addEventListener('click', () => { monthMenuOpen() ? closeMonthMenu(false) : openMonthMenu(); });
+  monthBtn.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp'){ e.preventDefault(); if (!monthMenuOpen()) openMonthMenu(); }
+    else if (e.key === 'Escape') closeMonthMenu(false);
+  });
+  monthMenu.addEventListener('click', e => {
+    const b = e.target.closest ? e.target.closest('.dm-opt') : null;
+    if (b) selectMonth(b.dataset.ym);
+  });
+  monthMenu.addEventListener('keydown', e => {
+    const opts = Array.prototype.slice.call(monthMenu.querySelectorAll('.dm-opt'));
+    if (!opts.length) return;
+    const i = opts.indexOf(document.activeElement);
+    if (e.key === 'Escape'){ e.preventDefault(); closeMonthMenu(true); }
+    else if (e.key === 'ArrowDown'){ e.preventDefault(); (opts[i+1] || opts[0]).focus(); }
+    else if (e.key === 'ArrowUp'){ e.preventDefault(); (i > 0 ? opts[i-1] : opts[opts.length-1]).focus(); }
+    else if (e.key === 'Home'){ e.preventDefault(); opts[0].focus(); }
+    else if (e.key === 'End'){ e.preventDefault(); opts[opts.length-1].focus(); }
+    else if (e.key === 'Tab'){ closeMonthMenu(false); }   // フォーカスが外へ出るので閉じる(移動自体は妨げない)
+  });
+  // 外側クリックで閉じる。開いている間の「外側の1タップ」はメニューを閉じるためだけに使い、
+  // 下にある要素へは通さない(スクリムと同じ効果)。これが無いと、メニューを開いたまま
+  // 大型バナーをタップしたときに「閉じる」と「#jopt へ遷移」が同時に起きる。
+  // ★ キャプチャ段階で捕まえること。バブル段階だと、日付チップなど途中の要素の
+  //   クリック処理が先に走ってしまい止められない。
+  // ★ スクリム要素を置く方式は採らなかった。画面全体を覆う固定要素はメニューを開けている間
+  //   ページのスクロールまで奪ってしまい、z-index の積み直しも必要になるため。
+  document.addEventListener('click', e => {
+    if (!monthMenuOpen()) return;
+    const t = e.target;
+    if (t && t.closest && t.closest('.dstrip-month-wrap')) return;  // ボタン・選択肢は通常どおり処理する
+    e.preventDefault();
+    e.stopPropagation();
+    closeMonthMenu(false);
+  }, true);
 
   // 大型イベントのバナーは、掲載ウィンドウ(初日の14日前〜最終日の翌日)に入っているものを
   // すべて出す。0件のことも複数件のこともある(社長了承済み・big-events.js の説明を参照)。

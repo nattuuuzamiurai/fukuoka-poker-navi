@@ -2,7 +2,7 @@
 /**
  * gen-event-pages.js
  *
- * 検索流入用に、大型イベント(JOPT / WJPT / NIPPON SERIES)のクローラブルな静的ページを生成する。
+ * 検索流入用に、大型イベント(JOPT / WJPT / NIPPON SERIES / FST)のクローラブルな静的ページを生成する。
  * SPAのハッシュURL(#jopt 等)は個別ページとしてインデックスされないため、
  * /events/<slug>/index.html という実URLの静的ページを用意する。
  *
@@ -10,11 +10,13 @@
  *   - JOPT:          jopt-data.js (window.JOPT_DATA / module.exports)
  *   - WJPT:          index.html 内の const WJPT = {...} を抽出
  *   - NIPPON SERIES: nippon-series-data.js
+ *   - FST:           index.html 内の const FST = {...} を抽出
  *
  * 生成物:
  *   - events/jopt-2026-fukuoka-01/index.html
  *   - events/wjpt-2026/index.html
  *   - events/nippon-series-2026-fukuoka/index.html
+ *   - events/fst-2026-fukuoka/index.html
  *   - sitemap.xml (ホーム + 各イベントページ)
  *   - index.html の【恒久リンク行(#evtLinks)だけ】を上書き同期する
  *       … このスクリプトが index.html を触るのはこの1行だけ。他の箇所には一切手を出さない。
@@ -42,16 +44,19 @@ const JOPT = require(path.join(REPO, 'jopt-data.js'));
 const BIG = require(path.join(REPO, 'big-events.js'));
 const NIPPON = require(path.join(REPO, 'nippon-series-data.js'));
 
-function extractWJPT(indexHtml) {
-  const src = fs.readFileSync(indexHtml, 'utf8');
-  const m = src.match(/const WJPT = (\{[\s\S]*?\n  \});/);
-  if (!m) throw new Error('index.html から WJPT を抽出できませんでした');
-  // WJPT.days は big-events.js のレジストリを参照しているため、同じ関数を sandbox に渡す
+// index.html に直接書かれている大会データ(const WJPT / const FST)を、値を手打ちせずに取り出す。
+// 対象は「行頭から2スペース字下げの `};` で閉じるオブジェクトリテラル」= index.html の書式。
+// days は big-events.js のレジストリを参照しているため、同じ関数を sandbox に渡す。
+function extractConst(indexSrc, name) {
+  const m = indexSrc.match(new RegExp('const ' + name + ' = (\\{[\\s\\S]*?\\n  \\});'));
+  if (!m) throw new Error(`index.html から ${name} を抽出できませんでした`);
   const sandbox = { bigEventDays: BIG.bigEventDays };
   vm.createContext(sandbox);
   return vm.runInContext('(' + m[1] + ')', sandbox);
 }
-const WJPT = extractWJPT(path.join(REPO, 'index.html'));
+const INDEX_SRC = fs.readFileSync(path.join(REPO, 'index.html'), 'utf8');
+const WJPT = extractConst(INDEX_SRC, 'WJPT');
+const FST = extractConst(INDEX_SRC, 'FST');
 
 // ---- 共通ユーティリティ ----
 const esc = s => String(s == null ? '' : s)
@@ -124,6 +129,11 @@ ${JSON.stringify(jsonld, null, 2)}
   .disclaimer b{color:var(--txt)}
   .archived{font-size:.86em;line-height:1.7;color:#5b4a1e;background:#fbf1d8;border:1px solid #ecd9a6;border-radius:10px;padding:11px 13px;margin-bottom:14px}
   .archived b{color:#3a2a06}
+  /* 「まだ発表されていない」ことの告知(FST)。終了(.archived)と区別できる色にする */
+  .tba{font-size:.86em;line-height:1.7;color:#26424e;background:#eef6f8;border:1px solid #cfe3e9;border-radius:10px;padding:11px 13px;margin-bottom:14px}
+  .tba b{color:#14333d}
+  /* 大会バナー(当サイト作成)。狭い画面でも横幅いっぱいに収め、読み込み前後で高さが動かないようにする */
+  .evt-banner{display:block;width:100%;height:auto;aspect-ratio:1024/412;border-radius:var(--r);box-shadow:var(--sha);margin-bottom:14px}
   .cta{display:block;text-align:center;background:linear-gradient(135deg,var(--felt),var(--felt2));color:#fff;font-weight:800;text-decoration:none;border-radius:var(--r);padding:13px 16px;margin:6px 0 20px;box-shadow:var(--sha)}
   .cta small{display:block;font-weight:600;font-size:.8em;color:#cfe3dd;margin-top:3px}
   h2.day{font-size:1.05em;font-weight:800;color:var(--felt);margin:22px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--gold)}
@@ -135,6 +145,9 @@ ${JSON.stringify(jsonld, null, 2)}
   table.sched td.buyin{white-space:nowrap}
   table.sched tr:last-child td{border-bottom:none}
   table.sched .gtd{display:inline-block;background:#fbf1d8;border:1px solid #ecd9a6;color:#7a5711;font-size:.85em;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:5px}
+  /* 「項目 / 内容」形式(FST)。項目名は左の見出し列になる */
+  table.sched tbody th{width:1%;white-space:nowrap}
+  table.sched td.fst-prize{font-weight:800;color:var(--felt);font-variant-numeric:tabular-nums}
   .sched-wrap{overflow-x:auto}
   .links{font-size:.88em;line-height:2;margin:18px 0 8px}
   .links a{color:#0e6a72;font-weight:700}
@@ -456,12 +469,81 @@ ${schedTableNippon(NIPPON.events)}
   return pageHead({ title, desc, canonical, jsonld, image: 'img/nippon-series/nippon-series-banner.jpg' }) + body + pageFoot('/events/nippon-series-2026-fukuoka/');
 }
 
+// ---- FST 5.0 ページ ----
+// 個別トーナメント(タイムスケジュール・ストラクチャー)は未発表のため、
+// 会期・会場・発表済みの2大会(MAIN EVENT / CHAMPIONSHIP)の概要だけの薄いページ。
+// ★ ここに推測を足さないこと。値はすべて index.html の const FST(＝一次情報で裏取り済み)から取る。
+function buildFst() {
+  const canonical = `${SITE}/events/fst-2026-fukuoka/`;
+  const reg = BIG.bigEventById('fst');
+  const first = BIG.eventFirstDay(FST.days), last = BIG.eventLastDay(FST.days);
+  const f1 = fmtDate(first), f2 = fmtDate(last);
+  const main = FST.events[0];
+  const title = `FST 5.0（FUKUOKA SUPER TOURNAMENT）2026 福岡 開催概要（${f1.m}/${f1.d}〜${f2.m}/${f2.d} ホテルニューオータニ博多）| ふくおかポーカーナビ`;
+  const desc = `FST 5.0（FUKUOKA SUPER TOURNAMENT／2026年${f1.m}月${f1.d}日〜${f2.m}月${f2.d}日・ホテルニューオータニ博多）の開催概要。`
+    + `MAIN EVENT は Prize Total ${main.prize}、CHAMPIONSHIP は Prize Total ${FST.events[1].prize}。個別トーナメントの詳細は未発表です。`;
+  const jsonld = {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    "name": "FST 5.0 (FUKUOKA SUPER TOURNAMENT)",
+    "startDate": first,
+    "endDate": last,
+    "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+    "eventStatus": "https://schema.org/EventScheduled",
+    "location": {
+      "@type": "Place",
+      "name": "ホテルニューオータニ博多",
+      "address": { "@type": "PostalAddress", "streetAddress": "渡辺通1-1-2", "addressRegion": "福岡県", "addressLocality": "福岡市中央区", "postalCode": "810-0004", "addressCountry": "JP" }
+    },
+    "organizer": { "@type": "Organization", "name": FST.organizer, "url": FST.x },
+    "description": desc,
+    "url": canonical,
+    "isAccessibleForFree": false
+  };
+  // 発表済みの2大会。1大会=1テーブルの「項目 / 内容」形式にする。
+  // JOPT・NIPPON のような横並びの表にすると、エントリー欄(「¥50,000 ／ FSTチケット2枚 ／ …」)が
+  // 狭い画面で数文字ごとに折り返して読めなくなるため(375pxで実測)。
+  const tables = FST.events.map(e => `<h2 class="day">${esc(e.name)}</h2>
+<div class="sched-wrap"><table class="sched">
+  <tbody>
+    <tr><th>Prize Total</th><td class="fst-prize">${esc(e.prize)}</td></tr>
+    <tr><th>エントリー</th><td>${esc(e.entry)}</td></tr>
+${e.sched.map(([k, v]) => `    <tr><th>${esc(k)}</th><td class="start">${esc(v)}</td></tr>`).join('\n')}
+  </tbody>
+</table></div>`).join('\n');
+  const body = `
+<h1>FST 5.0（FUKUOKA SUPER TOURNAMENT）2026 福岡 開催概要</h1>
+<p class="lead">2026年${f1.m}月${f1.d}日（${f1.wd}）〜${f2.m}月${f2.d}日（${f2.wd}）／ホテルニューオータニ博多（福岡市中央区渡辺通）</p>
+<img class="evt-banner" src="/${esc(FST.banner)}" width="1024" height="412" alt="${esc(reg && reg.bannerAlt ? reg.bannerAlt : FST.name)}">
+<div class="evt-meta">
+  <b>大会名</b>　${esc(FST.edition)}（FUKUOKA SUPER TOURNAMENT）<br>
+  <b>会期</b>　2026年9月19日（土）・20日（日）・21日（月）・22日（火）・23日（水）の5日間<br>
+  <b>会場</b>　${esc(FST.venue)}<br>
+  <b>住所</b>　${esc(FST.address)}<br>
+  <b>主催</b>　${esc(FST.organizer)}<br>
+  <b>MAIN EVENT</b>　<span class="prize">Prize Total ${esc(main.prize)}</span>
+</div>
+<p class="lead" style="margin-top:-6px">※ 公式では「FST5.0」（スペースなし）とも表記されます。</p>
+<div class="tba"><b>個別トーナメントの詳細は未発表です。</b>タイムスケジュール・ブラインドストラクチャー・レイトレジ締切・サイドイベントの本数などは公表されていません。発表され次第、このページに掲載します。下表は現時点で公表されている MAIN EVENT と CHAMPIONSHIP の概要です。</div>
+<div class="disclaimer">当サイトはFSTの主催者・公式媒体ではありません。公開情報をもとに当サイトが独自に集約した<b>非公式のまとめ</b>です。掲載しているバナーは当サイトが作成したもので、ロゴ・大会名等の権利は主催者に帰属します。掲載内容は<b>${esc(FST.asOf)}時点</b>の公式告知にもとづきますが、当サイトによる転記の誤りが含まれる可能性があります。発表済みの内容も変更される場合があります。参加前に必ず<a href="${esc(FST.x)}" target="_blank" rel="noopener">公式X（@fst_202408）</a>等の公式情報をご確認ください。<br>${POSITIONING}</div>
+<a class="cta" href="/#fst">▶ サイト内のFSTサテライト（チケット獲得トーナメント）を見る<small>インタラクティブ版（日付・店舗つきで直近の開催予定を表示）</small></a>
+${tables}
+<p class="lead" style="margin-top:14px">※ エントリー方法の「FSTチケット」は、県内各店で開催されるサテライトで獲得できるチケットを指します。サテライトの開催予定は<a href="/#fst">トップページのFSTページ</a>に掲載しています。</p>
+<div class="links">
+  ▶ <a href="${esc(FST.x)}" target="_blank" rel="noopener">公式X（@fst_202408）</a>　／　<a href="${esc(FST.linktree)}" target="_blank" rel="noopener">公式Linktree</a>　／　<a href="${esc(FST.instagram)}" target="_blank" rel="noopener">公式Instagram</a><br>
+  ▶ <a href="/">福岡の他のポーカートーナメント日程を見る</a>
+</div>`;
+  return pageHead({ title, desc, canonical, jsonld, image: 'img/fst/fst-banner.jpg' }) + body + pageFoot('/events/fst-2026-fukuoka/');
+}
+
 // ---- sitemap ----
 function buildSitemap() {
   const urls = [
     { loc: `${SITE}/`, freq: 'daily', pri: '1.0' },
     { loc: `${SITE}/events/nippon-series-2026-fukuoka/`, freq: 'daily', pri: '0.8' },
     { loc: `${SITE}/events/jopt-2026-fukuoka-01/`, freq: 'daily', pri: '0.8' },
+    // FSTは個別トーナメントが未発表で、更新はレア。発表されたら daily / 0.8 に上げる。
+    { loc: `${SITE}/events/fst-2026-fukuoka/`, freq: 'weekly', pri: '0.7' },
     { loc: `${SITE}/events/wjpt-2026/`, freq: 'monthly', pri: '0.3' },
   ];
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -482,6 +564,7 @@ const files = {
   'events/jopt-2026-fukuoka-01/index.html': buildJopt(),
   'events/wjpt-2026/index.html': buildWjpt(),
   'events/nippon-series-2026-fukuoka/index.html': buildNippon(),
+  'events/fst-2026-fukuoka/index.html': buildFst(),
   'sitemap.xml': buildSitemap(),
   'index.html': buildIndexHtml()      // 恒久リンク行(#evtLinks)だけを差し替えたもの
 };
