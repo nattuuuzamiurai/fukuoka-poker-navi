@@ -1014,13 +1014,17 @@
     // 社長の指示によりトップ(ページ最上部)のまま開くよう廃止した(2026-07-23)。
   }
 
+  // トーナメント1件のカード。
+  // ★ t.name / t.tags / t.start は外部由来の文字列(店舗の告知テキスト・Waitinglist APIの自動取込)なので、
+  //   必ず escHtml() を通してから埋め込む。2026-07-30に日次の自動取込を入れて
+  //   「人のレビューを経ずに外部文字列が本番DOMに入る」経路ができたため、ここは信頼境界になっている。
   function renderTournamentCard(t, opts){
     const v = venueById[t.venueId] || {};
     const tags = [];
     if (t.guarantee) tags.push(`<span class="mtag gtd">GTD ${(t.guarantee/10000)}万</span>`);
     if (t.reentry) tags.push(`<span class="mtag re">${t.reentry==='late'?'レイト可':'リエントリー可'}</span>`);
-    (t.tags||[]).forEach(tg => tags.push(`<span class="mtag${tg==='大型'?' big':''}">${tg}</span>`));
-    if (t.stack) tags.push(`<span class="mtag">${t.stack.toLocaleString()}点</span>`);
+    (t.tags||[]).forEach(tg => tags.push(`<span class="mtag${tg==='大型'?' big':''}">${escHtml(tg)}</span>`));
+    if (t.stack) tags.push(`<span class="mtag">${escHtml(t.stack.toLocaleString())}点</span>`);
     if (t.lowConfidence) tags.push(`<span class="mtag lowconf">⚠ 要確認</span>`);
     const sns = [];
     if (v.x) sns.push(`<a class="ticon x" href="${v.x}" target="_blank" rel="noopener" aria-label="X（旧Twitter）"><svg viewBox="0 0 24 24" width="13" height="13" fill="#fff"><path d="M18.9 2H22l-7.6 8.7L23 22h-6.9l-5.4-6.6L4.6 22H1.5l8.1-9.3L1 2h7.1l4.9 6.1L18.9 2Zm-1.2 18h1.9L7.4 4H5.4l12.3 16Z"/></svg></a>`);
@@ -1029,15 +1033,15 @@
     const started = isStarted(t);
     // 店舗詳細ページでは会場名が見出しに出ているため、カード内の店舗表示は省略する
     const venueHtml = (opts && opts.hideVenue) ? ''
-      : `<div class="tc-venue"><span class="vpin" aria-hidden="true">📍</span><a href="#venue/${t.venueId}">${v.name||''}</a><span class="area">${v.area||''}</span></div>`;
+      : `<div class="tc-venue"><span class="vpin" aria-hidden="true">📍</span><a href="#venue/${encodeURIComponent(t.venueId||'')}">${escHtml(v.name||'')}</a><span class="area">${escHtml(v.area||'')}</span></div>`;
     return `<div class="tcard${v.featured?' feat':''}${started?' started':''}">
       <div class="tc-top">
-        <div class="tc-time"><b>${t.start||'不明'}</b><span>${started?'開始済み':'START'}</span></div>
+        <div class="tc-time"><b>${escHtml(t.start||'不明')}</b><span>${started?'開始済み':'START'}</span></div>
         <div class="tc-main">
-          <div class="tc-name">${t.name}</div>
+          <div class="tc-name">${escHtml(t.name)}</div>
           ${venueHtml}
         </div>
-        <div class="tc-buyin">${t.buyin?`<b>${fmt(t.buyin)}</b>`:((t.tags||[]).some(tg=>tg.includes('フリーロール'))?'<b class="free">フリーロール</b>':'<b class="unknown">詳細は店舗SNSを確認</b>')}<span>${t.addon?('+AO '+fmt(t.addon)):(t.stack?('STACK '+t.stack.toLocaleString()):'')}</span></div>
+        <div class="tc-buyin">${t.buyin?`<b>${escHtml(fmt(t.buyin))}</b>`:((t.tags||[]).some(tg=>tg.includes('フリーロール'))?'<b class="free">フリーロール</b>':'<b class="unknown">詳細は店舗SNSを確認</b>')}<span>${escHtml(t.addon?('+AO '+fmt(t.addon)):(t.stack?('STACK '+t.stack.toLocaleString()):''))}</span></div>
       </div>
       <div class="tc-meta">${tags.join('')}</div>
       <div class="tc-foot">
@@ -1048,7 +1052,7 @@
 
   function renderDateGroup(date, rows, opts){
     const d = iso(date), isToday = date === localToday;
-    let html = `<div class="dgroup" data-date="${date}">
+    let html = `<div class="dgroup" data-date="${escHtml(date)}">
       <div class="dlabel${isToday?' today':''}">
         <span class="dnum"><small>${d.getMonth()+1}月</small><b>${d.getDate()}</b></span>
         <span class="dw">${WD[d.getDay()]}曜日${isToday?' ・本日':''}</span>
@@ -1617,7 +1621,11 @@
   function parseHash(){
     const m = location.hash.match(/^#venue\/([^/]+)(?:\/(\d{4}-\d{2}))?$/);
     if (!m) return null;
-    return { venueId: m[1], month: m[2] || localToday.slice(0,7) };
+    // カード側は href を encodeURIComponent して書き出すので、読み取り側も対で decode する。
+    // venueIdが v\d+ の間は恒等変換だが、非ASCIIのIDが来たときに片側だけ壊れるのを防ぐ。
+    let venueId;
+    try { venueId = decodeURIComponent(m[1]); } catch { venueId = m[1]; }
+    return { venueId, month: m[2] || localToday.slice(0,7) };
   }
 
   // ページ(#page-xxx)とヘッダーバー(#hbar-xxx)は必ずこの関数だけで切り替える。
