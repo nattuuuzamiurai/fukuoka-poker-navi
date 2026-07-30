@@ -354,8 +354,8 @@ const VENUES = [
     "tel": "",
     "featured": false,
     "note": "2025/12開店。DJL(店内リーグ戦)・FPC・FSTサテライト・ミステリーバウンティ等を定期開催。「SUPER DOJO RING DAY」はリングゲーム企画のため掲載対象外。",
-    "sourceLabel": "",
-    "sourceUrl": ""
+    "sourceLabel": "X",
+    "sourceUrl": "https://x.com/dojofukuoka"
   },
   {
     "id": "v28",
@@ -11174,6 +11174,482 @@ const TOURNAMENTS = [
     "tags": [
       "ターボ"
     ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dj0801",
+    "venueId": "v27",
+    "name": "DJL 第1節",
+    "date": "2026-08-01",
+    "start": "14:00",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "リーグ"
+    ],
+    "source": "semi",
+    "verified": false,
+    "lowConfidence": true
+  },
+  {
+    "id": "dj0803",
+    "venueId": "v27",
+    "name": "トナメ1000",
+    "date": "2026-08-03",
+    "start": "19:00",
+    "buyin": 1000,
+    "addon": 1000,
+    "stack": 20000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dj0804",
+    "venueId": "v27",
+    "name": "ミステリーバウンティ",
+    "date": "2026-08-04",
+    "start": "19:00",
+    "buyin": 4000,
+    "addon": 4000,
+    "stack": 30000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "バウンティ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dj0805",
+    "venueId": "v27",
+    "name": "DJL 第2節",
+    "date": "2026-08-05",
+    "start": "19:00",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "リーグ"
+    ],
+    "source": "semi",
+    "verified": false,
+    "lowConfidence": true
+  },
+  {
+    "id": "dj0806",
+    "venueId": "v27",
+    "name": "FSTサテライト",
+    "date": "2026-08-06",
+    "start": "19:00",
+    "buyin": 3000,
+    "addon": 3000,
+    "stack": 20000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "サテライト",
+      "FST"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dj0808",
+    "venueId": "v27",
+    "name": "DJL 第3節",
+    "date": "2026-08-08",
+    "start": "14:00",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "リーグ"
+    ],
+    "source": "semi",
+    "verified": false,
+    "lowConfidence": true
+  },
+  {
+    "id": "dj0809",
+    "venueId": "v27",
+    "name": "モンスターディープスタック",
+    "date": "2026-08-09",
+    "start": "13:00",
+    "buyin": 5000,
+    "addon": null,
+    "stack": 100000,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "ディープ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dj0810",
+    "venueId": "v27",
+    "name": "トナメ1000",
+    "date": "2026-08-10",
+    "start": "19:00",
+    "buyin": 1000,
+    "addon": 1000,
+    "stack": 20000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dj0811",
+    "venueId": "v27",
+    "name": "ミステリーバウンティ",
+    "date": "2026-08-11",
+    "start": "19:00",
+    "buyin": 4000,
+    "addon": 4000,
+    "stack": 30000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "バウンティ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dj0812",
+    "venueId": "v27",
+    "name": "DJL 第4節",
+    "date": "2026-08-12",
+    "start": "19:00",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "リーグ"
+    ],
+    "source": "semi",
+    "verified": false,
+    "lowConfidence": true
+  },
+  {
+    "id": "dj0813",
+    "venueId": "v27",
+    "name": "FSTサテライト",
+    "date": "2026-08-13",
+    "start": "19:00",
+    "buyin": 3000,
+    "addon": 3000,
+    "stack": 20000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "サテライト",
+      "FST"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dj0815",
+    "venueId": "v27",
+    "name": "DJL 第5節",
+    "date": "2026-08-15",
+    "start": "14:00",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "リーグ"
+    ],
+    "source": "semi",
+    "verified": false,
+    "lowConfidence": true
+  },
+  {
+    "id": "dj0816",
+    "venueId": "v27",
+    "name": "モンスターディープスタック",
+    "date": "2026-08-16",
+    "start": "13:00",
+    "buyin": 5000,
+    "addon": null,
+    "stack": 100000,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "ディープ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dj0817",
+    "venueId": "v27",
+    "name": "THE DOJO ウルトラサテライト",
+    "date": "2026-08-17",
+    "start": "19:00",
+    "buyin": 2000,
+    "addon": 2000,
+    "stack": 20000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "サテライト"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dj0818",
+    "venueId": "v27",
+    "name": "ミステリーバウンティ",
+    "date": "2026-08-18",
+    "start": "19:00",
+    "buyin": 4000,
+    "addon": 4000,
+    "stack": 30000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "バウンティ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dj0819",
+    "venueId": "v27",
+    "name": "DJL 第6節",
+    "date": "2026-08-19",
+    "start": "19:00",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "リーグ"
+    ],
+    "source": "semi",
+    "verified": false,
+    "lowConfidence": true
+  },
+  {
+    "id": "dj0820",
+    "venueId": "v27",
+    "name": "FSTサテライト",
+    "date": "2026-08-20",
+    "start": "19:00",
+    "buyin": 3000,
+    "addon": 3000,
+    "stack": 20000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "サテライト",
+      "FST"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dj0822",
+    "venueId": "v27",
+    "name": "DJL 第7節",
+    "date": "2026-08-22",
+    "start": "14:00",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "リーグ"
+    ],
+    "source": "semi",
+    "verified": false,
+    "lowConfidence": true
+  },
+  {
+    "id": "dj0823",
+    "venueId": "v27",
+    "name": "モンスターディープスタック",
+    "date": "2026-08-23",
+    "start": "13:00",
+    "buyin": 5000,
+    "addon": null,
+    "stack": 100000,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "ディープ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dj0824",
+    "venueId": "v27",
+    "name": "DJL 第8節",
+    "date": "2026-08-24",
+    "start": "19:00",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "リーグ"
+    ],
+    "source": "semi",
+    "verified": false,
+    "lowConfidence": true
+  },
+  {
+    "id": "dj0825",
+    "venueId": "v27",
+    "name": "ミステリーバウンティ",
+    "date": "2026-08-25",
+    "start": "19:00",
+    "buyin": 4000,
+    "addon": 4000,
+    "stack": 30000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "バウンティ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dj0826",
+    "venueId": "v27",
+    "name": "DJL 第9節",
+    "date": "2026-08-26",
+    "start": "19:00",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "リーグ"
+    ],
+    "source": "semi",
+    "verified": false,
+    "lowConfidence": true
+  },
+  {
+    "id": "dj0827",
+    "venueId": "v27",
+    "name": "FSTサテライト",
+    "date": "2026-08-27",
+    "start": "19:00",
+    "buyin": 3000,
+    "addon": 3000,
+    "stack": 20000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "サテライト",
+      "FST"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dj0829",
+    "venueId": "v27",
+    "name": "DJL 第10節",
+    "date": "2026-08-29",
+    "start": "14:00",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "リーグ"
+    ],
+    "source": "semi",
+    "verified": false,
+    "lowConfidence": true
+  },
+  {
+    "id": "dj0830",
+    "venueId": "v27",
+    "name": "THE DOJO ULTRA",
+    "date": "2026-08-30",
+    "start": "13:00",
+    "buyin": 20000,
+    "addon": 10000,
+    "stack": 80000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "特別開催"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dj0831",
+    "venueId": "v27",
+    "name": "トナメ1000",
+    "date": "2026-08-31",
+    "start": "19:00",
+    "buyin": 1000,
+    "addon": 1000,
+    "stack": 20000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
     "source": "semi",
     "verified": false
   }
