@@ -1,11 +1,17 @@
 /* ============================================================
  * data.js — 福岡ポーカートーナメント・アグリゲーター データ層
  * 管理コンソール(admin.html)で生成。実データ(絶対日付)。
+ *
+ * VENUES の "slug" は店舗静的ページ(/venues/<slug>/)のURLそのものになる。
+ * ★ 一度公開した slug は変更しないこと(URLが変わって被リンク・検索順位を捨てることになる)。
+ * ★ 店舗を追加したら slug も付けること(ASCII小文字・数字・ハイフンのみ、全店で一意)。
+ *   付け忘れても気づけるよう、tools/gen-venue-pages.js が店名を挙げて異常終了する。
  * ============================================================ */
 
 const VENUES = [
   {
     "id": "v2",
+    "slug": "kkpoker-fukuoka",
     "name": "KKPOKER FUKUOKA",
     "area": "天神",
     "address": "福岡市中央区春吉3-21-19 ARBRE天神4F",
@@ -22,6 +28,7 @@ const VENUES = [
   },
   {
     "id": "v3",
+    "slug": "m-holdem-nakasu",
     "name": "m HOLD'EM 中洲",
     "area": "中洲",
     "address": "福岡市博多区中洲3-7-24 ゲイツビル3F",
@@ -38,6 +45,7 @@ const VENUES = [
   },
   {
     "id": "v4",
+    "slug": "onecasino-fukuoka-nakasu",
     "name": "ONECASINO 福岡中洲",
     "area": "中洲",
     "address": "福岡市博多区中洲4-7-7 中洲リッチビル2F",
@@ -54,6 +62,7 @@ const VENUES = [
   },
   {
     "id": "v5",
+    "slug": "casino-bar-leje-hakata",
     "name": "Casino bar Leje 博多店",
     "area": "中洲",
     "address": "福岡市博多区中洲3-7-10 若松ビル4F",
@@ -70,6 +79,7 @@ const VENUES = [
   },
   {
     "id": "v6",
+    "slug": "grand-mirage-poker",
     "name": "グランドミラージュポーカー",
     "area": "天神",
     "address": "福岡市中央区今泉1-17-16",
@@ -86,6 +96,7 @@ const VENUES = [
   },
   {
     "id": "v7",
+    "slug": "fuxk-fukuoka-tenjin",
     "name": "FUXK 福岡天神店",
     "area": "天神",
     "address": "福岡市中央区春吉3-21-18 2F",
@@ -102,6 +113,7 @@ const VENUES = [
   },
   {
     "id": "v8",
+    "slug": "raise-blue-tenjin",
     "name": "RAISE BLUE 天神",
     "area": "天神",
     "address": "",
@@ -118,6 +130,7 @@ const VENUES = [
   },
   {
     "id": "v9",
+    "slug": "casino-blow-nishi-nakasu",
     "name": "CASINO BLOW 西中洲",
     "area": "中洲",
     "address": "福岡市中央区西中洲1-21 GIOビル2F",
@@ -134,6 +147,7 @@ const VENUES = [
   },
   {
     "id": "v13",
+    "slug": "pokerbar-nuwland",
     "name": "PokerBar NUWLAND",
     "area": "北九州",
     "address": "北九州市小倉北区京町2-4-27 ロックビル3F",
@@ -150,6 +164,7 @@ const VENUES = [
   },
   {
     "id": "v14",
+    "slug": "triplebarrel-kokura",
     "name": "TripleBarrel 小倉店",
     "area": "北九州",
     "address": "北九州市小倉北区鍛治町1-7-4 鍛治町会館3F",
@@ -166,6 +181,7 @@ const VENUES = [
   },
   {
     "id": "v16",
+    "slug": "texas-holdem-3000",
     "name": "てきさすほーるでむ。",
     "area": "北九州",
     "address": "北九州市小倉南区北方2-24-1",
@@ -182,6 +198,7 @@ const VENUES = [
   },
   {
     "id": "v17",
+    "slug": "texas-holdem-aa",
     "name": "テキサスホールデムAA",
     "area": "北九州",
     "address": "北九州市小倉北区片野新町1-10-23 3F",
@@ -198,6 +215,7 @@ const VENUES = [
   },
   {
     "id": "v18",
+    "slug": "poker-bar-iris",
     "name": "Poker Bar IRIS",
     "area": "北九州",
     "address": "北九州市八幡西区黒崎2-6-3 2F",
@@ -214,6 +232,7 @@ const VENUES = [
   },
   {
     "id": "v19",
+    "slug": "casino-arrows-kokura",
     "name": "CASINO Arrows 小倉店",
     "area": "北九州",
     "address": "北九州市小倉北区堺町1-9-20 ナカノビル3F",
@@ -230,6 +249,7 @@ const VENUES = [
   },
   {
     "id": "v20",
+    "slug": "king-queen-suited-nogata",
     "name": "KING&QUEEN SUITED 直方店",
     "area": "筑豊",
     "address": "",
@@ -246,6 +266,7 @@ const VENUES = [
   },
   {
     "id": "v21",
+    "slug": "ken-poker-kurume",
     "name": "KENポーカー（久留米）",
     "area": "久留米",
     "address": "福岡県久留米市東町34-71",
@@ -262,6 +283,7 @@ const VENUES = [
   },
   {
     "id": "v22",
+    "slug": "crownclown-nakasu",
     "name": "CRownCLown（クラウンクラウン）",
     "area": "中洲",
     "address": "福岡県福岡市博多区中洲3-7-15 TM30 BUILDING 2F",
@@ -278,6 +300,7 @@ const VENUES = [
   },
   {
     "id": "v23",
+    "slug": "alice-the-poker-room",
     "name": "ALICE the Poker room（アリス）",
     "area": "天神",
     "address": "福岡県福岡市中央区渡辺通5-2-10 2F",
@@ -294,6 +317,7 @@ const VENUES = [
   },
   {
     "id": "v24",
+    "slug": "roots-fukuoka",
     "name": "ROOTS FUKUOKA",
     "area": "大名",
     "address": "福岡県福岡市中央区大名一丁目12-46 エムズクロス福岡大名6F",
@@ -310,6 +334,7 @@ const VENUES = [
   },
   {
     "id": "v25",
+    "slug": "seventwo-tenjin",
     "name": "72 -SevenTwo-",
     "area": "天神",
     "address": "福岡県福岡市中央区天神3-3-5-1 フルフルビル3F",
@@ -326,6 +351,7 @@ const VENUES = [
   },
   {
     "id": "v26",
+    "slug": "joker-fukuoka-ohashi",
     "name": "JOKER♠️ 福岡大橋",
     "area": "大橋",
     "address": "",
@@ -343,6 +369,7 @@ const VENUES = [
   },
   {
     "id": "v27",
+    "slug": "the-dojo-fukuoka",
     "name": "THE DOJO",
     "area": "大橋",
     "address": "福岡県福岡市南区大橋4-2-3 ライフビル2F",
@@ -359,6 +386,7 @@ const VENUES = [
   },
   {
     "id": "v28",
+    "slug": "casinox-fukuoka-imaizumi",
     "name": "CasinoX（カジノックス）福岡今泉店",
     "area": "今泉",
     "address": "福岡県福岡市中央区今泉1-10-15",
@@ -375,6 +403,7 @@ const VENUES = [
   },
   {
     "id": "v29",
+    "slug": "bon-nishi-nakasu",
     "name": "梵 bon 西中洲",
     "area": "西中洲",
     "address": "福岡県福岡市中央区西中洲1-21 6F",
@@ -391,6 +420,7 @@ const VENUES = [
   },
   {
     "id": "v30",
+    "slug": "aria-nakasu",
     "name": "ARIA 中洲",
     "area": "中洲",
     "address": "福岡県福岡市博多区中洲2-1-18",
@@ -407,6 +437,7 @@ const VENUES = [
   },
   {
     "id": "v32",
+    "slug": "bar-betty-nakasu",
     "name": "BAR BETTY（バーベティ）",
     "area": "中洲",
     "address": "福岡県福岡市博多区中洲2-6-20 2F",
@@ -423,6 +454,7 @@ const VENUES = [
   },
   {
     "id": "v33",
+    "slug": "poker-room-sky",
     "name": "Poker room SKY",
     "area": "博多",
     "address": "福岡県福岡市博多区美野島2-2-2 2F",
@@ -439,6 +471,7 @@ const VENUES = [
   },
   {
     "id": "v34",
+    "slug": "king-queen-suited-kurosaki",
     "name": "KING&QUEEN SUITED 黒崎店",
     "area": "北九州",
     "address": "福岡県北九州市八幡西区黒崎2-6-17 ケイズプレイス黒崎Ⅱ2F",
@@ -455,6 +488,7 @@ const VENUES = [
   },
   {
     "id": "v35",
+    "slug": "ace-and-king-kurume",
     "name": "A&K（Ace and King）",
     "area": "久留米",
     "address": "福岡県久留米市東町38-19 富田屋ビル3F",
@@ -471,6 +505,7 @@ const VENUES = [
   },
   {
     "id": "v36",
+    "slug": "musashi-poker-room-fukuoka",
     "name": "むさぽ福岡（MUSASHI POKER ROOM 福岡店）",
     "area": "大名",
     "address": "福岡県福岡市中央区大名1丁目3-29 Daimyo582 2階",
@@ -487,6 +522,7 @@ const VENUES = [
   },
   {
     "id": "v37",
+    "slug": "raftel-casino-fukuoka-imaizumi",
     "name": "RAFTEL CASINO（ラフテルカジノ 福岡今泉店）",
     "area": "今泉",
     "address": "福岡県福岡市中央区今泉1丁目23-4 新天神ビル301",
@@ -503,6 +539,7 @@ const VENUES = [
   },
   {
     "id": "v38",
+    "slug": "save-tenjin",
     "name": "アミューズメントバー SAVE天神店",
     "area": "天神",
     "address": "福岡県福岡市中央区天神3-6-16 オフィスニューガイアCRAIR 8F",
@@ -519,6 +556,7 @@ const VENUES = [
   },
   {
     "id": "v39",
+    "slug": "kaji-bar-kokura",
     "name": "KAJI BAR",
     "area": "北九州",
     "address": "福岡県北九州市小倉北区鍛冶町1-5-11 4F",
@@ -535,6 +573,7 @@ const VENUES = [
   },
   {
     "id": "v40",
+    "slug": "triplebarrel-orio",
     "name": "TripleBarrel 折尾店",
     "area": "北九州",
     "address": "福岡県北九州市八幡西区折尾1丁目14-10 2F",
@@ -551,6 +590,7 @@ const VENUES = [
   },
   {
     "id": "v41",
+    "slug": "poker-studio-deep-blue-yukuhashi",
     "name": "POKER Studio DEEP BLUE",
     "area": "京築",
     "address": "福岡県行橋市中央3丁目5-36 田町ビル3F",
