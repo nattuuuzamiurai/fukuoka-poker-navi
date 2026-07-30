@@ -101,15 +101,21 @@
   .dstrip-month-wrap{position:relative;flex:0 0 auto;display:flex;align-items:center;padding-right:10px;margin-right:8px;border-right:1px solid var(--bor)}
   .dstrip-month{display:inline-flex;align-items:center;gap:5px;font-family:inherit;font-weight:800;color:var(--felt);font-size:.92em;white-space:nowrap;background:var(--sur);border:1px solid var(--bor);border-radius:20px;padding:5px 10px;line-height:1.25;cursor:pointer;outline:none}
   .dstrip-month .dm-caret{font-size:.62em;color:var(--mut);line-height:1;transition:.13s}
-  .dstrip-month:hover{border-color:var(--gold)}
   .dstrip-month:focus-visible{border-color:var(--felt);box-shadow:0 0 0 3px rgba(15,61,46,.18)}
   .dstrip-month[aria-expanded="true"]{background:var(--felt);border-color:var(--felt);color:#fff}
   .dstrip-month[aria-expanded="true"] .dm-caret{color:#fff;transform:rotate(180deg)}
   .dmonth-menu{position:absolute;top:calc(100% + 5px);left:0;z-index:45;display:block;min-width:118px;max-height:262px;overflow-y:auto;background:var(--sur);border:1px solid var(--bor);border-radius:12px;box-shadow:0 8px 22px rgba(30,20,5,.18);padding:5px}
   .dmonth-menu[hidden]{display:none}
-  .dm-opt{display:flex;align-items:center;width:100%;min-height:42px;text-align:left;font-family:inherit;font-size:.9em;font-weight:700;color:var(--txt);background:none;border:0;border-radius:9px;padding:8px 14px;white-space:nowrap;cursor:pointer}
-  .dm-opt:hover{background:#f1efe8}
+  /* タップ領域は44px以上を確保する(iOS HIG の推奨値。42pxだと押しにくい)。
+     メニューは position:absolute なので、ここを変えても下の見出しのY座標には影響しない。 */
+  .dm-opt{display:flex;align-items:center;width:100%;min-height:44px;text-align:left;font-family:inherit;font-size:.9em;font-weight:700;color:var(--txt);background:none;border:0;border-radius:9px;padding:8px 14px;white-space:nowrap;cursor:pointer}
   .dm-opt.on{background:var(--felt);color:#fff}
+  /* :hover は必ず hover 可能な環境だけに限定する。タッチ端末(iOS Safari)では
+     タップ後に hover 状態が居座り、他所を触るまで色が残って「選択中」に見えるため。 */
+  @media(hover:hover){
+    .dstrip-month:hover{border-color:var(--gold)}
+    .dm-opt:hover{background:#f1efe8}
+  }
   .dm-opt:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
   .dstrip{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
   .dstrip::-webkit-scrollbar{height:0}
@@ -815,8 +821,26 @@
     return out;
   }
   const addDays = (d,n) => { const x=new Date(d); x.setDate(x.getDate()+n); return x; };
-  // 一覧・店舗カードの「今後の開催件数」用に、今日から60日分だけ定期分を展開して結合しておく
+  // 店舗カードの「今後の開催件数」・FSTサテライト・月の選択肢の導出用に、
+  // 今日から60日分だけ定期分を展開して結合しておく。
+  // ★ 日付ストリップの一覧描画にこれを直接使わないこと。60日で切れているため、
+  //   選択できる月の後ろのほうの日が「開催が登録されているのに0件」に見える。
+  //   一覧は必ず monthTournaments() を通すこと(下のコメント参照)。
   const ALL_TOURNAMENTS = TOURNAMENTS.concat(expandRecurring(today, addDays(today, 60)));
+
+  // 指定した月(YYYY-MM)の全日ぶんのトーナメント。絶対日程 + その月に必要な範囲だけ展開した定期分。
+  // 定期分を展開する範囲は max(月初, 今日)〜月末:
+  //   - 今月      … 今日〜月末(過去の日に定期分を出さない従来の挙動を維持する)
+  //   - 未来の月  … 月初〜月末(60日の先で切れない)
+  //   - 過去の月  … 範囲が空になるので絶対日程のみ
+  // ALL_TOURNAMENTS(60日固定)と違い月ごとに引き直すので、どの月を選んでも欠けが出ない。
+  function monthTournaments(ym){
+    const y = Number(ym.slice(0,4)), m = Number(ym.slice(5,7));
+    const mStart = new Date(y, m-1, 1), mEnd = new Date(y, m, 0);
+    const from = mStart > today ? mStart : today;   // 今月は今日から。過去月は from > mEnd で空になる
+    return TOURNAMENTS.filter(t => t && typeof t.date === 'string' && t.date.slice(0,7) === ym)
+      .concat(expandRecurring(from, mEnd));
+  }
 
   // stats
   const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -838,6 +862,13 @@
   // ---- 月の切り替え(日付ストリップ左の「7月 ▼」) ----
   // ★ 選択肢は ALL_TOURNAMENTS から自動導出する。月を書き並べない(データが増えれば選択肢も自動で増える)。
   //   今月だけはデータが0件でも必ず入れる(「今日」に戻る導線を消さないため)。
+  //
+  // ★★ 不変条件: ここで選択肢に出した月は、monthTournaments(月) で【全日ぶん】のデータが
+  //   揃っていなければならない。選択肢に出す = 利用者がその月の全日を開ける、ということなので、
+  //   一部の日だけデータが欠けていると「開催が登録されているのに0件」と嘘を表示してしまう。
+  //   実際、一覧が ALL_TOURNAMENTS(今日から60日で打ち切り)を直接見ていたときに
+  //   9月末2日・10月30日ぶんが空表示になる不具合を出している。
+  //   選択肢を増やす/描画元を変えるときは、この不変条件が保てているか必ず確認すること。
   const thisMonth = localToday.slice(0,7);
   const thisYear = Number(localToday.slice(0,4));
   const isYmd = d => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
@@ -857,7 +888,9 @@
   function defaultDateOfMonth(ym){
     if (ym === thisMonth) return localToday;
     let first = null;
-    ALL_TOURNAMENTS.forEach(t => {
+    // 一覧と同じ monthTournaments() を見る。ALL_TOURNAMENTS だと60日で切れた月の
+    // 「最初の開催日」を取り違える(空の日を初期選択にしてしまう)。
+    monthTournaments(ym).forEach(t => {
       if (t && isYmd(t.date) && t.date.slice(0,7) === ym && (first === null || t.date < first)) first = t.date;
     });
     return first || (ym + '-01');
@@ -907,7 +940,8 @@
   }
 
   function render(){
-    const rows = ALL_TOURNAMENTS
+    // 描画元は「選択中の月」の全日ぶん。ALL_TOURNAMENTS(60日で打ち切り)を使わないこと。
+    const rows = monthTournaments(state.month)
       .filter(t => inWhen(t.date))
       .filter(t => { const v=venueById[t.venueId]; return state.area==='all' || (v && v.area===state.area); })
       .filter(t => inTag(t.tags))
@@ -1705,7 +1739,9 @@
   });
   selArea.addEventListener('change', e => { state.area = e.target.value; render(); });
   document.getElementById('sel-tag').addEventListener('change', e => { state.tag = e.target.value; render(); });
-  window.addEventListener('hashchange', route);
+  // ページを切り替えるときは月メニューを必ず閉じる。開いたまま別ページへ移ると
+  // aria-expanded="true" のまま残り、トップに戻ったときに開きっぱなしで見えるため。
+  window.addEventListener('hashchange', () => { closeMonthMenu(false); route(); });
 
   // ---- 月の切り替えメニュー ----
   // ネイティブ <select> ではなくボタン+ドロップダウンにしている。理由:
@@ -1766,10 +1802,21 @@
     else if (e.key === 'End'){ e.preventDefault(); opts[opts.length-1].focus(); }
     else if (e.key === 'Tab'){ closeMonthMenu(false); }   // フォーカスが外へ出るので閉じる(移動自体は妨げない)
   });
-  document.addEventListener('click', e => {                // 外側クリックで閉じる
+  // 外側クリックで閉じる。開いている間の「外側の1タップ」はメニューを閉じるためだけに使い、
+  // 下にある要素へは通さない(スクリムと同じ効果)。これが無いと、メニューを開いたまま
+  // 大型バナーをタップしたときに「閉じる」と「#jopt へ遷移」が同時に起きる。
+  // ★ キャプチャ段階で捕まえること。バブル段階だと、日付チップなど途中の要素の
+  //   クリック処理が先に走ってしまい止められない。
+  // ★ スクリム要素を置く方式は採らなかった。画面全体を覆う固定要素はメニューを開けている間
+  //   ページのスクロールまで奪ってしまい、z-index の積み直しも必要になるため。
+  document.addEventListener('click', e => {
     if (!monthMenuOpen()) return;
-    if (!(e.target.closest && e.target.closest('.dstrip-month-wrap'))) closeMonthMenu(false);
-  });
+    const t = e.target;
+    if (t && t.closest && t.closest('.dstrip-month-wrap')) return;  // ボタン・選択肢は通常どおり処理する
+    e.preventDefault();
+    e.stopPropagation();
+    closeMonthMenu(false);
+  }, true);
 
   // 大型イベントのバナーは、掲載ウィンドウ(初日の14日前〜最終日の翌日)に入っているものを
   // すべて出す。0件のことも複数件のこともある(社長了承済み・big-events.js の説明を参照)。
