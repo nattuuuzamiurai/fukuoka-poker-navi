@@ -203,22 +203,35 @@ function buildVenue(v) {
   //   【判定に「今日」を使わない理由】実行日で分岐すると、データを1文字も触っていないのに
   //   翌日には --check が落ちる。判定は日付独立な RANGE 内の行数で行う。
   //   データ駆動なので、日程が1件入れば自動で通常の文面に戻る(将来の手当ては不要)。
-  const paren = `${v.area}${v.access ? '／' + v.access : ''}`;
+  // ★ 店名に既に「（エリア名）」が入っている店では、エリアを機械的に足すと二重になる。
+  //   例: 「KENポーカー（久留米）」+「（久留米）」→「KENポーカー（久留米）（久留米）」が
+  //   title / description / og:title / og:description の4箇所に出ていた(35件中1件)。
+  //   店名に含まれるエリア名を素通しで判定(v.name.includes(v.area))すると
+  //   「m HOLD'EM 中洲（中洲）」「RAISE BLUE 天神（天神）」等12件の文面まで変わってしまうため、
+  //   【括弧付きの同一表記】が既にあるときだけ足さない、という判定にしてある
+  //   (半角括弧の店名が来ても効くようにしている)。
+  const areaInName = v.name.includes(`（${v.area}）`) || v.name.includes(`(${v.area})`);
+  const titleName = areaInName ? v.name : `${v.name}（${v.area}）`;
+  // description の括弧は「エリア／アクセス」。エリアが店名に入っているならアクセスだけを残す。
+  const parenParts = [];
+  if (!areaInName) parenParts.push(v.area);
+  if (v.access) parenParts.push(v.access);
+  const descName = parenParts.length ? `${v.name}（${parenParts.join('／')}）` : v.name;
   let title, desc, sub;
   if (v.preopen) {
     // 未開店の店。営業中と読める文面を出さない(JSON-LDのLocalBusinessも出さない)。
-    title = `${v.name}（${v.area}）｜オープン予定のポーカースポット | ふくおかポーカーナビ`;
-    desc = `${v.name}（${paren}）はオープン予定のポーカースポットです。`
+    title = `${titleName}｜オープン予定のポーカースポット | ふくおかポーカーナビ`;
+    desc = `${descName}はオープン予定のポーカースポットです。`
       + `判明している開店時期と${v.address ? '所在地・' : ''}アクセス・公式SNSをまとめています。当サイトに掲載中の開催予定はまだありません。`;
     sub = `${esc(v.area)}のポーカースポット${v.access ? `（${esc(v.access)}）` : ''} — オープン予定`;
   } else if (rows.length) {
-    title = `${v.name}（${v.area}）のポーカートーナメント日程 | ふくおかポーカーナビ`;
-    desc = `${v.name}（${paren}）で開催されるポーカートーナメントの日程を日付順に掲載。`
+    title = `${titleName}のポーカートーナメント日程 | ふくおかポーカーナビ`;
+    desc = `${descName}で開催されるポーカートーナメントの日程を日付順に掲載。`
       + `開始時刻・バイイン・スタックのほか、${v.address ? '住所・' : ''}アクセス・公式SNSもまとめて確認できます。`;
     sub = `${esc(v.area)}のポーカースポット${v.access ? `（${esc(v.access)}）` : ''} — トーナメント日程・バイイン・アクセス`;
   } else {
-    title = `${v.name}（${v.area}）｜住所・アクセス・トーナメント開催情報 | ふくおかポーカーナビ`;
-    desc = `${v.name}（${paren}）の${v.address ? '住所・' : ''}アクセス・公式SNSをまとめています。`
+    title = `${titleName}｜住所・アクセス・トーナメント開催情報 | ふくおかポーカーナビ`;
+    desc = `${descName}の${v.address ? '住所・' : ''}アクセス・公式SNSをまとめています。`
       + `現時点で当サイトに掲載中の開催予定はありません。最新の開催情報は店舗の公式情報・SNSをご確認ください。`;
     sub = `${esc(v.area)}のポーカースポット${v.access ? `（${esc(v.access)}）` : ''} — 住所・アクセス・開催情報`;
   }
