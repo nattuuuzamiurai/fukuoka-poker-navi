@@ -887,8 +887,17 @@
     }
     wrap.innerHTML = html;
     // 今月は「今日」を中央に(従来どおり)。今日を含まない月では「選択中の日」を中央に。
+    // ★ ここで scrollIntoView() を使わないこと。
+    //   同メソッドは「順次フォーカスナビゲーションの開始点」をそのチップへ移してしまうため、
+    //   読み込み直後の最初の Tab が日付チップから始まってしまい、DOM上その手前にある
+    //   月ボタン(#dstripMonth)とヘッダーのロゴにキーボードで到達できなくなる(Chromiumで実測)。
+    //   横スクロール量を自分で出せば、見た目は同じまま、この副作用だけを避けられる
+    //   (端の日はブラウザ側が自動でクランプするので、中央に寄り切らないのは従来と同じ)。
     const centerChip = wrap.querySelector('.dchip.today') || wrap.querySelector('.dchip.on');
-    if (centerChip) centerChip.scrollIntoView({inline:'center', block:'nearest'});
+    if (centerChip) {
+      const sr = wrap.getBoundingClientRect(), cr = centerChip.getBoundingClientRect();
+      wrap.scrollLeft += (cr.left + cr.width/2) - (sr.left + sr.width/2);
+    }
   }
   function inTag(tags){
     if (state.tag==='all') return true;
