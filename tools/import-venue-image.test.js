@@ -82,6 +82,39 @@ test('importVenueImage: Vision抽出結果をsemi/verified:falseでdata.jsにmer
   }
 });
 
+// 規則の所有者は tools/validate-data.js の1つ、呼び出し側は3つ(このCLI / Instagram監視 / ゲート)。
+// 3つ目の呼び出し側でも「不正な行だけが落ちる」ことを1件だけ確かめておく
+// (ここの検査を外しても全スイートが緑のままだと、静かに退化していても気づけない)。
+test('importVenueImage: 不正な行(日付書式・id重複)だけを捨て、正しい行は取り込む', async () => {
+  const dataJsPath = path.join(os.tmpdir(), `data-test-${Date.now()}-${Math.random().toString(36).slice(2)}.js`);
+  fs.writeFileSync(dataJsPath, 'const VENUES = [];\nconst TOURNAMENTS = [\n];\nconst AREAS = [];\n');
+  try {
+    const good = { date: '2026-09-10', start: '19:00', name: 'テストトナメ', buyin: 3000 };
+    const fakeVisionLib = {
+      async extractTournaments() {
+        return [
+          good,
+          { ...good },                                             // id重複
+          { date: '2026-9-11', start: '19:00', name: 'ゼロ埋めなし' }, // 日付書式
+          { date: '2026-09-12', start: '7pm', name: '時刻が読めない' },  // start書式
+          { date: '2026-09-13', start: '19:00', name: 'カンマ金額', buyin: '3,500' }, // NaN
+        ];
+      },
+    };
+    const result = await importer.importVenueImage(
+      { venueId: 'v40', imageBuffer: Buffer.from('fake'), dryRun: false, dataJsPath, today: TODAY },
+      { visionLib: fakeVisionLib, mergeLib: merge }
+    );
+    assert.equal(result.tournaments.length, 1, '正しい1件だけが取り込まれる');
+    const { arr } = merge.readDataJs(dataJsPath);
+    assert.equal(arr.length, 1);
+    assert.equal(arr[0].name, 'テストトナメ');
+    assert.equal(new Set(arr.map((t) => t.id)).size, arr.length, 'idが重複していないこと');
+  } finally {
+    fs.unlinkSync(dataJsPath);
+  }
+});
+
 test('importVenueImage: Vision抽出が0件なら例外を投げ、data.jsは書き換えない', async () => {
   const dataJsPath = path.join(os.tmpdir(), `data-test-${Date.now()}-${Math.random().toString(36).slice(2)}.js`);
   fs.writeFileSync(dataJsPath, 'const VENUES = [];\nconst TOURNAMENTS = [];\nconst AREAS = [];\n');
@@ -107,7 +140,13 @@ test('importVenueImage: Vision抽出が0件なら例外を投げ、data.jsは書
 // アクセスする前に安全に止まり、data.js を一切書き換えないことを確認する。
 
 const TOOLS_DIR = __dirname;
-const FILES_TO_COPY = ['import-venue-image.js', 'tournament-merge.js', 'venue-schedule-vision.js', 'instagram-oembed.js'];
+const FILES_TO_COPY = [
+  'import-venue-image.js',
+  'tournament-merge.js',
+  'venue-schedule-vision.js',
+  'instagram-oembed.js',
+  'validate-data.js',
+];
 
 function makeTempRepoRoot() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'import-venue-image-cli-'));

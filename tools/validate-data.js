@@ -37,6 +37,13 @@
  *     YAML の引用符の都合(シングルクォートで囲むのでJS側にシングルクォートを書けない)で
  *     読めない代物になる。
  *   - テストできる(tools/validate-data.test.js)。人が手元でも同じものを走らせられる。
+ *
+ * 【このファイルが「日付の判定そのもの」も持つ理由(2026-07-31追加)】
+ * 同じ判定を、data.js に入った【後】(このCLI)と入れる【前】(Vision抽出側 —
+ * tools/monitor-instagram-apify.js / tools/import-venue-image.js)の両方が使う。
+ * 二重に書けば必ず片方が古くなるので、規則の所有者はこのファイル1つに寄せ、
+ * 抽出側は `dateProblem` / `extractedRowProblem` を require して使う。
+ * (CLIとして起動されたときだけ main() を走らせるので、require しても副作用は無い)
  */
 
 'use strict';
@@ -53,6 +60,17 @@ const MAX_LIST = 20;
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
+// 開始時刻。ゼロ埋めの HH:MM のみ許す。
+// 日付と同じくゼロ埋めを要求するのは、(1) start が id の構成要素であること
+// (`ig-v18-2026-09-12-1900-nlh`)、(2) 同じ日の中の並び順を start の文字列比較で決めているため
+// `9:00` が `19:00` より後ろに来てしまうこと、の2つの実害があるため。
+const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+// Tournament スキーマのうち、数値として data.js に入るフィールド。
+// Vision が `"3,500"` や `"20k"` を返すと Number() が NaN になり、JSON化で null に化けて
+// 【価格情報が無言で消える】。そのため NaN になる値は取り込まずに破棄理由として出す。
+const NUMERIC_FIELDS = ['buyin', 'addon', 'stack', 'guarantee'];
+
 function fail(lines) {
   for (const line of [].concat(lines)) console.error(line);
   process.exit(1);
@@ -66,11 +84,94 @@ function where(t) {
   return `venueId=${venueId} / id=${id} / name=${name}`;
 }
 
-/** YYYY-MM-DD の文字列が実在する日付か(2026-02-31 のような値を弾く) */
+/**
+ * YYYY-MM-DD の文字列が実在する日付か(2026-02-31 のような値を弾く)。
+ * ISO_DATE を通った文字列にだけ使うこと(前後の空白等は ISO_DATE 側のアンカーで弾かれる前提)。
+ */
 function isRealDate(s) {
   const [y, m, d] = s.split('-').map(Number);
   const dt = new Date(Date.UTC(y, m - 1, d));
   return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
+}
+
+/**
+ * date として受け付けられない値かどうかを判定する【唯一の定義】。
+ *   'format'   … YYYY-MM-DD(ゼロ埋め)ではない(`2026-9-5` / `9/5` / `2026-07-01T00:00:00Z` / 空 / undefined)
+ *   'calendar' … 書式は合っているが存在しない日付(`2026-02-31`)
+ *   null       … 問題なし
+ * @param {*} value
+ * @returns {'format'|'calendar'|null}
+ */
+function dateProblem(value) {
+  const s = String(value);
+  if (!ISO_DATE.test(s)) return 'format';
+  if (!isRealDate(s)) return 'calendar';
+  return null;
+}
+
+/**
+ * Vision(LLM)が返した抽出結果1件を data.js に入れてよいかを判定する【1行だけを見る検査】。
+ * 駄目なら【ログにそのまま出せる日本語の理由】、問題なければ null を返す。
+ *
+ * 【この関数が保証する範囲 — 誤解しないこと】
+ * 日付については、data.js に入った後の最終ゲート(このファイルの main)と同じ `dateProblem` を
+ * 使うのでズレない(「抽出側は通すのにコミット前ゲートで落ちる=その日のジョブが丸ごと止まる」が起きない)。
+ * **ただしゲートは日付以外に id重複・件数も見る。それらは1行だけでは判定できないので、この関数には
+ * 入っていない。行を跨ぐ検査(id重複)は `duplicateIdProblem` を呼び出し側が使って別途担保すること。**
+ * (実際、id重複を層2で見ていなかったために「Visionが同じ行を2回返す → ゲートで落ちる →
+ *  状態が進まない → 翌日も同じ所で止まる」という、まさに塞ぎたかった失敗モードが残っていた)
+ *
+ * @param {*} t Vision抽出の素の1件
+ * @returns {string|null}
+ */
+function extractedRowProblem(t) {
+  if (!t || typeof t !== 'object') return '抽出結果がオブジェクトではない';
+  if (!t.name || !String(t.name).trim()) return '大会名が読み取れない(name が空)';
+  if (!t.date) return '日付が読み取れない(date が空)';
+  const problem = dateProblem(t.date);
+  if (problem === 'format') return '日付が YYYY-MM-DD(ゼロ埋め)ではない';
+  if (problem === 'calendar') return '存在しない日付';
+  // start は省略可(取込み側が '00:00' を既定値にする)。値があるなら HH:MM だけ許す。
+  if (t.start != null && String(t.start).trim() !== '' && !HHMM.test(String(t.start))) {
+    return `開始時刻が HH:MM(ゼロ埋め)ではない(start=${JSON.stringify(String(t.start))})`;
+  }
+  for (const field of NUMERIC_FIELDS) {
+    const v = t[field];
+    if (v == null) continue; // null/undefined は「読み取れなかった」の正しい表現
+    if (String(v).trim() === '' || Number.isNaN(Number(v))) {
+      return `${field} が数値として読めない(${field}=${JSON.stringify(v)})`;
+    }
+  }
+  return null;
+}
+
+/**
+ * 【行を跨ぐ検査】同じ id のエントリが二重に生まれないか。
+ * `extractedRowProblem` は1行だけを見るのでここは分けてある。呼び出し側が
+ * 「今回の取込みで既に採用した id の集合」を持って1件ずつ呼ぶこと。
+ *
+ * 【なぜ必要か】id は `ig-<venue>-<date>-<start>-<slug(name)>` で組み立てるため、
+ * Visionが同じ行を2回返す/同じ日・同じ大会名で start が読めなかった2行(どちらも既定の '00:00')が
+ * あると衝突する。放置すると data.js の id が重複し、コミット前ゲートが落ちて
+ * apify-monitor-state.json が進まず、翌日も同じ投稿から再試行して同じ所で止まる。
+ *
+ * @param {{id:string,date:string,start:string}} entry これから採用しようとしているエントリ
+ * @param {Set<string>} usedIds 今回の取込みで既に採用した id
+ * @param {Map<string,string>|null} [existingIdSlots] data.js 側の id → `${date} ${start}`。
+ *   mergeStore は (date,start) が一致する既存エントリしか置き換えないので、
+ *   「同じidだがスロットが違う」既存があると両方残って重複する(人が admin.html で
+ *   日時だけ直した場合などに起こりうる)。渡さなければこの検査は省略される。
+ * @returns {string|null}
+ */
+function duplicateIdProblem(entry, usedIds, existingIdSlots) {
+  if (usedIds && usedIds.has(entry.id)) {
+    return `同じidの行が重複(date/start/nameが同一。id=${entry.id})`;
+  }
+  const slot = `${entry.date} ${entry.start}`;
+  if (existingIdSlots && existingIdSlots.has(entry.id) && existingIdSlots.get(entry.id) !== slot) {
+    return `既存エントリと id が衝突(既存は ${existingIdSlots.get(entry.id)} / id=${entry.id})`;
+  }
+  return null;
 }
 
 function listOf(entries, render) {
@@ -127,9 +228,9 @@ function main() {
     ]);
   }
 
-  // 4. 日付書式(このゲートの本命)
-  const badFormat = tournaments.filter(t => !ISO_DATE.test(String(t && t.date)));
-  const badCalendar = tournaments.filter(t => ISO_DATE.test(String(t && t.date)) && !isRealDate(String(t.date)));
+  // 4. 日付書式(このゲートの本命)。判定は dateProblem 1本(抽出側と同じもの)。
+  const badFormat = tournaments.filter(t => dateProblem(t && t.date) === 'format');
+  const badCalendar = tournaments.filter(t => dateProblem(t && t.date) === 'calendar');
   if (badFormat.length || badCalendar.length) {
     const lines = [`[validate-data] 日付が YYYY-MM-DD(ゼロ埋め)ではありません: ${badFormat.length + badCalendar.length}件`];
     if (badFormat.length) {
@@ -145,7 +246,16 @@ function main() {
       '   (1) 店舗静的ページの再生成(tools/gen-venue-pages.js)が落ち、日次の自動取込が止まります',
       '   (2) 公開サイトの一覧は日付文字列の辞書順で並ぶため、9月の大会が2027年の大会より後ろに出ます',
       '  直し方: 上の venueId / id / name のエントリの date を YYYY-MM-DD に直す。',
-      '  LLM(Vision)抽出由来(source が semi で id が自動採番)なら、元のInstagram投稿の日付も確認すること。'
+      '  LLM(Vision)抽出由来(source が semi で id が自動採番)なら、元のInstagram投稿の日付も確認すること。',
+      '',
+      '  ★ Instagram監視のジョブ(.github/workflows/monitor-instagram-apify.yml)で落ちた場合は',
+      '    リポジトリの data.js を検索しても見つかりません。この行はランナー上の作業コピーにしか',
+      '    存在せず、コミットされずに破棄されるためです(=公開はされていない)。',
+      '    直す対象は data.js ではなく、抽出側(tools/monitor-instagram-apify.js)です。',
+      '    抽出側には不正な行だけを捨てる検査(同じ tools/validate-data.js の extractedRowProblem)が',
+      '    入っているので、ここまで届いたということはその検査に穴があります。',
+      '    その投稿を取り込み直したいときは apify-monitor-state.json の lastPostedAt を戻すか、',
+      '    `node tools/import-venue-image.js --venue <id> --instagram-url <投稿URL>` で手動取込みします。'
     );
     fail(lines);
   }
@@ -153,4 +263,9 @@ function main() {
   console.log(`[validate-data] OK: TOURNAMENTS ${tournaments.length}件 / id重複なし / 日付はすべて YYYY-MM-DD(実在する日付)`);
 }
 
-main();
+// CLIとして起動されたときだけ検査を走らせる。
+// (抽出側が dateProblem / extractedRowProblem を require するため。require で main() が
+//  走ると「引数が無い」で即 exit(1) してしまう)
+if (require.main === module) main();
+
+module.exports = { ISO_DATE, HHMM, isRealDate, dateProblem, extractedRowProblem, duplicateIdProblem };
