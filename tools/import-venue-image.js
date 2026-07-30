@@ -44,6 +44,10 @@
 const fs = require('fs');
 const path = require('path');
 
+// 「data.js に入れてよい行か」の判定は、コミット前ゲート(tools/validate-data.js)および
+// Instagram監視(tools/monitor-instagram-apify.js)と同じものを使う。判定を書き分けない。
+const { extractedRowProblem } = require('./validate-data');
+
 const REPO_ROOT = path.join(__dirname, '..');
 const DATA_JS = path.join(REPO_ROOT, 'data.js');
 
@@ -109,12 +113,23 @@ async function importVenueImage(opts, libs) {
     mediaType: opts.mediaType,
   });
 
-  const tournaments = (Array.isArray(raw) ? raw : [])
-    .filter((t) => t && t.date && t.name)
-    .map((t) => toTournament(t, opts.venueId));
+  // 不正な行(日付が YYYY-MM-DD でない等)はその行だけを捨て、残りは取り込む。
+  // 捨てた行は必ずログに出す(このCLIは人が見ながら実行するので、黙って減ると読み取り漏れに気づけない)。
+  const tournaments = [];
+  for (const t of Array.isArray(raw) ? raw : []) {
+    const reason = extractedRowProblem(t);
+    if (reason) {
+      console.warn(
+        `[import-venue-image] 抽出結果を1件破棄しました: ${reason}` +
+          ` / venueId=${opts.venueId} / date=${JSON.stringify(t && t.date)} / name=${JSON.stringify(t && t.name)}`
+      );
+      continue;
+    }
+    tournaments.push(toTournament(t, opts.venueId));
+  }
 
   if (!tournaments.length) {
-    throw new Error('Vision抽出結果が0件でした(告知画像ではなかった可能性があります)。');
+    throw new Error('Vision抽出結果が0件でした(告知画像ではなかった、または抽出結果がすべて不正だった可能性があります)。');
   }
 
   if (opts.dryRun) {

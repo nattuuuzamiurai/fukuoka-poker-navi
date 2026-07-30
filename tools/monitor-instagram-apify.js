@@ -14,6 +14,8 @@
  *      tools/venue-schedule-vision.js でTournamentデータへ抽出する(簡易キーワード判定。
  *      取りこぼしより誤検知の方が実害が小さいため広めに拾う。実際にトーナメント情報が読み取れるかは
  *      後段のVision抽出が0件かどうかで最終判断される)
+ *   3.5 抽出結果を1行ずつ検査し、`data.js` に入れてはいけない値(日付が YYYY-MM-DD でない等)の
+ *      行【だけ】を捨てる(tools/validate-data.js の extractedRowProblem。詳細は下記)
  *   4. 抽出結果を tools/tournament-merge.js で `data.js` へ安全にupsertする
  *      (`source: 'semi', verified: false`。PR #11(import-waitinglist.js)・PR #14と同じ安全設計:
  *       対象venue以外・過去日には一切触れない、書き込み前に自己チェック、失敗時は書き換えない)
@@ -41,12 +43,32 @@
  * そのため`source: 'semi'`(tools/import-venue-image.jsと同じ、「対応する(date,start)が無いものは残す」
  * 規則)を使う。これにより複数投稿にまたがる日程が積み上がっていき、店舗側の告知投稿が消えたり
  * 日程自体が中止・変更されたりした場合は、admin.html等で人手による整理が必要になる。
+ *
+ * 【抽出結果の検査を「不正な行だけ捨てる」形にしている理由(2026-07-31追加)】
+ * Vision(LLM)は `2026-9-5` / `9/5` / `2026-07-01T00:00:00Z` のような日付を返し得る。
+ * この値が `data.js` に入ると公開サイトの並び順が壊れ、翌朝以降の静的ページ再生成も落ちる。
+ * ただし【ここで例外を投げてジョブごと落としてはいけない】。この関数は6店ぶんを1つの配列に
+ * 積み上げて最後に一度だけ書き出すので、1店の1件で落とすと `apify-monitor-state.json` が進まず、
+ * 翌日も6店すべてが同じ投稿から再試行して同じ所で落ちる(=パイプラインが永久に止まる)。
+ * しかも落ちた行はランナー上の作業コピーにしか無く、当番がリポジトリで直せる対象が存在しない。
+ * そのため「不正な行だけを捨て、残りは取り込み、状態は前進させる」。捨てた行は
+ * 店・投稿・値がわかる形でログに出し、Visionの抽出品質を人が測れるようにする。
+ *
+ * 【捨てすぎ(投稿まるごと不採用)を異常として扱う理由】
+ * ある投稿から抽出した行が1件以上あるのに1件も採用できなかった場合、その投稿の内容は
+ * サイトのどこにも残らず、しかも確認済み投稿日時が進むので【二度と再試行されない】。
+ * 静かに捨てると誰も気づけないため、ジョブは止めない代わりに ::error:: 注記で目立たせ、
+ * 手動取込み(tools/import-venue-image.js --instagram-url)の導線をログに出す。
  */
 
 'use strict';
 
 const fs = require('fs');
 const path = require('path');
+
+// 「data.js に入れてよい日付か」の判定はコミット前ゲート(tools/validate-data.js)と同じものを使う。
+// 二重に書くと必ず片方が古くなり、「抽出側は通すのにゲートで落ちる=ジョブが毎日止まる」ズレが生じる。
+const { extractedRowProblem } = require('./validate-data');
 
 const REPO_ROOT = path.join(__dirname, '..');
 const DATA_JS = path.join(REPO_ROOT, 'data.js');
@@ -164,6 +186,20 @@ function toTournament(t, venueId) {
   };
 }
 
+/**
+ * 破棄した抽出行1件を、人が追跡できる1行のログにする。
+ * 「どの店の・どの投稿の・どんな値だったか」が揃っていないとVisionの抽出品質を測れないので、
+ * 理由 / 店 / 投稿URL / 投稿日時 / 実際の date と name をすべて出す。
+ */
+function formatDroppedRow(store, post, row, reason) {
+  return (
+    `[monitor-instagram-apify] 抽出結果を1件破棄しました: ${reason}` +
+    ` / 店=${store.label}(${store.venueId})` +
+    ` / 投稿=${post.permalink}(${post.postedAt})` +
+    ` / date=${JSON.stringify(row && row.date)} / name=${JSON.stringify(row && row.name)}`
+  );
+}
+
 async function downloadImage(url) {
   const res = await fetch(url, { signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
   if (res.status !== 200) throw new Error(`画像取得に失敗しました(HTTP ${res.status})`);
@@ -176,9 +212,14 @@ async function downloadImage(url) {
  * 失敗(Apify取得エラー等)は例外を投げる。呼び出し側はそれを「data.js/状態ファイルを一切書き換えず終了」の
  * 合図として扱うこと(この関数の中では成功した店舗ぶんも含めて何もファイルに書き込まないため安全)。
  *
+ * 【不正な抽出行の扱い】data.js に入れてはいけない行(日付が YYYY-MM-DD でない等)は
+ * その行だけを捨て、残りは取り込む。例外は投げない(投げると6店ぶん全部が書き込まれず、
+ * 状態も進まないため翌日も同じ所で落ちる)。捨てた行は summaries[].dropped に、
+ * 「1件も採用できなかった投稿」は anomalies に入れて呼び出し側へ返す。
+ *
  * @param {{ stores: Array, before: Array, today: string, state: object }} opts
  * @param {{ fetchLib: object, visionLib: object, mergeLib: object, downloadImage: Function }} libs
- * @returns {Promise<{ arr: Array, state: object, changed: boolean, summaries: Array }>}
+ * @returns {Promise<{ arr: Array, state: object, changed: boolean, summaries: Array, anomalies: Array }>}
  */
 async function runMonitor(opts, libs) {
   const { stores, before, today, state } = opts;
@@ -187,6 +228,7 @@ async function runMonitor(opts, libs) {
   let arr = before;
   const nextState = { ...state };
   const summaries = [];
+  const anomalies = [];
   let changed = false;
 
   for (const store of stores) {
@@ -194,7 +236,15 @@ async function runMonitor(opts, libs) {
     const posts = await fetchLib.fetchInstagramPosts(store.handle);
 
     const newPosts = pickNewPosts(posts, prev && prev.lastPostedAt);
-    const summary = { store, newPostCount: newPosts.length, scheduleLikeCount: 0, extractedCount: 0, stats: null };
+    const summary = {
+      store,
+      newPostCount: newPosts.length,
+      scheduleLikeCount: 0,
+      extractedCount: 0,
+      droppedCount: 0,
+      dropped: [],
+      stats: null,
+    };
 
     if (newPosts.length === 0) {
       summaries.push(summary);
@@ -224,11 +274,44 @@ async function runMonitor(opts, libs) {
         );
         continue;
       }
-      for (const t of Array.isArray(raw) ? raw : []) {
-        if (t && t.date && t.name) extracted.push(toTournament(t, store.venueId));
+      // Visionの戻り値は無検証では使えない。1行ずつ検査し、不正な行だけを捨てて残りは取り込む。
+      const rows = Array.isArray(raw) ? raw : [];
+      let keptFromPost = 0;
+      const droppedFromPost = [];
+      for (const t of rows) {
+        const reason = extractedRowProblem(t);
+        if (reason) {
+          const record = {
+            venueId: store.venueId,
+            label: store.label,
+            permalink: post.permalink,
+            postedAt: post.postedAt,
+            reason,
+            date: t && t.date,
+            name: t && t.name,
+          };
+          droppedFromPost.push(record);
+          summary.dropped.push(record);
+          console.warn(formatDroppedRow(store, post, t, reason));
+          continue;
+        }
+        extracted.push(toTournament(t, store.venueId));
+        keptFromPost += 1;
+      }
+      // 抽出行はあったのに1件も採用できなかった投稿 = その投稿の内容が丸ごと失われた状態。
+      // 確認済み投稿日時は下で前進するので二度と再試行されない。静かに捨てず異常として記録する。
+      if (rows.length > 0 && keptFromPost === 0) {
+        anomalies.push({
+          store,
+          permalink: post.permalink,
+          postedAt: post.postedAt,
+          rowCount: rows.length,
+          reasons: [...new Set(droppedFromPost.map((d) => d.reason))],
+        });
       }
     }
     summary.extractedCount = extracted.length;
+    summary.droppedCount = summary.dropped.length;
 
     // 新着の確認記録は、Vision抽出の成否に関わらずこの店で確認できた最新投稿まで進める
     // (同じ投稿を毎回「新着」として拾い直し続けないため)。
@@ -245,7 +328,37 @@ async function runMonitor(opts, libs) {
     summaries.push(summary);
   }
 
-  return { arr, state: nextState, changed, summaries };
+  return { arr, state: nextState, changed, summaries, anomalies };
+}
+
+/**
+ * 「抽出行はあったのに1件も採用できなかった投稿」を目立つ形で報告する。
+ *
+ * 【ジョブを失敗させない理由】ここで非ゼロ終了すると、後続ステップ(検査→コミット→push)が
+ * 走らず `apify-monitor-state.json` の前進も取り込めた他店のデータもリポジトリに残らない。
+ * 結果として翌日も同じ投稿から再試行して同じ所で止まる — 今回直した不具合そのものに戻る。
+ * そこで【ジョブは緑のまま通し、GitHub Actions の注記(::error::)で人に見せる】。
+ * ローカル実行では単なる1行のログとして出るだけで、動作に影響しない。
+ */
+function reportAnomalies(anomalies) {
+  if (!anomalies || anomalies.length === 0) return;
+  console.log('');
+  console.error(
+    `::error title=Instagram監視 - 取り込めなかった投稿::` +
+      `${anomalies.length}件の投稿で、Visionが返した行を1件も採用できませんでした。` +
+      `ジョブは継続しています(取り込めた他の行は反映済み)。人の確認が必要です。`
+  );
+  for (const a of anomalies) {
+    console.error(
+      `[monitor-instagram-apify] 投稿まるごと不採用: 店=${a.store.label}(${a.store.venueId})` +
+        ` / 投稿=${a.permalink}(${a.postedAt}) / 抽出${a.rowCount}件すべて破棄 / 理由=${a.reasons.join(', ')}`
+    );
+  }
+  console.error(
+    '[monitor-instagram-apify] これらの投稿は【再試行されません】(確認済み投稿日時が進むため)。' +
+      '内容が必要なら `node tools/import-venue-image.js --venue <id> --instagram-url <投稿URL>` で手動取込みしてください。' +
+      'すべての店で同じ理由が続く場合は tools/venue-schedule-vision.js のプロンプト/モデルを疑ってください。'
+  );
 }
 
 async function main() {
@@ -278,13 +391,14 @@ async function main() {
     return;
   }
 
-  const { arr, state: nextState, changed, summaries } = result;
+  const { arr, state: nextState, changed, summaries, anomalies } = result;
 
   for (const s of summaries) {
     console.log('');
     console.log(`[${s.store.label} / ${s.store.venueId} / @${s.store.handle}]`);
     console.log(
-      `  新着投稿 ${s.newPostCount}件 / うちスケジュール告知らしき投稿 ${s.scheduleLikeCount}件 / 抽出できたトーナメント ${s.extractedCount}件`
+      `  新着投稿 ${s.newPostCount}件 / うちスケジュール告知らしき投稿 ${s.scheduleLikeCount}件 / ` +
+        `取り込んだトーナメント ${s.extractedCount}件 / 破棄した抽出行 ${s.droppedCount}件`
     );
     if (s.stats) {
       console.log(
@@ -294,6 +408,8 @@ async function main() {
       );
     }
   }
+
+  reportAnomalies(anomalies);
 
   // 対象外店舗・過去日が変化していないことの最終自己チェック(店舗ごとのassertOnlyTargetChangedに加えた二重チェック)
   const targets = new Set(STORES.map((s) => s.venueId));
@@ -340,6 +456,8 @@ module.exports = {
   pickNewPosts,
   slugify,
   toTournament,
+  formatDroppedRow,
+  reportAnomalies,
   runMonitor,
   loadState,
   saveState,

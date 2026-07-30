@@ -37,6 +37,13 @@
  *     YAML の引用符の都合(シングルクォートで囲むのでJS側にシングルクォートを書けない)で
  *     読めない代物になる。
  *   - テストできる(tools/validate-data.test.js)。人が手元でも同じものを走らせられる。
+ *
+ * 【このファイルが「日付の判定そのもの」も持つ理由(2026-07-31追加)】
+ * 同じ判定を、data.js に入った【後】(このCLI)と入れる【前】(Vision抽出側 —
+ * tools/monitor-instagram-apify.js / tools/import-venue-image.js)の両方が使う。
+ * 二重に書けば必ず片方が古くなるので、規則の所有者はこのファイル1つに寄せ、
+ * 抽出側は `dateProblem` / `extractedRowProblem` を require して使う。
+ * (CLIとして起動されたときだけ main() を走らせるので、require しても副作用は無い)
  */
 
 'use strict';
@@ -66,11 +73,48 @@ function where(t) {
   return `venueId=${venueId} / id=${id} / name=${name}`;
 }
 
-/** YYYY-MM-DD の文字列が実在する日付か(2026-02-31 のような値を弾く) */
+/**
+ * YYYY-MM-DD の文字列が実在する日付か(2026-02-31 のような値を弾く)。
+ * ISO_DATE を通った文字列にだけ使うこと(前後の空白等は ISO_DATE 側のアンカーで弾かれる前提)。
+ */
 function isRealDate(s) {
   const [y, m, d] = s.split('-').map(Number);
   const dt = new Date(Date.UTC(y, m - 1, d));
   return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
+}
+
+/**
+ * date として受け付けられない値かどうかを判定する【唯一の定義】。
+ *   'format'   … YYYY-MM-DD(ゼロ埋め)ではない(`2026-9-5` / `9/5` / `2026-07-01T00:00:00Z` / 空 / undefined)
+ *   'calendar' … 書式は合っているが存在しない日付(`2026-02-31`)
+ *   null       … 問題なし
+ * @param {*} value
+ * @returns {'format'|'calendar'|null}
+ */
+function dateProblem(value) {
+  const s = String(value);
+  if (!ISO_DATE.test(s)) return 'format';
+  if (!isRealDate(s)) return 'calendar';
+  return null;
+}
+
+/**
+ * Vision(LLM)が返した抽出結果1件を data.js に入れてよいかを判定する。
+ * 駄目なら【ログにそのまま出せる日本語の理由】、問題なければ null を返す。
+ *
+ * data.js に入った後の最終ゲート(このファイルの main)と同じ `dateProblem` を使うので、
+ * 「抽出側は通すのにコミット前ゲートで落ちる(=その日のジョブが丸ごと止まる)」というズレが起きない。
+ * @param {*} t Vision抽出の素の1件
+ * @returns {string|null}
+ */
+function extractedRowProblem(t) {
+  if (!t || typeof t !== 'object') return '抽出結果がオブジェクトではない';
+  if (!t.name || !String(t.name).trim()) return '大会名が読み取れない(name が空)';
+  if (!t.date) return '日付が読み取れない(date が空)';
+  const problem = dateProblem(t.date);
+  if (problem === 'format') return '日付が YYYY-MM-DD(ゼロ埋め)ではない';
+  if (problem === 'calendar') return '存在しない日付';
+  return null;
 }
 
 function listOf(entries, render) {
@@ -127,9 +171,9 @@ function main() {
     ]);
   }
 
-  // 4. 日付書式(このゲートの本命)
-  const badFormat = tournaments.filter(t => !ISO_DATE.test(String(t && t.date)));
-  const badCalendar = tournaments.filter(t => ISO_DATE.test(String(t && t.date)) && !isRealDate(String(t.date)));
+  // 4. 日付書式(このゲートの本命)。判定は dateProblem 1本(抽出側と同じもの)。
+  const badFormat = tournaments.filter(t => dateProblem(t && t.date) === 'format');
+  const badCalendar = tournaments.filter(t => dateProblem(t && t.date) === 'calendar');
   if (badFormat.length || badCalendar.length) {
     const lines = [`[validate-data] 日付が YYYY-MM-DD(ゼロ埋め)ではありません: ${badFormat.length + badCalendar.length}件`];
     if (badFormat.length) {
@@ -145,7 +189,16 @@ function main() {
       '   (1) 店舗静的ページの再生成(tools/gen-venue-pages.js)が落ち、日次の自動取込が止まります',
       '   (2) 公開サイトの一覧は日付文字列の辞書順で並ぶため、9月の大会が2027年の大会より後ろに出ます',
       '  直し方: 上の venueId / id / name のエントリの date を YYYY-MM-DD に直す。',
-      '  LLM(Vision)抽出由来(source が semi で id が自動採番)なら、元のInstagram投稿の日付も確認すること。'
+      '  LLM(Vision)抽出由来(source が semi で id が自動採番)なら、元のInstagram投稿の日付も確認すること。',
+      '',
+      '  ★ Instagram監視のジョブ(.github/workflows/monitor-instagram-apify.yml)で落ちた場合は',
+      '    リポジトリの data.js を検索しても見つかりません。この行はランナー上の作業コピーにしか',
+      '    存在せず、コミットされずに破棄されるためです(=公開はされていない)。',
+      '    直す対象は data.js ではなく、抽出側(tools/monitor-instagram-apify.js)です。',
+      '    抽出側には不正な行だけを捨てる検査(同じ tools/validate-data.js の extractedRowProblem)が',
+      '    入っているので、ここまで届いたということはその検査に穴があります。',
+      '    その投稿を取り込み直したいときは apify-monitor-state.json の lastPostedAt を戻すか、',
+      '    `node tools/import-venue-image.js --venue <id> --instagram-url <投稿URL>` で手動取込みします。'
     );
     fail(lines);
   }
@@ -153,4 +206,9 @@ function main() {
   console.log(`[validate-data] OK: TOURNAMENTS ${tournaments.length}件 / id重複なし / 日付はすべて YYYY-MM-DD(実在する日付)`);
 }
 
-main();
+// CLIとして起動されたときだけ検査を走らせる。
+// (抽出側が dateProblem / extractedRowProblem を require するため。require で main() が
+//  走ると「引数が無い」で即 exit(1) してしまう)
+if (require.main === module) main();
+
+module.exports = { ISO_DATE, isRealDate, dateProblem, extractedRowProblem };

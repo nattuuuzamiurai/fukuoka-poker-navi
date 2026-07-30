@@ -94,6 +94,15 @@ jobs:
           fi
           # checkout から push までの間に main が進むと push が弾かれるため、push直前にrebaseして取り込む。
           git pull --rebase
+          # rebase で自分のコミットが【空になって消える】ことがある(同じ変更を他のジョブや人が
+          # 先に push していた場合。git rebase は空になったコミットを既定で捨てる)。
+          # committed=1 のままだと、下の `git commit --amend` が【他人のコミット】を書き換えてしまい、
+          # push が non-fast-forward で拒否される。remote は無傷だがログからは真因が読み取れないので、
+          # rebase の後に「自分のコミットがまだ残っているか」を実測で取り直す。
+          if test "$(git rev-list --count "@{u}..HEAD")" = "0"; then
+            echo "rebase で自分のコミットが空になりました(同じ変更が既に main にあります)。amendは行いません。"
+            committed=0
+          fi
           # 【順序が重要】静的ページの再生成と検査は rebase の"後"に行う。
           #   rebase の前に生成すると、rebase で取り込んだ他ジョブ・人のコミットぶんの data.js が
           #   生成物に反映されず、【push されるツリーが --check を通らない状態】になり得る

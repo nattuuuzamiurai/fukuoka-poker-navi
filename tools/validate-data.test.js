@@ -97,6 +97,22 @@ test('date が無い/空でも落ちる(undefined がそのまま通らない)',
   assert.match(r2.err, /id=x2/);
 });
 
+// ISO_DATE の ^ $ アンカーが効いていることの直接確認。
+// アンカーを外しても他のテスト(9/5・ISO日時など)は isRealDate 側の NaN で偶然通ってしまい、
+// 全緑のままアンカーだけ壊せてしまう。前後に空白が混じった値だけがそれを検出できる
+// (' 2026-07-01'.split('-') は Number(' 2026') === 2026 となり、isRealDate は通してしまう)。
+test('前後に空白が混じった日付( 2026-07-01 )で落ちる(ISO_DATEのアンカーが効いていること)', () => {
+  const head = { id: 'sp1', venueId: 'v40', name: '先頭に空白', date: ' 2026-07-01', source: 'semi' };
+  const r1 = run(writeRepo(fixture([head])));
+  assert.equal(r1.code, 1);
+  assert.match(r1.err, /id=sp1/);
+
+  const tail = { id: 'sp2', venueId: 'v40', name: '末尾に空白', date: '2026-07-01 ', source: 'semi' };
+  const r2 = run(writeRepo(fixture([tail])));
+  assert.equal(r2.code, 1);
+  assert.match(r2.err, /id=sp2/);
+});
+
 test('書式は合っているが存在しない日付(2026-02-31)で落ちる', () => {
   const bad = { id: 'x3', venueId: 'v34', name: '2月31日の大会', date: '2026-02-31', source: 'semi' };
   const r = run(writeRepo(fixture([bad])));
@@ -142,11 +158,56 @@ test('リポジトリのパスを渡さないと落ちる', () => {
   assert.match(r.stderr, /リポジトリのパスを指定してください/);
 });
 
-test('不正が多数あっても一覧は打ち切られ、件数が分かる', () => {
+test('不正が多数あっても一覧は MAX_LIST(20) 件で打ち切られ、残りは件数で分かる', () => {
   const many = [];
   for (let i = 0; i < 25; i++) many.push({ id: `bad${i}`, venueId: 'v40', name: `不正${i}`, date: '2026-9-5' });
   const r = run(writeRepo(fixture(many)));
   assert.equal(r.code, 1);
   assert.match(r.err, /: 25件/);
   assert.match(r.err, /ほか 5 件/);
+  // 要約行だけを見ると打ち切り自体を外しても通ってしまうので、実際に並んだ行数を数える。
+  assert.equal((r.err.match(/想定外の値/g) || []).length, 20, '一覧は20件で打ち切られること');
+});
+
+// 当番が最初に読む文面。Instagram監視で落ちた行はリポジトリの data.js に無い(ランナー上の
+// 作業コピーにしか存在せず破棄される)ため、「data.js を検索して直す」だけの案内だと詰む。
+test('修正案内に「Instagram監視経路では data.js に無い」旨と、直す対象が書かれている', () => {
+  const bad = { id: 'ig-v40-9', venueId: 'v40', name: '案内文の確認', date: '2026-9-5', source: 'semi' };
+  const r = run(writeRepo(fixture([bad])));
+  assert.equal(r.code, 1);
+  assert.match(r.err, /Instagram監視のジョブ/);
+  assert.match(r.err, /リポジトリの data\.js を検索しても見つかりません/);
+  assert.match(r.err, /tools\/monitor-instagram-apify\.js/);
+  assert.match(r.err, /apify-monitor-state\.json/);
+});
+
+// ---------- 共有する判定関数(抽出側 = 層2 が require して使うもの) ----------
+
+const { dateProblem, extractedRowProblem } = require('./validate-data');
+
+test('require しても検査は走らない(CLI起動時だけ main が動く)', () => {
+  // ここまで require できている時点で exit(1) していない = 副作用が無いことの確認
+  assert.equal(typeof dateProblem, 'function');
+  assert.equal(typeof extractedRowProblem, 'function');
+});
+
+test('dateProblem: 書式違反と存在しない日付を区別する', () => {
+  assert.equal(dateProblem('2026-07-01'), null);
+  assert.equal(dateProblem('2026-9-5'), 'format');
+  assert.equal(dateProblem('9/5'), 'format');
+  assert.equal(dateProblem('2026-07-01T00:00:00Z'), 'format');
+  assert.equal(dateProblem(' 2026-07-01'), 'format');
+  assert.equal(dateProblem(undefined), 'format');
+  assert.equal(dateProblem('2026-02-31'), 'calendar');
+  assert.equal(dateProblem('2026-13-01'), 'calendar');
+});
+
+test('extractedRowProblem: 取り込んでよい行は null、駄目な行は理由を返す', () => {
+  assert.equal(extractedRowProblem({ date: '2026-09-05', name: 'マンデー' }), null);
+  assert.match(extractedRowProblem({ date: '2026-9-5', name: 'マンデー' }), /YYYY-MM-DD/);
+  assert.match(extractedRowProblem({ date: '2026-02-31', name: 'マンデー' }), /存在しない日付/);
+  assert.match(extractedRowProblem({ date: '2026-09-05', name: '  ' }), /name が空/);
+  assert.match(extractedRowProblem({ name: 'マンデー' }), /date が空/);
+  assert.match(extractedRowProblem(null), /オブジェクトではない/);
+  assert.match(extractedRowProblem('2026-09-05'), /オブジェクトではない/);
 });

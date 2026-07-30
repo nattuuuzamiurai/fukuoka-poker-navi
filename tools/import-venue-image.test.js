@@ -107,7 +107,13 @@ test('importVenueImage: Vision抽出が0件なら例外を投げ、data.jsは書
 // アクセスする前に安全に止まり、data.js を一切書き換えないことを確認する。
 
 const TOOLS_DIR = __dirname;
-const FILES_TO_COPY = ['import-venue-image.js', 'tournament-merge.js', 'venue-schedule-vision.js', 'instagram-oembed.js'];
+const FILES_TO_COPY = [
+  'import-venue-image.js',
+  'tournament-merge.js',
+  'venue-schedule-vision.js',
+  'instagram-oembed.js',
+  'validate-data.js',
+];
 
 function makeTempRepoRoot() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'import-venue-image-cli-'));
