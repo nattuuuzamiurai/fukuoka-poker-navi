@@ -3,8 +3,13 @@ name: Waitinglist 日程の自動取得
 # Waitinglist(DMMポーカー)の公開APIから対象店舗のトーナメント日程を取得し、
 # 差分があるときだけ data.js をコミットする。詳細は tools/import-waitinglist.js のコメント参照。
 #
-# スクリプトは「取得失敗 / HTTP 200以外 / 対象店舗0件」のとき data.js を書き換えずに非ゼロ終了する。
+# スクリプトは「取得失敗 / HTTP 200以外 / 対象店舗0件 / ページング不整合 / 別店舗の混入 /
+# 今日以降の件数の急減」のとき data.js を書き換えずに非ゼロ終了する。
 # その場合このワークフローも失敗させて、異常が Actions の画面で見えるようにする。
+#
+# data.js を更新したら店舗静的ページ(venues/)とsitemapの再生成が必要(READMEの
+# 「data.js を更新したら」参照)。忘れるとJSを実行しないクローラに古い日程が見え続けるため、
+# ここで必ず再生成してから一緒にコミットする。
 
 on:
   schedule:
@@ -44,6 +49,13 @@ jobs:
             if(d.TOURNAMENTS.length<500) throw new Error("TOURNAMENTS件数が異常: "+d.TOURNAMENTS.length);
             if(new Set(d.TOURNAMENTS.map(t=>t.id)).size!==d.TOURNAMENTS.length) throw new Error("id重複");'
 
+      # data.js のスナップショットである店舗静的ページ・sitemap.xml・トップの店舗リンク行を
+      # 追随させる。data.js に差分が無ければ生成物も変わらないので、常に実行してよい。
+      - name: 店舗静的ページ / sitemap を再生成
+        run: |
+          node tools/gen-venue-pages.js .
+          node tools/gen-venue-pages.js . --check
+
       - name: 差分があればコミット & プッシュ
         run: |
           if git diff --quiet; then
@@ -52,6 +64,6 @@ jobs:
           fi
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data.js
+          git add -A
           git commit -m "chore: Waitinglistから日程を自動取得 ($(TZ=Asia/Tokyo date +%Y-%m-%d))"
           git push

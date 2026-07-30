@@ -10838,10 +10838,14 @@ const TOURNAMENTS = [
     "reentry": true,
     "prize": null,
     "tags": [
-      "ターボ"
+      "ターボ",
+      "ディープ"
     ],
     "source": "auto",
-    "verified": false
+    "verified": false,
+    "pinnedTags": [
+      "ディープ"
+    ]
   },
   {
     "id": "wl-01KTZT0AFBR11BGVN9XDY8SDSA",
@@ -10945,10 +10949,14 @@ const TOURNAMENTS = [
     "reentry": true,
     "prize": null,
     "tags": [
-      "ターボ"
+      "ターボ",
+      "ディープ"
     ],
     "source": "auto",
-    "verified": false
+    "verified": false,
+    "pinnedTags": [
+      "ディープ"
+    ]
   },
   {
     "id": "wl-01KXG4N9EM2Z6XWGGHY2Z3NVSW",
