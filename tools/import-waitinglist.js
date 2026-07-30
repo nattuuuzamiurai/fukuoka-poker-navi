@@ -128,6 +128,16 @@ function todayJst() {
   return `${j.getUTCFullYear()}-${pad2(j.getUTCMonth() + 1)}-${pad2(j.getUTCDate())}`;
 }
 
+/**
+ * GitHub Actions のワークフローコマンド(::error::)に載せる文字列の百分率符号化。
+ * `%` と改行をそのまま書くと、注記が壊れる・改行以降が切れる。
+ *   - ghMsg  … 本文用。急減ガードの文面に「前回の50%未満」と生の % が入る
+ *   - ghProp … title= などのプロパティ用。区切り文字の : と , も逃がす必要がある
+ * GitHub 側が復号するので、画面には元の文字が出る。
+ */
+const ghMsg = (s) => String(s).replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A');
+const ghProp = (s) => ghMsg(s).replace(/:/g, '%3A').replace(/,/g, '%2C');
+
 function fail(msg) {
   console.error(`[import-waitinglist] ERROR: ${msg}`);
   console.error('[import-waitinglist] data.js は書き換えていません。');
@@ -552,7 +562,7 @@ async function main() {
       // 当番が最初に見る情報なので、その場で目立たせる。GitHub Actions では
       // ::error:: 注記が実行サマリの先頭に出るため、ログを遡らなくても店名が分かる。
       console.error(`[import-waitinglist] ✗ ${store.label} (storeId=${store.displayId}) をスキップ: ${e.message}`);
-      console.error(`::error title=Waitinglist取込に失敗 (${store.label})::${e.message}`);
+      console.error(`::error title=${ghProp(`Waitinglist取込に失敗 (${store.label})`)}::${ghMsg(e.message)}`);
     }
   }
 
@@ -604,16 +614,25 @@ async function main() {
 
   // 4) 他店に影響が出ていないことの自己チェック
   //    ★ 基準は STORES 全体ではなく【今回取得に成功した店だけ】。こうすると
-  //      「スキップした店のデータが1バイトも変わっていないこと」まで同時に検査できる
+  //      「スキップした店のデータが変わっていないこと」まで同時に検査できる
   //      (スキップした店は others 側に入るため)。
+  //
+  //    ★ 比較の左辺には【マージ前に取っておいたディープコピー】を使う。
+  //      before と arr は同じ要素オブジェクトを共有しているので、左辺に before を渡すと
+  //      「エントリを in-place で書き換えるバグ」が両辺に同じように映って素通りする
+  //      (品質管理部の変異試験で実証済み: 構造的な差し替えは検知できるが in-place は抜ける)。
+  //      beforeJson は冒頭で取得済みなので、そこから復元すれば実行時のコストもほぼ無い。
+  //      現在の mergeStore / carryOver は常に新しいオブジェクトを作るので今のところ実害は無いが、
+  //      将来 in-place な実装が紛れ込んでも検査が効くようにしておく。
+  const beforeSnapshot = JSON.parse(beforeJson);
   const targets = new Set(fetched.map(({ store }) => store.venueId));
   const others = (list) => list.filter((t) => !targets.has(t.venueId));
-  if (JSON.stringify(others(before)) !== JSON.stringify(others(arr))) {
+  if (JSON.stringify(others(beforeSnapshot)) !== JSON.stringify(others(arr))) {
     fail('取得に成功した店舗以外のデータが変化しています(バグ)。書き込みを中止します。');
   }
-  // 過去日のエントリが変化していないことも確認
+  // 過去日のエントリが変化していないことも確認(同じ理由で左辺はスナップショット)
   const pastOf = (list) => list.filter((t) => targets.has(t.venueId) && t.date < today);
-  if (JSON.stringify(pastOf(before)) !== JSON.stringify(pastOf(arr))) {
+  if (JSON.stringify(pastOf(beforeSnapshot)) !== JSON.stringify(pastOf(arr))) {
     fail('過去日のエントリが変化しています(バグ)。書き込みを中止します。');
   }
 

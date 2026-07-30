@@ -97,22 +97,30 @@ globalThis.fetch = async (url) => {
  * このテストが壊れる(=テストが設定変更の邪魔をする)。検証したいのは制御フローであって
  * 対象店の中身ではないので、ここは固定の2店に置き換える。
  */
-function scriptWithFixtureStores() {
+function scriptWithFixtureStores(injectBeforeSelfCheck) {
   const src = fs.readFileSync(SRC, 'utf8');
   const fixture = `const STORES = [
   { venueId: 'v3', displayId: '4018492', label: "m HOLD'EM 中洲" },
   { venueId: 'v19', displayId: '4039056', label: 'CASINO Arrows 小倉店' },
 ];`;
-  const replaced = src.replace(/const STORES = \[[\s\S]*?\n\];/, fixture);
+  let replaced = src.replace(/const STORES = \[[\s\S]*?\n\];/, fixture);
   assert.notEqual(replaced, src, 'STORES 配列を差し替えられませんでした(書式が変わった?)');
+
+  // 自己チェックが本当に効いているかを見るため、その直前にわざとバグを注入できるようにする。
+  // 「検査が素通りしないこと」は正常系の実行では観測できない(正常系ではそもそも壊れないため)。
+  if (injectBeforeSelfCheck) {
+    const anchor = '  // 4) 他店に影響が出ていないことの自己チェック';
+    assert.ok(replaced.includes(anchor), '自己チェックの目印が見つかりません(コメントを変えた?)');
+    replaced = replaced.replace(anchor, `  ${injectBeforeSelfCheck}\n${anchor}`);
+  }
   return replaced;
 }
 
 /** 一時リポジトリを作り、スクリプトを1回動かして結果を返す。 */
-function run(scenario, args = []) {
+function run(scenario, args = [], injectBeforeSelfCheck = null) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'wl-import-'));
   fs.mkdirSync(path.join(dir, 'tools'));
-  fs.writeFileSync(path.join(dir, 'tools', 'import-waitinglist.js'), scriptWithFixtureStores());
+  fs.writeFileSync(path.join(dir, 'tools', 'import-waitinglist.js'), scriptWithFixtureStores(injectBeforeSelfCheck));
   fs.writeFileSync(path.join(dir, 'data.js'), dataJsSource());
   const stub = path.join(dir, 'stub.js');
   fs.writeFileSync(stub, stubSource());
@@ -187,6 +195,34 @@ test('失敗した店舗の一覧がまとめて出る', () => {
   const r = run('v19-empty');
   assert.match(r.stderr, /取得に失敗した店舗 1\/2件/);
   assert.match(r.stderr, /CASINO Arrows 小倉店/);
+});
+
+// ---- 3.5 自己チェックの基準が「取得に成功した店だけ」であること ----
+//
+// この2本は【自己チェックの基準を STORES 全体に戻す退行】を捕まえるためにある。
+// 基準が STORES 全体だと、スキップした店は targets 側に入って others から外れるため、
+// その店のデータが壊れても検査を素通りしてしまう。
+// 正常系の実行では観測できない性質なので、自己チェックの直前にバグを注入して確かめる。
+
+test('スキップした店のデータが変化したら、自己チェックが書き込みを止める', () => {
+  // v19 は取得に失敗してスキップされる。その v19 のエントリを書き換えるバグを注入する。
+  const r = run('v19-empty', [], "arr = arr.map((t) => (t.venueId === 'v19' ? { ...t, name: '注入したバグ' } : t));");
+  assert.equal(r.code, 1, 'スキップした店の変化を検知して rc=1 で止まるべき');
+  assert.match(r.stderr, /取得に成功した店舗以外のデータが変化しています/);
+});
+
+test('自己チェックが止めたときは data.js を書き換えない', () => {
+  const r = run('v19-empty', [], "arr = arr.map((t) => (t.venueId === 'v19' ? { ...t, name: '注入したバグ' } : t));");
+  assert.deepEqual(r.tournaments, r.before);
+});
+
+// in-place な書き換え(オブジェクトのフィールドを直接触る)も検知できること。
+// before と arr は同じ要素オブジェクトを共有するので、比較の左辺にマージ前の
+// ディープコピーを使っていないとこれが素通りする。
+test('エントリを in-place で書き換えるバグも自己チェックが捕まえる', () => {
+  const r = run('v19-empty', [], "for (const t of arr) { if (t.venueId === 'v19') t.name = 'in-placeで壊した'; }");
+  assert.equal(r.code, 1, 'in-place な変更も検知して rc=1 で止まるべき');
+  assert.deepEqual(r.tournaments, r.before);
 });
 
 // ---- 4. 全店失敗は従来どおり「何も書かない」 ----
