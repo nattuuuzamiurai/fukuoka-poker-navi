@@ -169,13 +169,15 @@ node tools/gen-venue-pages.js .          # 店舗ページ35枚 + トップの�
 **CIは現時点で未実装**（`.github/workflows/` は無く、`--check` は人が手で走らせている）。
 将来CIを組む担当への注意が2点ある。
 
-1. **`<repo>` には絶対パスを渡すこと。** 相対パス（`.` など）だと
-   `require(path.join(REPO,'jopt-data.js'))` が `jopt-data.js` のようなベアモジュール指定になり、
-   Node がリポジトリのファイルではなくインストール済みパッケージとして探しに行って落ちる。
-   CI側で絶対パスを組むか、`tools/gen-event-pages.js` の `REPO` を `path.resolve(REPO)` に直す。
+1. **`<repo>` は相対パス（`.` など）でも絶対パスでも動く。** 3つの生成スクリプトはいずれも
+   受け取ったパスを `path.resolve()` で絶対パスに直してから `require()` する。
    ```sh
-   node tools/gen-event-pages.js "$GITHUB_WORKSPACE" --check   # ← 絶対パスならそのまま動く
+   node tools/gen-event-pages.js . --check                      # ← 相対パスでも動く
+   node tools/gen-event-pages.js "$GITHUB_WORKSPACE" --check    # ← 絶対パスでも動く
    ```
+   かつて相対パスで落ちていた（`require(path.join('.','jopt-data.js'))` が `jopt-data.js` という
+   ベアモジュール指定に正規化され、Nodeがインストール済みパッケージとして探して失敗した）。
+   **新しく生成スクリプトを足すときは、受け取ったパスを必ず `path.resolve()` すること。**
 2. 上表の3つは**役割が違う**ので、CIを入れても `mountBigEventLinks()` の自己点検は残すこと
    （CIはコミット時点のズレ、自己点検は実際に配信されたHTMLのズレを見ている）。
 
@@ -374,4 +376,5 @@ Claude APIキーは初回だけ「詳細設定」で登録すればよい（こ�
 - **根拠の弱い情報は、公開面(`data.js` の `note`)でもその旨をヘッジする。** 「住所は未確認。」「住所は第三者情報のため要確認。」等。
   内部の `fukuoka-venues.json` にだけ留保を書いて公開面に落とさないと、読者は確度の差を知らないまま行動する(部屋番号まで載せた住所が誤っていれば、無関係な入居者の部屋を訪ねることになる)。
 - 掲載は各店舗・主催者の公開情報ベース。参加前に公式確認を促す注意書きを常設。
-- `data.js` は実店舗・実データで運用中(2026-07-14〜)。35店舗・`TOURNAMENTS` 546件（＋毎週固定の `RECURRING` 27件）のトーナメント日程を掲載。
+- `data.js` は実店舗・実データで運用中(2026-07-14〜)。35店舗・`TOURNAMENTS` 604件（＋毎週固定の `RECURRING` 27件）のトーナメント日程を掲載。
+  （件数は日々増えるので、この行の数字は目安。正確な値は `node -e 'const D=require("./data.js");console.log(D.VENUES.length,D.TOURNAMENTS.length,D.RECURRING.length)'` で取れる）
