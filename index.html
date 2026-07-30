@@ -104,6 +104,18 @@
   .dstrip-month:focus-visible{border-color:var(--felt);box-shadow:0 0 0 3px rgba(15,61,46,.18)}
   .dstrip-month[aria-expanded="true"]{background:var(--felt);border-color:var(--felt);color:#fff}
   .dstrip-month[aria-expanded="true"] .dm-caret{color:#fff;transform:rotate(180deg)}
+  /* 「今日」に戻るボタン(社長指示・2026-07-30)。月ボタンと同じピル型でトーンだけ変える
+     (金＝日付チップの .dchip.today と同じ色。月選択＝緑と混同しない)。
+     ★高さは月ボタンと同じに保つこと(この行の高さ＝直下の「トーナメント日程」見出しのY座標が動く)。
+     ★今日を選んでいる間は hidden。JS側は hidden 属性で出し入れするので、
+       非表示のときは display:none 相当＝フレックス項目にならず、margin-left も効かない
+       ⇒ 初期表示のレイアウトは1pxも変わらない。 */
+  .dstrip-today{position:relative;margin-left:6px;display:inline-flex;align-items:center;font-family:inherit;font-weight:800;font-size:.92em;white-space:nowrap;color:#b3841f;background:#fff8ea;border:1px solid var(--gold);border-radius:20px;padding:5px 10px;line-height:1.25;cursor:pointer;outline:none}
+  /* 見た目の高さは月ボタンに合わせたまま、タップ領域だけを44px以上に広げる
+     (iOS HIG。上下方向にだけ広げるので隣のチップとは重ならない)。 */
+  .dstrip-today::after{content:'';position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);height:44px}
+  .dstrip-today:focus-visible{border-color:#b3841f;box-shadow:0 0 0 3px rgba(217,164,65,.3)}
+  .dstrip-today:active{background:#f8ecd2}
   .dmonth-menu{position:absolute;top:calc(100% + 5px);left:0;z-index:45;display:block;min-width:118px;max-height:262px;overflow-y:auto;background:var(--sur);border:1px solid var(--bor);border-radius:12px;box-shadow:0 8px 22px rgba(30,20,5,.18);padding:5px}
   .dmonth-menu[hidden]{display:none}
   /* タップ領域は44px以上を確保する(iOS HIG の推奨値。42pxだと押しにくい)。
@@ -114,6 +126,7 @@
      タップ後に hover 状態が居座り、他所を触るまで色が残って「選択中」に見えるため。 */
   @media(hover:hover){
     .dstrip-month:hover{border-color:var(--gold)}
+    .dstrip-today:hover{background:#fdf0d8;border-color:#b3841f}
     .dm-opt:hover{background:#f1efe8}
   }
   .dm-opt:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
@@ -584,6 +597,11 @@
         <span id="dstripMonthLabel"></span><span class="dm-caret" aria-hidden="true">▼</span>
       </button>
       <div class="dmonth-menu" id="dstripMonthMenu" role="listbox" aria-label="表示する月を選ぶ" hidden></div>
+      <!-- 「今日」に戻るボタン(社長指示・2026-07-30「月が変わると今日の日付に戻るのがめんどくさい」)。
+           日付の操作なので日付UI(月ボタン)の隣に置く。エリア/種類フィルタの .frow は役割が違い、
+           かつ320px幅ですでに横スクロールしているため4つ目を足さない。
+           ★今日を選んでいる間は hidden(タブ順からも外れる)。切り替えは syncTodayBtn()。 -->
+      <button type="button" class="dstrip-today" id="dstripToday" aria-label="今日に戻る" hidden>今日</button>
     </div>
     <div class="dstrip" id="dstrip"></div>
   </div>
@@ -940,6 +958,10 @@
   }
 
   function render(){
+    // 「今日」ボタンの出し入れはここ1か所で同期する。
+    // state.selectedDate を変える経路(日付チップ・月の切り替え・「今日」ボタン自身)は
+    // どれも最後に render() を呼ぶため、同期漏れが起きない。
+    syncTodayBtn();
     // 描画元は「選択中の月」の全日ぶん。ALL_TOURNAMENTS(60日で打ち切り)を使わないこと。
     const rows = monthTournaments(state.month)
       .filter(t => inWhen(t.date))
@@ -1817,6 +1839,34 @@
     e.stopPropagation();
     closeMonthMenu(false);
   }, true);
+
+  // ---- 「今日」に戻るボタン(社長指示・2026-07-30) ----
+  // 表示条件は「今日以外の日を選んでいる」の1つだけ。これで「別の月にいる」「同じ月の別の日にいる」
+  // の両方を拾える。今日を選んでいるときは出さないので、初期表示のレイアウトは変わらない。
+  // ★ hidden 属性で出し入れすること(display:none 相当でタブ順からも外れる)。
+  //   visibility や opacity で隠すと、見えないボタンにキーボードで到達できてしまう。
+  // ★ このボタンは .dstrip-month-wrap の中にあるため、月メニューを開いたまま押しても
+  //   「外側クリックで閉じる」ハンドラに飲まれない(下の goToday が自分で閉じる)。
+  const todayBtn = document.getElementById('dstripToday');
+  function syncTodayBtn(){
+    todayBtn.hidden = (state.selectedDate === localToday);
+  }
+  function goToday(){
+    const wasFocused = document.activeElement === todayBtn;
+    closeMonthMenu(false);          // 月メニューを開いたまま押されることがある
+    state.month = thisMonth;
+    state.selectedDate = localToday;
+    buildDateStrip();               // 今日のチップに .on / .today が付き、中央寄せもここで行われる
+    render();                       // この中の syncTodayBtn() でこのボタン自身が hidden になる
+    // 自分が hidden になるとフォーカスが宙に浮く。キーボード操作でも文脈を失わないよう、
+    // 選択された「今日」のチップへ移す(preventScroll。中央寄せは buildDateStrip が済ませている)。
+    if (wasFocused){
+      const chip = document.querySelector('#dstrip .dchip.on');
+      if (chip) chip.focus({ preventScroll: true });
+    }
+  }
+  // <button> なので Enter / Space はブラウザが click に変換する(keydown は不要)。
+  todayBtn.addEventListener('click', goToday);
 
   // 大型イベントのバナーは、掲載ウィンドウ(初日の14日前〜最終日の翌日)に入っているものを
   // すべて出す。0件のことも複数件のこともある(社長了承済み・big-events.js の説明を参照)。
