@@ -11,6 +11,15 @@
  * title/description が「オープン予定」の文面になり、JSON-LD の LocalBusiness を出さなくなる。
  * ★ 開店したらこのフィールドを外すこと(外し忘れると、営業中の店が検索結果で
  *   「オープン予定」のまま扱われ、構造化データも出ない)。
+ *
+ * VENUES の "addressUnverified": true / "telUnverified": true は「その項目の裏が取れていない」印。
+ * 付けると店舗静的ページの JSON-LD(LocalBusiness)から streetAddress / telephone を出さなくなる。
+ * ★ 読者向けの表示テキストは今まで通り出す(note のヘッジ付きで読める形にしておく)。
+ *   狙いは「人には留保付きで見せる／機械には断定しない」の分離。留保付きの住所を
+ *   構造化データで断定すると、検索結果に確度の低い住所・電話が"事実として"出て、
+ *   無関係な入居者の部屋を訪ねる・無関係な番号に電話する経路を当サイトが作ることになる。
+ * ★ 裏が取れたらこのフィールドを外すこと。note のヘッジ文も同時に外す
+ *   (フラグと note がズレていると tools/gen-venue-pages.js が店名を挙げて異常終了する)。
  * ============================================================ */
 
 const VENUES = [
@@ -282,6 +291,8 @@ const VENUES = [
     "website": "",
     "tel": "080-3904-2698",
     "featured": false,
+    "addressUnverified": true,
+    "telUnverified": true,
     "note": "営業18:00-24:00・初心者講習あり。JOPT/WJPT・MASAKICHI SUPER LEAGUE系。卓状況はオープンチャットで更新中。住所/電話はポーカー店ディレクトリ情報のため要確認。",
     "sourceLabel": "公式ライン",
     "sourceUrl": "https://line.me/ti/g2/JROMKCR0N5"
@@ -299,7 +310,8 @@ const VENUES = [
     "website": "",
     "tel": "",
     "featured": false,
-    "note": "RFID導入の本格ポーカールーム。ハイローラー等イベント定期開催。住所は複数ソース一致(要確認)。7/11〜13はFPCのためキャナルシティ会場に振替で終日店休。7/23〜26は10周年イベント開催。",
+    "addressUnverified": true,
+    "note": "RFID導入の本格ポーカールーム。ハイローラー等イベント定期開催。住所は複数ソース一致(要確認)。",
     "sourceLabel": "X",
     "sourceUrl": "https://x.com/rownlown"
   },
@@ -316,6 +328,7 @@ const VENUES = [
     "website": "https://alice2174.com/73162/",
     "tel": "",
     "featured": false,
+    "addressUnverified": true,
     "note": "ポーカー専門スポット。入場1,000円(飲み放題込)、トーナメント1,000円〜。住所は要確認。",
     "sourceLabel": "",
     "sourceUrl": ""
@@ -539,6 +552,7 @@ const VENUES = [
     "website": "",
     "tel": "",
     "featured": false,
+    "addressUnverified": true,
     "note": "2026年3月28日オープン。ポーカー5卓＋ブラックジャック・バカラ。平日17:00〜24:00／土日祝14:00〜24:00。住所は第三者情報のため要確認。",
     "sourceLabel": "X",
     "sourceUrl": "https://x.com/casinoRAFTEL"
