@@ -15,7 +15,8 @@
  *   - events/jopt-2026-fukuoka-01/index.html
  *   - events/wjpt-2026/index.html
  *   - events/nippon-series-2026-fukuoka/index.html
- *   - sitemap.xml (ホーム + 各イベントページ)
+ *   - sitemap.xml … 中身は tools/gen-sitemap.js が決める(店舗ページのURLも入るため)。
+ *                    このスクリプトは受け取った文字列をそのまま書くだけで、組み立てない。
  *   - index.html の【恒久リンク行(#evtLinks)だけ】を上書き同期する
  *       … このスクリプトが index.html を触るのはこの1行だけ。他の箇所には一切手を出さない。
  *
@@ -44,6 +45,8 @@ const REPO = path.resolve(REPO_ARG);
 // 店舗ページ(tools/gen-venue-pages.js)がまったく同じ骨格を使うため、複製せず共有する。
 const shell = require('./site-shell.js');
 const { SITE, POSITIONING, esc, fmtDate, LINK_SEP, pageHead } = shell;
+// sitemap.xml の唯一の所有者。中身はここでは組み立てず、丸ごと受け取って書くだけ。
+const { sitemapFile } = require('./gen-sitemap.js');
 
 // ---- データ読み込み ----
 const JOPT = require(path.join(REPO, 'jopt-data.js'));
@@ -314,25 +317,6 @@ ${schedTableNippon(NIPPON.events)}
   return pageHead({ title, desc, canonical, jsonld, image: 'img/nippon-series/nippon-series-banner.jpg' }) + body + pageFoot('/events/nippon-series-2026-fukuoka/');
 }
 
-// ---- sitemap ----
-function buildSitemap() {
-  const urls = [
-    { loc: `${SITE}/`, freq: 'daily', pri: '1.0' },
-    { loc: `${SITE}/events/nippon-series-2026-fukuoka/`, freq: 'daily', pri: '0.8' },
-    { loc: `${SITE}/events/jopt-2026-fukuoka-01/`, freq: 'daily', pri: '0.8' },
-    { loc: `${SITE}/events/wjpt-2026/`, freq: 'monthly', pri: '0.3' },
-  ];
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.map(u => `  <url>
-    <loc>${u.loc}</loc>
-    <changefreq>${u.freq}</changefreq>
-    <priority>${u.pri}</priority>
-  </url>`).join('\n')}
-</urlset>
-`;
-}
-
 // ---- 書き出し / 検査 ----
 // 出力はいったん全部メモリ上で組み立ててから、まとめて書く(--check のときは書かずに突き合わせる)。
 // --check は「big-events.js を直したのに再生成を忘れた」「生成物を手で書き換えた」を検出するためのもの。
@@ -340,8 +324,11 @@ const files = {
   'events/jopt-2026-fukuoka-01/index.html': buildJopt(),
   'events/wjpt-2026/index.html': buildWjpt(),
   'events/nippon-series-2026-fukuoka/index.html': buildNippon(),
-  'sitemap.xml': buildSitemap(),
-  'index.html': buildIndexHtml()      // 恒久リンク行(#evtLinks)だけを差し替えたもの
+  'index.html': buildIndexHtml(),     // 恒久リンク行(#evtLinks)だけを差し替えたもの
+  // sitemap.xml の中身は tools/gen-sitemap.js が決める(このスクリプトは組み立てない)。
+  // イベントページと店舗ページの両方のURLが必要なので、片方の生成スクリプトが自前で
+  // 作ると相手のURLを消してしまう。ここでは受け取った文字列をそのまま書くだけ。
+  ...sitemapFile(REPO)
 };
 
 verifyPermanentLinks(files);
