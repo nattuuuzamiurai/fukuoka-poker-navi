@@ -106,13 +106,13 @@
   .dstrip-month[aria-expanded="true"] .dm-caret{color:#fff;transform:rotate(180deg)}
   /* 「今日」に戻るボタン(社長指示・2026-07-30)。月ボタンと同じピル型でトーンだけ変える
      (金＝日付チップの .dchip.today と同じ色。月選択＝緑と混同しない)。
-     ★高さは月ボタンと同じに保つこと(この行の高さ＝直下の「トーナメント日程」見出しのY座標が動く)。
-     ★今日を選んでいる間は hidden。JS側は hidden 属性で出し入れするので、
-       非表示のときは display:none 相当＝フレックス項目にならず、margin-left も効かない
-       ⇒ 初期表示のレイアウトは1pxも変わらない。 */
-  /* ★ display を指定する要素には必ず [hidden]{display:none} も書くこと。
-     作者スタイルの display は UA の [hidden] 指定に勝つため、これが無いと hidden 属性が効かない
-     (=初期表示でボタンが出てレイアウトが変わる)。.dmonth-menu[hidden] も同じ理由で置いてある。 */
+     ★高さは月ボタンと同じに保つこと(この行の高さ＝直下の「トーナメント日程」見出しのY座標が動く。
+       実測: 月ボタン29.2px / このボタン29.2px、行の高さは表示中も60.89pxで不変)。
+     ★今日を選んでいる間は hidden。非表示のときはフレックス項目にならず margin-left も効かないので、
+       初期表示のレイアウトは1pxも変わらない。
+     ★★ display を指定する要素には必ず [hidden]{display:none} も書くこと。
+       作者スタイルの display は UA の [hidden] 指定に勝つため、これが無いと hidden 属性が効かず
+       初期表示でボタンが出てしまう(実装中に踏んだ)。.dmonth-menu[hidden] も同じ理由で置いてある。 */
   .dstrip-today[hidden]{display:none}
   .dstrip-today{position:relative;margin-left:6px;display:inline-flex;align-items:center;font-family:inherit;font-weight:800;font-size:.92em;white-space:nowrap;color:#b3841f;background:#fff8ea;border:1px solid var(--gold);border-radius:20px;padding:5px 10px;line-height:1.25;cursor:pointer;outline:none}
   /* 見た目の高さは月ボタンに合わせたまま、タップ領域だけを44px以上に広げる
@@ -1862,9 +1862,9 @@
   // ★ このボタンは .dstrip-month-wrap の中にあるため、月メニューを開いたまま押しても
   //   「外側クリックで閉じる」ハンドラに飲まれない(下の goToday が自分で閉じる)。
   const todayBtn = document.getElementById('dstripToday');
-  // ボタンが出入りすると日付ストリップの幅が約57px変わり、そのままだとチップが
-  // 横に飛ぶ(320px幅では画面の18%)。幅が変わった分だけストリップの scrollLeft を
-  // 足し引きして、チップの【画面上の位置を変えない】。
+  // ボタンが出入りすると日付ストリップの幅が実測55.6px変わり、そのままだとチップが
+  // その分だけ横に飛ぶ(320px幅では画面の17%)。幅が変わった分だけストリップの scrollLeft を
+  // 足し引きして、チップの【画面上の位置を変えない】(実測で残るズレは0.4px)。
   // ⇒ 利用者に見える動きは、従来どおり「選んだ日を中央へ寄せる smooth スクロール」だけになる。
   function syncTodayBtn(){
     const next = (state.selectedDate === localToday);
