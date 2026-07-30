@@ -1,0 +1,72 @@
+name: Waitinglist 日程の自動取得
+
+# Waitinglist(DMMポーカー)の公開APIから対象店舗のトーナメント日程を取得し、
+# 差分があるときだけ data.js をコミットする。詳細は tools/import-waitinglist.js のコメント参照。
+#
+# スクリプトは「取得失敗 / HTTP 200以外 / 対象店舗0件 / ページング不整合 / 別店舗の混入 /
+# 今日以降の件数の急減」のとき data.js を書き換えずに非ゼロ終了する。
+# その場合このワークフローも失敗させて、異常が Actions の画面で見えるようにする。
+#
+# このワークフローが触るのは data.js だけで、店舗静的ページ(venues/)や sitemap.xml は再生成しない。
+# 現在の tools/venue-schedule.js の dataRange() は全店グローバルの日付範囲を返すため、
+# 1店の1件を足しただけで35ページ全部が書き換わり、無人の日次pushでは他セッションとの競合が常態化する。
+# 日次の自動再生成は dataRange() の店舗別化とセットで別PRに切り出した。
+# それまでは、data.js を更新したあとの再生成は従来どおり人が実行する
+# (READMEの「data.js を更新したら」参照。忘れるとJSを実行しないクローラに古い日程が見え続ける)。
+
+on:
+  schedule:
+    # cronはUTC。21:23 UTC = 06:23 JST(毎日1回)
+    - cron: '23 21 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# 同時実行を防ぐ(手動実行とcronが重なって競合するのを避ける)
+concurrency:
+  group: import-waitinglist
+  cancel-in-progress: false
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリを取得
+        uses: actions/checkout@v4
+
+      - name: Node.js をセットアップ
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Waitinglist から日程を取得して data.js を更新
+        run: node tools/import-waitinglist.js
+
+      # 壊れた data.js をコミットして本番サイトを白画面にしないための最終ゲート。
+      # 構文・件数・id重複を見る(スクリプト側の安全弁をすり抜けた場合の受け皿)。
+      - name: 出力の妥当性を確認
+        run: |
+          node --check data.js
+          node -e 'const d=require("./data.js");
+            if(d.TOURNAMENTS.length<500) throw new Error("TOURNAMENTS件数が異常: "+d.TOURNAMENTS.length);
+            if(new Set(d.TOURNAMENTS.map(t=>t.id)).size!==d.TOURNAMENTS.length) throw new Error("id重複");'
+
+      - name: 差分があればコミット & プッシュ
+        run: |
+          # 追加が git add -A なので、判定も未追跡ファイルを含む git status --porcelain で見る
+          # (git diff --quiet だと未追跡ファイルだけの変更を「差分なし」と誤判定する)。
+          if test -z "$(git status --porcelain)"; then
+            echo "差分なし。コミットしません。"
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: Waitinglistから日程を自動取得 ($(TZ=Asia/Tokyo date +%Y-%m-%d))"
+          # checkout から push までの間に main が進むと push が弾かれる。
+          # 誰も Actions を見ていないと取込みが静かに止まりサイトが古いまま残るので、
+          # push の直前に rebase して取り込む(このジョブが触るのは data.js だけなので
+          # 他の作業と行が衝突する可能性は低い。衝突したらジョブを失敗させて人が気づけるようにする)。
+          git pull --rebase
+          git push
