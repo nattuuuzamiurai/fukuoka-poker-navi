@@ -183,7 +183,7 @@ test('修正案内に「Instagram監視経路では data.js に無い」旨と�
 
 // ---------- 共有する判定関数(抽出側 = 層2 が require して使うもの) ----------
 
-const { dateProblem, extractedRowProblem, duplicateIdProblem } = require('./validate-data');
+const { dateProblem, normalizeExtractedRow, extractedRowProblem, duplicateIdProblem } = require('./validate-data');
 
 test('require しても検査は走らない(CLI起動時だけ main が動く)', () => {
   // ここまで require できている時点で exit(1) していない = 副作用が無いことの確認
@@ -214,6 +214,8 @@ test('extractedRowProblem: 取り込んでよい行は null、駄目な行は理
 
 // start は id の構成要素(`ig-v18-2026-09-12-1900-nlh`)であり、同じ日の並び順も start の
 // 文字列比較で決まる。`7pm` や改行混入をそのまま通すと id と表示の両方が壊れる。
+// この検査は【正規化(normalizeExtractedRow)を通した後の値】に対する最後の関門なので、
+// `9:00` をここで通すようにしてはいけない(正規化を呼び忘れた経路の逸脱がそのまま入る)。
 test('extractedRowProblem: start は HH:MM(ゼロ埋め)か空のみ許す', () => {
   const base = { date: '2026-09-05', name: 'マンデー' };
   assert.equal(extractedRowProblem({ ...base, start: '19:00' }), null);
@@ -221,9 +223,117 @@ test('extractedRowProblem: start は HH:MM(ゼロ埋め)か空のみ許す', () 
   assert.equal(extractedRowProblem({ ...base, start: null }), null, 'start省略は許す(00:00が既定)');
   assert.equal(extractedRowProblem({ ...base, start: '' }), null);
   assert.match(extractedRowProblem({ ...base, start: '7pm' }), /開始時刻が HH:MM/);
-  assert.match(extractedRowProblem({ ...base, start: '9:00' }), /開始時刻が HH:MM/);
+  assert.match(extractedRowProblem({ ...base, start: '9:00' }), /開始時刻が HH:MM/, '正規化前の値はここでは通さない');
   assert.match(extractedRowProblem({ ...base, start: '19:00\n<b>' }), /開始時刻が HH:MM/);
   assert.match(extractedRowProblem({ ...base, start: '25:00' }), /開始時刻が HH:MM/);
+});
+
+// ---------- 正規化(検査の前段。2026-07-31追加 / PR #19のフォローアップ) ----------
+// 破棄は「遅れる」ではなく「自動経路から永久に失われる」を意味する(Instagram監視は
+// 捨てた行を再試行しない)。曖昧さゼロで直せる逸脱にまで破棄を使うのは過剰なので、
+// 検査の前に直せるものだけを直す。
+
+test('normalizeExtractedRow: ゼロ埋め漏れ・全角コロンの start を直し、正規化前の値を notes に残す', () => {
+  const base = { date: '2026-09-05', name: 'マンデー' };
+
+  const a = normalizeExtractedRow({ ...base, start: '9:00' });
+  assert.equal(a.row.start, '09:00');
+  assert.equal(extractedRowProblem(a.row), null, '正規化後は検査を通ること');
+  assert.deepEqual(
+    a.notes.map((n) => [n.field, n.from, n.to]),
+    [['start', '9:00', '09:00']],
+    '正規化前の値が残ること(Visionの出力形式を人が測るため)'
+  );
+
+  assert.equal(normalizeExtractedRow({ ...base, start: '7:30' }).row.start, '07:30');
+  assert.equal(normalizeExtractedRow({ ...base, start: '19：00' }).row.start, '19:00', '全角コロン');
+  assert.equal(normalizeExtractedRow({ ...base, start: '9：00' }).row.start, '09:00', '全角コロン+ゼロ埋め漏れ');
+  assert.equal(normalizeExtractedRow({ ...base, start: ' 19:00 ' }).row.start, '19:00', '前後の空白');
+  // 全角数字は日本語の告知画像では全角コロンと同じ頻度で出る「同種の揺れ」。NFKCで一緒に吸収する
+  assert.equal(normalizeExtractedRow({ ...base, start: '１９：００' }).row.start, '19:00', '全角数字+全角コロン');
+  assert.equal(normalizeExtractedRow({ ...base, start: '９:００' }).row.start, '09:00', '全角数字+半角コロン');
+  assert.equal(normalizeExtractedRow({ ...base, start: '１９:00' }).row.start, '19:00', '全角と半角の混在');
+  assert.equal(normalizeExtractedRow({ ...base, start: '　19:00　' }).row.start, '19:00', '全角スペース');
+
+  // 既に正しい値は触らない(= notes が出ない。無意味なログを増やさない)
+  const ok = normalizeExtractedRow({ ...base, start: '19:00' });
+  assert.equal(ok.row.start, '19:00');
+  assert.deepEqual(ok.notes, []);
+});
+
+// 直すのは【書式の揺れ】だけで、【記法の翻訳】はしない。`7pm`→`19:00` も一意に決まるが、
+// 翻訳ルールを1つ足すごとに「誤った開始時刻を公開する」経路が増える(開始時刻の誤りは
+// プレイヤーが違う時間に店へ行く実害で、「大会が1件載らない」より重い)。
+// 実測(破棄ログ・lastExtraction.normalized)で頻度が分かってから足す、が正しい手順。
+test('normalizeExtractedRow: 記法が違う/範囲外の start は直さない(=検査で破棄される)', () => {
+  const base = { date: '2026-09-05', name: 'マンデー' };
+  for (const start of ['25:00', '19:70', '7pm', '７pm', '19時', '１９時', '午後7時', '19:00\n<b>', '1900']) {
+    const { row, notes } = normalizeExtractedRow({ ...base, start });
+    assert.equal(row.start, start, `${start} は直さない(記法の翻訳はしない / 範囲外は決められない)`);
+    assert.deepEqual(notes, []);
+    assert.ok(extractedRowProblem(row), `${start} は検査で破棄されること`);
+  }
+});
+
+// NFKC は start にだけかける。name/prize/tags にかけると大会名の全角英字まで半角化してしまい、
+// それは「店の表記を書き換える」行為(書式の揺れの補正ではない)。
+test('normalizeExtractedRow: NFKCは start 以外のフィールドに波及しない', () => {
+  const input = {
+    date: '2026-09-05',
+    name: 'ＷＳＯＰ ＭＡＩＮ①',       // 全角英字・囲み数字を含む大会名
+    start: '１９：００',
+    prize: '１位 ￥１０，０００',
+    tags: ['ＮＬＨ', 'ターボ'],
+  };
+  const { row } = normalizeExtractedRow(input);
+  assert.equal(row.start, '19:00', 'start は正規化される');
+  assert.equal(row.name, 'ＷＳＯＰ ＭＡＩＮ①', '大会名は1文字も変えない');
+  assert.equal(row.prize, '１位 ￥１０，０００', 'prize も変えない');
+  assert.deepEqual(row.tags, ['ＮＬＨ', 'ターボ'], 'tags も変えない');
+});
+
+// 採用する値は「NFKC後の文字列そのもの」ではなく「正規表現が捕まえた数字から組み立て直した値」。
+// そのため NFKC が想定外の変換をしても、data.js に入るのは常に `\d{2}:\d{2}` の形に限られる。
+test('normalizeExtractedRow: 採用されるstartは常に半角数字とコロンだけで組み立てられる', () => {
+  const base = { date: '2026-09-05', name: 'マンデー' };
+  for (const start of ['9:00', '１９：００', '　7:30　', '⑤:00']) {
+    const { row } = normalizeExtractedRow({ ...base, start });
+    if (row.start !== start) assert.match(row.start, /^\d{2}:\d{2}$/, `${start} → ${row.start}`);
+  }
+});
+
+test('normalizeExtractedRow: 数値として読めない金額はその項目だけ null にし、行は残す', () => {
+  const base = { date: '2026-09-05', name: 'マンデー', start: '19:00' };
+
+  const a = normalizeExtractedRow({ ...base, buyin: '3,500' });
+  assert.equal(a.row.buyin, null);
+  assert.equal(a.row.name, 'マンデー', '行の他の項目は残ること');
+  assert.equal(extractedRowProblem(a.row), null, '金額1項目のために行を捨てないこと');
+  assert.deepEqual(a.notes.map((n) => [n.field, n.from, n.to]), [['buyin', '3,500', null]]);
+
+  assert.equal(normalizeExtractedRow({ ...base, buyin: '5000円' }).row.buyin, null);
+  assert.equal(normalizeExtractedRow({ ...base, stack: '20k' }).row.stack, null);
+  assert.equal(normalizeExtractedRow({ ...base, addon: '無料' }).row.addon, null);
+  assert.equal(normalizeExtractedRow({ ...base, guarantee: '10万' }).row.guarantee, null);
+  // 空文字は Number('') が 0 になり「不明」が「無料」に化ける。null に倒すこと
+  assert.equal(normalizeExtractedRow({ ...base, buyin: '' }).row.buyin, null);
+
+  // 読める値・null は触らない
+  const keep = normalizeExtractedRow({ ...base, buyin: 3000, addon: '2000', guarantee: null });
+  assert.equal(keep.row.buyin, 3000);
+  assert.equal(keep.row.addon, '2000');
+  assert.deepEqual(keep.notes, []);
+});
+
+test('normalizeExtractedRow: 入力を書き換えない / オブジェクトでない入力はそのまま返す', () => {
+  const input = { date: '2026-09-05', name: 'マンデー', start: '9:00', buyin: '3,500' };
+  const { row } = normalizeExtractedRow(input);
+  assert.equal(input.start, '9:00', '呼び出し側の元データを壊さないこと');
+  assert.equal(input.buyin, '3,500');
+  assert.notEqual(row, input);
+
+  assert.deepEqual(normalizeExtractedRow(null), { row: null, notes: [] });
+  assert.deepEqual(normalizeExtractedRow('ただの文字列'), { row: 'ただの文字列', notes: [] });
 });
 
 // 数値にならない値は Number() で NaN になり、JSON化で null に化けて【価格情報が無言で消える】。
@@ -246,11 +356,23 @@ test('duplicateIdProblem: 同じidの2件目と、既存の別スロットとの
   const used = new Set();
   assert.equal(duplicateIdProblem(entry, used, null), null);
   used.add(entry.id);
-  assert.match(duplicateIdProblem(entry, used, null), /同じidの行が重複/);
+  assert.match(duplicateIdProblem(entry, used, null).reason, /同じidの行が重複/);
 
   // 既存 data.js 側に同じidで別の(date,start)がある場合(mergeStoreはスロット一致でしか置き換えない)
   const slots = new Map([[entry.id, '2026-09-13 20:00']]);
-  assert.match(duplicateIdProblem(entry, new Set(), slots), /既存エントリと id が衝突/);
+  assert.match(duplicateIdProblem(entry, new Set(), slots).reason, /既存エントリと id が衝突/);
   // 同じスロットなら既存が置き換わるので衝突しない
   assert.equal(duplicateIdProblem(entry, new Set(), new Map([[entry.id, '2026-09-12 19:00']])), null);
+});
+
+// 呼び出し側は「内容が失われた重複」と「既に取り込めている重複(店の再投稿)」を区別して
+// 扱う(前者だけを ::error:: の異常にする)。理由の文面で見分けると文言修正で静かに壊れるため、
+// 機械可読な kind を返すことをここで固定する。
+test('duplicateIdProblem: 重複の種類(kind)を返す', () => {
+  const entry = { id: 'ig-v18-2026-09-12-1900-nlh', date: '2026-09-12', start: '19:00' };
+  assert.equal(duplicateIdProblem(entry, new Set([entry.id]), null).kind, 'duplicate-in-run');
+  assert.equal(
+    duplicateIdProblem(entry, new Set(), new Map([[entry.id, '2026-09-13 20:00']])).kind,
+    'existing-slot-conflict'
+  );
 });

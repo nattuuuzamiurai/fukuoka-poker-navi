@@ -14,10 +14,11 @@
  *      tools/venue-schedule-vision.js でTournamentデータへ抽出する(簡易キーワード判定。
  *      取りこぼしより誤検知の方が実害が小さいため広めに拾う。実際にトーナメント情報が読み取れるかは
  *      後段のVision抽出が0件かどうかで最終判断される)
- *   3.5 抽出結果を検査し、`data.js` に入れてはいけない行【だけ】を捨てる(詳細は下記)。
- *      1行だけの検査は tools/validate-data.js の extractedRowProblem(日付書式・実在日・
- *      name非空・開始時刻が HH:MM か・金額が数値として読めるか)、行を跨ぐ検査は
- *      同ファイルの duplicateIdProblem(id重複)
+ *   3.5 抽出結果を【正規化してから】検査し、`data.js` に入れてはいけない行【だけ】を捨てる(詳細は下記)。
+ *      正規化は tools/validate-data.js の normalizeExtractedRow(`9:00`→`09:00`、
+ *      全角コロン、読めない金額はその項目だけ null)、1行だけの検査は同ファイルの
+ *      extractedRowProblem(日付書式・実在日・name非空・開始時刻が HH:MM か・金額が数値か)、
+ *      行を跨ぐ検査は同ファイルの duplicateIdProblem(id重複)
  *   4. 抽出結果を tools/tournament-merge.js で `data.js` へ安全にupsertする
  *      (`source: 'semi', verified: false`。PR #11(import-waitinglist.js)・PR #14と同じ安全設計:
  *       対象venue以外・過去日には一切触れない、書き込み前に自己チェック、失敗時は書き換えない)
@@ -65,11 +66,36 @@
  * ただしこれは1行だけでは判定できない検査なので、判定は validate-data.js の duplicateIdProblem に
  * 置き、「今回採用したidの集合」と「data.js側のid→スロット」をこちらが持って渡す。
  *
+ * 【捨てる前に直せるものは直す理由(2026-07-31追記 / 層2の前段に正規化を置いた)】
+ * 下記のとおり lastPostedAt は採用件数に関係なく無条件で前進するので、捨てた行は
+ * 「遅れる」のではなく【自動経路から永久に失われる】。とくに初回実行は6店×直近12投稿の
+ * バックログ全体を一度きり・不可逆に消費する。そこで tools/validate-data.js の
+ * normalizeExtractedRow を検査の前に通し、
+ *   - 開始時刻の【書式の揺れ】(ゼロ埋め漏れ・全角・前後の空白) … 直して採用する
+ *   - 読み取れない金額(`"3,500"` / `"5000円"`) … その項目だけ null にして【行は残す】
+ * とする。正規化した内容は正規化前の値ごとログに出す(Visionの出力形式を人が測るため)。
+ *
+ * 【直すのは書式の揺れだけで、記法の翻訳(`7pm`→`19:00`、`19時`→`19:00`)はしない】
+ * `7pm` も一意に決まるが、翻訳ルールを1つ足すごとに【誤った開始時刻を公開する】経路が増える。
+ * 開始時刻の誤りはプレイヤーが違う時間に店へ行く実害で、「大会が1件載らない」より重い。
+ * 書式の揺れの補正にはこの危険が無い(情報を1ビットも足していない)。この線引きは
+ * 実測で覆せる — 捨てた生値は破棄ログに、直した件数は lastExtraction.normalized に残るので、
+ * `19時` が実際に頻出すると分かってからルールを足すこと(想像で先回りしない)。
+ *
  * 【捨てすぎ(投稿まるごと不採用)を異常として扱う理由】
  * ある投稿から抽出した行が1件以上あるのに1件も採用できなかった場合、その投稿の内容は
  * サイトのどこにも残らず、しかも確認済み投稿日時が進むので【二度と再試行されない】。
  * 静かに捨てると誰も気づけないため、ジョブは止めない代わりに ::error:: 注記で目立たせ、
  * 手動取込み(tools/import-venue-image.js --instagram-url)の導線をログに出す。
+ *
+ * 【ただし「同じ投稿の再掲」は異常ではない(2026-07-31追記)】
+ * 店が同じ画像を再投稿すると、その投稿の全行が「今回の取込みで既に採用済み」(duplicateIdProblem の
+ * kind='duplicate-in-run')として捨てられ、採用0件になる。だが内容は1件目の投稿で取り込めており
+ * 【何も失われていない】。これを ::error:: にすると、初回実行という一度きりの run で唯一の
+ * 警告チャネルが空振りで埋まり、本物の異常(日付不正等)が読み取れなくなる。そのため
+ * 「破棄理由がすべて duplicate-in-run の投稿」は異常から除外し、ログにだけ残す。
+ * 一方 kind='existing-slot-conflict'(data.js に同じidで別日時の既存がある)は内容がどこにも
+ * 入らないままなので、従来どおり異常として扱う。
  */
 
 'use strict';
@@ -79,8 +105,9 @@ const path = require('path');
 
 // 「data.js に入れてよい行か」の判定はコミット前ゲート(tools/validate-data.js)と同じものを使う。
 // 二重に書くと必ず片方が古くなり、「抽出側は通すのにゲートで落ちる=ジョブが毎日止まる」ズレが生じる。
-// extractedRowProblem は1行だけの検査、duplicateIdProblem は行を跨ぐ検査(id重複)。
-const { extractedRowProblem, duplicateIdProblem } = require('./validate-data');
+// normalizeExtractedRow は検査の前段(直せる逸脱を直す)、extractedRowProblem は1行だけの検査、
+// duplicateIdProblem は行を跨ぐ検査(id重複)。
+const { normalizeExtractedRow, extractedRowProblem, duplicateIdProblem } = require('./validate-data');
 
 const REPO_ROOT = path.join(__dirname, '..');
 const DATA_JS = path.join(REPO_ROOT, 'data.js');
@@ -173,10 +200,19 @@ function slugify(name) {
 
 /**
  * Vision抽出の素の結果1件 → Tournamentスキーマ(source: 'semi', verified: false)。
+ * 【必ず normalizeExtractedRow を通した行を渡すこと】— id は start から組み立てるので、
+ * `9:00` のまま渡すと id が `-900-` になり、同日内の並び順(start の文字列比較)も狂う。
+ *
  * `source: 'auto'`ではなく`'semi'`にしているのは、対象店舗が「1投稿1イベント」形式で運用されており
  * 1回の投稿取得結果が今後の全日程を含むとは限らないため(詳細は本ファイル冒頭のコメント参照)。
  * `'semi'`ならtools/tournament-merge.jsのmergeStoreで「対応する(date,start)が無いものは残す」
  * 規則が適用され、複数投稿にまたがる日程が消えずに積み上がっていく。
+ *
+ * 【buyin/stack の既定値が 0 ではなく null な理由(2026-07-31修正)】
+ * 0 は「0円 = 無料」という【読み取れた値】で、null が「読み取れなかった」。Visionが金額を
+ * 返さなかった/読めない値を返した(正規化で null に倒れた)のは後者なので、0 にしてはいけない。
+ * 表示はどちらも「詳細は店舗SNSを確認」(index.html / tools/venue-schedule.js の vpBuyin)で
+ * 変わらないが、データとしての意味が逆になる。
  */
 function toTournament(t, venueId) {
   const start = t.start || '00:00';
@@ -186,9 +222,9 @@ function toTournament(t, venueId) {
     name: String(t.name).trim(),
     date: t.date,
     start,
-    buyin: t.buyin != null ? Number(t.buyin) : 0,
+    buyin: t.buyin != null ? Number(t.buyin) : null,
     addon: t.addon != null ? Number(t.addon) : null,
-    stack: t.stack != null ? Number(t.stack) : 0,
+    stack: t.stack != null ? Number(t.stack) : null,
     guarantee: t.guarantee != null ? Number(t.guarantee) : null,
     reentry: t.reentry === 'late' ? 'late' : Boolean(t.reentry),
     prize: t.prize || null,
@@ -206,6 +242,22 @@ function toTournament(t, venueId) {
 function formatDroppedRow(store, post, row, reason) {
   return (
     `[monitor-instagram-apify] 抽出結果を1件破棄しました: ${reason}` +
+    ` / 店=${store.label}(${store.venueId})` +
+    ` / 投稿=${post.permalink}(${post.postedAt})` +
+    ` / date=${JSON.stringify(row && row.date)} / name=${JSON.stringify(row && row.name)}`
+  );
+}
+
+/**
+ * 正規化した抽出行1件のログ。【正規化前の値を必ず残す】 — これが無いと
+ * 「Visionが実際にどんな形で返しているか」を人が測れず、プロンプトを直す判断ができない。
+ */
+function formatNormalizedRow(store, post, row, notes) {
+  const detail = notes
+    .map((n) => `${n.field}: ${JSON.stringify(n.from)} → ${JSON.stringify(n.to)}(${n.reason})`)
+    .join(' / ');
+  return (
+    `[monitor-instagram-apify] 抽出結果を正規化しました: ${detail}` +
     ` / 店=${store.label}(${store.venueId})` +
     ` / 投稿=${post.permalink}(${post.postedAt})` +
     ` / date=${JSON.stringify(row && row.date)} / name=${JSON.stringify(row && row.name)}`
@@ -258,7 +310,10 @@ async function runMonitor(opts, libs) {
       extractedCount: 0,
       droppedCount: 0,
       dropped: [],
+      normalizedCount: 0,
+      normalized: [],
       unusablePostCount: 0,
+      repostedPostCount: 0,
       stats: null,
     };
 
@@ -276,7 +331,8 @@ async function runMonitor(opts, libs) {
     const existingIdSlots = new Map(arr.map((t) => [t.id, `${t.date} ${t.start}`]));
 
     const extracted = [];
-    let unusablePosts = 0; // 抽出行はあったのに1件も採用できなかった投稿の数
+    let unusablePosts = 0; // 抽出行はあったのに1件も採用できなかった投稿の数(異常)
+    let repostedPosts = 0; // 全行が「既に取込み済み」だった投稿の数(再投稿。異常ではない)
     for (const post of scheduleLike) {
       let imageBuffer;
       try {
@@ -296,17 +352,35 @@ async function runMonitor(opts, libs) {
         );
         continue;
       }
-      // Visionの戻り値は無検証では使えない。1行ずつ検査し、不正な行だけを捨てて残りは取り込む。
+      // Visionの戻り値は無検証では使えない。1行ずつ「直せるものは直してから」検査し、
+      // それでも不正な行だけを捨てて残りは取り込む。
       const rows = Array.isArray(raw) ? raw : [];
       let keptFromPost = 0;
       const droppedFromPost = [];
       for (const t of rows) {
-        // 1行だけの検査 → 通ったらエントリを組み立てて、行を跨ぐ検査(id重複)
-        let reason = extractedRowProblem(t);
+        // 正規化(`9:00`→`09:00`、読めない金額はその項目だけ null)→ 1行だけの検査 →
+        // 通ったらエントリを組み立てて、行を跨ぐ検査(id重複)。
+        // 【検査もエントリ生成も正規化後の row を使うこと】— id と同日内の並び順が start に依存する。
+        const { row, notes } = normalizeExtractedRow(t);
+        if (notes.length) {
+          summary.normalized.push({
+            venueId: store.venueId,
+            permalink: post.permalink,
+            notes,
+            name: row && row.name,
+          });
+          console.warn(formatNormalizedRow(store, post, row, notes));
+        }
+        let reason = extractedRowProblem(row);
+        let kind = reason ? 'row' : null;
         let entry = null;
         if (!reason) {
-          entry = toTournament(t, store.venueId);
-          reason = duplicateIdProblem(entry, usedIds, existingIdSlots);
+          entry = toTournament(row, store.venueId);
+          const dup = duplicateIdProblem(entry, usedIds, existingIdSlots);
+          if (dup) {
+            reason = dup.reason;
+            kind = dup.kind;
+          }
         }
         if (reason) {
           const record = {
@@ -315,12 +389,13 @@ async function runMonitor(opts, libs) {
             permalink: post.permalink,
             postedAt: post.postedAt,
             reason,
-            date: t && t.date,
-            name: t && t.name,
+            kind,
+            date: row && row.date,
+            name: row && row.name,
           };
           droppedFromPost.push(record);
           summary.dropped.push(record);
-          console.warn(formatDroppedRow(store, post, t, reason));
+          console.warn(formatDroppedRow(store, post, row, reason));
           continue;
         }
         usedIds.add(entry.id);
@@ -329,20 +404,40 @@ async function runMonitor(opts, libs) {
       }
       // 抽出行はあったのに1件も採用できなかった投稿 = その投稿の内容が丸ごと失われた状態。
       // 確認済み投稿日時は下で前進するので二度と再試行されない。静かに捨てず異常として記録する。
+      //
+      // 【例外】破棄理由が【すべて】「今回の取込みで既に採用済み」(duplicate-in-run)なら、
+      // それは店が同じ画像を再投稿しただけで、内容は1件目の投稿から取り込めている=何も失われていない。
+      // これを異常にすると、初回実行という一度きりの run で唯一の警告チャネル(::error::)が
+      // 空振りで埋まり、本物の異常が読めなくなる。ログには残す(上の破棄ログ+下の1行)。
+      // なお「再投稿だが、その画像に元々読めない行も含まれていた」場合(重複+別理由の混在)は
+      // 異常として上げる。その行はどの投稿からも取り込めておらず、本当に失われているため。
       if (rows.length > 0 && keptFromPost === 0) {
-        unusablePosts += 1;
-        anomalies.push({
-          store,
-          permalink: post.permalink,
-          postedAt: post.postedAt,
-          rowCount: rows.length,
-          reasons: [...new Set(droppedFromPost.map((d) => d.reason))],
-        });
+        const allAlreadyImported =
+          droppedFromPost.length > 0 && droppedFromPost.every((d) => d.kind === 'duplicate-in-run');
+        if (allAlreadyImported) {
+          repostedPosts += 1;
+          console.log(
+            `[monitor-instagram-apify] 再投稿と判断しました(異常ではありません): 店=${store.label}(${store.venueId})` +
+              ` / 投稿=${post.permalink}(${post.postedAt}) / 抽出${rows.length}件はすべて既に取込み済みの行と同一のため、` +
+              'この投稿からの追加はありません。'
+          );
+        } else {
+          unusablePosts += 1;
+          anomalies.push({
+            store,
+            permalink: post.permalink,
+            postedAt: post.postedAt,
+            rowCount: rows.length,
+            reasons: [...new Set(droppedFromPost.map((d) => d.reason))],
+          });
+        }
       }
     }
     summary.extractedCount = extracted.length;
     summary.droppedCount = summary.dropped.length;
+    summary.normalizedCount = summary.normalized.length;
     summary.unusablePostCount = unusablePosts;
+    summary.repostedPostCount = repostedPosts;
 
     // 新着の確認記録は、Vision抽出の成否に関わらずこの店で確認できた最新投稿まで進める
     // (同じ投稿を毎回「新着」として拾い直し続けないため)。
@@ -360,7 +455,12 @@ async function runMonitor(opts, libs) {
         posts: scheduleLike.length,
         kept: extracted.length,
         dropped: summary.droppedCount,
+        // 正規化した行数と再投稿と判断した投稿数も残す。これが無いと
+        // 「dropped が多いのに unusablePosts が 0」の理由(=再投稿)が状態ファイルから読めず、
+        // Visionの出力形式がどれだけ揺れているか(normalized)も測れない。
+        normalized: summary.normalizedCount,
         unusablePosts,
+        reposts: repostedPosts,
       };
     } else if (prev && prev.lastExtraction) {
       nextState[store.venueId].lastExtraction = prev.lastExtraction;
@@ -453,7 +553,8 @@ async function main() {
     console.log(`[${s.store.label} / ${s.store.venueId} / @${s.store.handle}]`);
     console.log(
       `  新着投稿 ${s.newPostCount}件 / うちスケジュール告知らしき投稿 ${s.scheduleLikeCount}件 / ` +
-        `取り込んだトーナメント ${s.extractedCount}件 / 破棄した抽出行 ${s.droppedCount}件 / ` +
+        `取り込んだトーナメント ${s.extractedCount}件 / 正規化した抽出行 ${s.normalizedCount}件 / ` +
+        `破棄した抽出行 ${s.droppedCount}件 / 再投稿(取込み済み)の投稿 ${s.repostedPostCount}件 / ` +
         `1行も採用できなかった投稿 ${s.unusablePostCount}件`
     );
     if (s.stats) {
@@ -513,6 +614,7 @@ module.exports = {
   slugify,
   toTournament,
   formatDroppedRow,
+  formatNormalizedRow,
   reportAnomalies,
   runMonitor,
   loadState,

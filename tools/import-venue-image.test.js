@@ -26,12 +26,15 @@ test('toTournament: source=semi/verified=falseで、amountはnumber化・reentry
   assert.ok(t.id.startsWith('photo-v40-2026-09-10-1900-'));
 });
 
-test('toTournament: start省略時は00:00、reentry省略時はfalseになる', () => {
+// 金額が読み取れなかったときの既定値は 0 ではなく null。0 は「0円=無料」という
+// 【読み取れた値】であり、「読み取れなかった」を表せるのは null だけ(表示はどちらも
+// 「詳細は店舗SNSを確認」だが、データとしての意味が逆になる)。
+test('toTournament: start省略時は00:00、reentry省略時はfalse、金額は0ではなくnullになる', () => {
   const t = importer.toTournament({ date: '2026-09-10', name: 'テスト' }, 'v40');
   assert.equal(t.start, '00:00');
   assert.equal(t.reentry, false);
-  assert.equal(t.buyin, 0);
-  assert.equal(t.stack, 0);
+  assert.strictEqual(t.buyin, null);
+  assert.strictEqual(t.stack, null);
   assert.equal(t.addon, null);
   assert.equal(t.guarantee, null);
 });
@@ -97,7 +100,7 @@ test('importVenueImage: 不正な行(日付書式・id重複)だけを捨て、�
           { ...good },                                             // id重複
           { date: '2026-9-11', start: '19:00', name: 'ゼロ埋めなし' }, // 日付書式
           { date: '2026-09-12', start: '7pm', name: '時刻が読めない' },  // start書式
-          { date: '2026-09-13', start: '19:00', name: 'カンマ金額', buyin: '3,500' }, // NaN
+          { date: '2026-09-13', start: '25:00', name: '時刻が範囲外' },  // 正規化しても直らない
         ];
       },
     };
@@ -110,6 +113,37 @@ test('importVenueImage: 不正な行(日付書式・id重複)だけを捨て、�
     assert.equal(arr.length, 1);
     assert.equal(arr[0].name, 'テストトナメ');
     assert.equal(new Set(arr.map((t) => t.id)).size, arr.length, 'idが重複していないこと');
+  } finally {
+    fs.unlinkSync(dataJsPath);
+  }
+});
+
+// 正規化(tools/validate-data.js の normalizeExtractedRow)もこのCLIが呼ぶ。
+// 呼び忘れるとこのCLIだけが `9:00` や `"3,500"` の行を捨て続ける(Instagram監視と挙動がズレる)。
+test('importVenueImage: ゼロ埋め漏れの開始時刻・読めない金額でも行を捨てず、正規化して取り込む', async () => {
+  const dataJsPath = path.join(os.tmpdir(), `data-test-${Date.now()}-${Math.random().toString(36).slice(2)}.js`);
+  fs.writeFileSync(dataJsPath, 'const VENUES = [];\nconst TOURNAMENTS = [\n];\nconst AREAS = [];\n');
+  try {
+    const fakeVisionLib = {
+      async extractTournaments() {
+        return [
+          { date: '2026-09-10', start: '9:00', name: 'モーニング', buyin: '3,500' },
+          { date: '2026-09-10', start: '19：00', name: 'ナイト', buyin: 3000, stack: '20k' },
+        ];
+      },
+    };
+    const result = await importer.importVenueImage(
+      { venueId: 'v40', imageBuffer: Buffer.from('fake'), dryRun: false, dataJsPath, today: TODAY },
+      { visionLib: fakeVisionLib, mergeLib: merge }
+    );
+    assert.equal(result.tournaments.length, 2, '2件とも取り込まれること');
+    const byName = Object.fromEntries(result.tournaments.map((t) => [t.name, t]));
+    assert.equal(byName['モーニング'].start, '09:00');
+    assert.ok(byName['モーニング'].id.includes('-0900-'), byName['モーニング'].id);
+    assert.strictEqual(byName['モーニング'].buyin, null, '読めない金額はその項目だけ null');
+    assert.equal(byName['ナイト'].start, '19:00');
+    assert.equal(byName['ナイト'].buyin, 3000);
+    assert.strictEqual(byName['ナイト'].stack, null);
   } finally {
     fs.unlinkSync(dataJsPath);
   }
