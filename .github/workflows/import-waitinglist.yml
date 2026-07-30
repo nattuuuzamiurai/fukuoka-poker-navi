@@ -10,6 +10,12 @@ name: Waitinglist 日程の自動取得
 # data.js だけでなく、そのスナップショットである店舗静的ページ(venues/)と sitemap.xml も
 # このワークフローの中で再生成する。再生成しないと、JSを実行しないクローラに古い日程が見え続ける
 # (閲覧者にはブラウザ側の描き直しで最新が出るため、画面を見ても気づけない)。
+# 再生成は【`git pull --rebase` の後】に行う。理由は下のコミットステップのコメント参照
+# (rebase で取り込んだ他ジョブぶんが生成物に反映されないまま push されるのを防ぐため)。
+#
+# data.js を書く経路は他にもある(Instagram監視 monitor-instagram-apify.yml)。
+# 日付書式のような「どちらが原因でも本番と翌朝のジョブを壊す」検査は、
+# 両方のワークフローが同じ tools/validate-data.js を呼ぶ共通の栓にしてある。
 #
 # 再生成の波及は tools/venue-schedule.js の venueRange() が店舗別なので、
 # 取込対象の店(現在は v3)のページにしか及ばない。日次で書き換わるのは data.js と
@@ -57,38 +63,63 @@ jobs:
         run: node tools/import-waitinglist.js
 
       # 壊れた data.js をコミットして本番サイトを白画面にしないための最終ゲート。
-      # 構文・件数・id重複を見る(スクリプト側の安全弁をすり抜けた場合の受け皿)。
-      - name: 出力の妥当性を確認
-        run: |
-          node --check data.js
-          node -e 'const d=require("./data.js");
-            if(d.TOURNAMENTS.length<500) throw new Error("TOURNAMENTS件数が異常: "+d.TOURNAMENTS.length);
-            if(new Set(d.TOURNAMENTS.map(t=>t.id)).size!==d.TOURNAMENTS.length) throw new Error("id重複");'
-
-      # data.js のスナップショットである静的ページを追随させる。
-      # --check は「生成物がデータと一致しているか」の検査で、ここが落ちるのは
-      # 生成が中途半端に終わった場合(=コミットしてはいけない状態)。
-      - name: 店舗静的ページ / sitemap を再生成
-        run: |
-          node tools/gen-venue-pages.js .
-          node tools/gen-venue-pages.js . --check
+      # 構文・件数・id重複・【日付書式(YYYY-MM-DD ゼロ埋め)】を見る
+      # (スクリプト側の安全弁をすり抜けた場合の受け皿)。中身は tools/validate-data.js。
+      #
+      # ★このステップが落ちたら、まず data.js の【日付書式】を疑うこと。
+      #   `2026-9-5` / `9/5` / `2026-07-01T00:00:00Z` のような値が1件でも混ざると落ちる。
+      #   犯人はこのワークフローとは限らない。Instagram監視(monitor-instagram-apify.yml)は
+      #   LLM(Vision)が読み取った日付を data.js に入れるので、そちら由来のことがある。
+      #   エラーには【実際の不正値】(想定外の値: 2026-9-5 のように)と venueId / id / name が出るので、
+      #   仮にスタックトレース側の店名が別店を指していても、その値で data.js を検索すれば
+      #   該当エントリに辿り着ける。
+      - name: 出力の妥当性を確認(日付書式を含む)
+        run: node tools/validate-data.js .
 
       - name: 差分があればコミット & プッシュ
         run: |
           # 追加が git add -A なので、判定も未追跡ファイルを含む git status --porcelain で見る
           # (git diff --quiet だと未追跡ファイルだけの変更を「差分なし」と誤判定する)。
-          if test -z "$(git status --porcelain)"; then
-            echo "差分なし。コミットしません。"
-            exit 0
-          fi
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "chore: Waitinglistから日程を自動取得 ($(TZ=Asia/Tokyo date +%Y-%m-%d))"
+          committed=0
+          if test -n "$(git status --porcelain)"; then
+            git add -A
+            git commit -m "chore: Waitinglistから日程を自動取得 ($(TZ=Asia/Tokyo date +%Y-%m-%d))"
+            committed=1
+          else
+            echo "取込みによる差分なし。"
+          fi
           # checkout から push までの間に main が進むと push が弾かれる。
           # 誰も Actions を見ていないと取込みが静かに止まりサイトが古いまま残るので、
-          # push の直前に rebase して取り込む(このジョブが触るのは data.js と取込対象店の
-          # 生成ページだけなので、他の作業と行が衝突する可能性は低い。
-          # 衝突したらジョブを失敗させて人が気づけるようにする)。
+          # push の直前に rebase して取り込む(このコミットが持ち込むのは data.js だけなので、
+          # 他の作業と行が衝突する可能性は低い。衝突したらジョブを失敗させて人が気づけるようにする)。
           git pull --rebase
+          # 【順序が重要】静的ページの再生成と検査は rebase の"後"に行う。
+          #   rebase の前に生成すると、rebase で取り込んだ他ジョブ・人のコミットぶんの data.js が
+          #   生成物に反映されず、【push されるツリーが --check を通らない状態】になり得る
+          #   (例: Instagram監視が同日に6店ぶんの日程を足していると、その6店のページが古いまま押される)。
+          #   生成物をコミットに含めないまま rebase することで、venues/*.html の衝突も避けられる。
+          # 再検査(validate-data)も rebase 後にやる。押す物そのものを検査するため。
+          node tools/validate-data.js .
+          # --check は「生成物がデータと一致しているか」の検査で、ここが落ちるのは
+          # 生成が中途半端に終わった場合(=コミットしてはいけない状態)。
+          node tools/gen-venue-pages.js .
+          node tools/gen-venue-pages.js . --check
+          if test -n "$(git status --porcelain)"; then
+            git add -A
+            if test "$committed" = "1"; then
+              # 取込みと同じ1コミットにまとめる(data.js と生成物が別コミットに割れないように)
+              git commit --amend --no-edit
+            else
+              # 取込みに差分が無いのに生成物がズレている = 人が data.js を触って再生成を忘れた状態。
+              # 直すのは正しいが、取込みの手柄にすると監査ログが嘘になるので別のメッセージにする。
+              git commit -m "chore: 静的ページを data.js に追随させる(自動再生成) ($(TZ=Asia/Tokyo date +%Y-%m-%d))"
+              committed=1
+            fi
+          fi
+          if test "$committed" = "0"; then
+            echo "差分なし。プッシュしません。"
+            exit 0
+          fi
           git push
