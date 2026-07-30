@@ -6,23 +6,138 @@
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://fukuokapoker.com/events/nippon-series-2026-fukuoka/</loc>
-    <changefreq>daily</changefreq>
+    <loc>https://fukuokapoker.com/events/wjpt-2026/</loc>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://fukuokapoker.com/events/jopt-2026-fukuoka-01/</loc>
-    <changefreq>daily</changefreq>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://fukuokapoker.com/events/nippon-series-2026-fukuoka/</loc>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://fukuokapoker.com/events/fst-2026-fukuoka/</loc>
     <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://fukuokapoker.com/venues/kkpoker-fukuoka/</loc>
+    <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://fukuokapoker.com/events/wjpt-2026/</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.3</priority>
+    <loc>https://fukuokapoker.com/venues/m-holdem-nakasu/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://fukuokapoker.com/venues/casino-bar-leje-hakata/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://fukuokapoker.com/venues/fuxk-fukuoka-tenjin/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://fukuokapoker.com/venues/raise-blue-tenjin/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://fukuokapoker.com/venues/pokerbar-nuwland/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://fukuokapoker.com/venues/triplebarrel-kokura/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://fukuokapoker.com/venues/texas-holdem-3000/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://fukuokapoker.com/venues/poker-bar-iris/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://fukuokapoker.com/venues/casino-arrows-kokura/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://fukuokapoker.com/venues/king-queen-suited-nogata/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://fukuokapoker.com/venues/ken-poker-kurume/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://fukuokapoker.com/venues/crownclown-nakasu/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://fukuokapoker.com/venues/seventwo-tenjin/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://fukuokapoker.com/venues/joker-fukuoka-ohashi/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://fukuokapoker.com/venues/the-dojo-fukuoka/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://fukuokapoker.com/venues/casinox-fukuoka-imaizumi/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://fukuokapoker.com/venues/poker-room-sky/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://fukuokapoker.com/venues/king-queen-suited-kurosaki/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://fukuokapoker.com/venues/ace-and-king-kurume/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://fukuokapoker.com/venues/raftel-casino-fukuoka-imaizumi/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://fukuokapoker.com/venues/triplebarrel-orio/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://fukuokapoker.com/venues/poker-studio-deep-blue-yukuhashi/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
   </url>
 </urlset>
