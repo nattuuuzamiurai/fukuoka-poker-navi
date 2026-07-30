@@ -7,9 +7,12 @@ name: Waitinglist 日程の自動取得
 # 今日以降の件数の急減」のとき data.js を書き換えずに非ゼロ終了する。
 # その場合このワークフローも失敗させて、異常が Actions の画面で見えるようにする。
 #
-# data.js を更新したら店舗静的ページ(venues/)とsitemapの再生成が必要(READMEの
-# 「data.js を更新したら」参照)。忘れるとJSを実行しないクローラに古い日程が見え続けるため、
-# ここで必ず再生成してから一緒にコミットする。
+# このワークフローが触るのは data.js だけで、店舗静的ページ(venues/)や sitemap.xml は再生成しない。
+# 現在の tools/venue-schedule.js の dataRange() は全店グローバルの日付範囲を返すため、
+# 1店の1件を足しただけで35ページ全部が書き換わり、無人の日次pushでは他セッションとの競合が常態化する。
+# 日次の自動再生成は dataRange() の店舗別化とセットで別PRに切り出した。
+# それまでは、data.js を更新したあとの再生成は従来どおり人が実行する
+# (READMEの「data.js を更新したら」参照。忘れるとJSを実行しないクローラに古い日程が見え続ける)。
 
 on:
   schedule:
@@ -49,16 +52,11 @@ jobs:
             if(d.TOURNAMENTS.length<500) throw new Error("TOURNAMENTS件数が異常: "+d.TOURNAMENTS.length);
             if(new Set(d.TOURNAMENTS.map(t=>t.id)).size!==d.TOURNAMENTS.length) throw new Error("id重複");'
 
-      # data.js のスナップショットである店舗静的ページ・sitemap.xml・トップの店舗リンク行を
-      # 追随させる。data.js に差分が無ければ生成物も変わらないので、常に実行してよい。
-      - name: 店舗静的ページ / sitemap を再生成
-        run: |
-          node tools/gen-venue-pages.js .
-          node tools/gen-venue-pages.js . --check
-
       - name: 差分があればコミット & プッシュ
         run: |
-          if git diff --quiet; then
+          # 追加が git add -A なので、判定も未追跡ファイルを含む git status --porcelain で見る
+          # (git diff --quiet だと未追跡ファイルだけの変更を「差分なし」と誤判定する)。
+          if test -z "$(git status --porcelain)"; then
             echo "差分なし。コミットしません。"
             exit 0
           fi
