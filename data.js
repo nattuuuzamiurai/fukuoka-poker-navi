@@ -11126,6 +11126,56 @@ const TOURNAMENTS = [
     ],
     "source": "semi",
     "verified": false
+  },
+  {
+    "id": "mh0801a",
+    "venueId": "v3",
+    "name": "m Monster Stack",
+    "date": "2026-08-01",
+    "start": "13:10",
+    "buyin": 4000,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "mh0801b",
+    "venueId": "v3",
+    "name": "m VAULT",
+    "date": "2026-08-01",
+    "start": "17:10",
+    "buyin": 4000,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "mh0801c",
+    "venueId": "v3",
+    "name": "m MAD shuffle Turbo",
+    "date": "2026-08-01",
+    "start": "21:00",
+    "buyin": 2000,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "semi",
+    "verified": false
   }
 ];
 
