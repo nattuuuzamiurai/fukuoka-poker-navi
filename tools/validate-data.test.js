@@ -183,7 +183,7 @@ test('修正案内に「Instagram監視経路では data.js に無い」旨と�
 
 // ---------- 共有する判定関数(抽出側 = 層2 が require して使うもの) ----------
 
-const { dateProblem, extractedRowProblem } = require('./validate-data');
+const { dateProblem, extractedRowProblem, duplicateIdProblem } = require('./validate-data');
 
 test('require しても検査は走らない(CLI起動時だけ main が動く)', () => {
   // ここまで require できている時点で exit(1) していない = 副作用が無いことの確認
@@ -210,4 +210,47 @@ test('extractedRowProblem: 取り込んでよい行は null、駄目な行は理
   assert.match(extractedRowProblem({ name: 'マンデー' }), /date が空/);
   assert.match(extractedRowProblem(null), /オブジェクトではない/);
   assert.match(extractedRowProblem('2026-09-05'), /オブジェクトではない/);
+});
+
+// start は id の構成要素(`ig-v18-2026-09-12-1900-nlh`)であり、同じ日の並び順も start の
+// 文字列比較で決まる。`7pm` や改行混入をそのまま通すと id と表示の両方が壊れる。
+test('extractedRowProblem: start は HH:MM(ゼロ埋め)か空のみ許す', () => {
+  const base = { date: '2026-09-05', name: 'マンデー' };
+  assert.equal(extractedRowProblem({ ...base, start: '19:00' }), null);
+  assert.equal(extractedRowProblem({ ...base, start: '00:00' }), null);
+  assert.equal(extractedRowProblem({ ...base, start: null }), null, 'start省略は許す(00:00が既定)');
+  assert.equal(extractedRowProblem({ ...base, start: '' }), null);
+  assert.match(extractedRowProblem({ ...base, start: '7pm' }), /開始時刻が HH:MM/);
+  assert.match(extractedRowProblem({ ...base, start: '9:00' }), /開始時刻が HH:MM/);
+  assert.match(extractedRowProblem({ ...base, start: '19:00\n<b>' }), /開始時刻が HH:MM/);
+  assert.match(extractedRowProblem({ ...base, start: '25:00' }), /開始時刻が HH:MM/);
+});
+
+// 数値にならない値は Number() で NaN になり、JSON化で null に化けて【価格情報が無言で消える】。
+test('extractedRowProblem: 数値フィールドが数値として読めない行を弾く', () => {
+  const base = { date: '2026-09-05', name: 'マンデー' };
+  assert.equal(extractedRowProblem({ ...base, buyin: 3000 }), null);
+  assert.equal(extractedRowProblem({ ...base, buyin: '3000' }), null, '数字だけの文字列は Number() で通る');
+  assert.equal(extractedRowProblem({ ...base, buyin: null, guarantee: null }), null, 'null は「読み取れなかった」の正しい表現');
+  assert.match(extractedRowProblem({ ...base, buyin: '3,500' }), /buyin が数値として読めない/);
+  assert.match(extractedRowProblem({ ...base, stack: '20k' }), /stack が数値として読めない/);
+  assert.match(extractedRowProblem({ ...base, addon: '無料' }), /addon が数値として読めない/);
+  assert.match(extractedRowProblem({ ...base, guarantee: '10万' }), /guarantee が数値として読めない/);
+  assert.match(extractedRowProblem({ ...base, buyin: '' }), /buyin が数値として読めない/, '空文字は Number() で 0 になるので弾く');
+});
+
+// 行を跨ぐ検査。コミット前ゲートは id重複も見るが、それは1行だけでは判定できないので
+// extractedRowProblem には入っていない(呼び出し側が集合を持ってこちらを呼ぶ)。
+test('duplicateIdProblem: 同じidの2件目と、既存の別スロットとの衝突を検出する', () => {
+  const entry = { id: 'ig-v18-2026-09-12-1900-nlh', date: '2026-09-12', start: '19:00' };
+  const used = new Set();
+  assert.equal(duplicateIdProblem(entry, used, null), null);
+  used.add(entry.id);
+  assert.match(duplicateIdProblem(entry, used, null), /同じidの行が重複/);
+
+  // 既存 data.js 側に同じidで別の(date,start)がある場合(mergeStoreはスロット一致でしか置き換えない)
+  const slots = new Map([[entry.id, '2026-09-13 20:00']]);
+  assert.match(duplicateIdProblem(entry, new Set(), slots), /既存エントリと id が衝突/);
+  // 同じスロットなら既存が置き換わるので衝突しない
+  assert.equal(duplicateIdProblem(entry, new Set(), new Map([[entry.id, '2026-09-12 19:00']])), null);
 });

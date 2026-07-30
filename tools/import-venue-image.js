@@ -46,7 +46,8 @@ const path = require('path');
 
 // 「data.js に入れてよい行か」の判定は、コミット前ゲート(tools/validate-data.js)および
 // Instagram監視(tools/monitor-instagram-apify.js)と同じものを使う。判定を書き分けない。
-const { extractedRowProblem } = require('./validate-data');
+// extractedRowProblem は1行だけの検査、duplicateIdProblem は行を跨ぐ検査(id重複)。
+const { extractedRowProblem, duplicateIdProblem } = require('./validate-data');
 
 const REPO_ROOT = path.join(__dirname, '..');
 const DATA_JS = path.join(REPO_ROOT, 'data.js');
@@ -115,9 +116,19 @@ async function importVenueImage(opts, libs) {
 
   // 不正な行(日付が YYYY-MM-DD でない等)はその行だけを捨て、残りは取り込む。
   // 捨てた行は必ずログに出す(このCLIは人が見ながら実行するので、黙って減ると読み取り漏れに気づけない)。
+  // id重複も捨てる — 同じidが2件入ると data.js の共通ゲート(tools/validate-data.js)が落ちる。
+  // 既存 data.js 側との衝突までは見ない(このCLIは人が結果を見ながら実行し、直後に
+  // `node tools/validate-data.js .` を回せる。無人の日次ジョブである Instagram監視側は
+  // そこまで見ている — tools/monitor-instagram-apify.js の existingIdSlots)。
   const tournaments = [];
+  const usedIds = new Set();
   for (const t of Array.isArray(raw) ? raw : []) {
-    const reason = extractedRowProblem(t);
+    let reason = extractedRowProblem(t);
+    let entry = null;
+    if (!reason) {
+      entry = toTournament(t, opts.venueId);
+      reason = duplicateIdProblem(entry, usedIds, null);
+    }
     if (reason) {
       console.warn(
         `[import-venue-image] 抽出結果を1件破棄しました: ${reason}` +
@@ -125,7 +136,8 @@ async function importVenueImage(opts, libs) {
       );
       continue;
     }
-    tournaments.push(toTournament(t, opts.venueId));
+    usedIds.add(entry.id);
+    tournaments.push(entry);
   }
 
   if (!tournaments.length) {

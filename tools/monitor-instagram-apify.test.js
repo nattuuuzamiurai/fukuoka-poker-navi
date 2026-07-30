@@ -371,6 +371,118 @@ test('runMonitor: 6店のうち1店で不正が出ても、他5店の取込み�
   assert.equal(brokenSummary.extractedCount, 0);
 });
 
+// 重複ID(2026-07-31 / 品質管理部の指摘)。Visionが同じ行を2回返す、あるいは start が
+// 読み取れない同名・同日の2行(どちらも既定の '00:00' になる)は id が衝突する。
+// 層2で捨てないと data.js の id が重複し、コミット前ゲートが落ちて state が進まず、
+// 翌日も6店すべてが同じ投稿から再試行して同じ所で止まる(本PRが消しに来た失敗モードそのもの)。
+test('runMonitor: Visionが同じ行を2回返しても、2件目をid重複として破棄する', async () => {
+  const row = { date: '2099-09-12', start: '19:00', name: 'NLH Tournament', buyin: 3000, tags: [] };
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[2]], before: [], today: '2026-07-31', state: {} }, // v18
+    fakeLibsFor([row, { ...row }])
+  );
+
+  assert.equal(result.arr.length, 1, '採用されるのは1件だけ');
+  assert.equal(result.summaries[0].droppedCount, 1);
+  assert.match(result.summaries[0].dropped[0].reason, /同じidの行が重複/);
+  // id が重複していない = コミット前ゲート(層1)が通る状態
+  const ids = result.arr.map((t) => t.id);
+  assert.equal(new Set(ids).size, ids.length);
+  // 一部は取り込めているので「投稿まるごと不採用」ではない
+  assert.equal(result.anomalies.length, 0);
+});
+
+test('runMonitor: startが読めない同日・同名の2行(どちらも00:00になる)もid重複として破棄する', async () => {
+  const rows = [
+    { date: '2099-09-12', name: 'マンデートナメ', buyin: 3000, tags: [] },
+    { date: '2099-09-12', name: 'マンデートナメ', buyin: 5000, tags: [] },
+  ];
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[2]], before: [], today: '2026-07-31', state: {} },
+    fakeLibsFor(rows)
+  );
+  assert.equal(result.arr.length, 1);
+  assert.equal(result.arr[0].start, '00:00');
+  assert.match(result.summaries[0].dropped[0].reason, /同じidの行が重複/);
+});
+
+test('runMonitor: 既存data.jsに同じidで別日時のエントリがあれば衝突として破棄する', async () => {
+  // 人が admin.html で日時だけ直した等で、id と (date,start) がズレている既存エントリ。
+  // mergeStore はスロット一致でしか置き換えないので、放置すると両方残って id が重複する。
+  const existing = {
+    id: 'ig-v18-2099-09-12-1900-nlh-tournament',
+    venueId: 'v18',
+    name: 'NLH Tournament',
+    date: '2099-09-13',
+    start: '20:00',
+    buyin: 3000,
+    addon: null,
+    stack: 0,
+    guarantee: null,
+    reentry: false,
+    prize: null,
+    tags: [],
+    source: 'semi',
+    verified: false,
+  };
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[2]], before: [existing], today: '2026-07-31', state: {} },
+    fakeLibsFor([{ date: '2099-09-12', start: '19:00', name: 'NLH Tournament', buyin: 3000, tags: [] }])
+  );
+  assert.equal(result.changed, false);
+  assert.deepEqual(result.arr, [existing]);
+  assert.match(result.summaries[0].dropped[0].reason, /既存エントリと id が衝突/);
+  assert.equal(result.anomalies.length, 1, '1行も採用できていないので異常として記録される');
+});
+
+test('runMonitor: 開始時刻がHH:MMでない行・数値がNaNになる行を破棄する', async () => {
+  const rows = [
+    { date: '2099-09-12', start: '19:00', name: '正しい', buyin: 3000, tags: [] },
+    { date: '2099-09-12', start: '7pm', name: '時刻が読めない', buyin: 3000, tags: [] },
+    { date: '2099-09-12', start: '19:00\n<b>', name: '改行混入', buyin: 3000, tags: [] },
+    { date: '2099-09-13', start: '19:00', name: '金額にカンマ', buyin: '3,500', tags: [] },
+    { date: '2099-09-14', start: '19:00', name: 'スタックにk', buyin: 3000, stack: '20k', tags: [] },
+  ];
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[2]], before: [], today: '2026-07-31', state: {} },
+    fakeLibsFor(rows)
+  );
+  assert.equal(result.arr.length, 1);
+  assert.equal(result.summaries[0].droppedCount, 4);
+  const reasons = result.summaries[0].dropped.map((d) => d.reason);
+  assert.match(reasons[0], /開始時刻が HH:MM/);
+  assert.match(reasons[1], /開始時刻が HH:MM/);
+  assert.match(reasons[2], /buyin が数値として読めない/);
+  assert.match(reasons[3], /stack が数値として読めない/);
+});
+
+test('runMonitor: 抽出品質(採用/破棄/不採用投稿の件数)を状態ファイルに残す', async () => {
+  const rows = [
+    { date: '2099-09-12', start: '19:00', name: '正しい', buyin: 3000, tags: [] },
+    { date: '2099-9-12', start: '19:00', name: '不正', buyin: 3000, tags: [] },
+  ];
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
+    fakeLibsFor(rows)
+  );
+  assert.deepEqual(result.state.v40.lastExtraction, {
+    checkedAt: '2026-07-31',
+    posts: 1,
+    kept: 1,
+    dropped: 1,
+    unusablePosts: 0,
+  });
+
+  // Vision抽出を行わなかった回(スケジュール告知らしき投稿が無い)は前回値を持ち越す
+  //(毎回変わる値を足して無意味な日次差分を増やさないため)
+  const next = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: result.arr, today: '2026-08-01', state: result.state },
+    fakeLibsFor([], { caption: '今日もありがとうございました', permalink: 'https://www.instagram.com/p/NEXT/' })
+  );
+  assert.deepEqual(next.state.v40.lastExtraction, result.state.v40.lastExtraction);
+  assert.equal(next.state.v40.lastPostedAt, '2026-07-20T10:00:00.000Z');
+});
+
 test('formatDroppedRow: 店・投稿・実際の値・理由がすべて1行に出る', () => {
   const line = monitor.formatDroppedRow(
     { venueId: 'v40', label: 'TripleBarrel 折尾店' },
@@ -562,10 +674,13 @@ test('CLI: 1店で不正な日付が返っても、正常終了して他店ぶ�
     assert.match(r.stderr, /https:\/\/www\.instagram\.com\/p\/triple_orio\//);
     assert.match(r.stderr, /"9\/5"/);
     assert.match(r.stderr, /"捨てられる大会"/);
-    // 1行も採用できなかった投稿(v18)は異常として目立たせる。ただしジョブは落とさない
-    assert.match(r.stderr, /::error title=/);
-    assert.match(r.stderr, /投稿まるごと不採用: 店=Poker Bar IRIS\(v18\)/);
-    assert.match(r.stderr, /再試行されません/);
+    // 1行も採用できなかった投稿(v18)は異常として目立たせる。ただしジョブは落とさない。
+    // ワークフローコマンド(::error::)は【stdout】に出すこと。GitHubの仕様は
+    // "sent to the runner over stdout" で、stderrで注記として認識される保証が無い。
+    assert.match(r.stdout, /::error title=/);
+    assert.equal(/::error title=/.test(r.stderr), false, '注記をstderrに出すと注記として扱われない');
+    assert.match(r.stdout, /投稿まるごと不採用: 店=Poker Bar IRIS\(v18\)/);
+    assert.match(r.stdout, /再試行されません/);
 
     // 書き込んだ data.js はコミット前ゲート(層1)も通る形になっている
     const validate = spawnSync('node', [path.join(TOOLS_DIR, 'validate-data.js'), root], { encoding: 'utf8' });

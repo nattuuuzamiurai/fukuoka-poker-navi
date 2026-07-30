@@ -49,7 +49,7 @@ AdSense/PR枠が埋まるまでの間、自社アプリの導線を3か所に置
 | `tools/gen-event-pages.js` | 上記イベント静的ページと**トップの恒久リンク行（`index.html` の `#evtLinks` 1行）**の**生成スクリプト**。データは `jopt-data.js` と `index.html` の `const WJPT` からそのまま読み込む（数値を手打ちしない=転記ミス防止）。実行: `node tools/gen-event-pages.js <リポジトリのパス>`（`--check` を付けると書き込まずに一致確認だけ行い、ズレていれば非ゼロ終了）。**JOPT等のデータや `big-events.js` を更新したら必ず再実行すること**（静的ページはデータのスナップショットのため） |
 | `tools/gen-venue-pages.js` | 店舗静的ページと**トップの店舗リンク行（`index.html` の `#venueLinks` 1行）**の**生成スクリプト**。データは `data.js` の `VENUES` / `TOURNAMENTS` / `RECURRING` からそのまま読み込む。実行: `node tools/gen-venue-pages.js <リポジトリのパス>`（`--check` あり）。**`data.js` を更新したら必ず再実行すること**（下記「`data.js` を更新したら」。自動取込ぶん（Waitinglist / Instagram監視）は各日次ワークフローが自動で再生成する） |
 | `tools/venue-schedule.js` | 店舗ページの日程表を組み立てるコードの**唯一の所有者**。生成時（Node）と閲覧時（ブラウザに埋め込む `SCHEDULE_JS`）で同じ1本を共有する。**焼き込む期間を店舗別に決める `venueRange()`** もここが持つ（`gen-venue-pages.js` の見出しと `gen-sitemap.js` の掲載判定が同じ基準を使うため）。テスト: `node tools/venue-schedule.test.js` |
-| `tools/validate-data.js` | **`data.js` をコミットしてよいかを判定する共通ゲート**（構文 / `TOURNAMENTS` の件数 / `id` 重複 / **日付書式 `YYYY-MM-DD`（実在する日付か）**）。落ちたときは**不正値と該当トーナメント（venueId・id・name）**を出す。実行: `node tools/validate-data.js .`。2つの日次ワークフロー（Waitinglist取込み / Instagram監視）が**コミット前と `git pull --rebase` の後**にこれを呼ぶ。**日付の判定そのもの（`dateProblem` / `extractedRowProblem`）もこのファイルが持ち**、取込み側（`monitor-instagram-apify.js` / `import-venue-image.js`）が `require` して使う（同じ規則を2箇所に書くと必ず片方が古くなり、「取込み側は通すのにゲートで落ちる＝毎朝ジョブが止まる」ズレが生じるため）。テスト: `node tools/validate-data.test.js` |
+| `tools/validate-data.js` | **`data.js` をコミットしてよいかを判定する共通ゲート**（構文 / `TOURNAMENTS` の件数 / `id` 重複 / **日付書式 `YYYY-MM-DD`（実在する日付か）**）。落ちたときは**不正値と該当トーナメント（venueId・id・name）**を出す。実行: `node tools/validate-data.js .`。2つの日次ワークフロー（Waitinglist取込み / Instagram監視）が**コミット前と `git pull --rebase` の後**にこれを呼ぶ。**取込んでよい行かの判定（`dateProblem` / `extractedRowProblem` / `duplicateIdProblem`）もこのファイルが持ち**、取込み側（`monitor-instagram-apify.js` / `import-venue-image.js`）が `require` して使う（同じ規則を2箇所に書くと必ず片方が古くなり、「取込み側は通すのにゲートで落ちる＝毎朝ジョブが止まる」ズレが生じるため）。**ゲート側にしか無い検査（件数）もあるので「取込み側を通れば必ずゲートも通る」ではない**点に注意。テスト: `node tools/validate-data.test.js` |
 | `tools/gen-sitemap.js` | **`sitemap.xml` の唯一の所有者**。トップ＋イベントページ＋店舗ページの全URLをここだけで組み立てる（詳細は下記「sitemap.xml の所有者」）。単独実行も可: `node tools/gen-sitemap.js <リポジトリのパス>`（`--check` あり） |
 | `tools/site-shell.js` | 静的ページ共通の「外側」（`<head>`・GA4タグ・共通CSS・ヘッダー・フッター・自社広告・大会の恒久リンク行）。イベントページと店舗ページで骨格が食い違わないよう、出どころを1つにしてある。**純粋なモジュールで、require しても何も書き込まない** |
 | `tools/import-venue-image.js` | 店舗から直接届いたトーナメント月間スケジュール画像を取り込むCLIツール（詳細は下記「データ取得アーキテクチャ」）。実行: `node tools/import-venue-image.js --venue <id> --image <path>`（`--dry-run` あり） |
@@ -57,7 +57,7 @@ AdSense/PR枠が埋まるまでの間、自社アプリの導線を3か所に置
 | `tools/tournament-merge.js` | `data.js` の `TOURNAMENTS` に1店舗ぶんの取得結果を安全にupsertする共通ロジック（対象店舗以外・過去日には一切触れない）。`tools/import-venue-image.js` から呼ばれる |
 | `tools/instagram-oembed.js` | 店舗が画像ではなく投稿リンクだけ送ってきた場合の補助（公式oEmbedからサムネイルを取得。ログイン・巡回は行わない）。`tools/import-venue-image.js --instagram-url` から呼ばれる |
 | `tools/fetch-venue-posts-apify.js` | Apify（既製Instagramスクレイパー、pay-per-result）を呼び、指定ハンドルの最近の投稿一覧（画像URL・投稿日時・パーマリンク・キャプション）を取得する（`APIFY_API_TOKEN` が必要）。`tools/monitor-instagram-apify.js` から呼ばれる |
-| `tools/monitor-instagram-apify.js` | 公式サイトAPIが無い6店舗のInstagram投稿を日次で自動監視し、新着のスケジュール告知らしき投稿をVisionで抽出して `data.js` に安全にupsertするCLIツール（詳細は下記「データ取得アーキテクチャ」）。実行: `node tools/monitor-instagram-apify.js`（`--dry-run` あり）。**Visionが返した行は1行ずつ検査し（`tools/validate-data.js` と同じ判定）、不正な行だけを捨てて残りは取り込む**（ジョブは落とさない。理由は下記「データ取得アーキテクチャ」の日付の検査は2層）。GitHub Actions `.github/workflows/monitor-instagram-apify.yml` が毎日自動実行する。テスト: `node tools/monitor-instagram-apify.test.js` |
+| `tools/monitor-instagram-apify.js` | 公式サイトAPIが無い6店舗のInstagram投稿を日次で自動監視し、新着のスケジュール告知らしき投稿をVisionで抽出して `data.js` に安全にupsertするCLIツール（詳細は下記「データ取得アーキテクチャ」）。実行: `node tools/monitor-instagram-apify.js`（`--dry-run` あり）。**Visionが返した行は1行ずつ検査し（`tools/validate-data.js` と同じ判定。日付書式・実在日・開始時刻の書式・金額が数値か・id重複）、不正な行だけを捨てて残りは取り込む**（ジョブは落とさない。理由は下記「データ取得アーキテクチャ」の日付の検査は2層）。破棄・不採用の件数は `apify-monitor-state.json` の `lastExtraction` に記録される。GitHub Actions `.github/workflows/monitor-instagram-apify.yml` が毎日自動実行する。テスト: `node tools/monitor-instagram-apify.test.js` |
 
 `data.js` を差し替えるだけでサイトが更新される設計。CDN/静的ホスティング（GitHub Pages 等）にそのまま置ける。
 ただし静的ページ（`events/` `venues/` `sitemap.xml`）はデータのスナップショットなので、下記の再生成が必要。
@@ -521,6 +521,17 @@ GET https://api.waitinglist-poker.com/v1/game-schedules/tournament?storeId=<stor
     ジョブごと落とすと、6店ぶんを1配列に積んで最後にまとめて書く設計上
     **`apify-monitor-state.json` が進まず、翌日も6店すべてが同じ投稿から再試行して同じ所で落ちる**
     (=パイプラインが永久に止まる)。しかも落ちた行はランナー上にしか無く当番が直せる対象が無い
+  - **層2が見るもの**: 日付書式・実在する日付・`name` 非空・**開始時刻が `HH:MM`(ゼロ埋め)か**・
+    **金額系(`buyin`/`addon`/`stack`/`guarantee`)が数値として読めるか**(`"3,500"` は `Number()` が
+    NaN になり、JSON化で `null` に化けて**価格が無言で消える**)・**id が重複しないか**
+    - **id重複は「行を跨ぐ検査」なので別関数**(`duplicateIdProblem`)。id は
+      `ig-<venue>-<date>-<start>-<slug(name)>` で組み立てるため、Visionが同じ行を2回返した場合や、
+      **同じ日・同じ大会名で開始時刻が読めなかった2行**(どちらも既定の `00:00`)で衝突する。
+      さらに `slugify()` は英数字以外を落とすので、**日本語だけの大会名はすべて `post` に潰れる** —
+      同じ店・同じ日・同じ開始時刻の別大会は日本語名だと必ず衝突する。層2で捨てないと層1が落ち、
+      state が進まないまま毎日同じ所で止まる
+    - 層1のゲートは**日付以外に id重複・件数も見る**。層2が写しているのは1行で判定できる規則だけなので、
+      「層2を通れば層1も通る」は**自動的には成り立たない**。検査を足すときは両方を確認すること
   - **捨てた行はログに残す**: 「理由 / 店 / 投稿URL・投稿日時 / 実際の `date` と `name`」を1行で出す
     (Visionの抽出品質を人が測れることが要件)。店ごとのサマリにも `破棄した抽出行 N件` が出る
   - **投稿から1行も採用できなかった場合は異常扱い**: その投稿の内容はサイトのどこにも残らず、
@@ -529,6 +540,16 @@ GET https://api.waitinglist-poker.com/v1/game-schedules/tournament?storeId=<stor
     「状態が進まない」問題に戻るため)。内容が必要なら
     `node tools/import-venue-image.js --venue <id> --instagram-url <投稿URL>` で手動取込みする。
     全店で同じ理由が続くようなら `tools/venue-schedule-vision.js` のプロンプト/モデルを疑う
+    - 注記(`::error::` 等のワークフローコマンド)は**必ず stdout に出す**こと。GitHubの仕様は
+      "sent to the runner over stdout" で、stderr で注記として認識される保証が無い
+  - **件数は `apify-monitor-state.json` に残す**: 注記は「緑のrunに赤い注記が付く」だけなので
+    **通知は飛ばず**、runログも既定90日で消える。それだけでは「Visionの抽出品質を人が測れる」を
+    満たせないので、店ごとに `lastExtraction: { checkedAt, posts, kept, dropped, unusablePosts }` を
+    同じ状態ファイルに書く(このファイルは元から毎回コミットされるので**git履歴に差分として残る**)。
+    別ファイルにせず相乗りさせたのは、このファイルの**書き手がこのスクリプト1つだけ**で、
+    書き込みも1回のJSON書き出しに閉じており、並行編集で消される事故が起こらないため。
+    Vision抽出を実際に行った店だけ更新し、行っていない店は前回値を持ち越す(毎回変わる値を足すと
+    日程に変化が無い日でも差分が出て、無意味な日次コミットが増えるため)
 - **コスト目安**: 6店舗×日次×直近投稿十数件取得と仮定すると、月間の取得件数は約
   6店 × 12件 × 30日 = 2,160件。Apifyのpay-per-result単価($1〜1.6/1000件)で計算すると
   **月あたり実際の課金は$1〜数ドル程度の見込み**(投稿が少ない店舗ではもっと安くなる)。
