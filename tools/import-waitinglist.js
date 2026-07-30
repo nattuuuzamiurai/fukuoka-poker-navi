@@ -21,9 +21,9 @@
  * data.js を一切書き換えずに非ゼロ終了する。「HTTP 200だが中身が壊れている」部分障害も止める:
  *   1. fetch失敗 / HTTP 200以外 / レスポンス形状が想定外
  *   2. ある店舗の取得件数が0件
- *   3. ページング不整合(totalRecords に対して実取得件数が足りない = 途中で切れている)
- *   4. 別店舗のデータ混入(store.displayId が要求した storeId と違う)
- *   5. 今日以降の件数が前回の半分未満に急減(部分障害・過去日のみ返却などを検出。--allow-shrink で解除)
+ *   3. ページング不整合(totalRecords に対して「重複排除後の」実取得件数が足りない = 途中で切れている)
+ *   4. store.displayId が無い / 要求した storeId と違う(別店舗のデータ混入)
+ *   5. 今日以降の件数の急減(前回の半分未満、または一度に MAX_ABS_DROP 件以上の減少。--allow-shrink で解除)
  *   6. 書き込み直前の自己チェック(対象外店舗・過去日エントリが変化していないか)
  */
 
@@ -66,6 +66,7 @@ const DRY_RUN = process.argv.includes('--dry-run');
 // 件数の急減ガードを人の判断で外すためのフラグ(閉店・長期休業など正当な減少のとき)
 const ALLOW_SHRINK = process.argv.includes('--allow-shrink');
 const SHRINK_RATIO = 0.5; // 今日以降の件数が「前回 × この比率」を下回ったら止める
+const MAX_ABS_DROP = 10;  // 比率に収まっていても、1回でこの件数以上減ったら止める(比率ガードの穴埋め)
 
 // ---------- 小道具 ----------
 
@@ -160,8 +161,11 @@ async function fetchStore(store) {
   });
 
   // ページング不整合(=部分障害)の検出。宣言された総件数に届いていなければ信用しない。
-  if (all.length < total) {
-    throw new Error(`ページング不整合: totalRecords=${total} に対し ${all.length}件しか取得できませんでした`);
+  // ★ 必ず「重複排除“後”」の件数で判定する。排除前の all.length で見ると、
+  //   同じidを水増しした応答や、ページング中のレコード挿入で同一レコードが
+  //   2ページに跨った場合に、実データが静かに欠けたまま通ってしまう。
+  if (uniq.length < total) {
+    throw new Error(`ページング不整合: totalRecords=${total} に対し ${uniq.length}件(重複排除後)しか取得できませんでした`);
   }
   return uniq;
 }
@@ -253,25 +257,37 @@ const API_OWNED_TAGS = ['ターボ', 'ディープ', 'PLO', 'ミックス'];
 
 /**
  * APIから作った新エントリに、既存エントリが持っていた「APIが供給できない情報」を引き継ぐ。
- * 対象は guarantee(GTD) / prize / 人間が付けたタグ。
+ * 対象は guarantee(GTD) / prize / pinnedTags / 人間が付けたタグ。
  * 引き継ぎ元は「同じidの既存auto」と「同じ(date,start)の手入力」の両方(前者を優先)。
  *
  * これが無いと、初回の置き換えでGTDやバウンティ等が消え、さらに毎日の再生成で
  * 人が後から足した情報も翌朝には消えてしまう(冪等性のためにも必須)。
+ *
+ * 【pinnedTags】人間が明示的に固定したタグ。API_OWNED_TAGS(ターボ/ディープ/PLO/ミックス)であっても
+ * 上書きされずに毎回 tags に合流する。APIの `feature` は単一値なので「ターボかつディープ」を
+ * 表現できず、さらに欠測もある(m WTB Turbo は feature が無い)。スタック点数からの推測は
+ * ノーマルとディープで 40000 が重複するため誤判定を生む。そこで自動判定を増やすのではなく、
+ * 人が付けたことがデータ上わかる形で残す。
  */
 function carryOver(next, prevs) {
   let guarantee = null;
   let prize = null;
   const humanTags = [];
+  const pinnedTags = [];
   for (const p of prevs) {
     if (!p) continue;
     if (guarantee == null && p.guarantee != null) guarantee = p.guarantee;
     if (prize == null && p.prize != null) prize = p.prize;
+    for (const tag of p.pinnedTags || []) pinnedTags.push(tag);
     for (const tag of p.tags || []) {
       if (!API_OWNED_TAGS.includes(tag)) humanTags.push(tag);
     }
   }
-  return { ...next, guarantee, prize, tags: [...new Set([...next.tags, ...humanTags])] };
+  const pinned = [...new Set(pinnedTags)];
+  const entry = { ...next, guarantee, prize, tags: [...new Set([...next.tags, ...humanTags, ...pinned])] };
+  // 空のときはキーごと出さない(既存の lowConfidence と同じく任意フィールド扱い。差分を汚さない)
+  if (pinned.length) entry.pinnedTags = pinned;
+  return entry;
 }
 
 /**
@@ -304,37 +320,49 @@ function mergeStore(all, store, apiEntries, today) {
     manualsBySlot.get(k).push(t);
   }
 
-  const stats = { added: 0, updated: 0, unchanged: 0, removed: 0, carried: 0, keptManual: [], replacedManual: [] };
+  // 同じ(date,start)にAPI側が何件あるか。1件のときだけ手入力と1対1に対応づけられる。
+  const apiCountBySlot = new Map();
+  for (const t of rawFuture) apiCountBySlot.set(slotOf(t), (apiCountBySlot.get(slotOf(t)) || 0) + 1);
+
+  const stats = { added: 0, updated: 0, unchanged: 0, removed: 0, carried: 0, ambiguous: 0, keptManual: [], replacedManual: [] };
 
   // API側を1件ずつ確定させる(既存の情報を引き継ぎながら)
   const future$ = [];
   for (const raw of rawFuture) {
     const prevAuto = existingAutoById.get(raw.id) || null;
     const prevManuals = manualsBySlot.get(slotOf(raw)) || [];
-    const entry = carryOver(raw, [prevAuto, ...prevManuals]);
+
+    // ★ 同じ枠にAPI側が複数あるとき、手入力のGTD/プライズがどちらの大会のものか特定できない。
+    //   そのまま両方に配ると「GTD100万」のカードが2枚並び、片方が事実と異なる情報になる。
+    //   名前が一致するものだけに限定し、一致しなければ引き継がない(欠落は誤情報より軽い)。
+    const usableManuals =
+      apiCountBySlot.get(slotOf(raw)) === 1 ? prevManuals : prevManuals.filter((m) => m.name === raw.name);
+    if (prevManuals.length && usableManuals.length < prevManuals.length) stats.ambiguous++;
+
+    const entry = carryOver(raw, [prevAuto, ...usableManuals]);
     future$.push(entry);
     if (!sameEntry(entry, raw)) stats.carried++;
 
     if (prevAuto) {
       if (sameEntry(prevAuto, entry)) stats.unchanged++;
       else stats.updated++;
-      if (prevManuals.length) stats.replacedManual.push(...prevManuals);
     } else if (prevManuals.length) {
       stats.updated++;
-      stats.replacedManual.push(...prevManuals);
     } else {
       stats.added++;
     }
   }
 
-  // 既存の未来ぶんの後始末
+  // 既存の未来ぶんの後始末。置き換え対象の手入力はここで1回だけ数える(二重計上を防ぐ)。
   const keptManual = [];
   for (const t of future) {
     if (t.source === 'auto') {
       if (!apiById.has(t.id)) stats.removed++; // APIから消えた = 中止/削除
       continue; // auto は丸ごと作り直すのでここでは残さない
     }
-    if (!apiSlots.has(slotOf(t))) {
+    if (apiSlots.has(slotOf(t))) {
+      stats.replacedManual.push(t);
+    } else {
       keptManual.push(t);
       stats.keptManual.push(t);
     }
@@ -377,7 +405,13 @@ async function main() {
 
     // 店舗の同一性検証。storeIdが無視されて別店舗が返ってきた場合に、
     // よその店のトーナメントをこの店として書き込んでしまうのを防ぐ。
-    const wrong = raw.find((t) => t.store && t.store.displayId && String(t.store.displayId) !== String(store.displayId));
+    // ★ store フィールドが「無い」応答を素通りさせないため、存在自体を必須にする
+    //   (フィールドが落ちているだけで検証がスキップされては検証の意味がない)。
+    const noStore = raw.find((t) => !t.store || !t.store.displayId);
+    if (noStore) {
+      fail(`${store.label}: store.displayId を持たないレコードがあります(id=${noStore.id})。店舗の同一性を確認できないため中止します。`);
+    }
+    const wrong = raw.find((t) => String(t.store.displayId) !== String(store.displayId));
     if (wrong) {
       fail(`${store.label}: 別店舗(displayId=${wrong.store.displayId} / ${wrong.store.name})のデータが混入しています。中止します。`);
     }
@@ -387,14 +421,23 @@ async function main() {
       fail(`${store.label} の変換結果が0件でした(startAtが不正?)。中止します。`);
     }
 
-    // 「今日以降の件数が急に半分未満に減った」= API側の部分障害を疑う。
+    // 「今日以降の件数が急に減った」= API側の部分障害を疑う。
     // HTTP 200で中身だけ欠けている応答(件数が足りない / 過去日しか返らない 等)はここで止まる。
+    // 比率(半分未満)だけだと、件数が多い店ほど「しきい値ちょうど」で大量に消せてしまうため、
+    // 「1回で MAX_ABS_DROP 件以上減ったら止める」絶対値の上限も併用する。
     // 閉店・長期休業など正当な大幅減のときは --allow-shrink で人が明示的に通す。
     const prevFuture = before.filter((t) => t.venueId === store.venueId && t.date >= today).length;
     const nextFuture = mapped.filter((t) => t.date >= today).length;
+    const drop = prevFuture - nextFuture;
     if (!ALLOW_SHRINK && prevFuture > 0 && nextFuture < Math.ceil(prevFuture * SHRINK_RATIO)) {
       fail(
-        `${store.label}: 今日以降の件数が ${prevFuture}件 → ${nextFuture}件 と急減。` +
+        `${store.label}: 今日以降の件数が ${prevFuture}件 → ${nextFuture}件 と急減(前回の${Math.round(SHRINK_RATIO * 100)}%未満)。` +
+          'API側の部分障害の可能性があるため中止します(意図した減少なら --allow-shrink)。'
+      );
+    }
+    if (!ALLOW_SHRINK && drop >= MAX_ABS_DROP) {
+      fail(
+        `${store.label}: 今日以降の件数が ${prevFuture}件 → ${nextFuture}件 と一度に${drop}件減っています(上限${MAX_ABS_DROP}件)。` +
           'API側の部分障害の可能性があるため中止します(意図した減少なら --allow-shrink)。'
       );
     }
@@ -421,7 +464,10 @@ async function main() {
         `削除(APIから消滅) ${stats.removed}件 / 手入力の置き換え ${stats.replacedManual.length}件 / ` +
         `API未掲載の手入力 ${stats.keptManual.length}件`
     );
-    console.log(`  うち人手情報(GTD/プライズ/人手タグ)を引き継いだもの ${stats.carried}件`);
+    console.log(`  うち人手情報(GTD/プライズ/pinnedTags/人手タグ)を引き継いだもの ${stats.carried}件`);
+    if (stats.ambiguous) {
+      console.log(`  ⚠ 同じ枠にAPIが複数あり対応づけできず引き継ぎを見送ったもの ${stats.ambiguous}件(必要なら人手で付け直す)`);
+    }
     if (stats.replacedManual.length) {
       console.log(`  手入力→API版に置き換え ${stats.replacedManual.length}件:`);
       for (const t of stats.replacedManual) console.log(`    - ${t.date} ${t.start} ${t.name} (${t.id}, source=${t.source})`);

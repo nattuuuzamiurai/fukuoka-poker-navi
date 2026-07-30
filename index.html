@@ -1612,7 +1612,11 @@
   function parseHash(){
     const m = location.hash.match(/^#venue\/([^/]+)(?:\/(\d{4}-\d{2}))?$/);
     if (!m) return null;
-    return { venueId: m[1], month: m[2] || localToday.slice(0,7) };
+    // カード側は href を encodeURIComponent して書き出すので、読み取り側も対で decode する。
+    // venueIdが v\d+ の間は恒等変換だが、非ASCIIのIDが来たときに片側だけ壊れるのを防ぐ。
+    let venueId;
+    try { venueId = decodeURIComponent(m[1]); } catch { venueId = m[1]; }
+    return { venueId, month: m[2] || localToday.slice(0,7) };
   }
 
   // ページ(#page-xxx)とヘッダーバー(#hbar-xxx)は必ずこの関数だけで切り替える。
