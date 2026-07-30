@@ -161,6 +161,7 @@
   </div>
   <a class="sa-btn" href="https://poker-tourney-log--family.expo.app" target="_blank" rel="noopener">使ってみる →</a>
 </div>
+<script src="/recurring-dedupe.js"></script>
 <script src="/data.js"></script>
 <script>
 
@@ -180,7 +181,9 @@ function vpExpandRecurring(RECURRING, venueId, fromIso, toIso){
     for (var i = 0; i < RECURRING.length; i++) {
       var r = RECURRING[i];
       if (r.venueId !== venueId || r.weekday !== wd) continue;
-      out.push({ name: r.name, date: iso, start: r.start, buyin: r.buyin, addon: r.addon,
+      /* venueId は表には出ないが、自動取込との重複判定(recurring-dedupe.js)が鍵に使うので必ず持たせる。
+         ここが欠けると判定が黙って空振りする(index.html 側の展開行は元から持っている)。 */
+      out.push({ venueId: r.venueId, name: r.name, date: iso, start: r.start, buyin: r.buyin, addon: r.addon,
                  stack: r.buyinStack || 0, lateReg: r.lateReg, guarantee: null,
                  tags: r.tags || [], recurring: true });
     }
@@ -196,7 +199,13 @@ function vpRows(TOURNAMENTS, RECURRING, venueId, fromIso, toIso){
     if (t.venueId !== venueId || t.date < fromIso || t.date > toIso) continue;
     abs.push(t);
   }
-  return abs.concat(vpExpandRecurring(RECURRING, venueId, fromIso, toIso))
+  /* 自動取込(source:'auto')と (日付, 開始時刻) が一致する定期開催の行は出さない。
+     判定は recurring-dedupe.js が持つ(index.html の expandRecurring も同じファイルを読む)。
+     ★ 抑止した行と対になる自動取込の行は必ず同じ日付 = 必ず abs に入っているので、
+       この間引きで行が0件になることはない(sitemap の掲載判定 hasSchedule が壊れない)。 */
+  var rec = vpExpandRecurring(RECURRING, venueId, fromIso, toIso);
+  if (typeof RecurringDedupe !== 'undefined') rec = RecurringDedupe.filterExpanded(TOURNAMENTS, rec);
+  return abs.concat(rec)
     .sort(function(a, b){
       if (a.date !== b.date) return a.date < b.date ? -1 : 1;
       var sa = a.start || '99:99', sb = b.start || '99:99';
@@ -258,6 +267,9 @@ function vpScheduleHtml(rows){
    (README「data.jsを更新したら」を参照)。 */
 (function(){
   if (typeof TOURNAMENTS === 'undefined' || typeof RECURRING === 'undefined') return;
+  /* recurring-dedupe.js が読めていないときは描き直さない。描き直すと、生成時に間引いた
+     「自動取込と重複する定期開催」が閲覧時だけ復活してしまう(古い日程が残るほうがまだ軽い)。 */
+  if (typeof RecurringDedupe === 'undefined') return;
   var el = document.getElementById('vp-sched');
   if (!el) return;
   var n = new Date();
