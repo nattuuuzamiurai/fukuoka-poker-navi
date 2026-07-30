@@ -311,7 +311,7 @@ const VENUES = [
     "tel": "",
     "featured": false,
     "addressUnverified": true,
-    "note": "RFID導入の本格ポーカールーム。ハイローラー等イベント定期開催。住所は複数ソース一致(要確認)。7/11〜13はFPCのためキャナルシティ会場に振替で終日店休。7/23〜26は10周年イベント開催。",
+    "note": "RFID導入の本格ポーカールーム。ハイローラー等イベント定期開催。住所は複数ソース一致(要確認)。",
     "sourceLabel": "X",
     "sourceUrl": "https://x.com/rownlown"
   },
