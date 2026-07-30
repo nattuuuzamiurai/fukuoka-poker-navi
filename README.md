@@ -248,10 +248,46 @@ Claude APIキーは初回だけ「詳細設定」で登録すればよい（こ�
 
 | ソース | 自動化 | 方法 |
 |---|---|---|
+| **Waitinglist（DMMポーカー）掲載店** | ◎ **自動（稼働中）** | 認証不要の公開JSON APIを毎日取得 → `data.js` に upsert（下記） |
 | 店舗公式サイト / Googleビジネス | ◎ 自動 | 定期クロール → HTML/構造化データをパース |
 | X（旧Twitter） | △ 条件付き | API有料枠 or 公開タイムラインの限定取得。店舗アカウントを購読 |
 | Instagram | △ 困難 | ログイン壁＋規約。公開投稿の範囲で限定的に |
 | **公式LINE 配信** | ✕ **不可** | 他店のブロードキャストを外部取得する公開手段は存在しない |
+
+### Waitinglist 自動取込（`tools/import-waitinglist.js`）
+
+DMMポーカーのイベントカレンダーは Waitinglist の埋め込みで、その裏に**認証不要の公開JSON API**がある。
+これを使って掲載店のトーナメント日程を毎日自動取得する。**手入力ゼロで日程が最新化される唯一の経路**。
+
+```
+GET https://api.waitinglist-poker.com/v1/game-schedules/tournament?storeId=<storeId>&limit=100&page=1
+    Origin: https://poker.dmm.com / Referer: https://poker.dmm.com/
+→ { totalRecords, tournaments: [...] }   ※limit最大100・pageは1始まり。ページ間は1秒あける
+```
+
+- **実行**: GitHub Actions `.github/workflows/import-waitinglist.yml` が**毎日 06:23 JST**（cronは `23 21 * * *` UTC）に実行。手動実行（`workflow_dispatch`）も可。差分があるときだけ `github-actions[bot]` がコミット＆プッシュする
+- **対象店舗**: スクリプト冒頭の `STORES` 配列で管理。**1行足すだけで店舗を増やせる**。API掲載を確認済みなのは以下7店で、現在有効なのは `v3` のみ（他はコメントで控えてある）
+
+  | venueId | storeId | 店舗 | 状態 |
+  |---|---|---|---|
+  | `v3` | 4018492 | m HOLD'EM 中洲 | **有効** |
+  | `v22` | 4012445 | CRownCLown | 控え |
+  | `v19` | 4039056 | CASINO Arrows 小倉店 | 控え |
+  | `v26` | 4009265 | POKER HOUSE JOKER | 控え |
+  | `v27` | 4069478 | THE DOJO | 控え |
+  | `v33` | 4091897 | Poker room SKY | 控え |
+  | `v30` | 4050814 | ARIA中洲 | 控え |
+
+- **マッピング**: `startAt`(UTC) に +9時間して JST の `date`/`start` にする。`buyin`←`registrationFee`、`stack`←`startingStack`、`addon`←`addons[0].price`、`reentry`←`entries` に `reEntry` があるか、`tags`←`feature`(ターボ/ディープ) と `gameRule`(plo→PLO / mix→ミックス)。`id` はAPIのULIDを使い `wl-<id>`（安定・冪等）
+- **意図的に埋めないもの**: `guarantee` / `prize` はAPIに該当フィールドが無く、`notes`（長文の告知テキスト）からの正規表現推測は誤りの温床なので**常に `null`**。`大型` タグも定義上人間の判断が要る（後述「タグ「大型」の定義」）ため**自動付与しない**。名前からのタグ推測も行わない（誤タグを撒かないことを優先）
+- **upsert規則**（データ喪失を起こさないための取り決め）
+  1. **過去日（JST基準の今日より前）のエントリは一切触らない**
+  2. 対象店舗の `source: 'auto'` の今日以降のエントリは毎回作り直す（APIから消えた＝中止の場合はそのまま消える）
+  3. 手入力（`semi`/`manual`）のうち **API側に同じ (date, start) があるもの**はAPI版に置き換える（APIの方が stack/addon/reentry まで持ち情報が richer なため）
+  4. 手入力のうち **API側に対応が無いもの**は残し、件数と内訳をログに出す（APIに未登録なのか中止されたのか人間が判断できるように）
+  5. 対象店舗以外・`VENUES`・その他の定数には一切触らない。店舗ブロックの位置は保ち、ブロック内は date → start 昇順
+- **安全弁**: 取得失敗 / HTTP 200以外 / 対象店舗の取得件数が **0件** のいずれかで、`data.js` を**書き換えずに非ゼロ終了**する（APIの一時障害でサイトのデータが消える事故を防ぐ）。加えて書き込み直前に「対象外店舗のデータが変化していないか」「過去日のエントリが変化していないか」を自己チェックし、変化していれば中止する。一時的なネットワークエラーは最大3回までリトライする
+- **確認用**: `node tools/import-waitinglist.js --dry-run` で書き込まずに差分サマリだけ出せる。実行時は必ず `追加 / 更新 / 変更なし / 削除 / 手入力の置き換え / API未掲載の手入力` の件数を出力する
 
 ### 半自動パイプライン（LINE / IG 等の埋め合わせ）
 
@@ -298,7 +334,9 @@ Claude APIキーは初回だけ「詳細設定」で登録すればよい（こ�
 - [x] 管理コンソール（`admin.html`）：店舗選択→画像/テキスト→登録の1画面、`dev-server.py` 経由で `data.js` に自動保存
 - [x] 実店舗データの投入（福岡県内アミューズ店20店を調査・反映 → `fukuoka-venues.json` / `data.js`）
 - [ ] 各店の実開催日程を admin.html で継続登録（告知の取り込み運用）
-- [ ] 自動クローラ：公式サイト/Googleビジネスの定期取得（GitHub Actions cron 等）
+- [x] 自動クローラ 第1弾：**Waitinglist（DMMポーカー）公開APIの日次取得**（`tools/import-waitinglist.js` ＋ GitHub Actions・毎日06:23 JST）。
+      対象7店を確認済みで現在有効なのは m HOLD'EM 中洲（`v3`）。他6店は `STORES` に1行足すだけで有効化できる（詳細は上の「データ取得アーキテクチャ → Waitinglist 自動取込」）
+- [ ] 自動クローラ 第2弾：Waitinglist 非掲載店の公式サイト/Googleビジネスの定期取得
 - [ ] LINE公式アカウント連携：新着トーナメントの自動プッシュ配信
 - [ ] SEO：店舗個別ページ・大会個別ページの静的生成、構造化データ(JSON-LD)
 - [ ] 収益：AdSense審査通過、店舗PR枠の商品化
