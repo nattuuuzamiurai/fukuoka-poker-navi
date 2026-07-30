@@ -47,8 +47,9 @@ AdSense/PR枠が埋まるまでの間、自社アプリの導線を3か所に置
 | `events/<slug>/index.html` | 大型イベント個別の**静的ページ**（検索流入用）。SPAのハッシュURL(`#jopt`等)はインデックスされないため、実URL(`/events/jopt-2026-fukuoka-01/` 等)でクローラブルな全日程ページを別途用意する。Event構造化データ・canonical付き |
 | `venues/<slug>/index.html` | 店舗個別の**静的ページ**（検索流入用）。SPAのハッシュURL(`#venue/v41`)は独立URLとして扱われずインデックスされないため、実URL(`/venues/poker-studio-deep-blue-yukuhashi/` 等)でクローラブルな店舗ページを別途用意する。狙いは「行橋 ポーカー」「折尾 ポーカー」のようにトップ1枚では取りにいけない地域×店名のロングテール。LocalBusiness構造化データ・canonical付き |
 | `tools/gen-event-pages.js` | 上記イベント静的ページと**トップの恒久リンク行（`index.html` の `#evtLinks` 1行）**の**生成スクリプト**。データは `jopt-data.js` と `index.html` の `const WJPT` からそのまま読み込む（数値を手打ちしない=転記ミス防止）。実行: `node tools/gen-event-pages.js <リポジトリのパス>`（`--check` を付けると書き込まずに一致確認だけ行い、ズレていれば非ゼロ終了）。**JOPT等のデータや `big-events.js` を更新したら必ず再実行すること**（静的ページはデータのスナップショットのため） |
-| `tools/gen-venue-pages.js` | 店舗静的ページと**トップの店舗リンク行（`index.html` の `#venueLinks` 1行）**の**生成スクリプト**。データは `data.js` の `VENUES` / `TOURNAMENTS` / `RECURRING` からそのまま読み込む。実行: `node tools/gen-venue-pages.js <リポジトリのパス>`（`--check` あり）。**`data.js` を更新したら必ず再実行すること**（下記「`data.js` を更新したら」。Waitinglist の自動取込ぶんは日次ワークフローが自動で再生成する） |
+| `tools/gen-venue-pages.js` | 店舗静的ページと**トップの店舗リンク行（`index.html` の `#venueLinks` 1行）**の**生成スクリプト**。データは `data.js` の `VENUES` / `TOURNAMENTS` / `RECURRING` からそのまま読み込む。実行: `node tools/gen-venue-pages.js <リポジトリのパス>`（`--check` あり）。**`data.js` を更新したら必ず再実行すること**（下記「`data.js` を更新したら」。自動取込ぶん（Waitinglist / Instagram監視）は各日次ワークフローが自動で再生成する） |
 | `tools/venue-schedule.js` | 店舗ページの日程表を組み立てるコードの**唯一の所有者**。生成時（Node）と閲覧時（ブラウザに埋め込む `SCHEDULE_JS`）で同じ1本を共有する。**焼き込む期間を店舗別に決める `venueRange()`** もここが持つ（`gen-venue-pages.js` の見出しと `gen-sitemap.js` の掲載判定が同じ基準を使うため）。テスト: `node tools/venue-schedule.test.js` |
+| `tools/validate-data.js` | **`data.js` をコミットしてよいかを判定する共通ゲート**（構文 / `TOURNAMENTS` の件数 / `id` 重複 / **日付書式 `YYYY-MM-DD`（実在する日付か）**）。落ちたときは**不正値と該当トーナメント（venueId・id・name）**を出す。実行: `node tools/validate-data.js .`。2つの日次ワークフロー（Waitinglist取込み / Instagram監視）が**コミット前と `git pull --rebase` の後**にこれを呼ぶ。テスト: `node tools/validate-data.test.js` |
 | `tools/gen-sitemap.js` | **`sitemap.xml` の唯一の所有者**。トップ＋イベントページ＋店舗ページの全URLをここだけで組み立てる（詳細は下記「sitemap.xml の所有者」）。単独実行も可: `node tools/gen-sitemap.js <リポジトリのパス>`（`--check` あり） |
 | `tools/site-shell.js` | 静的ページ共通の「外側」（`<head>`・GA4タグ・共通CSS・ヘッダー・フッター・自社広告・大会の恒久リンク行）。イベントページと店舗ページで骨格が食い違わないよう、出どころを1つにしてある。**純粋なモジュールで、require しても何も書き込まない** |
 | `tools/import-venue-image.js` | 店舗から直接届いたトーナメント月間スケジュール画像を取り込むCLIツール（詳細は下記「データ取得アーキテクチャ」）。実行: `node tools/import-venue-image.js --venue <id> --image <path>`（`--dry-run` あり） |
@@ -64,14 +65,17 @@ AdSense/PR枠が埋まるまでの間、自社アプリの導線を3か所に置
 ### `data.js` を更新したら（月次の日程入力のあと・店舗を追加したあと）
 
 ```
+node tools/validate-data.js .            # data.js 自体の検査（日付書式・件数・id重複・構文）
 node tools/gen-venue-pages.js .          # 店舗ページ35枚 + トップの店舗リンク行 + sitemap.xml
 ```
 
 をリポジトリのルートで実行し、**生成物もコミットする**（GitHub Pages は静的配信なので生成物が必要）。
 ズレていないかだけ見たいときは `--check` を付ける（書き込まず、一致しなければ非ゼロ終了）。
+`validate-data.js` は日次ワークフローが使っているものと同じ検査で、**日付を `2026-9-5` のように書いてしまった**ときに
+「どの店のどの大会か」まで出して止まる（再生成の失敗より先に、原因の側で止まる）。
 
-> **人が `data.js` を触ったときの話**。Waitinglist の日次自動取込で `data.js` が変わったぶんは、
-> ワークフローが同じジョブの中で再生成するので手作業は要らない（下記「Waitinglist 自動取込」）。
+> **人が `data.js` を触ったときの話**。日次の自動取込（Waitinglist / Instagram監視）で `data.js` が
+> 変わったぶんは、それぞれのワークフローが同じジョブの中で再生成するので手作業は要らない。
 
 - 店舗ページの日程は**「生成時の静的レンダリング＋閲覧時に `data.js` から再描画」のハイブリッド**。
   そのため再生成を忘れても**閲覧者には最新が出る**が、**JSを実行しないクローラには古い日程が見えたまま**になる。
@@ -200,8 +204,10 @@ node tools/gen-venue-pages.js .          # 店舗ページ35枚 + トップの�
 > ズレていても `mountBigEventLinks()` が描き直すので**画面上は正常に見え、目視では気づけない**
 > （欠けるのはJSを実行しないクローラに対してだけ）。上表の仕組みはこの見えない壊れ方への対策。
 
-**CIは現時点で未実装**（`.github/workflows/` は無く、`--check` は人が手で走らせている）。
-将来CIを組む担当への注意が2点ある。
+**PR/pushに対するCIは現時点で未実装。** ただし日次の自動取込ワークフロー2本
+（`import-waitinglist.yml` / `monitor-instagram-apify.yml`）だけは、自分がpushするツリーに対して
+`node tools/validate-data.js .` と `node tools/gen-venue-pages.js . --check` を実行している
+（人の変更に対する `--check` は依然として手で走らせる）。将来CIを組む担当への注意が2点ある。
 
 1. **`<repo>` は相対パス（`.` など）でも絶対パスでも動く。** 3つの生成スクリプトはいずれも
    受け取ったパスを `path.resolve()` で絶対パスに直してから `require()` する。
@@ -392,7 +398,9 @@ GET https://api.waitinglist-poker.com/v1/game-schedules/tournament?storeId=<stor
 
   一時的なネットワークエラーは最大3回までリトライする。加えてワークフロー側でも、コミット前に `data.js` の構文・件数（500件未満なら異常）・id重複を検証する
 - **確認用**: `node tools/import-waitinglist.js --dry-run` で書き込まずに差分サマリだけ出せる。実行時は必ず `追加 / 更新 / 変更なし / 削除 / 手入力の置き換え / API未掲載の手入力` の件数を出力する
-- **静的ページの再生成もこのワークフローの中でやる**: 自動取込で `data.js` が変わると、そのスナップショットである `venues/<slug>/index.html` と `sitemap.xml` が古くなる（閲覧者にはブラウザ側の描き直しで最新が出るので、**画面を見ても気づけない**）。そこで `import` → 妥当性確認のあと、コミット前に `node tools/gen-venue-pages.js .` と `--check` を実行する。**自動取込ぶんについて人が再生成する作業は無い**。
+- **静的ページの再生成もこのワークフローの中でやる**: 自動取込で `data.js` が変わると、そのスナップショットである `venues/<slug>/index.html` と `sitemap.xml` が古くなる（閲覧者にはブラウザ側の描き直しで最新が出るので、**画面を見ても気づけない**）。そこで `import` → 妥当性確認 → コミット → `git pull --rebase` の**あと**に `node tools/gen-venue-pages.js .` と `--check` を実行し、生成物を同じコミットに `--amend` で取り込んでから push する。**自動取込ぶんについて人が再生成する作業は無い**。
+  - **再生成を rebase の「後」にしている理由**: rebase は他のジョブ（Instagram監視）や人のコミットを取り込む。rebase の前に生成すると、取り込んだぶんの `data.js` が生成物に反映されないまま push され、**main が `--check` の通らない状態になる**（実測: 人が `data.js` だけを push した直後にこのジョブが走ると、その店のページが古いまま押される）。生成物をコミットに含めずに rebase することで、`venues/*.html` の衝突も避けられる（このコミットが持ち込むのは `data.js` だけになる）
+  - **取込みに差分が無いのに生成物がズレていた場合**（人が `data.js` を触って再生成を忘れた等）も、このジョブが直して push する。ただし「Waitinglistから日程を自動取得」ではなく **`chore: 静的ページを data.js に追随させる（自動再生成）`** という別のメッセージでコミットする（取込みの手柄にすると監査ログが事実と違うものになるため）
   - 焼き込む期間が店舗別（`venueRange()`）になったので、**日次で書き換わるのは `data.js` と取込対象店のページだけ**。実測（v3に1件追加 / v3の9月分が消える / 2027年3月の大会が1件載る の3シナリオすべて）で**2ファイル**（`data.js` + `venues/m-holdem-nakasu/index.html`）に収まり、他店のページと `sitemap.xml` は動かない
     - ただし**定期開催しか無い3店（v5/v19/v41）だけは構造的な保証ではない**。この取込が過去日を作らない・触らないので結果的に動かないだけで、依存関係がある（上記「`data.js` を更新したら」の⚠を参照）
   - 全店共通の期間だった頃は、同じ3シナリオが **2 / 36 / 36 ファイル**、`venues/` 全体が 1.1MB → 1.4MB（`casino-bar-leje-hakata` 単体で 61KB → 142KB）まで膨らんでいた。無人の日次pushでこれをやると `venues/` を触る他の作業と競合が常態化する
@@ -494,9 +502,16 @@ GET https://api.waitinglist-poker.com/v1/game-schedules/tournament?storeId=<stor
   古いエントリが残っていないか定期的にadmin.html側で確認すること
 - **必要な環境変数(GitHub Secrets)**: `APIFY_API_TOKEN`(Apify呼び出し用)、`ANTHROPIC_API_KEY`
   (Vision抽出用)。いずれもコードには直書きしていない
-- **⚠ 静的ページの再生成は、このワークフローには入っていない**(Waitinglist取込みと同じ理由。
-  上記「Waitinglist 自動取込」の該当箇所を参照)。`data.js` が変わったら
-  `node tools/gen-venue-pages.js .` を人が実行すること
+- **静的ページの再生成もこのワークフローの中でやる**(Waitinglist取込みと同じ手順・同じ順序。
+  コミット → `git pull --rebase` → `node tools/gen-venue-pages.js .` と `--check` → `--amend` → push)。
+  ここで再生成しないと、Instagram由来の日程は翌朝のWaitinglist取込み(06:23 JST)まで約23時間
+  `venues/` に反映されず、しかもその更新が**「chore: Waitinglistから日程を自動取得」という
+  事実と違うコミットメッセージ**で記録される(障害調査で人を惑わせる)
+- **日付書式のゲート**: このワークフローは**LLM(Vision)が読み取った日付をそのまま `data.js` に入れる**
+  経路なので、`2026-9-5` / `9/5` / `2026-07-01T00:00:00Z` のような値が混ざり得る。コミット前に
+  `node tools/validate-data.js .`(Waitinglist取込みと共通)で止める。この値が入ると
+  **翌朝以降の静的ページ再生成が毎日落ち**、公開サイトでも**辞書順ソートのため9月の大会が
+  2027年の大会より後ろに並ぶ**。落ちたときは不正値と該当トーナメント(venueId/id/name)がログに出る
 - **コスト目安**: 6店舗×日次×直近投稿十数件取得と仮定すると、月間の取得件数は約
   6店 × 12件 × 30日 = 2,160件。Apifyのpay-per-result単価($1〜1.6/1000件)で計算すると
   **月あたり実際の課金は$1〜数ドル程度の見込み**(投稿が少ない店舗ではもっと安くなる)。
