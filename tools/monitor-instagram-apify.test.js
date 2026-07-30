@@ -552,38 +552,49 @@ test('runMonitor: 開始時刻が読み取れない形の行は破棄する(範�
 // 【自動経路から永久に失われる】。曖昧さゼロで直せる逸脱にまで破棄を使うのは過剰なので、
 // 検査の前に正規化を通す。正規化しても不正なもの(範囲外の時刻など)は従来どおり破棄する。
 
-test('runMonitor: ゼロ埋め漏れ・全角コロンの開始時刻は破棄せず正規化して取り込む(idと並び順も正規化後の値)', async () => {
+test('runMonitor: 書式が揺れた開始時刻(ゼロ埋め漏れ・全角コロン・全角数字)は破棄せず正規化して取り込む(idと並び順も正規化後の値)', async () => {
   const rows = [
     { date: '2099-09-12', start: '9:00', name: 'モーニング', buyin: 3000, tags: [] },
     { date: '2099-09-12', start: '7:30', name: 'アーリーバード', buyin: 3000, tags: [] },
     { date: '2099-09-12', start: '19：00', name: 'ナイト', buyin: 3000, tags: [] },
+    { date: '2099-09-12', start: '１２：００', name: 'ランチ', buyin: 3000, tags: [] },
+    { date: '2099-09-12', start: '８:３０', name: 'ブレックファスト', buyin: 3000, tags: [] },
   ];
   const result = await monitor.runMonitor(
     { stores: [monitor.STORES[2]], before: [], today: '2026-07-31', state: {} },
     fakeLibsFor(rows)
   );
 
-  assert.equal(result.arr.length, 3, '1件も破棄されないこと');
+  assert.equal(result.arr.length, 5, '1件も破棄されないこと');
   assert.equal(result.summaries[0].droppedCount, 0);
-  assert.equal(result.summaries[0].normalizedCount, 3);
+  assert.equal(result.summaries[0].normalizedCount, 5);
 
   const byName = Object.fromEntries(result.arr.map((t) => [t.name, t]));
   assert.equal(byName['モーニング'].start, '09:00');
   assert.equal(byName['アーリーバード'].start, '07:30');
   assert.equal(byName['ナイト'].start, '19:00');
+  assert.equal(byName['ランチ'].start, '12:00', '全角数字+全角コロン');
+  assert.equal(byName['ブレックファスト'].start, '08:30', '全角数字+半角コロン');
 
   // id は正規化後の start から組み立てられていること(`-900-` ではなく `-0900-`)
   assert.ok(byName['モーニング'].id.includes('-0900-'), byName['モーニング'].id);
   assert.ok(byName['アーリーバード'].id.includes('-0730-'), byName['アーリーバード'].id);
   assert.ok(byName['ナイト'].id.includes('-1900-'), byName['ナイト'].id);
+  assert.ok(byName['ランチ'].id.includes('-1200-'), byName['ランチ'].id);
+  // 全角数字がそのまま id に入っていないこと(id は半角の数字だけで組み立て直される)
+  for (const t of result.arr) assert.match(t.id, /^ig-v18-2099-09-12-\d{4}-/, t.id);
 
   // 同日内は start の文字列比較で並ぶ。正規化前だと '19:00' < '7:30' < '9:00' となり順序が壊れる
   const sameDay = result.arr.filter((t) => t.date === '2099-09-12').map((t) => t.name);
-  assert.deepEqual(sameDay, ['アーリーバード', 'モーニング', 'ナイト'], '07:30 → 09:00 → 19:00 の順');
+  assert.deepEqual(
+    sameDay,
+    ['アーリーバード', 'ブレックファスト', 'モーニング', 'ランチ', 'ナイト'],
+    '07:30 → 08:30 → 09:00 → 12:00 → 19:00 の順'
+  );
 
   // 正規化前の値がログ用の記録に残ること(Visionの出力形式を人が測るため)
   const froms = result.summaries[0].normalized.flatMap((n) => n.notes.map((x) => x.from));
-  assert.deepEqual(froms, ['9:00', '7:30', '19：00']);
+  assert.deepEqual(froms, ['9:00', '7:30', '19：00', '１２：００', '８:３０']);
 });
 
 test('runMonitor: 読み取れない金額は【その項目だけ】nullにして行は残す(価格1項目で大会を失わない)', async () => {
@@ -918,6 +929,7 @@ test('CLI: 逸脱した値(9:00 / 7:30 / 19:00全角 / 3,500 / 5000円)を含む
         { date: '2099-01-05', start: '9:00', name: 'Morning', buyin: '3,500', tags: [] },
         { date: '2099-01-05', start: '7:30', name: 'EarlyBird', buyin: '5000円', tags: [] },
         { date: '2099-01-05', start: '19：00', name: 'Night', buyin: 3000, tags: [] },
+        { date: '2099-01-05', start: '１２：００', name: 'Lunch', buyin: 3000, tags: [] },
       ];
     };\n`
   );
@@ -935,19 +947,21 @@ test('CLI: 逸脱した値(9:00 / 7:30 / 19:00全角 / 3,500 / 5000円)を含む
 
     const { arr } = mergeLib.readDataJs(path.join(root, 'data.js'));
     const imported = arr.filter((t) => t.venueId === 'v40');
-    assert.equal(imported.length, 3, '逸脱した値を含む3行がすべて取り込まれていること');
+    assert.equal(imported.length, 4, '逸脱した値を含む4行がすべて取り込まれていること');
 
     const byName = Object.fromEntries(imported.map((t) => [t.name, t]));
     assert.equal(byName['Morning'].start, '09:00');
     assert.equal(byName['EarlyBird'].start, '07:30');
     assert.equal(byName['Night'].start, '19:00');
+    assert.equal(byName['Lunch'].start, '12:00', '全角数字も正規化されること');
     assert.ok(byName['Morning'].id.includes('-0900-'), byName['Morning'].id);
+    assert.ok(byName['Lunch'].id.includes('-1200-'), byName['Lunch'].id);
     // 読めなかった金額は【その項目だけ】null。0(=無料)にしない
     assert.strictEqual(byName['Morning'].buyin, null);
     assert.strictEqual(byName['EarlyBird'].buyin, null);
     assert.equal(byName['Night'].buyin, 3000);
     // data.js 上の並びも正規化後の start 順(同日内)
-    assert.deepEqual(imported.map((t) => t.name), ['EarlyBird', 'Morning', 'Night']);
+    assert.deepEqual(imported.map((t) => t.name), ['EarlyBird', 'Morning', 'Lunch', 'Night']);
 
     // 範囲外の時刻は従来どおり破棄される
     assert.equal(arr.some((t) => t.venueId === 'v18'), false);
@@ -955,6 +969,7 @@ test('CLI: 逸脱した値(9:00 / 7:30 / 19:00全角 / 3,500 / 5000円)を含む
     // 正規化は【正規化前の値ごと】ログに残る
     assert.match(r.stderr, /抽出結果を正規化しました/);
     assert.match(r.stderr, /"9:00" → "09:00"/);
+    assert.match(r.stderr, /"１２：００" → "12:00"/);
     assert.match(r.stderr, /"3,500" → null/);
     assert.match(r.stderr, /"5000円" → null/);
 
@@ -973,8 +988,8 @@ test('CLI: 逸脱した値(9:00 / 7:30 / 19:00全角 / 3,500 / 5000円)を含む
     const state = JSON.parse(fs.readFileSync(path.join(root, 'apify-monitor-state.json'), 'utf8'));
     assert.equal(state.v40.lastExtraction.reposts, 1);
     assert.equal(state.v40.lastExtraction.unusablePosts, 0);
-    // 正規化は「行」単位で数える(破棄した抽出行と同じ単位)。3行 × 2投稿(再投稿ぶんを含む)
-    assert.equal(state.v40.lastExtraction.normalized, 6);
+    // 正規化は「行」単位で数える(破棄した抽出行と同じ単位)。4行 × 2投稿(再投稿ぶんを含む)
+    assert.equal(state.v40.lastExtraction.normalized, 8);
     assert.equal(state.v18.lastExtraction.unusablePosts, 1);
 
     // 書き込んだ data.js はコミット前ゲート(層1)も通る形(件数の下限だけは別途除外)

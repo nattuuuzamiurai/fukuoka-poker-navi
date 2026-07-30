@@ -249,6 +249,11 @@ test('normalizeExtractedRow: ゼロ埋め漏れ・全角コロンの start を�
   assert.equal(normalizeExtractedRow({ ...base, start: '19：00' }).row.start, '19:00', '全角コロン');
   assert.equal(normalizeExtractedRow({ ...base, start: '9：00' }).row.start, '09:00', '全角コロン+ゼロ埋め漏れ');
   assert.equal(normalizeExtractedRow({ ...base, start: ' 19:00 ' }).row.start, '19:00', '前後の空白');
+  // 全角数字は日本語の告知画像では全角コロンと同じ頻度で出る「同種の揺れ」。NFKCで一緒に吸収する
+  assert.equal(normalizeExtractedRow({ ...base, start: '１９：００' }).row.start, '19:00', '全角数字+全角コロン');
+  assert.equal(normalizeExtractedRow({ ...base, start: '９:００' }).row.start, '09:00', '全角数字+半角コロン');
+  assert.equal(normalizeExtractedRow({ ...base, start: '１９:00' }).row.start, '19:00', '全角と半角の混在');
+  assert.equal(normalizeExtractedRow({ ...base, start: '　19:00　' }).row.start, '19:00', '全角スペース');
 
   // 既に正しい値は触らない(= notes が出ない。無意味なログを増やさない)
   const ok = normalizeExtractedRow({ ...base, start: '19:00' });
@@ -256,13 +261,44 @@ test('normalizeExtractedRow: ゼロ埋め漏れ・全角コロンの start を�
   assert.deepEqual(ok.notes, []);
 });
 
-test('normalizeExtractedRow: 範囲外・形が違う start は直さない(=検査で破棄される)', () => {
+// 直すのは【書式の揺れ】だけで、【記法の翻訳】はしない。`7pm`→`19:00` も一意に決まるが、
+// 翻訳ルールを1つ足すごとに「誤った開始時刻を公開する」経路が増える(開始時刻の誤りは
+// プレイヤーが違う時間に店へ行く実害で、「大会が1件載らない」より重い)。
+// 実測(破棄ログ・lastExtraction.normalized)で頻度が分かってから足す、が正しい手順。
+test('normalizeExtractedRow: 記法が違う/範囲外の start は直さない(=検査で破棄される)', () => {
   const base = { date: '2026-09-05', name: 'マンデー' };
-  for (const start of ['25:00', '19:70', '7pm', '19時', '19:00\n<b>', '1900']) {
+  for (const start of ['25:00', '19:70', '7pm', '７pm', '19時', '１９時', '午後7時', '19:00\n<b>', '1900']) {
     const { row, notes } = normalizeExtractedRow({ ...base, start });
-    assert.equal(row.start, start, `${start} は直さない(何時なのか決められない)`);
+    assert.equal(row.start, start, `${start} は直さない(記法の翻訳はしない / 範囲外は決められない)`);
     assert.deepEqual(notes, []);
     assert.ok(extractedRowProblem(row), `${start} は検査で破棄されること`);
+  }
+});
+
+// NFKC は start にだけかける。name/prize/tags にかけると大会名の全角英字まで半角化してしまい、
+// それは「店の表記を書き換える」行為(書式の揺れの補正ではない)。
+test('normalizeExtractedRow: NFKCは start 以外のフィールドに波及しない', () => {
+  const input = {
+    date: '2026-09-05',
+    name: 'ＷＳＯＰ ＭＡＩＮ①',       // 全角英字・囲み数字を含む大会名
+    start: '１９：００',
+    prize: '１位 ￥１０，０００',
+    tags: ['ＮＬＨ', 'ターボ'],
+  };
+  const { row } = normalizeExtractedRow(input);
+  assert.equal(row.start, '19:00', 'start は正規化される');
+  assert.equal(row.name, 'ＷＳＯＰ ＭＡＩＮ①', '大会名は1文字も変えない');
+  assert.equal(row.prize, '１位 ￥１０，０００', 'prize も変えない');
+  assert.deepEqual(row.tags, ['ＮＬＨ', 'ターボ'], 'tags も変えない');
+});
+
+// 採用する値は「NFKC後の文字列そのもの」ではなく「正規表現が捕まえた数字から組み立て直した値」。
+// そのため NFKC が想定外の変換をしても、data.js に入るのは常に `\d{2}:\d{2}` の形に限られる。
+test('normalizeExtractedRow: 採用されるstartは常に半角数字とコロンだけで組み立てられる', () => {
+  const base = { date: '2026-09-05', name: 'マンデー' };
+  for (const start of ['9:00', '１９：００', '　7:30　', '⑤:00']) {
+    const { row } = normalizeExtractedRow({ ...base, start });
+    if (row.start !== start) assert.match(row.start, /^\d{2}:\d{2}$/, `${start} → ${row.start}`);
   }
 });
 

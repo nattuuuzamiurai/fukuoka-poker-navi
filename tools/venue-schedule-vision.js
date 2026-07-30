@@ -119,8 +119,8 @@ async function extractTournaments(imageBuffer, { postedDateHint, mediaType } = {
     '{"date":"YYYY-MM-DD","start":"HH:MM"|null,"name":"string","buyin":number|null,"addon":number|null,' +
       '"stack":number|null,"guarantee":number|null,"reentry":true|false|"late","prize":string|null,"tags":string[]}',
     'date は必ず YYYY-MM-DD(ゼロ埋め。例: "2026-09-05")。',
-    'start は24時間表記のゼロ埋め HH:MM(例: "09:00" / "19:00")。' +
-      '"9:00" のようにゼロを省いたり、"19：00"(全角コロン)・"7pm"・"19時" のような表記を使わないでください。',
+    'start は24時間表記のゼロ埋め HH:MM(半角。例: "09:00" / "19:00")。' +
+      '"9:00" のようにゼロを省いたり、"１９：００"(全角の数字・コロン)・"7pm"・"19時" のような表記を使わないでください。',
     '金額は円の数値のみ(カンマ・円マーク・"k"などの単位無し。例: 3500)。' +
       '読み取れない項目は null にしてください(推測で埋めない。0 は「無料」の意味になるので使わない)。',
     'トーナメントと無関係な文言(店舗の営業案内、注意書きなど)は無視してください。',
