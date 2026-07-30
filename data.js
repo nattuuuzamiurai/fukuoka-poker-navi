@@ -10755,7 +10755,8 @@ const TOURNAMENTS = [
     "reentry": true,
     "prize": null,
     "tags": [
-      "ディープ"
+      "ディープ",
+      "特別開催"
     ],
     "source": "auto",
     "verified": false
@@ -10772,7 +10773,9 @@ const TOURNAMENTS = [
     "guarantee": null,
     "reentry": true,
     "prize": null,
-    "tags": [],
+    "tags": [
+      "バウンティ"
+    ],
     "source": "auto",
     "verified": false
   },
@@ -10806,7 +10809,9 @@ const TOURNAMENTS = [
     "guarantee": null,
     "reentry": true,
     "prize": null,
-    "tags": [],
+    "tags": [
+      "バウンティ"
+    ],
     "source": "auto",
     "verified": false
   },
@@ -10840,7 +10845,9 @@ const TOURNAMENTS = [
     "guarantee": null,
     "reentry": true,
     "prize": null,
-    "tags": [],
+    "tags": [
+      "特別開催"
+    ],
     "source": "auto",
     "verified": false
   },
@@ -10857,7 +10864,8 @@ const TOURNAMENTS = [
     "reentry": true,
     "prize": null,
     "tags": [
-      "ターボ"
+      "ターボ",
+      "バウンティ"
     ],
     "source": "auto",
     "verified": false
@@ -10908,7 +10916,9 @@ const TOURNAMENTS = [
     "guarantee": null,
     "reentry": true,
     "prize": null,
-    "tags": [],
+    "tags": [
+      "特別開催"
+    ],
     "source": "auto",
     "verified": false
   },
@@ -10942,7 +10952,9 @@ const TOURNAMENTS = [
     "guarantee": null,
     "reentry": true,
     "prize": null,
-    "tags": [],
+    "tags": [
+      "特別開催"
+    ],
     "source": "auto",
     "verified": false
   },
@@ -10994,7 +11006,9 @@ const TOURNAMENTS = [
     "guarantee": null,
     "reentry": true,
     "prize": null,
-    "tags": [],
+    "tags": [
+      "バウンティ"
+    ],
     "source": "auto",
     "verified": false
   },
@@ -11029,7 +11043,8 @@ const TOURNAMENTS = [
     "reentry": true,
     "prize": null,
     "tags": [
-      "ディープ"
+      "ディープ",
+      "特別開催"
     ],
     "source": "auto",
     "verified": false
@@ -11098,7 +11113,9 @@ const TOURNAMENTS = [
     "guarantee": null,
     "reentry": true,
     "prize": null,
-    "tags": [],
+    "tags": [
+      "特別開催"
+    ],
     "source": "auto",
     "verified": false
   },
@@ -11130,7 +11147,9 @@ const TOURNAMENTS = [
     "guarantee": null,
     "reentry": true,
     "prize": null,
-    "tags": [],
+    "tags": [
+      "特別開催"
+    ],
     "source": "auto",
     "verified": false
   },
@@ -11146,7 +11165,9 @@ const TOURNAMENTS = [
     "guarantee": null,
     "reentry": true,
     "prize": null,
-    "tags": [],
+    "tags": [
+      "特別開催"
+    ],
     "source": "auto",
     "verified": false
   },
@@ -11178,7 +11199,9 @@ const TOURNAMENTS = [
     "guarantee": null,
     "reentry": true,
     "prize": null,
-    "tags": [],
+    "tags": [
+      "特別開催"
+    ],
     "source": "auto",
     "verified": false
   },
@@ -11210,7 +11233,9 @@ const TOURNAMENTS = [
     "guarantee": null,
     "reentry": true,
     "prize": null,
-    "tags": [],
+    "tags": [
+      "特別開催"
+    ],
     "source": "auto",
     "verified": false
   },
@@ -11226,7 +11251,9 @@ const TOURNAMENTS = [
     "guarantee": null,
     "reentry": false,
     "prize": null,
-    "tags": [],
+    "tags": [
+      "特別開催"
+    ],
     "source": "auto",
     "verified": false
   },

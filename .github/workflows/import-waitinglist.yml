@@ -35,6 +35,15 @@ jobs:
       - name: Waitinglist から日程を取得して data.js を更新
         run: node tools/import-waitinglist.js
 
+      # 壊れた data.js をコミットして本番サイトを白画面にしないための最終ゲート。
+      # 構文・件数・id重複を見る(スクリプト側の安全弁をすり抜けた場合の受け皿)。
+      - name: 出力の妥当性を確認
+        run: |
+          node --check data.js
+          node -e 'const d=require("./data.js");
+            if(d.TOURNAMENTS.length<500) throw new Error("TOURNAMENTS件数が異常: "+d.TOURNAMENTS.length);
+            if(new Set(d.TOURNAMENTS.map(t=>t.id)).size!==d.TOURNAMENTS.length) throw new Error("id重複");'
+
       - name: 差分があればコミット & プッシュ
         run: |
           if git diff --quiet; then

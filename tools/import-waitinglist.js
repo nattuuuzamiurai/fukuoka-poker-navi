@@ -10,14 +10,21 @@
  *   → { totalRecords: number, tournaments: [...] }
  *
  * 使い方:
- *   node tools/import-waitinglist.js              … data.js を書き換える
- *   node tools/import-waitinglist.js --dry-run    … 書き込まず、差分サマリだけ出す
+ *   node tools/import-waitinglist.js               … data.js を書き換える
+ *   node tools/import-waitinglist.js --dry-run     … 書き込まず、差分サマリだけ出す
+ *   node tools/import-waitinglist.js --allow-shrink… 件数の急減ガードを外して実行する
+ *                                                    (閉店・長期休業など正当な大幅減のとき人が明示的に通す)
  *
  * 対象店舗を増やすときは下の STORES に1行足すだけでよい。
  *
- * 【安全弁】外部APIの一時障害でサイトのデータが消えるのを防ぐため、
- *   - fetch失敗 / HTTP 200以外 / ある店舗の取得件数が0件
- *   のいずれかが起きたら data.js を一切書き換えずに非ゼロ終了する。
+ * 【安全弁】外部APIの一時障害でサイトのデータが消えるのを防ぐため、次のいずれかが起きたら
+ * data.js を一切書き換えずに非ゼロ終了する。「HTTP 200だが中身が壊れている」部分障害も止める:
+ *   1. fetch失敗 / HTTP 200以外 / レスポンス形状が想定外
+ *   2. ある店舗の取得件数が0件
+ *   3. ページング不整合(totalRecords に対して実取得件数が足りない = 途中で切れている)
+ *   4. 別店舗のデータ混入(store.displayId が要求した storeId と違う)
+ *   5. 今日以降の件数が前回の半分未満に急減(部分障害・過去日のみ返却などを検出。--allow-shrink で解除)
+ *   6. 書き込み直前の自己チェック(対象外店舗・過去日エントリが変化していないか)
  */
 
 'use strict';
@@ -32,9 +39,19 @@ const path = require('path');
 // ============================================================
 const STORES = [
   { venueId: 'v3', displayId: '4018492', label: "m HOLD'EM 中洲" },
-  // 将来: v22/4012445 CRownCLown, v19/4039056 CASINO Arrows 小倉店,
-  //       v26/4009265 POKER HOUSE JOKER, v27/4069478 THE DOJO,
-  //       v33/4091897 Poker room SKY, v30/4050814 ARIA中洲
+  //
+  // 将来の候補(APIに掲載があることは確認済み)。有効化は「data.jsの店名 = APIの店名」を
+  // 目視で確かめてから行うこと。venueIdを取り違えるとよその店の日程を掲載してしまう。
+  //
+  //   [店名が一致・そのまま有効化してよい]
+  //   { venueId: 'v22', displayId: '4012445', label: 'CRownCLown' },
+  //   { venueId: 'v19', displayId: '4039056', label: 'CASINO Arrows 小倉店' },
+  //   { venueId: 'v27', displayId: '4069478', label: 'THE DOJO' },
+  //   { venueId: 'v33', displayId: '4091897', label: 'Poker room SKY' },
+  //
+  //   [要確認・店名が一致しないので人の確認が必要]
+  //   v26 / 4009265 … data.jsは「JOKER♠️ 福岡大橋」、API店名は "POKER HOUSE JOKER"。同一店か未確認
+  //   v30 / 4050814 … data.jsは「ARIA 中洲」、API店名は "Aria" で登録1件のみ。同一店か未確認
 ];
 
 const API_BASE = 'https://api.waitinglist-poker.com/v1/game-schedules/tournament';
@@ -46,6 +63,9 @@ const RETRY_BASE_MS = 3000;      // リトライ間隔(3秒 → 6秒)
 const DATA_JS = path.join(__dirname, '..', 'data.js');
 
 const DRY_RUN = process.argv.includes('--dry-run');
+// 件数の急減ガードを人の判断で外すためのフラグ(閉店・長期休業など正当な減少のとき)
+const ALLOW_SHRINK = process.argv.includes('--allow-shrink');
+const SHRINK_RATIO = 0.5; // 今日以降の件数が「前回 × この比率」を下回ったら止める
 
 // ---------- 小道具 ----------
 
@@ -113,7 +133,13 @@ async function fetchPage(displayId, page) {
   throw lastErr;
 }
 
-/** 1店舗ぶんの全トーナメントを取得(ページング)。失敗は例外を投げる。 */
+/**
+ * 1店舗ぶんの全トーナメントを取得(ページング)。失敗は例外を投げる。
+ *
+ * 「HTTP 200だが中身が足りない」部分障害を通さないため、最後に totalRecords と
+ * 実際の取得件数を突き合わせる。2ページ目が空で返るケース(=途中で切れる)も
+ * ここで検出され、黙って件数が減ることはない。
+ */
 async function fetchStore(store) {
   const first = await fetchPage(store.displayId, 1);
   const total = Number(first.totalRecords) || first.tournaments.length;
@@ -127,11 +153,17 @@ async function fetchStore(store) {
   }
   // 念のためidで重複排除
   const seen = new Set();
-  return all.filter((t) => {
+  const uniq = all.filter((t) => {
     if (!t || !t.id || seen.has(t.id)) return false;
     seen.add(t.id);
     return true;
   });
+
+  // ページング不整合(=部分障害)の検出。宣言された総件数に届いていなければ信用しない。
+  if (all.length < total) {
+    throw new Error(`ページング不整合: totalRecords=${total} に対し ${all.length}件しか取得できませんでした`);
+  }
+  return uniq;
 }
 
 // ---------- 変換 ----------
@@ -151,10 +183,12 @@ function toTournament(t, venueId) {
   if (t.gameRule === 'plo') tags.push('PLO');
   else if (t.gameRule === 'mix') tags.push('ミックス');
 
-  const addon =
-    Array.isArray(t.addons) && t.addons.length && t.addons[0] && t.addons[0].price != null
-      ? Number(t.addons[0].price)
-      : null;
+  // addons[] は「アドオン」専用の配列ではなく、リバイや参加費違いの枠も入っている。
+  // 例: m GLORY の addons[0] は addonName:"リバイ"/price 2000 で、そのまま使うとサイトに
+  //     「+AO ¥2,000」と誤表示される。addonName が明示的にアドオンのものだけを採用する。
+  const addonEntry = (Array.isArray(t.addons) ? t.addons : [])
+    .find((a) => a && a.price != null && /アドオン|add[- ]?on/i.test(a.addonName || ''));
+  const addon = addonEntry ? Number(addonEntry.price) : null;
 
   const reentry = Array.isArray(t.entries) && t.entries.some((e) => e && e.entryType === 'reEntry');
 
@@ -211,51 +245,98 @@ const cmp = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 const byDateStart = (a, b) => cmp(String(a.date), String(b.date)) || cmp(String(a.start), String(b.start));
 
 /**
+ * APIが供給できる(=毎回上書きしてよい)タグ語彙。
+ * これ以外のタグ(バウンティ / 特別開催 / サテライト / 大型 など)は人間が付けたものなので、
+ * 置き換え時に消さずに引き継ぐ。
+ */
+const API_OWNED_TAGS = ['ターボ', 'ディープ', 'PLO', 'ミックス'];
+
+/**
+ * APIから作った新エントリに、既存エントリが持っていた「APIが供給できない情報」を引き継ぐ。
+ * 対象は guarantee(GTD) / prize / 人間が付けたタグ。
+ * 引き継ぎ元は「同じidの既存auto」と「同じ(date,start)の手入力」の両方(前者を優先)。
+ *
+ * これが無いと、初回の置き換えでGTDやバウンティ等が消え、さらに毎日の再生成で
+ * 人が後から足した情報も翌朝には消えてしまう(冪等性のためにも必須)。
+ */
+function carryOver(next, prevs) {
+  let guarantee = null;
+  let prize = null;
+  const humanTags = [];
+  for (const p of prevs) {
+    if (!p) continue;
+    if (guarantee == null && p.guarantee != null) guarantee = p.guarantee;
+    if (prize == null && p.prize != null) prize = p.prize;
+    for (const tag of p.tags || []) {
+      if (!API_OWNED_TAGS.includes(tag)) humanTags.push(tag);
+    }
+  }
+  return { ...next, guarantee, prize, tags: [...new Set([...next.tags, ...humanTags])] };
+}
+
+/**
  * 1店舗ぶんのマージ。既存配列を破壊せず、新しい配列と統計を返す。
  *
  * ルール:
  *   - 過去日(today未満)のエントリは内容を一切変更しない
- *   - today以降: その店の source==='auto' は作り直す
+ *   - today以降: その店の source==='auto' は作り直す(ただし上記 carryOver で人手情報は温存)
  *   - today以降: 手入力(semi/manual)のうちAPIに同じ(date,start)があるものはAPI版に置き換える
  *   - today以降: 手入力のうちAPIに対応が無いものは残す(件数と内訳をログに出す)
  */
 function mergeStore(all, store, apiEntries, today) {
+  const slotOf = (t) => `${t.date} ${t.start}`;
+
   const existing = all.filter((t) => t.venueId === store.venueId);
   const past = existing.filter((t) => t.date < today);
   const future = existing.filter((t) => !(t.date < today));
 
-  const future$ = apiEntries.filter((t) => t.date >= today).sort(byDateStart);
-  const apiSlots = new Set(future$.map((t) => `${t.date} ${t.start}`));
-  const apiById = new Map(future$.map((t) => [t.id, t]));
+  const rawFuture = apiEntries.filter((t) => t.date >= today).sort(byDateStart);
+  const apiSlots = new Set(rawFuture.map(slotOf));
+  const apiById = new Map(rawFuture.map((t) => [t.id, t]));
 
-  const stats = { added: 0, updated: 0, unchanged: 0, removed: 0, keptManual: [], replacedManual: [] };
+  const existingAutoById = new Map(future.filter((t) => t.source === 'auto').map((t) => [t.id, t]));
+  // 手入力を (date,start) で引けるようにする。同じ枠に複数あればすべて対象。
+  const manualsBySlot = new Map();
+  for (const t of future) {
+    if (t.source === 'auto') continue;
+    const k = slotOf(t);
+    if (!manualsBySlot.has(k)) manualsBySlot.set(k, []);
+    manualsBySlot.get(k).push(t);
+  }
 
-  // 既存の未来ぶんを仕分け
+  const stats = { added: 0, updated: 0, unchanged: 0, removed: 0, carried: 0, keptManual: [], replacedManual: [] };
+
+  // API側を1件ずつ確定させる(既存の情報を引き継ぎながら)
+  const future$ = [];
+  for (const raw of rawFuture) {
+    const prevAuto = existingAutoById.get(raw.id) || null;
+    const prevManuals = manualsBySlot.get(slotOf(raw)) || [];
+    const entry = carryOver(raw, [prevAuto, ...prevManuals]);
+    future$.push(entry);
+    if (!sameEntry(entry, raw)) stats.carried++;
+
+    if (prevAuto) {
+      if (sameEntry(prevAuto, entry)) stats.unchanged++;
+      else stats.updated++;
+      if (prevManuals.length) stats.replacedManual.push(...prevManuals);
+    } else if (prevManuals.length) {
+      stats.updated++;
+      stats.replacedManual.push(...prevManuals);
+    } else {
+      stats.added++;
+    }
+  }
+
+  // 既存の未来ぶんの後始末
   const keptManual = [];
   for (const t of future) {
     if (t.source === 'auto') {
       if (!apiById.has(t.id)) stats.removed++; // APIから消えた = 中止/削除
       continue; // auto は丸ごと作り直すのでここでは残さない
     }
-    if (apiSlots.has(`${t.date} ${t.start}`)) {
-      stats.replacedManual.push(t);
-    } else {
+    if (!apiSlots.has(slotOf(t))) {
       keptManual.push(t);
       stats.keptManual.push(t);
-    }
-  }
-
-  // API側の追加/更新/変更なしを数える
-  const existingById = new Map(future.map((t) => [t.id, t]));
-  for (const t of future$) {
-    const prev = existingById.get(t.id);
-    if (prev) {
-      if (sameEntry(prev, t)) stats.unchanged++;
-      else stats.updated++;
-    } else if (apiSlots.has(`${t.date} ${t.start}`) && stats.replacedManual.some((m) => m.date === t.date && m.start === t.start)) {
-      stats.updated++; // 手入力の置き換え
-    } else {
-      stats.added++;
     }
   }
 
@@ -293,11 +374,32 @@ async function main() {
     if (raw.length === 0) {
       fail(`${store.label} (storeId=${store.displayId}) のトーナメントが0件でした。API側の異常の可能性があるため中止します。`);
     }
+
+    // 店舗の同一性検証。storeIdが無視されて別店舗が返ってきた場合に、
+    // よその店のトーナメントをこの店として書き込んでしまうのを防ぐ。
+    const wrong = raw.find((t) => t.store && t.store.displayId && String(t.store.displayId) !== String(store.displayId));
+    if (wrong) {
+      fail(`${store.label}: 別店舗(displayId=${wrong.store.displayId} / ${wrong.store.name})のデータが混入しています。中止します。`);
+    }
+
     const mapped = raw.map((t) => toTournament(t, store.venueId)).filter(Boolean);
     if (mapped.length === 0) {
       fail(`${store.label} の変換結果が0件でした(startAtが不正?)。中止します。`);
     }
-    console.log(`[import-waitinglist] ${store.label}: API ${raw.length}件 取得 / 変換 ${mapped.length}件 / うち ${today} 以降 ${mapped.filter((t) => t.date >= today).length}件`);
+
+    // 「今日以降の件数が急に半分未満に減った」= API側の部分障害を疑う。
+    // HTTP 200で中身だけ欠けている応答(件数が足りない / 過去日しか返らない 等)はここで止まる。
+    // 閉店・長期休業など正当な大幅減のときは --allow-shrink で人が明示的に通す。
+    const prevFuture = before.filter((t) => t.venueId === store.venueId && t.date >= today).length;
+    const nextFuture = mapped.filter((t) => t.date >= today).length;
+    if (!ALLOW_SHRINK && prevFuture > 0 && nextFuture < Math.ceil(prevFuture * SHRINK_RATIO)) {
+      fail(
+        `${store.label}: 今日以降の件数が ${prevFuture}件 → ${nextFuture}件 と急減。` +
+          'API側の部分障害の可能性があるため中止します(意図した減少なら --allow-shrink)。'
+      );
+    }
+
+    console.log(`[import-waitinglist] ${store.label}: API ${raw.length}件 取得 / 変換 ${mapped.length}件 / うち ${today} 以降 ${nextFuture}件(前回 ${prevFuture}件)`);
     fetched.push({ store, mapped });
   }
 
@@ -319,6 +421,7 @@ async function main() {
         `削除(APIから消滅) ${stats.removed}件 / 手入力の置き換え ${stats.replacedManual.length}件 / ` +
         `API未掲載の手入力 ${stats.keptManual.length}件`
     );
+    console.log(`  うち人手情報(GTD/プライズ/人手タグ)を引き継いだもの ${stats.carried}件`);
     if (stats.replacedManual.length) {
       console.log(`  手入力→API版に置き換え ${stats.replacedManual.length}件:`);
       for (const t of stats.replacedManual) console.log(`    - ${t.date} ${t.start} ${t.name} (${t.id}, source=${t.source})`);
