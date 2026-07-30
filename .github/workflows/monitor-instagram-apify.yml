@@ -1,0 +1,71 @@
+name: Instagram投稿の自動監視(Apify)
+
+# 公式サイトAPIが無い6店舗(v40/v20/v18/v21/v34/v35)のInstagram投稿をApify経由で日次チェックし、
+# 新着のスケジュール告知らしき投稿があればVisionで抽出して data.js に差分反映する。
+# 詳細は tools/monitor-instagram-apify.js のコメント参照。
+#
+# Apifyは正規の第三者スクレイピングサービス(pay-per-result)で、自社アカウントへのログイン・
+# 検知回避は行わない。そのためWaitinglist取込み(import-waitinglist.yml)と違い、確率抽選・
+# ランダム遅延・巡回ウィンドウのような複雑な設計は不要で、単純な日次cronにしてある。
+#
+# スクリプトは「APIFY_API_TOKEN未設定 / Apify呼び出し失敗 / 対象外店舗・過去日エントリの変化」の
+# いずれかで data.js / apify-monitor-state.json を書き換えずに非ゼロ終了する。
+# その場合このワークフローも失敗させて、異常が Actions の画面で見えるようにする。
+#
+# このワークフローが触るのは data.js と apify-monitor-state.json だけで、店舗静的ページ(venues/)や
+# sitemap.xml は再生成しない(import-waitinglist.ymlと同じ理由。「data.js を更新したら」参照)。
+
+on:
+  schedule:
+    # cronはUTC。22:10 UTC = 07:10 JST(毎日1回。Waitinglist取込み(06:23 JST)の後にずらしてある)
+    - cron: '10 22 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# 同時実行を防ぐ(手動実行とcronが重なって競合するのを避ける)
+concurrency:
+  group: monitor-instagram-apify
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリを取得
+        uses: actions/checkout@v4
+
+      - name: Node.js をセットアップ
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Instagram新着投稿をApifyで取得し、スケジュール告知をdata.jsに反映
+        env:
+          APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: node tools/monitor-instagram-apify.js
+
+      # 壊れた data.js をコミットして本番サイトを白画面にしないための最終ゲート。
+      - name: 出力の妥当性を確認
+        run: |
+          node --check data.js
+          node -e 'const d=require("./data.js");
+            if(d.TOURNAMENTS.length<500) throw new Error("TOURNAMENTS件数が異常: "+d.TOURNAMENTS.length);
+            if(new Set(d.TOURNAMENTS.map(t=>t.id)).size!==d.TOURNAMENTS.length) throw new Error("id重複");'
+          node -e 'JSON.parse(require("fs").readFileSync("apify-monitor-state.json","utf8"))'
+
+      - name: 差分があればコミット & プッシュ
+        run: |
+          if test -z "$(git status --porcelain)"; then
+            echo "差分なし。コミットしません。"
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: Instagram新着投稿(Apify)からスケジュールを自動取得 ($(TZ=Asia/Tokyo date +%Y-%m-%d))"
+          # checkout から push までの間に main が進むと push が弾かれるため、push直前にrebaseして取り込む。
+          git pull --rebase
+          git push

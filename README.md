@@ -53,6 +53,8 @@ AdSense/PR枠が埋まるまでの間、自社アプリの導線を3か所に置
 | `tools/venue-schedule-vision.js` | 画像→Tournamentスキーマの配列に正規化するVision抽出ロジック（`ANTHROPIC_API_KEY` が必要）。`tools/import-venue-image.js` から呼ばれる |
 | `tools/tournament-merge.js` | `data.js` の `TOURNAMENTS` に1店舗ぶんの取得結果を安全にupsertする共通ロジック（対象店舗以外・過去日には一切触れない）。`tools/import-venue-image.js` から呼ばれる |
 | `tools/instagram-oembed.js` | 店舗が画像ではなく投稿リンクだけ送ってきた場合の補助（公式oEmbedからサムネイルを取得。ログイン・巡回は行わない）。`tools/import-venue-image.js --instagram-url` から呼ばれる |
+| `tools/fetch-venue-posts-apify.js` | Apify（既製Instagramスクレイパー、pay-per-result）を呼び、指定ハンドルの最近の投稿一覧（画像URL・投稿日時・パーマリンク・キャプション）を取得する（`APIFY_API_TOKEN` が必要）。`tools/monitor-instagram-apify.js` から呼ばれる |
+| `tools/monitor-instagram-apify.js` | 公式サイトAPIが無い6店舗のInstagram投稿を日次で自動監視し、新着のスケジュール告知らしき投稿をVisionで抽出して `data.js` に安全にupsertするCLIツール（詳細は下記「データ取得アーキテクチャ」）。実行: `node tools/monitor-instagram-apify.js`（`--dry-run` あり）。GitHub Actions `.github/workflows/monitor-instagram-apify.yml` が毎日自動実行する |
 
 `data.js` を差し替えるだけでサイトが更新される設計。CDN/静的ホスティング（GitHub Pages 等）にそのまま置ける。
 ただし静的ページ（`events/` `venues/` `sitemap.xml`）はデータのスナップショットなので、下記の再生成が必要。
@@ -298,7 +300,7 @@ Claude APIキーは初回だけ「詳細設定」で登録すればよい（こ�
 | **Waitinglist（DMMポーカー）掲載店** | ◎ **自動（稼働中）** | 認証不要の公開JSON APIを毎日取得 → `data.js` に upsert（下記） |
 | 店舗公式サイト / Googleビジネス | ◎ 自動 | 定期クロール → HTML/構造化データをパース |
 | X（旧Twitter） | △ 条件付き | API有料枠 or 公開タイムラインの限定取得。店舗アカウントを購読 |
-| Instagram | △ 困難 | ログイン壁＋規約。**自動巡回は中止済み(下記参照)。店舗からの画像直送に切り替え** |
+| Instagram | ◎ **自動（稼働中・Apify経由）** | ログイン壁＋規約のため自社アカウントでの巡回は中止（下記参照）。**正規の第三者サービスApify（pay-per-result）で6店舗の投稿を日次取得** → 新着のスケジュール告知をVisionで抽出 → `data.js` に upsert（下記） |
 | **公式LINE 配信** | ✕ **不可** | 他店のブロードキャストを外部取得する公開手段は存在しない |
 
 ### Waitinglist 自動取込（`tools/import-waitinglist.js`）
@@ -407,6 +409,64 @@ GET https://api.waitinglist-poker.com/v1/game-schedules/tournament?storeId=<stor
   古いエントリが自動では消えず並存することがある(`tools/tournament-merge.js`のupsertは
   「同じ(date,start)への置き換え」しか行わないため)。再取込み後は表示件数を確認し、
   古いエントリが残っていれば admin.html 側で手動整理すること。
+
+### Instagram新着投稿の自動監視(Apify経由・2026-07-31〜)
+
+上記「店舗からの画像直送」は今も有効な手動フォールバックだが、**Apify(apify.com)の既製Instagram
+スクレイパー(pay-per-result、$1〜1.6/1000件)を使えば、正規の第三者サービス経由で6店舗の投稿一覧を
+自動取得できる。** 自社アカウントへのログインも検知回避も不要(PR #13で中止した方式とは無関係)。
+
+```
+[6店舗ぶん: tools/fetch-venue-posts-apify.js でApifyから最近の投稿一覧を取得]
+      │  (画像URL・投稿日時・パーマリンク・キャプション)
+      ▼
+[apify-monitor-state.json の記録より新しい投稿だけを「新着」として抽出]
+      ▼
+[新着のうちキャプションがスケジュール告知らしいものだけ、画像をダウンロードして
+ tools/venue-schedule-vision.js でTournamentデータに抽出]
+      ▼
+[tools/tournament-merge.js で安全にupsert]  … 対象店舗以外・過去日には一切触れない、
+      │                                        書き込み前に自己チェック、失敗時は書き換えない
+      ▼
+[data.js へ反映](source: 'auto', verified: false) → サイト反映
+```
+
+- **実行**: GitHub Actions `.github/workflows/monitor-instagram-apify.yml` が**毎日 07:10 JST**
+  (cronは `10 22 * * *` UTC)に実行。手動実行(`workflow_dispatch`)も可。Apifyは正規の従量課金APIで
+  検知回避の必要が無いため、Waitinglist取込みのような確率抽選・ランダム遅延・巡回ウィンドウは無く、
+  単純な日次cron。差分があるときだけ `github-actions[bot]` がコミット＆プッシュする
+- **対象店舗**: `tools/monitor-instagram-apify.js` 冒頭の `STORES` 配列で管理(公式サイトAPIが無い
+  v40/v20/v18/v21/v34/v35の6店舗、Instagramハンドルはdata.jsの`instagram`欄と対応)
+- **新着判定**: `apify-monitor-state.json`(店舗ごとに `lastPostedAt` / `lastPermalink` を記録)より
+  新しい投稿だけを新着扱いにする。まだ記録が無い店舗(初回)は、その回にApifyから取得できた分
+  (既定で直近12件、`resultsLimit`で調整可)をそのまま新着として扱う—Apifyは常に直近N件までしか
+  返さないため、初回でも処理件数は有界
+- **スケジュール告知らしさの判定**: キャプションに「スケジュール」「日程」「月間」等のキーワードが
+  含まれるかの簡易判定(`SCHEDULE_KEYWORDS`)。取りこぼしより誤検知の方が実害が小さい
+  (誤検知してVisionに渡してもTournamentが0件抽出されれば何も起きない)ため広めに取ってある
+- **安全弁**: 次のいずれかで `data.js` / `apify-monitor-state.json` を**書き換えずに非ゼロ終了**する
+  1. `APIFY_API_TOKEN` 未設定(Apify呼び出し前に検知。ネットワークアクセスなし)
+  2. いずれかの店舗のApify呼び出し自体が失敗(全店ぶん確定してからまとめて書く設計のため、
+     1店舗の失敗で他の5店舗ぶんも含めて今回分は書き込まれない。import-waitinglist.jsと同じ設計)
+  3. 書き込み直前の自己チェック(対象外店舗・過去日エントリが変化していないか)
+  4. 新着が無い・新着はあってもスケジュール告知らしくない・Vision抽出が0件、のいずれかの場合は
+     `data.js`を書き換えずに正常終了する(`apify-monitor-state.json`の確認済み投稿日時のみ進める)
+- **既知の設計上の割り切り**: `source: 'auto'` はWaitinglist取込みと同じ「取得結果=その時点の
+  完全な今後のスケジュール」という前提のupsert規則を使う。Instagramの1投稿がWaitinglistのAPIほど
+  常に全体を網羅しているとは限らないため、ある投稿が一部の日程しか含まない場合、その投稿を
+  処理した回で以前この経路で取り込んだが今回の投稿には写っていない分が消えることがある
+  (店舗が次の投稿で改めて全体を載せれば復元される)。人手情報(GTD/プライズ/pinnedTags/人手タグ)は
+  引き継がれるため消えない。問題が頻発するようなら `source: 'semi'` に倒す変更を検討する
+- **必要な環境変数(GitHub Secrets)**: `APIFY_API_TOKEN`(Apify呼び出し用)、`ANTHROPIC_API_KEY`
+  (Vision抽出用)。いずれもコードには直書きしていない
+- **⚠ 静的ページの再生成は、このワークフローには入っていない**(Waitinglist取込みと同じ理由。
+  上記「Waitinglist 自動取込」の該当箇所を参照)。`data.js` が変わったら
+  `node tools/gen-venue-pages.js .` を人が実行すること
+- **コスト目安**: 6店舗×日次×直近投稿十数件取得と仮定すると、月間の取得件数は約
+  6店 × 12件 × 30日 = 2,160件。Apifyのpay-per-result単価($1〜1.6/1000件)で計算すると
+  **月あたり実際の課金は$1〜数ドル程度の見込み**(投稿が少ない店舗ではもっと安くなる)。
+  Vision抽出(Anthropic API)はスケジュール告知らしいと判定された新着投稿にのみ発生するため、
+  実際の呼び出し回数はさらに少ない(店舗が新しいスケジュールを投稿した時だけ)
 
 ### 半自動パイプライン（LINE / IG 等の埋め合わせ）
 
