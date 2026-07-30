@@ -49,6 +49,10 @@ AdSense/PR枠が埋まるまでの間、自社アプリの導線を3か所に置
 | `tools/gen-venue-pages.js` | 店舗静的ページと**トップの店舗リンク行（`index.html` の `#venueLinks` 1行）**の**生成スクリプト**。データは `data.js` の `VENUES` / `TOURNAMENTS` / `RECURRING` からそのまま読み込む。実行: `node tools/gen-venue-pages.js <リポジトリのパス>`（`--check` あり）。**`data.js` を更新したら必ず再実行すること**（下記「`data.js` を更新したら」） |
 | `tools/gen-sitemap.js` | **`sitemap.xml` の唯一の所有者**。トップ＋イベントページ＋店舗ページの全URLをここだけで組み立てる（詳細は下記「sitemap.xml の所有者」）。単独実行も可: `node tools/gen-sitemap.js <リポジトリのパス>`（`--check` あり） |
 | `tools/site-shell.js` | 静的ページ共通の「外側」（`<head>`・GA4タグ・共通CSS・ヘッダー・フッター・自社広告・大会の恒久リンク行）。イベントページと店舗ページで骨格が食い違わないよう、出どころを1つにしてある。**純粋なモジュールで、require しても何も書き込まない** |
+| `tools/import-venue-image.js` | 店舗から直接届いたトーナメント月間スケジュール画像を取り込むCLIツール（詳細は下記「データ取得アーキテクチャ」）。実行: `node tools/import-venue-image.js --venue <id> --image <path>`（`--dry-run` あり） |
+| `tools/venue-schedule-vision.js` | 画像→Tournamentスキーマの配列に正規化するVision抽出ロジック（`ANTHROPIC_API_KEY` が必要）。`tools/import-venue-image.js` から呼ばれる |
+| `tools/tournament-merge.js` | `data.js` の `TOURNAMENTS` に1店舗ぶんの取得結果を安全にupsertする共通ロジック（対象店舗以外・過去日には一切触れない）。`tools/import-venue-image.js` から呼ばれる |
+| `tools/instagram-oembed.js` | 店舗が画像ではなく投稿リンクだけ送ってきた場合の補助（公式oEmbedからサムネイルを取得。ログイン・巡回は行わない）。`tools/import-venue-image.js --instagram-url` から呼ばれる |
 
 `data.js` を差し替えるだけでサイトが更新される設計。CDN/静的ホスティング（GitHub Pages 等）にそのまま置ける。
 ただし静的ページ（`events/` `venues/` `sitemap.xml`）はデータのスナップショットなので、下記の再生成が必要。
@@ -293,15 +297,50 @@ Claude APIキーは初回だけ「詳細設定」で登録すればよい（こ�
 |---|---|---|
 | 店舗公式サイト / Googleビジネス | ◎ 自動 | 定期クロール → HTML/構造化データをパース |
 | X（旧Twitter） | △ 条件付き | API有料枠 or 公開タイムラインの限定取得。店舗アカウントを購読 |
-| Instagram | △ 困難 | ログイン壁＋規約。公開投稿の範囲で限定的に |
+| Instagram | △ 困難 | ログイン壁＋規約。**自動巡回は中止済み(下記参照)。店舗からの画像直送に切り替え** |
 | **公式LINE 配信** | ✕ **不可** | 他店のブロードキャストを外部取得する公開手段は存在しない |
+
+### Instagram自動巡回は中止し、店舗からの画像直送＋Vision取込みに切り替えた(2026-07-31)
+
+公式サイトAPIが無い店舗(v40/v20/v18/v21/v34/v35)向けに、PR #13で「社長個人アカウントの
+セッションCookieでInstagramにログインし、フィードを巡回して新着投稿を検知する」仕組みを実装したが、
+**セッションCookie注入＋検知回避を伴う設計だったため、経営管理オフィスの判断で中止した。**
+ログイン・巡回・ブロック回避のロジック(`instagram-browser.js` / `sns-schedule.js` /
+`sns-monitor-instagram.js` / GitHub Actionsの定期実行ワークフロー)はいずれも採用していない。
+
+代わりに、**各店舗に「Instagramへ投稿する月間スケジュール画像を、当社のLINE/メールにも直接送ってもらう」
+運用に切り替えた。** これによりInstagramへの自動アクセスは一切不要になり、届いた画像を
+`tools/import-venue-image.js` で取り込むだけの通常のツール運用になる。
+
+```
+[店舗がLINE/メールでスケジュール画像を直接送付]
+      │  (人が画像ファイルを保存する。メール受信の自動化は対象外)
+      ▼
+[tools/import-venue-image.js --venue <id> --image <path>]
+      │  Visionモデルで抽出 → Tournamentスキーマに正規化(tools/venue-schedule-vision.js)
+      ▼
+[tools/tournament-merge.js で安全にupsert]  … 対象店舗以外・過去日には一切触れない、
+      │                                        書き込み前に自己チェック、失敗時は書き換えない
+      ▼
+[data.js へ反映](source: 'semi', verified: false) → サイト反映
+```
+
+- 店舗によっては「画像そのものではなく投稿リンクだけ」送ってくることを想定し、
+  `--instagram-url` オプションで公式oEmbed(認証不要・ログイン不要)からサムネイルを
+  取得する経路も用意してある(`tools/instagram-oembed.js`)。ただし複数画像投稿では
+  先頭の1枚しか取れないため、基本は `--image` での直接送付を優先する。
+- 実行例: `node tools/import-venue-image.js --venue v40 --image ./inbox/orio-2026-09.jpg`
+  (`--dry-run` を付けると `data.js` を書き換えずに抽出結果だけ確認できる)。
+- 実行には環境変数 `ANTHROPIC_API_KEY` が必要(Vision抽出用。コードには直書きしない)。
 
 ### 半自動パイプライン（LINE / IG 等の埋め合わせ）
 
-完全自動が無理なソースは、**告知テキストを貼る → LLMで正規化 → `data.js` に追記**で工数を最小化する。
+完全自動が無理なソースは、**告知テキスト/画像を渡す → LLMで正規化 → `data.js` に追記**で工数を最小化する。
+Claude Codeのチャットで人手で行う場合(admin.htmlでの進捗管理)と、`tools/import-venue-image.js` で
+CLIから行う場合の両方がこの型に当てはまる。
 
 ```
-[店舗のLINE/IG告知テキストを貼付]
+[店舗のLINE/IG告知テキスト・画像]
       │
       ▼
 [LLM抽出]  date / start / name / buyin / addon / stack / guarantee / reentry / tags
