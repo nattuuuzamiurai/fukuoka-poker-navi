@@ -32,6 +32,9 @@ const fs = require('fs');
 const path = require('path');
 const shell = require('./site-shell.js');
 const { SITE } = shell;
+// 「その店に掲載中の日程があるか」の判定は venue-schedule.js が所有する。
+// gen-venue-pages.js の title/description の分岐と同じ基準を使うため。
+const { dataRange, hasSchedule } = require('./venue-schedule.js');
 
 // URLごとの changefreq / priority。日付には依存させない(上記の理由)。
 const HOME = { freq: 'daily', pri: '1.0' };
@@ -56,8 +59,20 @@ function buildSitemap(REPO) {
     .filter(e => e.featureUrl && e.featureUrl.startsWith('/events/'))
     .forEach(e => urls.push({ loc: SITE + e.featureUrl, ...EVENT }));
 
-  // 店舗ページ: data.js の VENUES 全件。店を足せば自動で増える。
-  DATA.VENUES.forEach(v => urls.push({ loc: `${SITE}/venues/${v.slug}/`, ...VENUE }));
+  // 店舗ページ: 掲載中の日程が1件以上ある店だけ。
+  // 【なぜ全件載せないか】このサイトの現時点の収益ゲートは検索順位ではなく AdSense審査で、
+  //   審査はサイト全体のコンテンツ量・質を見る(不承認理由の最頻出が「価値の低い広告枠」)。
+  //   日程0件の店のページは実質「住所＋アクセス＋SNS＋noteの1行」しかなく、
+  //   これが全URLの3割を占める状態で審査を受けるリスクを避ける[社長判断・2026-07-30]。
+  //   ページ自体は生成・公開し、トップの店舗リンク行(#venueLinks)からも辿れるので、
+  //   URLの早期確定と被リンクの受け皿という狙いは sitemap 掲載と独立に達成できる。
+  //   日程が1件でも入れば次の生成で自動的に載る(手当ては不要)。
+  // 【判定の所有者】venue-schedule.js の hasSchedule()。gen-venue-pages.js の
+  //   title/description の分岐とまったく同じ基準を使う(基準が分かれるとズレる)。
+  const RANGE = dataRange(DATA.TOURNAMENTS);
+  DATA.VENUES
+    .filter(v => hasSchedule(DATA.TOURNAMENTS, DATA.RECURRING, v.id, RANGE))
+    .forEach(v => urls.push({ loc: `${SITE}/venues/${v.slug}/`, ...VENUE }));
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

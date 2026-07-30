@@ -149,6 +149,15 @@ function pageHead({ title, desc, canonical, jsonld, image, noImage, ogType, twit
 `;
   const twImgTag = noImage ? '' : `<meta name="twitter:image" content="${esc(ogimg)}">
 `;
+  // JSON-LD は渡されたときだけ出す。
+  // 【なぜ省けるようにしたか】未開店の店舗ページで LocalBusiness を出すと、
+  //   まだ営業していない事業所を営業中として構造化データで宣言することになる
+  //   (検索結果に住所と最寄駅が出て、存在しない店を訪ねる経路ができる)。
+  //   jsonld を渡さない/null のときは <script type="application/ld+json"> ごと出力しない。
+  const ldTag = jsonld ? `<script type="application/ld+json">
+${JSON.stringify(jsonld, null, 2)}
+</script>
+` : '';
   return `<!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -177,10 +186,7 @@ ${imgTags}<meta property="og:locale" content="ja_JP">
 <meta name="twitter:card" content="${twitterCard || 'summary_large_image'}">
 ${twImgTag}<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6349478743429747"
      crossorigin="anonymous"></script>
-<script type="application/ld+json">
-${JSON.stringify(jsonld, null, 2)}
-</script>
-<style>
+${ldTag}<style>
 ${BASE_CSS}${extraCss || ''}</style>
 </head>
 <body>

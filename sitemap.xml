@@ -31,17 +31,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://fukuokapoker.com/venues/onecasino-fukuoka-nakasu/</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://fukuokapoker.com/venues/casino-bar-leje-hakata/</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://fukuokapoker.com/venues/grand-mirage-poker/</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -52,11 +42,6 @@
   </url>
   <url>
     <loc>https://fukuokapoker.com/venues/raise-blue-tenjin/</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://fukuokapoker.com/venues/casino-blow-nishi-nakasu/</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -72,11 +57,6 @@
   </url>
   <url>
     <loc>https://fukuokapoker.com/venues/texas-holdem-3000/</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://fukuokapoker.com/venues/texas-holdem-aa/</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -106,16 +86,6 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://fukuokapoker.com/venues/alice-the-poker-room/</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://fukuokapoker.com/venues/roots-fukuoka/</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://fukuokapoker.com/venues/seventwo-tenjin/</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
@@ -136,21 +106,6 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://fukuokapoker.com/venues/bon-nishi-nakasu/</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://fukuokapoker.com/venues/aria-nakasu/</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://fukuokapoker.com/venues/bar-betty-nakasu/</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://fukuokapoker.com/venues/poker-room-sky/</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
@@ -166,22 +121,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://fukuokapoker.com/venues/musashi-poker-room-fukuoka/</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://fukuokapoker.com/venues/raftel-casino-fukuoka-imaizumi/</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://fukuokapoker.com/venues/save-tenjin/</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://fukuokapoker.com/venues/kaji-bar-kokura/</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>

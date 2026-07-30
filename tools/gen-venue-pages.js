@@ -48,7 +48,6 @@
 
 const fs = require('fs');
 const path = require('path');
-const vm = require('vm');
 
 const args = process.argv.slice(2);
 const CHECK = args.includes('--check');
@@ -72,128 +71,14 @@ const { VENUES, TOURNAMENTS, RECURRING, AREAS } = DATA;
 // 生成してから気づくとURLの付け替え=被リンクの喪失になるため、生成前に止める。
 shell.validateVenueSlugs(VENUES);
 
-// ============================================================
-// 日程表を組み立てるコード(生成時と閲覧時で共有する1本)
-// ============================================================
-// ★ このコードは Node(生成時) と ブラウザ(閲覧時) の両方が実行する。
-//   2箇所に別々に書くと必ずズレるので、文字列として1本だけ持つ。
-//   - Node   : 下の SCHED で vm 経由で読み込んで、静的HTMLを組み立てる
-//   - ブラウザ: そのまま <script> に埋め込み、/data.js を読み直して描き直す
-//   日付計算はすべてUTCで行う。ローカルタイムゾーンに依存させると、
-//   生成環境(Node)と閲覧環境(端末)で曜日がずれることがある。
-const SCHEDULE_JS = `
-function vpEsc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-var VP_WD = ['日','月','火','水','木','金','土'];
-function vpParse(iso){ var a = iso.split('-'); return Date.UTC(+a[0], +a[1] - 1, +a[2]); }
-function vpToIso(ms){ var d = new Date(ms); return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0') + '-' + String(d.getUTCDate()).padStart(2, '0'); }
-function vpWeekday(iso){ return new Date(vpParse(iso)).getUTCDay(); }
-function vpNum(n){ return String(n).replace(/\\B(?=(\\d{3})+(?!\\d))/g, ','); }
+// ---- 日程表の組み立て(生成時と閲覧時で共有する1本) ----
+// SCHEDULE_JS / SCHED / dataRange は tools/venue-schedule.js が所有する。
+// 【なぜ切り出したか】gen-sitemap.js が「掲載0件の店」を判定して sitemap から外す。
+//   その判定基準がこちらと2箇所に分かれるとズレて、「sitemapには載っているのに中身は空」
+//   あるいはその逆が起きるため、判定を1箇所に寄せた。
+const { SCHEDULE_JS, SCHED, dataRange, hasSchedule } = require('./venue-schedule.js');
 
-/* 毎週固定の定期トーナメント(RECURRING)を、日付つきの形に展開する。
-   index.html の expandRecurring() と同じ考え方。 */
-function vpExpandRecurring(RECURRING, venueId, fromIso, toIso){
-  var out = [], end = vpParse(toIso);
-  for (var ms = vpParse(fromIso); ms <= end; ms += 86400000) {
-    var iso = vpToIso(ms), wd = new Date(ms).getUTCDay();
-    for (var i = 0; i < RECURRING.length; i++) {
-      var r = RECURRING[i];
-      if (r.venueId !== venueId || r.weekday !== wd) continue;
-      out.push({ name: r.name, date: iso, start: r.start, buyin: r.buyin, addon: r.addon,
-                 stack: r.buyinStack || 0, lateReg: r.lateReg, guarantee: null,
-                 tags: r.tags || [], recurring: true });
-    }
-  }
-  return out;
-}
-
-/* その店の [fromIso, toIso] の日程を、日付→開始時刻の順に並べて返す。 */
-function vpRows(TOURNAMENTS, RECURRING, venueId, fromIso, toIso){
-  var abs = [];
-  for (var i = 0; i < TOURNAMENTS.length; i++) {
-    var t = TOURNAMENTS[i];
-    if (t.venueId !== venueId || t.date < fromIso || t.date > toIso) continue;
-    abs.push(t);
-  }
-  return abs.concat(vpExpandRecurring(RECURRING, venueId, fromIso, toIso))
-    .sort(function(a, b){
-      if (a.date !== b.date) return a.date < b.date ? -1 : 1;
-      var sa = a.start || '99:99', sb = b.start || '99:99';
-      return sa < sb ? -1 : (sa > sb ? 1 : 0);
-    });
-}
-
-/* バイインの表示。index.html のトーナメントカードと同じ判断にそろえる。
-   金額が入っていない場合に「無料」と決めつけないこと(タグにフリーロールと
-   書かれているものだけフリーロールとして出し、それ以外は店舗確認に誘導する)。 */
-function vpBuyin(t){
-  if (t.buyin) return '\\u00a5' + vpNum(t.buyin);
-  var tags = t.tags || [];
-  for (var i = 0; i < tags.length; i++) {
-    if (String(tags[i]).indexOf('フリーロール') >= 0) return 'フリーロール';
-  }
-  return '詳細は店舗SNSを確認';
-}
-
-function vpScheduleHtml(rows){
-  if (!rows.length) {
-    return '<div class="vp-empty">現在このサイトに掲載している開催予定はありません。<br>開催状況は店舗の公式情報・SNSをご確認ください。</div>';
-  }
-  var byDay = {}, order = [];
-  for (var i = 0; i < rows.length; i++) {
-    var d = rows[i].date;
-    if (!byDay[d]) { byDay[d] = []; order.push(d); }
-    byDay[d].push(rows[i]);
-  }
-  var out = [];
-  for (var j = 0; j < order.length; j++) {
-    var day = order[j], list = byDay[day], p = day.split('-');
-    var head = (+p[1]) + '月' + (+p[2]) + '日（' + VP_WD[vpWeekday(day)] + '）';
-    var trs = [];
-    for (var k = 0; k < list.length; k++) {
-      var t = list[k], extra = '';
-      if (t.guarantee) extra += '<span class="gtd">GTD ' + vpNum(t.guarantee) + '</span>';
-      if (t.recurring) extra += '<span class="vp-recur">毎週' + VP_WD[vpWeekday(day)] + '曜</span>';
-      var tg = t.tags || [];
-      if (tg.length) extra += '　<span class="vp-tags">' + tg.map(vpEsc).join('・') + '</span>';
-      /* 抽出確度が低いものは黙って混ぜず、その旨を出す(READMEの編集方針)。 */
-      if (t.lowConfidence) extra += '　<span class="vp-warn">⚠ 要確認</span>';
-      trs.push('<tr><td class="start">' + vpEsc(t.start || '—') + '</td>'
-        + '<td>' + vpEsc(t.name) + extra + '</td>'
-        + '<td class="buyin">' + vpEsc(vpBuyin(t)) + '</td>'
-        + '<td class="buyin">' + (t.stack ? vpNum(t.stack) + '点' : '—') + '</td></tr>');
-    }
-    out.push('<h3 class="vp-day">' + head + '</h3>'
-      + '<div class="sched-wrap"><table class="sched">'
-      + '<thead><tr><th>開始</th><th>トーナメント</th><th>バイイン</th><th>スタック</th></tr></thead>'
-      + '<tbody>' + trs.join('') + '</tbody></table></div>');
-  }
-  return out.join('\\n');
-}
-`;
-
-// Node側から同じ関数を使う。SCHEDULE_JS を書き換えれば静的側も自動で追随する。
-const SCHED = vm.runInNewContext(SCHEDULE_JS
-  + '\n;({ vpRows: vpRows, vpScheduleHtml: vpScheduleHtml, vpToIso: vpToIso, vpParse: vpParse })');
-
-// ---- 静的側に焼き込む期間 ----
-// data.js に載っている日付の範囲(月単位に丸めたもの)。実行日に依存させない。
-function dataRange() {
-  const dates = TOURNAMENTS.map(t => t.date).filter(Boolean).sort();
-  if (!dates.length) {
-    // 日付つきトーナメントが1件も無い状態。定期分だけでも出せるよう当月を使う。
-    throw new Error('TOURNAMENTS が空です。焼き込む期間を決められません。');
-  }
-  const first = dates[0], last = dates[dates.length - 1];
-  const [fy, fm] = first.split('-').map(Number);
-  const [ly, lm] = last.split('-').map(Number);
-  const lastDay = new Date(Date.UTC(ly, lm, 0)).getUTCDate();
-  return {
-    from: `${fy}-${String(fm).padStart(2, '0')}-01`,
-    to: `${ly}-${String(lm).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`,
-    label: (fy === ly && fm === lm) ? `${fy}年${fm}月` : `${fy}年${fm}月〜${ly === fy ? '' : ly + '年'}${lm}月`
-  };
-}
-const RANGE = dataRange();
+const RANGE = dataRange(TOURNAMENTS);
 
 // ---- 店舗ページ本体 ----
 const VENUE_CSS = `  .vp-sub{font-size:.9em;color:var(--mut);margin-bottom:14px}
@@ -261,12 +146,38 @@ function metaRows(v) {
 
 function buildVenue(v) {
   const canonical = `${SITE}/venues/${v.slug}/`;
-  const title = `${v.name}（${v.area}）のポーカートーナメント日程 | ふくおかポーカーナビ`;
-  const desc = `${v.name}（${v.area}${v.access ? '／' + v.access : ''}）で開催されるポーカートーナメントの日程を日付順に掲載。`
-    + `開始時刻・バイイン・スタックのほか、${v.address ? '住所・' : ''}アクセス・公式SNSもまとめて確認できます。`;
 
   const rows = SCHED.vpRows(TOURNAMENTS, RECURRING, v.id, RANGE.from, RANGE.to);
   const schedHtml = SCHED.vpScheduleHtml(rows);
+
+  // ★ title / description / リード文は「掲載日程があるか」で切り替える。
+  //   【なぜ必要か】無条件に「トーナメント日程」「日程を日付順に掲載」と書くと、掲載0件の店では
+  //   検索結果に出る文が中身と一致しない。さらに note が「トーナメント開催は未確認」と書いている店で、
+  //   同じページの中で当サイトのタイトルと当サイトの note が矛盾する。
+  //   READMEの編集方針「第三者店舗の性質を当サイトの声で断定しない」に反するため、
+  //   日程が無い店では「日程がある」と読める断定を出さない。
+  //   【判定に「今日」を使わない理由】実行日で分岐すると、データを1文字も触っていないのに
+  //   翌日には --check が落ちる。判定は日付独立な RANGE 内の行数で行う。
+  //   データ駆動なので、日程が1件入れば自動で通常の文面に戻る(将来の手当ては不要)。
+  const paren = `${v.area}${v.access ? '／' + v.access : ''}`;
+  let title, desc, sub;
+  if (v.preopen) {
+    // 未開店の店。営業中と読める文面を出さない(JSON-LDのLocalBusinessも出さない)。
+    title = `${v.name}（${v.area}）｜オープン予定のポーカースポット | ふくおかポーカーナビ`;
+    desc = `${v.name}（${paren}）はオープン予定のポーカースポットです。`
+      + `判明している開店時期と${v.address ? '所在地・' : ''}アクセス・公式SNSをまとめています。当サイトに掲載中の開催予定はまだありません。`;
+    sub = `${esc(v.area)}のポーカースポット${v.access ? `（${esc(v.access)}）` : ''} — オープン予定`;
+  } else if (rows.length) {
+    title = `${v.name}（${v.area}）のポーカートーナメント日程 | ふくおかポーカーナビ`;
+    desc = `${v.name}（${paren}）で開催されるポーカートーナメントの日程を日付順に掲載。`
+      + `開始時刻・バイイン・スタックのほか、${v.address ? '住所・' : ''}アクセス・公式SNSもまとめて確認できます。`;
+    sub = `${esc(v.area)}のポーカースポット${v.access ? `（${esc(v.access)}）` : ''} — トーナメント日程・バイイン・アクセス`;
+  } else {
+    title = `${v.name}（${v.area}）｜住所・アクセス・トーナメント開催情報 | ふくおかポーカーナビ`;
+    desc = `${v.name}（${paren}）の${v.address ? '住所・' : ''}アクセス・公式SNSをまとめています。`
+      + `現時点で当サイトに掲載中の開催予定はありません。最新の開催情報は店舗の公式情報・SNSをご確認ください。`;
+    sub = `${esc(v.area)}のポーカースポット${v.access ? `（${esc(v.access)}）` : ''} — 住所・アクセス・開催情報`;
+  }
 
   // 同じエリアの他店。内部リンクを増やしつつ、読者にとっても「近くの別の店」になる。
   const sameArea = VENUES.filter(x => x.area === v.area && x.id !== v.id);
@@ -287,7 +198,7 @@ ${sameArea.map(x => `  <li><a href="/venues/${x.slug}/">${esc(x.name)}</a></li>`
 
   const body = `
 <h1>${esc(v.name)}</h1>
-<p class="vp-sub">${esc(v.area)}のポーカースポット${v.access ? `（${esc(v.access)}）` : ''} — トーナメント日程・バイイン・アクセス</p>
+<p class="vp-sub">${sub}</p>
 <div class="evt-meta">
   ${metaRows(v)}
 </div>
@@ -336,7 +247,8 @@ ${SCHEDULE_JS}
 
   return pageHead({
     title, desc, canonical,
-    jsonld: venueJsonLd(v),
+    // 未開店の店では LocalBusiness を出さない(営業中の事業所として宣言しないため)。
+    jsonld: v.preopen ? null : venueJsonLd(v),
     noImage: true,
     ogType: 'website',
     twitterCard: 'summary',
