@@ -110,6 +110,10 @@
      ★今日を選んでいる間は hidden。JS側は hidden 属性で出し入れするので、
        非表示のときは display:none 相当＝フレックス項目にならず、margin-left も効かない
        ⇒ 初期表示のレイアウトは1pxも変わらない。 */
+  /* ★ display を指定する要素には必ず [hidden]{display:none} も書くこと。
+     作者スタイルの display は UA の [hidden] 指定に勝つため、これが無いと hidden 属性が効かない
+     (=初期表示でボタンが出てレイアウトが変わる)。.dmonth-menu[hidden] も同じ理由で置いてある。 */
+  .dstrip-today[hidden]{display:none}
   .dstrip-today{position:relative;margin-left:6px;display:inline-flex;align-items:center;font-family:inherit;font-weight:800;font-size:.92em;white-space:nowrap;color:#b3841f;background:#fff8ea;border:1px solid var(--gold);border-radius:20px;padding:5px 10px;line-height:1.25;cursor:pointer;outline:none}
   /* 見た目の高さは月ボタンに合わせたまま、タップ領域だけを44px以上に広げる
      (iOS HIG。上下方向にだけ広げるので隣のチップとは重ならない)。 */
@@ -919,6 +923,9 @@
   }
 
   function buildDateStrip(){
+    // ★ 中央寄せの計算より前に「今日」ボタンの出し入れを済ませること。
+    //   後に回すとストリップの幅が変わり、中央が半ボタンぶん(約28px)ずれる。
+    syncTodayBtn();
     // state.month の1日〜末日だけを表示する(月をまたいだ前後の日付は出さない)
     const wrap = document.getElementById('dstrip');
     const y0 = Number(state.month.slice(0,4)), m0 = Number(state.month.slice(5,7)) - 1;
@@ -1848,16 +1855,25 @@
   // ★ このボタンは .dstrip-month-wrap の中にあるため、月メニューを開いたまま押しても
   //   「外側クリックで閉じる」ハンドラに飲まれない(下の goToday が自分で閉じる)。
   const todayBtn = document.getElementById('dstripToday');
+  // ボタンが出入りすると日付ストリップの幅が約57px変わり、そのままだとチップが
+  // 横に飛ぶ(320px幅では画面の18%)。幅が変わった分だけストリップの scrollLeft を
+  // 足し引きして、チップの【画面上の位置を変えない】。
+  // ⇒ 利用者に見える動きは、従来どおり「選んだ日を中央へ寄せる smooth スクロール」だけになる。
   function syncTodayBtn(){
-    todayBtn.hidden = (state.selectedDate === localToday);
+    const next = (state.selectedDate === localToday);
+    if (next === todayBtn.hidden) return;      // 状態が変わらないときは何もしない(初期表示を含む)
+    const strip = document.getElementById('dstrip');
+    const before = strip.getBoundingClientRect().left;
+    todayBtn.hidden = next;
+    strip.scrollLeft += strip.getBoundingClientRect().left - before;
   }
   function goToday(){
     const wasFocused = document.activeElement === todayBtn;
     closeMonthMenu(false);          // 月メニューを開いたまま押されることがある
     state.month = thisMonth;
     state.selectedDate = localToday;
-    buildDateStrip();               // 今日のチップに .on / .today が付き、中央寄せもここで行われる
-    render();                       // この中の syncTodayBtn() でこのボタン自身が hidden になる
+    buildDateStrip();               // 先頭で syncTodayBtn() が走ってからチップを中央寄せする
+    render();
     // 自分が hidden になるとフォーカスが宙に浮く。キーボード操作でも文脈を失わないよう、
     // 選択された「今日」のチップへ移す(preventScroll。中央寄せは buildDateStrip が済ませている)。
     if (wasFocused){
