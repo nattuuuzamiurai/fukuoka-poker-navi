@@ -1,0 +1,195 @@
+'use strict';
+
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+const { execFileSync } = require('node:child_process');
+
+const importer = require('./import-venue-image');
+const merge = require('./tournament-merge');
+
+const TODAY = '2026-08-01';
+
+test('toTournament: source=semi/verified=falseで、amountはnumber化・reentry/tagsは正規化される', () => {
+  const t = importer.toTournament(
+    { date: '2026-09-10', start: '19:00', name: ' 月間スケジュール ', buyin: '2000', reentry: 'late', tags: ['ターボ'] },
+    'v40'
+  );
+  assert.equal(t.venueId, 'v40');
+  assert.equal(t.name, '月間スケジュール');
+  assert.equal(t.buyin, 2000);
+  assert.equal(t.reentry, 'late');
+  assert.equal(t.source, 'semi');
+  assert.equal(t.verified, false);
+  assert.ok(t.id.startsWith('photo-v40-2026-09-10-1900-'));
+});
+
+test('toTournament: start省略時は00:00、reentry省略時はfalseになる', () => {
+  const t = importer.toTournament({ date: '2026-09-10', name: 'テスト' }, 'v40');
+  assert.equal(t.start, '00:00');
+  assert.equal(t.reentry, false);
+  assert.equal(t.buyin, 0);
+  assert.equal(t.stack, 0);
+  assert.equal(t.addon, null);
+  assert.equal(t.guarantee, null);
+});
+
+test('parseArgs: --venue/--image/--dry-run/--posted-date を読み取る', () => {
+  const args = importer.parseArgs(['--venue', 'v40', '--image', './a.jpg', '--dry-run', '--posted-date', '2026-09-01']);
+  assert.equal(args.venue, 'v40');
+  assert.equal(args.image, './a.jpg');
+  assert.equal(args.dryRun, true);
+  assert.equal(args.postedDate, '2026-09-01');
+});
+
+test('importVenueImage: Vision抽出結果をsemi/verified:falseでdata.jsにmergeする(dry-runでは書き換えない)', async () => {
+  const dataJsPath = path.join(os.tmpdir(), `data-test-${Date.now()}-${Math.random().toString(36).slice(2)}.js`);
+  // TOURNAMENTS の終端検出は「\n];」のリテラル探索のため、空配列でも改行を挟んでおく
+  // (JSON.stringifyされた実データでは非空配列なら自然にこの形になる)。
+  fs.writeFileSync(dataJsPath, 'const VENUES = [];\nconst TOURNAMENTS = [\n];\nconst AREAS = [];\n');
+  try {
+    const fakeVisionLib = {
+      async extractTournaments() {
+        return [{ date: '2026-08-10', start: '19:00', name: 'テストトナメ', buyin: 3000 }];
+      },
+    };
+
+    const before = fs.readFileSync(dataJsPath, 'utf8');
+    const dryRunResult = await importer.importVenueImage(
+      { venueId: 'v40', imageBuffer: Buffer.from('fake'), dryRun: true, dataJsPath, today: TODAY },
+      { visionLib: fakeVisionLib, mergeLib: merge }
+    );
+    assert.equal(dryRunResult.tournaments.length, 1);
+    assert.equal(dryRunResult.tournaments[0].source, 'semi');
+    assert.equal(dryRunResult.tournaments[0].verified, false);
+    assert.equal(dryRunResult.stats, null);
+    assert.equal(fs.readFileSync(dataJsPath, 'utf8'), before, '--dry-run相当ではdata.jsを書き換えない');
+
+    const writeResult = await importer.importVenueImage(
+      { venueId: 'v40', imageBuffer: Buffer.from('fake'), dryRun: false, dataJsPath, today: TODAY },
+      { visionLib: fakeVisionLib, mergeLib: merge }
+    );
+    assert.equal(writeResult.stats.added, 1);
+    const { arr } = merge.readDataJs(dataJsPath);
+    assert.equal(arr.length, 1);
+    assert.equal(arr[0].source, 'semi');
+    assert.equal(arr[0].verified, false);
+    assert.equal(arr[0].venueId, 'v40');
+  } finally {
+    fs.unlinkSync(dataJsPath);
+  }
+});
+
+test('importVenueImage: Vision抽出が0件なら例外を投げ、data.jsは書き換えない', async () => {
+  const dataJsPath = path.join(os.tmpdir(), `data-test-${Date.now()}-${Math.random().toString(36).slice(2)}.js`);
+  fs.writeFileSync(dataJsPath, 'const VENUES = [];\nconst TOURNAMENTS = [];\nconst AREAS = [];\n');
+  try {
+    const before = fs.readFileSync(dataJsPath, 'utf8');
+    const fakeVisionLib = { async extractTournaments() { return []; } };
+    await assert.rejects(
+      () =>
+        importer.importVenueImage(
+          { venueId: 'v40', imageBuffer: Buffer.from('fake'), dryRun: false, dataJsPath, today: TODAY },
+          { visionLib: fakeVisionLib, mergeLib: merge }
+        ),
+      /0件/
+    );
+    assert.equal(fs.readFileSync(dataJsPath, 'utf8'), before);
+  } finally {
+    fs.unlinkSync(dataJsPath);
+  }
+});
+
+// ---------- CLIとして(子プロセスで)実行する結合テスト ----------
+// 安全弁(不正な引数・未知の店舗・ファイル不在・APIキー未設定)が、実際にVision/Instagram APIへ
+// アクセスする前に安全に止まり、data.js を一切書き換えないことを確認する。
+
+const TOOLS_DIR = __dirname;
+const FILES_TO_COPY = ['import-venue-image.js', 'tournament-merge.js', 'venue-schedule-vision.js', 'instagram-oembed.js'];
+
+function makeTempRepoRoot() {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'import-venue-image-cli-'));
+  fs.mkdirSync(path.join(root, 'tools'));
+  for (const f of FILES_TO_COPY) {
+    fs.copyFileSync(path.join(TOOLS_DIR, f), path.join(root, 'tools', f));
+  }
+  fs.writeFileSync(
+    path.join(root, 'data.js'),
+    'const VENUES = [{"id":"v40","name":"TripleBarrel 折尾店"}];\nconst TOURNAMENTS = [];\nconst AREAS = [];\n' +
+      'if (typeof module !== "undefined") { module.exports = { VENUES, TOURNAMENTS, AREAS }; }\n'
+  );
+  return root;
+}
+
+function runCli(root, cliArgs, envOverrides = {}) {
+  const env = { ...process.env, ...envOverrides };
+  return execFileSync('node', ['tools/import-venue-image.js', ...cliArgs], {
+    cwd: root,
+    env,
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+}
+
+test('CLI: --venueが無ければdata.jsを書き換えず異常終了する', () => {
+  const root = makeTempRepoRoot();
+  try {
+    const before = fs.readFileSync(path.join(root, 'data.js'), 'utf8');
+    assert.throws(() => runCli(root, ['--image', 'x.jpg']));
+    assert.equal(fs.readFileSync(path.join(root, 'data.js'), 'utf8'), before);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('CLI: 存在しないvenueIdならdata.jsを書き換えず異常終了する', () => {
+  const root = makeTempRepoRoot();
+  try {
+    const before = fs.readFileSync(path.join(root, 'data.js'), 'utf8');
+    assert.throws(() => runCli(root, ['--venue', 'v999', '--image', 'x.jpg']));
+    assert.equal(fs.readFileSync(path.join(root, 'data.js'), 'utf8'), before);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('CLI: 画像ファイルが存在しなければdata.jsを書き換えず異常終了する', () => {
+  const root = makeTempRepoRoot();
+  try {
+    const before = fs.readFileSync(path.join(root, 'data.js'), 'utf8');
+    assert.throws(() => runCli(root, ['--venue', 'v40', '--image', 'no-such-file.jpg']));
+    assert.equal(fs.readFileSync(path.join(root, 'data.js'), 'utf8'), before);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('CLI: ANTHROPIC_API_KEY未設定ならVision呼び出し前(ネットワークアクセス無し)に安全終了する', () => {
+  const root = makeTempRepoRoot();
+  const imgPath = path.join(root, 'sample.jpg');
+  fs.writeFileSync(imgPath, Buffer.from([0xff, 0xd8, 0xff, 0xd9])); // 最小のJPEGバイト列(内容の妥当性はチェックされない)
+  try {
+    const before = fs.readFileSync(path.join(root, 'data.js'), 'utf8');
+    const env = { ...process.env };
+    delete env.ANTHROPIC_API_KEY;
+    assert.throws(() => runCli(root, ['--venue', 'v40', '--image', 'sample.jpg'], env));
+    assert.equal(fs.readFileSync(path.join(root, 'data.js'), 'utf8'), before);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('CLI: --image と --instagram-url の同時指定は異常終了する', () => {
+  const root = makeTempRepoRoot();
+  try {
+    const before = fs.readFileSync(path.join(root, 'data.js'), 'utf8');
+    assert.throws(() =>
+      runCli(root, ['--venue', 'v40', '--image', 'x.jpg', '--instagram-url', 'https://www.instagram.com/p/AAAA/'])
+    );
+    assert.equal(fs.readFileSync(path.join(root, 'data.js'), 'utf8'), before);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
