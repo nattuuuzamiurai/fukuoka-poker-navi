@@ -71,6 +71,39 @@ const { VENUES, TOURNAMENTS, RECURRING, AREAS } = DATA;
 // 生成してから気づくとURLの付け替え=被リンクの喪失になるため、生成前に止める。
 shell.validateVenueSlugs(VENUES);
 
+// ---- 「未確認」の印(addressUnverified / telUnverified)と note の食い違いを止める ----
+// 【なぜ必要か】
+//   確度の低い住所・電話を JSON-LD から落とす判定は data.js のフラグが持つ(下の venueJsonLd)。
+//   一方、読者向けのヘッジは note の文章が持つ。この2つは別々に書かれるので、店を追加した人が
+//   note にだけ「住所は要確認」と書いてフラグを付け忘れると、【表示は留保・構造化データは断定】
+//   という、今回まさに直した状態にそのまま戻る。しかもその壊れ方は画面を見ても分からない。
+//   そこで「note が住所/電話の未確認に言及しているのにフラグが無い」場合は生成せずに落とす。
+//   ★ 判定そのものを note の文字列マッチで行っているわけではない(それは脆い)。
+//     出力を決めるのはあくまでフラグで、ここは【書き忘れを人間に知らせるための検査】。
+// 【address が空の店を対象外にする理由】
+//   RAISE BLUE 天神は住所データ自体を持たず note に「住所は未確認。」と書いてある。
+//   出すべき streetAddress がそもそも無いのでフラグは不要(付けても意味がない)。
+const UNVERIFIED_CHECKS = [
+  { flag: 'addressUnverified', field: 'address', re: /住所[^。]*(要確認|未確認)/ },
+  { flag: 'telUnverified',     field: 'tel',     re: /電話[^。]*(要確認|未確認)/ }
+];
+function validateUnverifiedFlags(venues) {
+  const problems = [];
+  venues.forEach(v => {
+    UNVERIFIED_CHECKS.forEach(c => {
+      if (!v[c.field] || v[c.flag]) return;
+      if (c.re.test(v.note || '')) {
+        problems.push(`${v.id} ${v.name}: note が${c.field === 'tel' ? '電話' : '住所'}の未確認に言及していますが `
+          + `"${c.flag}": true がありません（data.js に足すか、裏が取れたなら note のヘッジを外してください）`);
+      }
+    });
+  });
+  if (problems.length) {
+    throw new Error('店舗データの「未確認」の印が note と食い違っています:\n  - ' + problems.join('\n  - '));
+  }
+}
+validateUnverifiedFlags(VENUES);
+
 // ---- 日程表の組み立て(生成時と閲覧時で共有する1本) ----
 // SCHEDULE_JS / SCHED / dataRange は tools/venue-schedule.js が所有する。
 // 【なぜ切り出したか】gen-sitemap.js が「掲載0件の店」を判定して sitemap から外す。
@@ -106,6 +139,10 @@ function addressParts(address) {
 function venueJsonLd(v) {
   // ★ data.js に無い項目は出さない。空文字を "" のまま出すと、
   //   検索エンジンに「値が無い」ではなく「空という値」を渡すことになる。
+  // ★ 裏が取れていない項目も出さない(addressUnverified / telUnverified)。
+  //   ページの表示テキストでは note のヘッジ付きで出しているのに、構造化データでは
+  //   同じ値を断定として渡していた。読者には「要確認」と伝えながら Google には
+  //   確定情報として渡すのは、READMEの編集方針(根拠の弱い情報は確度の差が伝わる形で出す)に反する。
   const j = {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
@@ -115,12 +152,19 @@ function venueJsonLd(v) {
     const p = addressParts(v.address);
     const addr = { '@type': 'PostalAddress' };
     if (p.locality) addr.addressLocality = p.locality;
-    if (p.street) addr.streetAddress = p.street;
+    // 落とすのは streetAddress(丁目・番地・ビル名・部屋番号)だけで、address ブロックごとは落とさない。
+    //   - 実害があるのは番地レベルの誤り(無関係な建物・部屋を訪ねさせる)。市区町村までの粒度なら
+    //     当サイトが独立に持っている area / access(最寄駅)と突き合わせて裏が取れている
+    //     (例: 中洲エリア・中洲川端駅徒歩1分 ⇔ 福岡市博多区)。
+    //   - LocalBusiness にとって address は Google が必須とする項目で、ブロックごと落とすと
+    //     「不正確な住所」ではなく「住所の無い事業所」になり、エラー扱いになる。
+    //     市区町村＋県だけを残すのが「嘘をつかず、かつ壊さない」最小の落とし方。
+    if (p.street && !v.addressUnverified) addr.streetAddress = p.street;
     addr.addressRegion = '福岡県';
     addr.addressCountry = 'JP';
     j.address = addr;
   }
-  if (v.tel) j.telephone = v.tel;
+  if (v.tel && !v.telUnverified) j.telephone = v.tel;
   // url は店舗自身のサイト。持っていない店では出さない。
   if (v.website) j.url = v.website;
   const sameAs = [v.x, v.instagram, v.threads, v.line].filter(Boolean);
@@ -159,22 +203,35 @@ function buildVenue(v) {
   //   【判定に「今日」を使わない理由】実行日で分岐すると、データを1文字も触っていないのに
   //   翌日には --check が落ちる。判定は日付独立な RANGE 内の行数で行う。
   //   データ駆動なので、日程が1件入れば自動で通常の文面に戻る(将来の手当ては不要)。
-  const paren = `${v.area}${v.access ? '／' + v.access : ''}`;
+  // ★ 店名に既に「（エリア名）」が入っている店では、エリアを機械的に足すと二重になる。
+  //   例: 「KENポーカー（久留米）」+「（久留米）」→「KENポーカー（久留米）（久留米）」が
+  //   title / description / og:title / og:description の4箇所に出ていた(35件中1件)。
+  //   店名に含まれるエリア名を素通しで判定(v.name.includes(v.area))すると
+  //   「m HOLD'EM 中洲（中洲）」「RAISE BLUE 天神（天神）」等12件の文面まで変わってしまうため、
+  //   【括弧付きの同一表記】が既にあるときだけ足さない、という判定にしてある
+  //   (半角括弧の店名が来ても効くようにしている)。
+  const areaInName = v.name.includes(`（${v.area}）`) || v.name.includes(`(${v.area})`);
+  const titleName = areaInName ? v.name : `${v.name}（${v.area}）`;
+  // description の括弧は「エリア／アクセス」。エリアが店名に入っているならアクセスだけを残す。
+  const parenParts = [];
+  if (!areaInName) parenParts.push(v.area);
+  if (v.access) parenParts.push(v.access);
+  const descName = parenParts.length ? `${v.name}（${parenParts.join('／')}）` : v.name;
   let title, desc, sub;
   if (v.preopen) {
     // 未開店の店。営業中と読める文面を出さない(JSON-LDのLocalBusinessも出さない)。
-    title = `${v.name}（${v.area}）｜オープン予定のポーカースポット | ふくおかポーカーナビ`;
-    desc = `${v.name}（${paren}）はオープン予定のポーカースポットです。`
+    title = `${titleName}｜オープン予定のポーカースポット | ふくおかポーカーナビ`;
+    desc = `${descName}はオープン予定のポーカースポットです。`
       + `判明している開店時期と${v.address ? '所在地・' : ''}アクセス・公式SNSをまとめています。当サイトに掲載中の開催予定はまだありません。`;
     sub = `${esc(v.area)}のポーカースポット${v.access ? `（${esc(v.access)}）` : ''} — オープン予定`;
   } else if (rows.length) {
-    title = `${v.name}（${v.area}）のポーカートーナメント日程 | ふくおかポーカーナビ`;
-    desc = `${v.name}（${paren}）で開催されるポーカートーナメントの日程を日付順に掲載。`
+    title = `${titleName}のポーカートーナメント日程 | ふくおかポーカーナビ`;
+    desc = `${descName}で開催されるポーカートーナメントの日程を日付順に掲載。`
       + `開始時刻・バイイン・スタックのほか、${v.address ? '住所・' : ''}アクセス・公式SNSもまとめて確認できます。`;
     sub = `${esc(v.area)}のポーカースポット${v.access ? `（${esc(v.access)}）` : ''} — トーナメント日程・バイイン・アクセス`;
   } else {
-    title = `${v.name}（${v.area}）｜住所・アクセス・トーナメント開催情報 | ふくおかポーカーナビ`;
-    desc = `${v.name}（${paren}）の${v.address ? '住所・' : ''}アクセス・公式SNSをまとめています。`
+    title = `${titleName}｜住所・アクセス・トーナメント開催情報 | ふくおかポーカーナビ`;
+    desc = `${descName}の${v.address ? '住所・' : ''}アクセス・公式SNSをまとめています。`
       + `現時点で当サイトに掲載中の開催予定はありません。最新の開催情報は店舗の公式情報・SNSをご確認ください。`;
     sub = `${esc(v.area)}のポーカースポット${v.access ? `（${esc(v.access)}）` : ''} — 住所・アクセス・開催情報`;
   }
