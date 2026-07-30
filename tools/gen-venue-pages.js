@@ -71,6 +71,39 @@ const { VENUES, TOURNAMENTS, RECURRING, AREAS } = DATA;
 // 生成してから気づくとURLの付け替え=被リンクの喪失になるため、生成前に止める。
 shell.validateVenueSlugs(VENUES);
 
+// ---- 「未確認」の印(addressUnverified / telUnverified)と note の食い違いを止める ----
+// 【なぜ必要か】
+//   確度の低い住所・電話を JSON-LD から落とす判定は data.js のフラグが持つ(下の venueJsonLd)。
+//   一方、読者向けのヘッジは note の文章が持つ。この2つは別々に書かれるので、店を追加した人が
+//   note にだけ「住所は要確認」と書いてフラグを付け忘れると、【表示は留保・構造化データは断定】
+//   という、今回まさに直した状態にそのまま戻る。しかもその壊れ方は画面を見ても分からない。
+//   そこで「note が住所/電話の未確認に言及しているのにフラグが無い」場合は生成せずに落とす。
+//   ★ 判定そのものを note の文字列マッチで行っているわけではない(それは脆い)。
+//     出力を決めるのはあくまでフラグで、ここは【書き忘れを人間に知らせるための検査】。
+// 【address が空の店を対象外にする理由】
+//   RAISE BLUE 天神は住所データ自体を持たず note に「住所は未確認。」と書いてある。
+//   出すべき streetAddress がそもそも無いのでフラグは不要(付けても意味がない)。
+const UNVERIFIED_CHECKS = [
+  { flag: 'addressUnverified', field: 'address', re: /住所[^。]*(要確認|未確認)/ },
+  { flag: 'telUnverified',     field: 'tel',     re: /電話[^。]*(要確認|未確認)/ }
+];
+function validateUnverifiedFlags(venues) {
+  const problems = [];
+  venues.forEach(v => {
+    UNVERIFIED_CHECKS.forEach(c => {
+      if (!v[c.field] || v[c.flag]) return;
+      if (c.re.test(v.note || '')) {
+        problems.push(`${v.id} ${v.name}: note が${c.field === 'tel' ? '電話' : '住所'}の未確認に言及していますが `
+          + `"${c.flag}": true がありません（data.js に足すか、裏が取れたなら note のヘッジを外してください）`);
+      }
+    });
+  });
+  if (problems.length) {
+    throw new Error('店舗データの「未確認」の印が note と食い違っています:\n  - ' + problems.join('\n  - '));
+  }
+}
+validateUnverifiedFlags(VENUES);
+
 // ---- 日程表の組み立て(生成時と閲覧時で共有する1本) ----
 // SCHEDULE_JS / SCHED / dataRange は tools/venue-schedule.js が所有する。
 // 【なぜ切り出したか】gen-sitemap.js が「掲載0件の店」を判定して sitemap から外す。
@@ -106,6 +139,10 @@ function addressParts(address) {
 function venueJsonLd(v) {
   // ★ data.js に無い項目は出さない。空文字を "" のまま出すと、
   //   検索エンジンに「値が無い」ではなく「空という値」を渡すことになる。
+  // ★ 裏が取れていない項目も出さない(addressUnverified / telUnverified)。
+  //   ページの表示テキストでは note のヘッジ付きで出しているのに、構造化データでは
+  //   同じ値を断定として渡していた。読者には「要確認」と伝えながら Google には
+  //   確定情報として渡すのは、READMEの編集方針(根拠の弱い情報は確度の差が伝わる形で出す)に反する。
   const j = {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
@@ -115,12 +152,19 @@ function venueJsonLd(v) {
     const p = addressParts(v.address);
     const addr = { '@type': 'PostalAddress' };
     if (p.locality) addr.addressLocality = p.locality;
-    if (p.street) addr.streetAddress = p.street;
+    // 落とすのは streetAddress(丁目・番地・ビル名・部屋番号)だけで、address ブロックごとは落とさない。
+    //   - 実害があるのは番地レベルの誤り(無関係な建物・部屋を訪ねさせる)。市区町村までの粒度なら
+    //     当サイトが独立に持っている area / access(最寄駅)と突き合わせて裏が取れている
+    //     (例: 中洲エリア・中洲川端駅徒歩1分 ⇔ 福岡市博多区)。
+    //   - LocalBusiness にとって address は Google が必須とする項目で、ブロックごと落とすと
+    //     「不正確な住所」ではなく「住所の無い事業所」になり、エラー扱いになる。
+    //     市区町村＋県だけを残すのが「嘘をつかず、かつ壊さない」最小の落とし方。
+    if (p.street && !v.addressUnverified) addr.streetAddress = p.street;
     addr.addressRegion = '福岡県';
     addr.addressCountry = 'JP';
     j.address = addr;
   }
-  if (v.tel) j.telephone = v.tel;
+  if (v.tel && !v.telUnverified) j.telephone = v.tel;
   // url は店舗自身のサイト。持っていない店では出さない。
   if (v.website) j.url = v.website;
   const sameAs = [v.x, v.instagram, v.threads, v.line].filter(Boolean);
