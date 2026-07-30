@@ -44,6 +44,20 @@
  * 二重に書けば必ず片方が古くなるので、規則の所有者はこのファイル1つに寄せ、
  * 抽出側は `dateProblem` / `extractedRowProblem` を require して使う。
  * (CLIとして起動されたときだけ main() を走らせるので、require しても副作用は無い)
+ *
+ * 【検査の前に「正規化」を挟む理由(2026-07-31追加 / normalizeExtractedRow)】
+ * 検査だけを厳しくすると、直せるものまで捨ててしまう。Instagram監視は捨てた行を
+ * 再試行しない(確認済み投稿日時が無条件で前進する)ので、破棄は「遅れる」ではなく
+ * 「自動経路から永久に失われる」を意味する — 破棄は最も重い処置であり、
+ * 【曖昧さゼロで直せる逸脱に対しては過剰】である。
+ *   - `9:00` → `09:00` / `19：00`(全角コロン) → `19:00` は解釈の余地が無く、情報も落ちない。
+ *     直せば id も同日内の並び順(start の文字列比較)も正しくなる。だから正規化して受ける
+ *   - `25:00` / `19:70` は「何時なのか」が決められない。だからここは引き続き破棄する
+ *   - `"3,500"` / `"5000円"` は【その項目だけ】 null(=読み取れなかった)にして行は残す。
+ *     スキーマは buyin: null を正式にサポートしており、価格1項目のために大会1件を
+ *     丸ごと失う方が損失が大きい。値をどう解釈するか(カンマ・単位・"20k")の推測はしない
+ * 正規化してもなお不正なものは、これまで通り extractedRowProblem が捨てる。
+ * つまり正規化は検査の代替ではなく前段であり、【検査そのものは緩めていない】。
  */
 
 'use strict';
@@ -66,9 +80,18 @@ const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 // `9:00` が `19:00` より後ろに来てしまうこと、の2つの実害があるため。
 const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
 
+// 正規化で受けられる開始時刻の形。`9:00` / `7:30` のようなゼロ埋め漏れだけを拾う。
+// 「時が1〜2桁 : 分がちょうど2桁」に限定しているので、`7pm` や `19:00\n<b>` は当たらない。
+// 範囲(25:00 / 19:70)はここでは見ない — ゼロ埋めした結果を上の HHMM が判定する。
+const NORMALIZABLE_HHMM = /^(\d{1,2}):(\d{2})$/;
+
+// 全角コロン。Visionが `19：00` を返すことがある。半角に直すだけなので情報は落ちない。
+const FULLWIDTH_COLON = /[：︓]/g;
+
 // Tournament スキーマのうち、数値として data.js に入るフィールド。
 // Vision が `"3,500"` や `"20k"` を返すと Number() が NaN になり、JSON化で null に化けて
-// 【価格情報が無言で消える】。そのため NaN になる値は取り込まずに破棄理由として出す。
+// 【価格情報が無言で消える】。そのため normalizeExtractedRow が【その項目だけ】明示的に
+// null(=読み取れなかった)へ倒し、extractedRowProblem は「NaN のまま来ていないか」を見張る。
 const NUMERIC_FIELDS = ['buyin', 'addon', 'stack', 'guarantee'];
 
 function fail(lines) {
@@ -110,6 +133,61 @@ function dateProblem(value) {
 }
 
 /**
+ * Vision(LLM)が返した抽出結果1件を、検査にかける【前】に直せる範囲だけ直す。
+ * 入力は書き換えず、直した新しいオブジェクトと「何をどう変えたか」を返す。
+ *
+ * 直すもの(それ以外には一切触らない):
+ *   1. `start` が `H:MM` / `HH:MM`(前後の空白・全角コロン込み)なら、半角コロン+ゼロ埋めに直す。
+ *      `9:00` → `09:00` / `7:30` → `07:30` / `19：00` → `19:00`。
+ *      **範囲外(`25:00` / `19:70`)は直さない**(何時なのか決められないため。ゼロ埋め後に
+ *      extractedRowProblem が破棄する)。`7pm` のように形が違うものも直さない(同上)。
+ *   2. 金額系(buyin/addon/stack/guarantee)が数値として読めない(`"3,500"` / `"5000円"` /
+ *      `"20k"` / `""`)なら、【その項目だけ】 null にする。**行は捨てない**。
+ *      `""` を Number() が 0 にして「不明」が「無料」に化けるのもここで止まる。
+ *      カンマや単位を取り除いて数値に直す【推測はしない】 — `"20k"` を 20000 と読むのも
+ *      `"5000円"` を 5000 と読むのも解釈であり、間違えると誤った価格を公開してしまう。
+ *      null は「読み取れなかった」を表す正しい値で、表示は「詳細は店舗SNSを確認」になる。
+ *
+ * @param {*} t Vision抽出の素の1件
+ * @returns {{ row: *, notes: Array<{field:string, from:*, to:*, reason:string}> }}
+ *   notes は空配列なら「何も直していない」。呼び出し側は notes を
+ *   【正規化前の値を含む形で】ログに出すこと(Visionの出力形式を人が測れるようにするため)。
+ */
+function normalizeExtractedRow(t) {
+  if (!t || typeof t !== 'object') return { row: t, notes: [] };
+  const notes = [];
+  const row = { ...t };
+
+  if (row.start != null) {
+    const raw = String(row.start);
+    const m = NORMALIZABLE_HHMM.exec(raw.trim().replace(FULLWIDTH_COLON, ':'));
+    if (m) {
+      const fixed = `${m[1].padStart(2, '0')}:${m[2]}`;
+      if (fixed !== raw) {
+        row.start = fixed;
+        notes.push({ field: 'start', from: t.start, to: fixed, reason: '開始時刻をゼロ埋めの HH:MM にそろえた' });
+      }
+    }
+  }
+
+  for (const field of NUMERIC_FIELDS) {
+    const v = row[field];
+    if (v == null) continue; // null/undefined は「読み取れなかった」の正しい表現なので触らない
+    if (String(v).trim() === '' || Number.isNaN(Number(v))) {
+      row[field] = null;
+      notes.push({
+        field,
+        from: v,
+        to: null,
+        reason: '数値として読めないため、この項目だけ未設定(null)にした。行は取り込む',
+      });
+    }
+  }
+
+  return { row, notes };
+}
+
+/**
  * Vision(LLM)が返した抽出結果1件を data.js に入れてよいかを判定する【1行だけを見る検査】。
  * 駄目なら【ログにそのまま出せる日本語の理由】、問題なければ null を返す。
  *
@@ -132,9 +210,14 @@ function extractedRowProblem(t) {
   if (problem === 'format') return '日付が YYYY-MM-DD(ゼロ埋め)ではない';
   if (problem === 'calendar') return '存在しない日付';
   // start は省略可(取込み側が '00:00' を既定値にする)。値があるなら HH:MM だけ許す。
+  // 【ここは緩めないこと】`9:00` を直すのは前段の normalizeExtractedRow の仕事で、この検査は
+  // 「正規化を通したはずの値が、本当に data.js に入れてよい形か」を見る最後の関門。
+  // ここを緩めると、正規化を呼び忘れた経路の逸脱がそのまま data.js に入る。
   if (t.start != null && String(t.start).trim() !== '' && !HHMM.test(String(t.start))) {
     return `開始時刻が HH:MM(ゼロ埋め)ではない(start=${JSON.stringify(String(t.start))})`;
   }
+  // 金額系も同じ。正規化を通っていれば NaN はすでに null に倒れているので、ここに来るのは
+  // 「正規化を呼んでいない経路」だけ。その場合は行ごと捨てる(誤った価格を出すよりは安全側)。
   for (const field of NUMERIC_FIELDS) {
     const v = t[field];
     if (v == null) continue; // null/undefined は「読み取れなかった」の正しい表現
@@ -155,21 +238,36 @@ function extractedRowProblem(t) {
  * あると衝突する。放置すると data.js の id が重複し、コミット前ゲートが落ちて
  * apify-monitor-state.json が進まず、翌日も同じ投稿から再試行して同じ所で止まる。
  *
+ * 【kind を返す理由(2026-07-31追加)】重複には意味の違う2種類があり、呼び出し側は区別して扱う。
+ *   - `duplicate-in-run` … 今回の取込みで既に採用した行と同一。**内容は1件目として取り込めている**
+ *     ので、この破棄では何も失われていない(店が同じ画像を再投稿した場合など)。
+ *     捨てた事実はログに残すが、「投稿まるごと不採用」の異常として警告してはいけない —
+ *     初回実行の唯一の警告チャネルが空振りで埋まり、本物の異常が読めなくなる
+ *   - `existing-slot-conflict` … data.js 側に同じidで【別の日時】の既存がある。こちらは
+ *     内容がどこにも入らないままなので、従来どおり異常として扱うこと
+ * 理由文字列でこれを見分けようとすると、文面を直した瞬間に静かに壊れる。だから kind を返す。
+ *
  * @param {{id:string,date:string,start:string}} entry これから採用しようとしているエントリ
  * @param {Set<string>} usedIds 今回の取込みで既に採用した id
  * @param {Map<string,string>|null} [existingIdSlots] data.js 側の id → `${date} ${start}`。
  *   mergeStore は (date,start) が一致する既存エントリしか置き換えないので、
  *   「同じidだがスロットが違う」既存があると両方残って重複する(人が admin.html で
  *   日時だけ直した場合などに起こりうる)。渡さなければこの検査は省略される。
- * @returns {string|null}
+ * @returns {{kind:'duplicate-in-run'|'existing-slot-conflict', reason:string}|null}
  */
 function duplicateIdProblem(entry, usedIds, existingIdSlots) {
   if (usedIds && usedIds.has(entry.id)) {
-    return `同じidの行が重複(date/start/nameが同一。id=${entry.id})`;
+    return {
+      kind: 'duplicate-in-run',
+      reason: `同じidの行が重複(date/start/nameが同一。既に取込み済み。id=${entry.id})`,
+    };
   }
   const slot = `${entry.date} ${entry.start}`;
   if (existingIdSlots && existingIdSlots.has(entry.id) && existingIdSlots.get(entry.id) !== slot) {
-    return `既存エントリと id が衝突(既存は ${existingIdSlots.get(entry.id)} / id=${entry.id})`;
+    return {
+      kind: 'existing-slot-conflict',
+      reason: `既存エントリと id が衝突(既存は ${existingIdSlots.get(entry.id)} / id=${entry.id})`,
+    };
   }
   return null;
 }
@@ -268,4 +366,13 @@ function main() {
 //  走ると「引数が無い」で即 exit(1) してしまう)
 if (require.main === module) main();
 
-module.exports = { ISO_DATE, HHMM, isRealDate, dateProblem, extractedRowProblem, duplicateIdProblem };
+module.exports = {
+  ISO_DATE,
+  HHMM,
+  NUMERIC_FIELDS,
+  isRealDate,
+  dateProblem,
+  normalizeExtractedRow,
+  extractedRowProblem,
+  duplicateIdProblem,
+};

@@ -49,7 +49,7 @@ AdSense/PR枠が埋まるまでの間、自社アプリの導線を3か所に置
 | `tools/gen-event-pages.js` | 上記イベント静的ページと**トップの恒久リンク行（`index.html` の `#evtLinks` 1行）**の**生成スクリプト**。データは `jopt-data.js` と `index.html` の `const WJPT` からそのまま読み込む（数値を手打ちしない=転記ミス防止）。実行: `node tools/gen-event-pages.js <リポジトリのパス>`（`--check` を付けると書き込まずに一致確認だけ行い、ズレていれば非ゼロ終了）。**JOPT等のデータや `big-events.js` を更新したら必ず再実行すること**（静的ページはデータのスナップショットのため） |
 | `tools/gen-venue-pages.js` | 店舗静的ページと**トップの店舗リンク行（`index.html` の `#venueLinks` 1行）**の**生成スクリプト**。データは `data.js` の `VENUES` / `TOURNAMENTS` / `RECURRING` からそのまま読み込む。実行: `node tools/gen-venue-pages.js <リポジトリのパス>`（`--check` あり）。**`data.js` を更新したら必ず再実行すること**（下記「`data.js` を更新したら」。自動取込ぶん（Waitinglist / Instagram監視）は各日次ワークフローが自動で再生成する） |
 | `tools/venue-schedule.js` | 店舗ページの日程表を組み立てるコードの**唯一の所有者**。生成時（Node）と閲覧時（ブラウザに埋め込む `SCHEDULE_JS`）で同じ1本を共有する。**焼き込む期間を店舗別に決める `venueRange()`** もここが持つ（`gen-venue-pages.js` の見出しと `gen-sitemap.js` の掲載判定が同じ基準を使うため）。テスト: `node tools/venue-schedule.test.js` |
-| `tools/validate-data.js` | **`data.js` をコミットしてよいかを判定する共通ゲート**（構文 / `TOURNAMENTS` の件数 / `id` 重複 / **日付書式 `YYYY-MM-DD`（実在する日付か）**）。落ちたときは**不正値と該当トーナメント（venueId・id・name）**を出す。実行: `node tools/validate-data.js .`。2つの日次ワークフロー（Waitinglist取込み / Instagram監視）が**コミット前と `git pull --rebase` の後**にこれを呼ぶ。**取込んでよい行かの判定（`dateProblem` / `extractedRowProblem` / `duplicateIdProblem`）もこのファイルが持ち**、取込み側（`monitor-instagram-apify.js` / `import-venue-image.js`）が `require` して使う（同じ規則を2箇所に書くと必ず片方が古くなり、「取込み側は通すのにゲートで落ちる＝毎朝ジョブが止まる」ズレが生じるため）。**ゲート側にしか無い検査（件数）もあるので「取込み側を通れば必ずゲートも通る」ではない**点に注意。テスト: `node tools/validate-data.test.js` |
+| `tools/validate-data.js` | **`data.js` をコミットしてよいかを判定する共通ゲート**（構文 / `TOURNAMENTS` の件数 / `id` 重複 / **日付書式 `YYYY-MM-DD`（実在する日付か）**）。落ちたときは**不正値と該当トーナメント（venueId・id・name）**を出す。実行: `node tools/validate-data.js .`。2つの日次ワークフロー（Waitinglist取込み / Instagram監視）が**コミット前と `git pull --rebase` の後**にこれを呼ぶ。**取込んでよい行かの判定（`dateProblem` / `extractedRowProblem` / `duplicateIdProblem`）と、その前段の正規化（`normalizeExtractedRow` … `9:00`→`09:00`・全角コロン・読めない金額をその項目だけ `null` に）もこのファイルが持ち**、取込み側（`monitor-instagram-apify.js` / `import-venue-image.js`）が `require` して使う（同じ規則を2箇所に書くと必ず片方が古くなり、「取込み側は通すのにゲートで落ちる＝毎朝ジョブが止まる」ズレが生じるため）。**ゲート側にしか無い検査（件数）もあるので「取込み側を通れば必ずゲートも通る」ではない**点に注意。テスト: `node tools/validate-data.test.js` |
 | `tools/gen-sitemap.js` | **`sitemap.xml` の唯一の所有者**。トップ＋イベントページ＋店舗ページの全URLをここだけで組み立てる（詳細は下記「sitemap.xml の所有者」）。単独実行も可: `node tools/gen-sitemap.js <リポジトリのパス>`（`--check` あり） |
 | `tools/site-shell.js` | 静的ページ共通の「外側」（`<head>`・GA4タグ・共通CSS・ヘッダー・フッター・自社広告・大会の恒久リンク行）。イベントページと店舗ページで骨格が食い違わないよう、出どころを1つにしてある。**純粋なモジュールで、require しても何も書き込まない** |
 | `tools/import-venue-image.js` | 店舗から直接届いたトーナメント月間スケジュール画像を取り込むCLIツール（詳細は下記「データ取得アーキテクチャ」）。実行: `node tools/import-venue-image.js --venue <id> --image <path>`（`--dry-run` あり） |
@@ -57,7 +57,7 @@ AdSense/PR枠が埋まるまでの間、自社アプリの導線を3か所に置
 | `tools/tournament-merge.js` | `data.js` の `TOURNAMENTS` に1店舗ぶんの取得結果を安全にupsertする共通ロジック（対象店舗以外・過去日には一切触れない）。`tools/import-venue-image.js` から呼ばれる |
 | `tools/instagram-oembed.js` | 店舗が画像ではなく投稿リンクだけ送ってきた場合の補助（公式oEmbedからサムネイルを取得。ログイン・巡回は行わない）。`tools/import-venue-image.js --instagram-url` から呼ばれる |
 | `tools/fetch-venue-posts-apify.js` | Apify（既製Instagramスクレイパー、pay-per-result）を呼び、指定ハンドルの最近の投稿一覧（画像URL・投稿日時・パーマリンク・キャプション）を取得する（`APIFY_API_TOKEN` が必要）。`tools/monitor-instagram-apify.js` から呼ばれる |
-| `tools/monitor-instagram-apify.js` | 公式サイトAPIが無い6店舗のInstagram投稿を日次で自動監視し、新着のスケジュール告知らしき投稿をVisionで抽出して `data.js` に安全にupsertするCLIツール（詳細は下記「データ取得アーキテクチャ」）。実行: `node tools/monitor-instagram-apify.js`（`--dry-run` あり）。**Visionが返した行は1行ずつ検査し（`tools/validate-data.js` と同じ判定。日付書式・実在日・開始時刻の書式・金額が数値か・id重複）、不正な行だけを捨てて残りは取り込む**（ジョブは落とさない。理由は下記「データ取得アーキテクチャ」の日付の検査は2層）。破棄・不採用の件数は `apify-monitor-state.json` の `lastExtraction` に記録される。GitHub Actions `.github/workflows/monitor-instagram-apify.yml` が毎日自動実行する。テスト: `node tools/monitor-instagram-apify.test.js` |
+| `tools/monitor-instagram-apify.js` | 公式サイトAPIが無い6店舗のInstagram投稿を日次で自動監視し、新着のスケジュール告知らしき投稿をVisionで抽出して `data.js` に安全にupsertするCLIツール（詳細は下記「データ取得アーキテクチャ」）。実行: `node tools/monitor-instagram-apify.js`（`--dry-run` あり）。**Visionが返した行は1行ずつ「直せるものを直してから」検査し（`tools/validate-data.js` と同じ正規化・判定。`9:00`→`09:00` の正規化、日付書式・実在日・開始時刻の書式・金額が数値か・id重複）、それでも不正な行だけを捨てて残りは取り込む**（ジョブは落とさない。理由は下記「データ取得アーキテクチャ」の日付の検査は2層）。正規化・破棄・不採用の件数は `apify-monitor-state.json` の `lastExtraction` に記録される。GitHub Actions `.github/workflows/monitor-instagram-apify.yml` が毎日自動実行する。テスト: `node tools/monitor-instagram-apify.test.js` |
 
 `data.js` を差し替えるだけでサイトが更新される設計。CDN/静的ホスティング（GitHub Pages 等）にそのまま置ける。
 ただし静的ページ（`events/` `venues/` `sitemap.xml`）はデータのスナップショットなので、下記の再生成が必要。
@@ -521,9 +521,29 @@ GET https://api.waitinglist-poker.com/v1/game-schedules/tournament?storeId=<stor
     ジョブごと落とすと、6店ぶんを1配列に積んで最後にまとめて書く設計上
     **`apify-monitor-state.json` が進まず、翌日も6店すべてが同じ投稿から再試行して同じ所で落ちる**
     (=パイプラインが永久に止まる)。しかも落ちた行はランナー上にしか無く当番が直せる対象が無い
+  - **層2は「検査」の前に「正規化」を通す(2026-07-31追加)**: 捨てた行は**再試行されない**
+    (`lastPostedAt` は採用件数に関係なく前進する)ので、破棄は「遅れる」ではなく
+    **「自動経路から永久に失われる」**を意味する。とくに初回実行は6店×直近12投稿の
+    バックログ全体を**一度きり・不可逆に**消費する。だから**曖昧さゼロで直せる逸脱にまで
+    破棄を使うのは過剰**で、`tools/validate-data.js` の `normalizeExtractedRow` が先に直す
+    - `start` … `9:00`→`09:00` / `7:30`→`07:30` / `19：00`(全角コロン)→`19:00`。
+      **範囲外(`25:00` / `19:70`)や形の違うもの(`7pm`)は直さず、従来どおり破棄**する
+      (何時なのか決められないため)。正規化後の値で id を組み立て、同日内の並び順も決まる
+    - 金額系 … `"3,500"` / `"5000円"` / `"20k"` / `""` は**その項目だけ `null`(=読み取れなかった)に
+      して、行は残す**。スキーマは `buyin: null` を正式にサポートしており、価格1項目のために
+      大会1件を丸ごと失う方が損失が大きい。カンマや単位を外して数値に直す**推測はしない**
+      (間違えると誤った価格を公開する)。`""` を `Number()` が `0`(=無料)にする件もここで止まる
+    - 取込み側の `toTournament` も、金額が無い/読めない場合の既定を **`0` ではなく `null`** にする。
+      `0` は「0円=無料」という**読み取れた値**で、「読み取れなかった」を表せるのは `null` だけ
+      (表示はどちらも「詳細は店舗SNSを確認」で変わらないが、データの意味が逆になる)
+    - **正規化した内容は「正規化前の値ごと」ログに出す**。これが無いとVisionが実際にどんな形で
+      返しているかを人が測れず、プロンプトを直す判断ができない
+    - `tools/venue-schedule-vision.js` のプロンプトにもゼロ埋め・全角コロン不可・単位無しを
+      明示してあるが、**それは補強であって担保ではない**。LLMの指示遵守を正しさの不変条件に
+      使わないこと。効いているのは自分側の正規化と検査
   - **層2が見るもの**: 日付書式・実在する日付・`name` 非空・**開始時刻が `HH:MM`(ゼロ埋め)か**・
-    **金額系(`buyin`/`addon`/`stack`/`guarantee`)が数値として読めるか**(`"3,500"` は `Number()` が
-    NaN になり、JSON化で `null` に化けて**価格が無言で消える**)・**id が重複しないか**
+    **金額系(`buyin`/`addon`/`stack`/`guarantee`)が数値として読めるか**(正規化を通っていれば
+    ここに来ないが、正規化を呼び忘れた経路のための最後の関門として残してある)・**id が重複しないか**
     - **id重複は「行を跨ぐ検査」なので別関数**(`duplicateIdProblem`)。id は
       `ig-<venue>-<date>-<start>-<slug(name)>` で組み立てるため、Visionが同じ行を2回返した場合や、
       **同じ日・同じ大会名で開始時刻が読めなかった2行**(どちらも既定の `00:00`)で衝突する。
@@ -537,15 +557,26 @@ GET https://api.waitinglist-poker.com/v1/game-schedules/tournament?storeId=<stor
   - **投稿から1行も採用できなかった場合は異常扱い**: その投稿の内容はサイトのどこにも残らず、
     確認済み投稿日時は進むので**二度と再試行されない**。静かに捨てると誰も気づけないため、
     GitHub Actions の `::error::` 注記で目立たせる。ただし**ジョブは落とさない**(落とすと上記の
-    「状態が進まない」問題に戻るため)。内容が必要なら
+    「状態が進まない」問題に戻るため)。
+    - **【例外】店の再投稿は異常にしない(2026-07-31追加)**: 同じ画像が再投稿されると2件目の
+      投稿は全行が「既に取込み済み」(`duplicateIdProblem` の `kind='duplicate-in-run'`)で捨てられ
+      採用0件になるが、**内容は1件目で取り込めており何も失われていない**。店の再投稿はよくあることで、
+      これを `::error::` にすると**初回実行という一度きりのrunで唯一の警告チャネルが空振りで埋まり、
+      本物の異常が読めなくなる**。そのため「破棄理由がすべて `duplicate-in-run`」の投稿は異常から
+      除外し、`再投稿と判断しました(異常ではありません)` の1行と件数(`lastExtraction.reposts`)
+      だけ残す。判定は**理由の文面ではなく `kind`** で行う(文言を直した瞬間に静かに壊れるため)
+    - 一方 `kind='existing-slot-conflict'`(`data.js` に同じidで**別の日時**の既存がある)と、
+      重複と別理由が混在する投稿は、**内容がどこにも入らないままなので従来どおり異常**として扱う内容が必要なら
     `node tools/import-venue-image.js --venue <id> --instagram-url <投稿URL>` で手動取込みする。
     全店で同じ理由が続くようなら `tools/venue-schedule-vision.js` のプロンプト/モデルを疑う
     - 注記(`::error::` 等のワークフローコマンド)は**必ず stdout に出す**こと。GitHubの仕様は
       "sent to the runner over stdout" で、stderr で注記として認識される保証が無い
   - **件数は `apify-monitor-state.json` に残す**: 注記は「緑のrunに赤い注記が付く」だけなので
     **通知は飛ばず**、runログも既定90日で消える。それだけでは「Visionの抽出品質を人が測れる」を
-    満たせないので、店ごとに `lastExtraction: { checkedAt, posts, kept, dropped, unusablePosts }` を
-    同じ状態ファイルに書く(このファイルは元から毎回コミットされるので**git履歴に差分として残る**)。
+    満たせないので、店ごとに
+    `lastExtraction: { checkedAt, posts, kept, dropped, normalized, unusablePosts, reposts }` を
+    同じ状態ファイルに書く(`normalized` はVisionの出力形式がどれだけ揺れているかの指標、
+    `reposts` が無いと「`dropped` が多いのに `unusablePosts` が0」の理由が読めない)(このファイルは元から毎回コミットされるので**git履歴に差分として残る**)。
     別ファイルにせず相乗りさせたのは、このファイルの**書き手がこのスクリプト1つだけ**で、
     書き込みも1回のJSON書き出しに閉じており、並行編集で消される事故が起こらないため。
     Vision抽出を実際に行った店だけ更新し、行っていない店は前回値を持ち越す(毎回変わる値を足すと
@@ -586,7 +617,7 @@ CLIから行う場合の両方がこの型に当てはまる。
 {
   id, venueId, name,
   date: 'YYYY-MM-DD', start: 'HH:MM',
-  buyin: 円, addon: 円|null, stack: 点,
+  buyin: 円|null, addon: 円|null, stack: 点|null,  // null = 読み取れなかった（0 は「0円＝無料」の意味）
   guarantee: 円|null, reentry: true|'late'|false,
   prize: 文字列|null, tags: [],
   source: 'auto'|'semi'|'manual', verified: boolean,

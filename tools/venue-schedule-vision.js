@@ -96,6 +96,14 @@ async function callVisionModel(imageBuffer, systemPrompt, userPrompt, mediaType 
 
 /**
  * 店舗の月間スケジュール画像から、Tournamentスキーマの配列を抽出する。
+ *
+ * 【プロンプトの書式指定は「補強」であって「担保」ではない】
+ * ここで `"09:00"` のようにゼロ埋めを例示しても、LLMが必ず従う保証はどこにも無い。
+ * 正しさの不変条件を守っているのは【呼び出し側の正規化と検査】(tools/validate-data.js の
+ * normalizeExtractedRow / extractedRowProblem)であって、この文面ではない。
+ * 逸脱が減れば正規化ログ(件数は apify-monitor-state.json の lastExtraction.normalized)が
+ * 減る、という関係にすぎないので、この指定を理由に呼び出し側の正規化を省いてはいけない。
+ *
  * @param {Buffer} imageBuffer
  * @param {{ postedDateHint?: string, mediaType?: string }} [opts]
  * @returns {Promise<Array<object>>} venueId/source/verified を含まない「素の」抽出結果
@@ -110,7 +118,11 @@ async function extractTournaments(imageBuffer, { postedDateHint, mediaType } = {
     '読み取れる開催情報をすべて、次のJSON配列の要素として出力してください:',
     '{"date":"YYYY-MM-DD","start":"HH:MM"|null,"name":"string","buyin":number|null,"addon":number|null,' +
       '"stack":number|null,"guarantee":number|null,"reentry":true|false|"late","prize":string|null,"tags":string[]}',
-    '金額は円の数値のみ(カンマ・円マーク無し)。読み取れない項目は null にしてください(推測で埋めない)。',
+    'date は必ず YYYY-MM-DD(ゼロ埋め。例: "2026-09-05")。',
+    'start は24時間表記のゼロ埋め HH:MM(例: "09:00" / "19:00")。' +
+      '"9:00" のようにゼロを省いたり、"19：00"(全角コロン)・"7pm"・"19時" のような表記を使わないでください。',
+    '金額は円の数値のみ(カンマ・円マーク・"k"などの単位無し。例: 3500)。' +
+      '読み取れない項目は null にしてください(推測で埋めない。0 は「無料」の意味になるので使わない)。',
     'トーナメントと無関係な文言(店舗の営業案内、注意書きなど)は無視してください。',
   ]
     .filter(Boolean)

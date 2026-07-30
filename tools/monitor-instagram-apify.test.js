@@ -432,16 +432,109 @@ test('runMonitor: 既存data.jsに同じidで別日時のエントリがあれ�
   assert.equal(result.changed, false);
   assert.deepEqual(result.arr, [existing]);
   assert.match(result.summaries[0].dropped[0].reason, /既存エントリと id が衝突/);
+  assert.equal(result.summaries[0].dropped[0].kind, 'existing-slot-conflict');
+  // 内容がどこにも入らないままなので、これは本物の異常(再投稿とは別物)
   assert.equal(result.anomalies.length, 1, '1行も採用できていないので異常として記録される');
 });
 
-test('runMonitor: 開始時刻がHH:MMでない行・数値がNaNになる行を破棄する', async () => {
+// ---------- 再投稿の偽警告(2026-07-31 / PR #19のフォローアップ) ----------
+// 店が同じ画像を再投稿すると、2件目の投稿は全行がid重複で破棄され「採用0件」になる。
+// だが内容は1件目で取り込めており【何も失われていない】。これを ::error:: にすると、
+// 初回実行という一度きりのrunで唯一の警告チャネルが空振りで埋まり、本物の異常が読めなくなる。
+
+/** 同一店の複数投稿(古い順)ぶんのフェイク依存を作る。Visionの戻り値は投稿ごとに指定する */
+function fakeLibsForPosts(posts) {
+  return {
+    fetchLib: {
+      async fetchInstagramPosts() {
+        return posts.map((p, i) => ({
+          permalink: p.permalink,
+          imageUrl: `https://example.com/${i}.jpg`,
+          postedAt: p.postedAt,
+          caption: 'スケジュールのお知らせ',
+        }));
+      },
+    },
+    visionLib: {
+      async extractTournaments(buffer) {
+        const i = Number(String(buffer).replace('https://example.com/', '').replace('.jpg', ''));
+        return posts[i].rows;
+      },
+    },
+    mergeLib,
+    downloadImage: async (url) => Buffer.from(url),
+  };
+}
+
+test('runMonitor: 店が同じ画像を再投稿しても異常(::error::)にはせず、ログには「取込み済み」として残す', async () => {
+  const rows = [
+    { date: '2099-09-12', start: '19:00', name: 'マンデートナメ', buyin: 3000, tags: [] },
+    { date: '2099-09-13', start: '20:00', name: 'チューズデー', buyin: 3000, tags: [] },
+  ];
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[2]], before: [], today: '2026-07-31', state: {} },
+    fakeLibsForPosts([
+      { permalink: 'https://www.instagram.com/p/FIRST/', postedAt: '2026-07-20T10:00:00.000Z', rows },
+      // 同じ画像の再投稿(よくある)。抽出結果も当然同じになる
+      { permalink: 'https://www.instagram.com/p/REPOST/', postedAt: '2026-07-21T10:00:00.000Z', rows: rows.map((r) => ({ ...r })) },
+    ])
+  );
+
+  assert.equal(result.arr.length, 2, '1件目の投稿ぶんが取り込まれていること');
+  assert.equal(result.anomalies.length, 0, '再投稿は異常ではない(何も失われていない)');
+  const summary = result.summaries[0];
+  assert.equal(summary.repostedPostCount, 1);
+  assert.equal(summary.unusablePostCount, 0);
+  // 捨てた事実自体はログ用の記録に残る(「既に取込み済み」と分かる形で)
+  assert.equal(summary.droppedCount, 2);
+  for (const d of summary.dropped) {
+    assert.equal(d.kind, 'duplicate-in-run');
+    assert.match(d.reason, /既に取込み済み/);
+    assert.equal(d.permalink, 'https://www.instagram.com/p/REPOST/');
+  }
+  // 状態ファイルからも「破棄されたのは再投稿ぶんである」ことが読めること
+  assert.deepEqual(result.state.v18.lastExtraction, {
+    checkedAt: '2026-07-31',
+    posts: 2,
+    kept: 2,
+    dropped: 2,
+    normalized: 0,
+    unusablePosts: 0,
+    reposts: 1,
+  });
+});
+
+test('runMonitor: 再投稿でも、id重複以外の理由が1件でも混じれば異常として報告する', async () => {
+  const rows = [
+    { date: '2099-09-12', start: '19:00', name: 'マンデートナメ', buyin: 3000, tags: [] },
+    { date: '2099-09-13', start: '20:00', name: 'チューズデー', buyin: 3000, tags: [] },
+  ];
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[2]], before: [], today: '2026-07-31', state: {} },
+    fakeLibsForPosts([
+      { permalink: 'https://www.instagram.com/p/FIRST/', postedAt: '2026-07-20T10:00:00.000Z', rows },
+      {
+        permalink: 'https://www.instagram.com/p/MIXED/',
+        postedAt: '2026-07-21T10:00:00.000Z',
+        // 1行は取込み済みの再掲だが、もう1行は日付が壊れていて【失われる】
+        rows: [{ ...rows[0] }, { date: '2099-9-14', start: '19:00', name: '日付不正', buyin: 3000, tags: [] }],
+      },
+    ])
+  );
+
+  assert.equal(result.anomalies.length, 1, '本物の異常は従来どおり報告されること');
+  assert.equal(result.anomalies[0].permalink, 'https://www.instagram.com/p/MIXED/');
+  assert.equal(result.summaries[0].repostedPostCount, 0);
+  assert.equal(result.summaries[0].unusablePostCount, 1);
+});
+
+test('runMonitor: 開始時刻が読み取れない形の行は破棄する(範囲外・書式違い)', async () => {
   const rows = [
     { date: '2099-09-12', start: '19:00', name: '正しい', buyin: 3000, tags: [] },
     { date: '2099-09-12', start: '7pm', name: '時刻が読めない', buyin: 3000, tags: [] },
     { date: '2099-09-12', start: '19:00\n<b>', name: '改行混入', buyin: 3000, tags: [] },
-    { date: '2099-09-13', start: '19:00', name: '金額にカンマ', buyin: '3,500', tags: [] },
-    { date: '2099-09-14', start: '19:00', name: 'スタックにk', buyin: 3000, stack: '20k', tags: [] },
+    { date: '2099-09-13', start: '25:00', name: '時が範囲外', buyin: 3000, tags: [] },
+    { date: '2099-09-14', start: '19:70', name: '分が範囲外', buyin: 3000, tags: [] },
   ];
   const result = await monitor.runMonitor(
     { stores: [monitor.STORES[2]], before: [], today: '2026-07-31', state: {} },
@@ -449,11 +542,108 @@ test('runMonitor: 開始時刻がHH:MMでない行・数値がNaNになる行を
   );
   assert.equal(result.arr.length, 1);
   assert.equal(result.summaries[0].droppedCount, 4);
-  const reasons = result.summaries[0].dropped.map((d) => d.reason);
-  assert.match(reasons[0], /開始時刻が HH:MM/);
-  assert.match(reasons[1], /開始時刻が HH:MM/);
-  assert.match(reasons[2], /buyin が数値として読めない/);
-  assert.match(reasons[3], /stack が数値として読めない/);
+  for (const reason of result.summaries[0].dropped.map((d) => d.reason)) {
+    assert.match(reason, /開始時刻が HH:MM/);
+  }
+});
+
+// ---------- 正規化(2026-07-31 / PR #19のフォローアップ) ----------
+// lastPostedAt は採用件数に関係なく無条件で前進するので、捨てた行は「遅れる」のではなく
+// 【自動経路から永久に失われる】。曖昧さゼロで直せる逸脱にまで破棄を使うのは過剰なので、
+// 検査の前に正規化を通す。正規化しても不正なもの(範囲外の時刻など)は従来どおり破棄する。
+
+test('runMonitor: ゼロ埋め漏れ・全角コロンの開始時刻は破棄せず正規化して取り込む(idと並び順も正規化後の値)', async () => {
+  const rows = [
+    { date: '2099-09-12', start: '9:00', name: 'モーニング', buyin: 3000, tags: [] },
+    { date: '2099-09-12', start: '7:30', name: 'アーリーバード', buyin: 3000, tags: [] },
+    { date: '2099-09-12', start: '19：00', name: 'ナイト', buyin: 3000, tags: [] },
+  ];
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[2]], before: [], today: '2026-07-31', state: {} },
+    fakeLibsFor(rows)
+  );
+
+  assert.equal(result.arr.length, 3, '1件も破棄されないこと');
+  assert.equal(result.summaries[0].droppedCount, 0);
+  assert.equal(result.summaries[0].normalizedCount, 3);
+
+  const byName = Object.fromEntries(result.arr.map((t) => [t.name, t]));
+  assert.equal(byName['モーニング'].start, '09:00');
+  assert.equal(byName['アーリーバード'].start, '07:30');
+  assert.equal(byName['ナイト'].start, '19:00');
+
+  // id は正規化後の start から組み立てられていること(`-900-` ではなく `-0900-`)
+  assert.ok(byName['モーニング'].id.includes('-0900-'), byName['モーニング'].id);
+  assert.ok(byName['アーリーバード'].id.includes('-0730-'), byName['アーリーバード'].id);
+  assert.ok(byName['ナイト'].id.includes('-1900-'), byName['ナイト'].id);
+
+  // 同日内は start の文字列比較で並ぶ。正規化前だと '19:00' < '7:30' < '9:00' となり順序が壊れる
+  const sameDay = result.arr.filter((t) => t.date === '2099-09-12').map((t) => t.name);
+  assert.deepEqual(sameDay, ['アーリーバード', 'モーニング', 'ナイト'], '07:30 → 09:00 → 19:00 の順');
+
+  // 正規化前の値がログ用の記録に残ること(Visionの出力形式を人が測るため)
+  const froms = result.summaries[0].normalized.flatMap((n) => n.notes.map((x) => x.from));
+  assert.deepEqual(froms, ['9:00', '7:30', '19：00']);
+});
+
+test('runMonitor: 読み取れない金額は【その項目だけ】nullにして行は残す(価格1項目で大会を失わない)', async () => {
+  const rows = [
+    { date: '2099-09-13', start: '19:00', name: 'カンマ金額', buyin: '3,500', tags: [] },
+    { date: '2099-09-14', start: '19:00', name: '円マーク付き', buyin: '5000円', stack: 20000, tags: [] },
+    { date: '2099-09-15', start: '19:00', name: 'スタックにk', buyin: 3000, stack: '20k', tags: [] },
+    { date: '2099-09-16', start: '19:00', name: '空文字のbuyin', buyin: '', tags: [] },
+  ];
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[2]], before: [], today: '2026-07-31', state: {} },
+    fakeLibsFor(rows)
+  );
+
+  assert.equal(result.arr.length, 4, '金額が読めなくても大会そのものは残ること');
+  assert.equal(result.summaries[0].droppedCount, 0);
+  assert.equal(result.summaries[0].normalizedCount, 4);
+
+  const byName = Object.fromEntries(result.arr.map((t) => [t.name, t]));
+  assert.equal(byName['カンマ金額'].buyin, null);
+  assert.equal(byName['円マーク付き'].buyin, null);
+  assert.equal(byName['円マーク付き'].stack, 20000, '読めた項目はそのまま残ること');
+  assert.equal(byName['スタックにk'].stack, null);
+  assert.equal(byName['スタックにk'].buyin, 3000);
+  // Number('') は 0 になり「不明」が「無料」に化ける。null であること(0ではない)
+  assert.strictEqual(byName['空文字のbuyin'].buyin, null);
+
+  // 破棄ではないが情報は落ちているので、正規化前の値がログ用の記録に残ること
+  const notes = result.summaries[0].normalized.flatMap((n) => n.notes);
+  assert.deepEqual(notes.map((n) => [n.field, n.from, n.to]), [
+    ['buyin', '3,500', null],
+    ['buyin', '5000円', null],
+    ['stack', '20k', null],
+    ['buyin', '', null],
+  ]);
+});
+
+test('toTournament: 金額が読み取れなかった行の buyin/stack は 0 ではなく null(0は「無料」の意味になる)', () => {
+  const t = monitor.toTournament({ date: '2099-09-12', start: '19:00', name: '金額不明' }, 'v18');
+  assert.strictEqual(t.buyin, null);
+  assert.strictEqual(t.stack, null);
+  assert.strictEqual(t.addon, null);
+  assert.strictEqual(t.guarantee, null);
+});
+
+test('formatNormalizedRow: 正規化前の値・正規化後の値・店・投稿が1行に出る', () => {
+  const line = monitor.formatNormalizedRow(
+    { venueId: 'v40', label: 'TripleBarrel 折尾店' },
+    { permalink: 'https://www.instagram.com/p/ABC/', postedAt: '2026-07-20T10:00:00.000Z' },
+    { date: '2026-09-05', name: 'マンデートナメ' },
+    [
+      { field: 'start', from: '9:00', to: '09:00', reason: '開始時刻をゼロ埋めの HH:MM にそろえた' },
+      { field: 'buyin', from: '3,500', to: null, reason: '数値として読めないため、この項目だけ未設定(null)にした。行は取り込む' },
+    ]
+  );
+  assert.match(line, /TripleBarrel 折尾店\(v40\)/);
+  assert.match(line, /https:\/\/www\.instagram\.com\/p\/ABC\//);
+  assert.match(line, /"9:00" → "09:00"/, '正規化前の値が残ること');
+  assert.match(line, /"3,500" → null/);
+  assert.match(line, /"マンデートナメ"/);
 });
 
 test('runMonitor: 抽出品質(採用/破棄/不採用投稿の件数)を状態ファイルに残す', async () => {
@@ -470,7 +660,9 @@ test('runMonitor: 抽出品質(採用/破棄/不採用投稿の件数)を状態�
     posts: 1,
     kept: 1,
     dropped: 1,
+    normalized: 0,
     unusablePosts: 0,
+    reposts: 0,
   });
 
   // Vision抽出を行わなかった回(スケジュール告知らしき投稿が無い)は前回値を持ち越す
@@ -686,6 +878,109 @@ test('CLI: 1店で不正な日付が返っても、正常終了して他店ぶ�
     const validate = spawnSync('node', [path.join(TOOLS_DIR, 'validate-data.js'), root], { encoding: 'utf8' });
     // 件数の下限(500件)には満たないテスト用データなので、そこだけは別途除外して日付検査を見る
     assert.equal(/日付が YYYY-MM-DD/.test(validate.stderr), false, validate.stderr);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+// 実運用に一番近い形(CLIとして、実際に data.js を書いて層1ゲートにかける)での確認。
+// 「Visionが実際に返しがちな逸脱」を注入し、行が失われないこと・値が正規化されること・
+// 再投稿で ::error:: が上がらないことを、まとめて1本で見る。
+test('CLI: 逸脱した値(9:00 / 7:30 / 19:00全角 / 3,500 / 5000円)を含む応答でも行を捨てず、再投稿では::error::を出さない', () => {
+  const root = makeTempRepoRoot();
+  // v40 = 逸脱を含む投稿 → その直後に【同じ内容の再投稿】、v18 = 範囲外の時刻(破棄されるべき)
+  fs.writeFileSync(
+    path.join(root, 'tools', 'fetch-venue-posts-apify.js'),
+    `exports.fetchInstagramPosts = async (handle) => {
+      if (handle === 'triple_orio') {
+        return [
+          { permalink: 'https://www.instagram.com/p/FIRST/', imageUrl: 'https://example.com/first.jpg', postedAt: '2026-07-20T10:00:00.000Z', caption: 'スケジュールのお知らせ' },
+          { permalink: 'https://www.instagram.com/p/REPOST/', imageUrl: 'https://example.com/repost.jpg', postedAt: '2026-07-21T10:00:00.000Z', caption: 'スケジュールのお知らせ(再掲)' },
+        ];
+      }
+      if (handle === 'pokerbar_iris') {
+        return [{ permalink: 'https://www.instagram.com/p/BADTIME/', imageUrl: 'https://example.com/badtime.jpg', postedAt: '2026-07-20T10:00:00.000Z', caption: 'スケジュールのお知らせ' }];
+      }
+      return [];
+    };\n`
+  );
+  fs.writeFileSync(
+    path.join(root, 'tools', 'venue-schedule-vision.js'),
+    `exports.extractTournaments = async (buf) => {
+      if (String(buf).includes('badtime')) {
+        return [
+          { date: '2099-01-05', start: '25:00', name: '時が範囲外', buyin: 1000, tags: [] },
+          { date: '2099-01-05', start: '19:70', name: '分が範囲外', buyin: 1000, tags: [] },
+        ];
+      }
+      // FIRST と REPOST は同じ画像なので同じ抽出結果になる
+      return [
+        { date: '2099-01-05', start: '9:00', name: 'Morning', buyin: '3,500', tags: [] },
+        { date: '2099-01-05', start: '7:30', name: 'EarlyBird', buyin: '5000円', tags: [] },
+        { date: '2099-01-05', start: '19：00', name: 'Night', buyin: 3000, tags: [] },
+      ];
+    };\n`
+  );
+  const globalFetchStub =
+    'globalThis.fetch = async (url) => ({ status: 200, arrayBuffer: async () => new TextEncoder().encode(String(url)).buffer });\n';
+  fs.writeFileSync(path.join(root, 'stub-fetch.js'), globalFetchStub);
+
+  try {
+    const r = spawnSync('node', ['--require', './stub-fetch.js', 'tools/monitor-instagram-apify.js'], {
+      cwd: root,
+      env: { ...process.env, APIFY_API_TOKEN: 'dummy-token-for-test' },
+      encoding: 'utf8',
+    });
+    assert.equal(r.status, 0, `正常終了すること(stderr: ${r.stderr})`);
+
+    const { arr } = mergeLib.readDataJs(path.join(root, 'data.js'));
+    const imported = arr.filter((t) => t.venueId === 'v40');
+    assert.equal(imported.length, 3, '逸脱した値を含む3行がすべて取り込まれていること');
+
+    const byName = Object.fromEntries(imported.map((t) => [t.name, t]));
+    assert.equal(byName['Morning'].start, '09:00');
+    assert.equal(byName['EarlyBird'].start, '07:30');
+    assert.equal(byName['Night'].start, '19:00');
+    assert.ok(byName['Morning'].id.includes('-0900-'), byName['Morning'].id);
+    // 読めなかった金額は【その項目だけ】null。0(=無料)にしない
+    assert.strictEqual(byName['Morning'].buyin, null);
+    assert.strictEqual(byName['EarlyBird'].buyin, null);
+    assert.equal(byName['Night'].buyin, 3000);
+    // data.js 上の並びも正規化後の start 順(同日内)
+    assert.deepEqual(imported.map((t) => t.name), ['EarlyBird', 'Morning', 'Night']);
+
+    // 範囲外の時刻は従来どおり破棄される
+    assert.equal(arr.some((t) => t.venueId === 'v18'), false);
+
+    // 正規化は【正規化前の値ごと】ログに残る
+    assert.match(r.stderr, /抽出結果を正規化しました/);
+    assert.match(r.stderr, /"9:00" → "09:00"/);
+    assert.match(r.stderr, /"3,500" → null/);
+    assert.match(r.stderr, /"5000円" → null/);
+
+    // 再投稿は異常ではない。ログには「取込み済み」と分かる形で残る
+    assert.match(r.stdout, /再投稿と判断しました/);
+    assert.match(r.stdout, /https:\/\/www\.instagram\.com\/p\/REPOST\//);
+    assert.match(r.stderr, /既に取込み済み/);
+
+    // 本物の異常(範囲外の時刻で1行も採用できなかった v18)だけが ::error:: として上がる
+    assert.match(r.stdout, /::error title=/);
+    assert.equal((r.stdout.match(/::error title=/g) || []).length, 1);
+    assert.match(r.stdout, /投稿まるごと不採用: 店=Poker Bar IRIS\(v18\)/);
+    assert.equal(/投稿まるごと不採用: 店=TripleBarrel/.test(r.stdout), false, '再投稿を不採用として報告しないこと');
+
+    // 状態ファイルから「破棄されたのは再投稿ぶん」であることが読める
+    const state = JSON.parse(fs.readFileSync(path.join(root, 'apify-monitor-state.json'), 'utf8'));
+    assert.equal(state.v40.lastExtraction.reposts, 1);
+    assert.equal(state.v40.lastExtraction.unusablePosts, 0);
+    // 正規化は「行」単位で数える(破棄した抽出行と同じ単位)。3行 × 2投稿(再投稿ぶんを含む)
+    assert.equal(state.v40.lastExtraction.normalized, 6);
+    assert.equal(state.v18.lastExtraction.unusablePosts, 1);
+
+    // 書き込んだ data.js はコミット前ゲート(層1)も通る形(件数の下限だけは別途除外)
+    const validate = spawnSync('node', [path.join(TOOLS_DIR, 'validate-data.js'), root], { encoding: 'utf8' });
+    assert.equal(/日付が YYYY-MM-DD/.test(validate.stderr), false, validate.stderr);
+    assert.equal(/id が重複/.test(validate.stderr), false, validate.stderr);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }

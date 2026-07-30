@@ -46,8 +46,9 @@ const path = require('path');
 
 // 「data.js に入れてよい行か」の判定は、コミット前ゲート(tools/validate-data.js)および
 // Instagram監視(tools/monitor-instagram-apify.js)と同じものを使う。判定を書き分けない。
+// normalizeExtractedRow は検査の前段(`9:00`→`09:00` 等、直せる逸脱を直す)、
 // extractedRowProblem は1行だけの検査、duplicateIdProblem は行を跨ぐ検査(id重複)。
-const { extractedRowProblem, duplicateIdProblem } = require('./validate-data');
+const { normalizeExtractedRow, extractedRowProblem, duplicateIdProblem } = require('./validate-data');
 
 const REPO_ROOT = path.join(__dirname, '..');
 const DATA_JS = path.join(REPO_ROOT, 'data.js');
@@ -77,7 +78,13 @@ function slugify(name) {
   return s || 'post';
 }
 
-/** Vision抽出の素の結果1件 → Tournamentスキーマ。 */
+/**
+ * Vision抽出の素の結果1件 → Tournamentスキーマ。
+ * 【必ず normalizeExtractedRow を通した行を渡すこと】— id は start から組み立てるので、
+ * `9:00` のまま渡すと id が `-900-` になり、同日内の並び順(start の文字列比較)も狂う。
+ * buyin/stack の既定値が 0 ではなく null なのは、0 が「0円=無料」という読み取れた値であり、
+ * 「読み取れなかった」を表せるのは null だけだから(tools/monitor-instagram-apify.js と同じ)。
+ */
 function toTournament(t, venueId) {
   const start = t.start || '00:00';
   return {
@@ -86,9 +93,9 @@ function toTournament(t, venueId) {
     name: String(t.name).trim(),
     date: t.date,
     start,
-    buyin: t.buyin != null ? Number(t.buyin) : 0,
+    buyin: t.buyin != null ? Number(t.buyin) : null,
     addon: t.addon != null ? Number(t.addon) : null,
-    stack: t.stack != null ? Number(t.stack) : 0,
+    stack: t.stack != null ? Number(t.stack) : null,
     guarantee: t.guarantee != null ? Number(t.guarantee) : null,
     reentry: t.reentry === 'late' ? 'late' : Boolean(t.reentry),
     prize: t.prize || null,
@@ -123,16 +130,27 @@ async function importVenueImage(opts, libs) {
   const tournaments = [];
   const usedIds = new Set();
   for (const t of Array.isArray(raw) ? raw : []) {
-    let reason = extractedRowProblem(t);
+    // 検査の前に、直せる逸脱(`9:00`→`09:00` / 読めない金額はその項目だけ null)を直す。
+    // 直した内容は【正規化前の値ごと】ログに出す(人が結果を見ながら実行するCLIなので、
+    // 黙って値が変わると読み取り漏れと区別が付かない)。
+    const { row, notes } = normalizeExtractedRow(t);
+    for (const n of notes) {
+      console.warn(
+        `[import-venue-image] 抽出結果を正規化しました: ${n.field}: ${JSON.stringify(n.from)} → ` +
+          `${JSON.stringify(n.to)}(${n.reason}) / venueId=${opts.venueId} / name=${JSON.stringify(row && row.name)}`
+      );
+    }
+    let reason = extractedRowProblem(row);
     let entry = null;
     if (!reason) {
-      entry = toTournament(t, opts.venueId);
-      reason = duplicateIdProblem(entry, usedIds, null);
+      entry = toTournament(row, opts.venueId);
+      const dup = duplicateIdProblem(entry, usedIds, null);
+      if (dup) reason = dup.reason;
     }
     if (reason) {
       console.warn(
         `[import-venue-image] 抽出結果を1件破棄しました: ${reason}` +
-          ` / venueId=${opts.venueId} / date=${JSON.stringify(t && t.date)} / name=${JSON.stringify(t && t.name)}`
+          ` / venueId=${opts.venueId} / date=${JSON.stringify(row && row.date)} / name=${JSON.stringify(row && row.name)}`
       );
       continue;
     }
