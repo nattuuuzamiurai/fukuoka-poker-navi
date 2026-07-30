@@ -10615,6 +10615,517 @@ const TOURNAMENTS = [
     "source": "semi",
     "verified": false,
     "lowConfidence": true
+  },
+  {
+    "id": "mh0802a",
+    "venueId": "v3",
+    "name": "m LIVE LEAGUE ~WEEKEND~",
+    "date": "2026-08-02",
+    "start": "13:10",
+    "buyin": 4000,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "特別開催"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "mh0802b",
+    "venueId": "v3",
+    "name": "m FT Bounty",
+    "date": "2026-08-02",
+    "start": "18:00",
+    "buyin": 4000,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "バウンティ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "mh0802c",
+    "venueId": "v3",
+    "name": "ｍ Hyper Deep Turbo",
+    "date": "2026-08-02",
+    "start": "21:00",
+    "buyin": 2500,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "ターボ",
+      "ディープ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "mh0803a",
+    "venueId": "v3",
+    "name": "m WAVE（Mystery Bounty）",
+    "date": "2026-08-03",
+    "start": "18:00",
+    "buyin": 3500,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "バウンティ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "mh0803b",
+    "venueId": "v3",
+    "name": "m Turbo",
+    "date": "2026-08-03",
+    "start": "21:00",
+    "buyin": 2000,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "mh0804a",
+    "venueId": "v3",
+    "name": "m LIVE LEAGUE season1",
+    "date": "2026-08-04",
+    "start": "17:10",
+    "buyin": 4000,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "特別開催"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "mh0804b",
+    "venueId": "v3",
+    "name": "m Bounty Turbo",
+    "date": "2026-08-04",
+    "start": "21:00",
+    "buyin": 2500,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "ターボ",
+      "バウンティ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "mh0805a",
+    "venueId": "v3",
+    "name": "【3.5K 飲み放題！】m Booze up",
+    "date": "2026-08-05",
+    "start": "18:00",
+    "buyin": 3500,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "mh0805b",
+    "venueId": "v3",
+    "name": "ｍ Hyper Deep Turbo",
+    "date": "2026-08-05",
+    "start": "21:00",
+    "buyin": 2500,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "ターボ",
+      "ディープ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "mh0806a",
+    "venueId": "v3",
+    "name": "m LIVE LEAGUE season1",
+    "date": "2026-08-06",
+    "start": "17:10",
+    "buyin": 4000,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "特別開催"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "mh0806b",
+    "venueId": "v3",
+    "name": "m Super Hold'em Turbo",
+    "date": "2026-08-06",
+    "start": "21:00",
+    "buyin": 2500,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "mh0807a",
+    "venueId": "v3",
+    "name": "VS m SORA×Crazy Pineapple",
+    "date": "2026-08-07",
+    "start": "17:30",
+    "buyin": 4000,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "特別開催"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "mh0807b",
+    "venueId": "v3",
+    "name": "m 22's WILD Turbo",
+    "date": "2026-08-07",
+    "start": "21:00",
+    "buyin": 2000,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "mh0808a",
+    "venueId": "v3",
+    "name": "m Monster Stack",
+    "date": "2026-08-08",
+    "start": "13:10",
+    "buyin": 4000,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "mh0808b",
+    "venueId": "v3",
+    "name": "m FT Bounty",
+    "date": "2026-08-08",
+    "start": "18:00",
+    "buyin": 4000,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "バウンティ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "mh0808c",
+    "venueId": "v3",
+    "name": "m MAD shuffle Turbo",
+    "date": "2026-08-08",
+    "start": "21:00",
+    "buyin": 2000,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "mh0809a",
+    "venueId": "v3",
+    "name": "m LIVE LEAGUE ~WEEKEND~",
+    "date": "2026-08-09",
+    "start": "13:10",
+    "buyin": 4000,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "特別開催"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "mh0809b",
+    "venueId": "v3",
+    "name": "m VAULT",
+    "date": "2026-08-09",
+    "start": "17:10",
+    "buyin": 4000,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "mh0809c",
+    "venueId": "v3",
+    "name": "m DICE Poker Turbo",
+    "date": "2026-08-09",
+    "start": "21:00",
+    "buyin": 2500,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "mh0811a",
+    "venueId": "v3",
+    "name": "m SUPER STACK",
+    "date": "2026-08-11",
+    "start": "13:10",
+    "buyin": 4000,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "mh0811b",
+    "venueId": "v3",
+    "name": "m LIVE LEAGUE season1",
+    "date": "2026-08-11",
+    "start": "17:10",
+    "buyin": 4000,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "特別開催"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "mh0812a",
+    "venueId": "v3",
+    "name": "【3.5K 飲み放題！】m Booze up",
+    "date": "2026-08-12",
+    "start": "18:00",
+    "buyin": 3500,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "mh0813a",
+    "venueId": "v3",
+    "name": "m LIVE LEAGUE season1",
+    "date": "2026-08-13",
+    "start": "17:10",
+    "buyin": 4000,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "特別開催"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "mh0814a",
+    "venueId": "v3",
+    "name": "VS m HANNA",
+    "date": "2026-08-14",
+    "start": "17:30",
+    "buyin": 4000,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "特別開催"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "mh0819a",
+    "venueId": "v3",
+    "name": "【3.5K 飲み放題！】m Booze up",
+    "date": "2026-08-19",
+    "start": "18:00",
+    "buyin": 3500,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "mh0821a",
+    "venueId": "v3",
+    "name": "VS m FURIN",
+    "date": "2026-08-21",
+    "start": "17:30",
+    "buyin": 4000,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "特別開催"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "mh0826a",
+    "venueId": "v3",
+    "name": "【3.5K 飲み放題！】m Booze up",
+    "date": "2026-08-26",
+    "start": "18:00",
+    "buyin": 3500,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "mh0828a",
+    "venueId": "v3",
+    "name": "VS m KANON",
+    "date": "2026-08-28",
+    "start": "17:30",
+    "buyin": 4000,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "特別開催"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "mh0830a",
+    "venueId": "v3",
+    "name": "m 月間戦 AUGUST",
+    "date": "2026-08-30",
+    "start": "13:10",
+    "buyin": 4000,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "特別開催"
+    ],
+    "source": "semi",
+    "verified": false
   }
 ];
 
