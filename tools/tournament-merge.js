@@ -163,7 +163,11 @@ function mergeStore(all, venueId, scraped, today) {
     }
   }
 
-  const block = [...past, ...keptManual, ...future$].sort(byDateStart);
+  // past は書き込み前の自己チェック(assertOnlyTargetChanged)で「内容・順序が完全に一致すること」を
+  // 求めているため、ここでソートしてはいけない(実データは日付順ではなく大会名グループ順等で並んでいる
+  // ことがあり、ソートすると内容が1件も変わっていなくても順序変化を「過去日が変化した」と誤検知して
+  // 書き込みを拒否してしまう。既存の並び順をそのまま保持する)。
+  const block = [...past, ...[...keptManual, ...future$].sort(byDateStart)];
 
   const firstIdx = all.findIndex((t) => t.venueId === venueId);
   const rest = all.filter((t) => t.venueId !== venueId);

@@ -204,6 +204,11 @@ async function main() {
       `残した手入力${stats.keptManual.length}件)。`
   );
   console.log('[import-venue-image] 忘れずに `node tools/gen-venue-pages.js .` を実行し、店舗静的ページを再生成してください。');
+  console.log(
+    '[import-venue-image] 注意: 日程が大幅に変わった月の再取込みでは、前回取り込んだ古いエントリが' +
+      '自動では消えず並存することがあります(残した手入力の件数が想定より多い場合は要確認)。' +
+      '必要なら admin.html 側で手動整理してください。'
+  );
 }
 
 if (require.main === module) {

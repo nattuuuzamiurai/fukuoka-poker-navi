@@ -161,6 +161,111 @@ test('assertOnlyTargetChanged: 過去日が変化していたら例外を投げ�
   }
 });
 
+test('mergeStore: 過去日が日付順ではなく大会名グループ順で並んでいても、内容・順序ともに一切変化しない(回帰テスト)', () => {
+  // 実データ(v40等)は過去日を含む既存エントリが日付順ではなく大会名グループ順で並んでいることがある。
+  // mergeStore が past を含めて丸ごとソートしてしまうと、内容が1件も変わっていなくても
+  // 「過去日の順序が変わった」ことを assertOnlyTargetChanged が「過去日が変化した」と誤検知し、
+  // 書き込みを永続的に拒否してしまう(2026-07-30 品質管理部レビューで検出)。
+  const tournaments = [
+    {
+      id: 'past-b-2',
+      venueId: 'v40',
+      name: 'B大会(2回目・古い方が後ろに来る非ソート順)',
+      date: '2020-01-05',
+      start: '19:00',
+      buyin: 1000,
+      addon: null,
+      stack: 10000,
+      guarantee: null,
+      reentry: false,
+      prize: null,
+      tags: [],
+      source: 'auto',
+      verified: false,
+    },
+    {
+      id: 'past-a-1',
+      venueId: 'v40',
+      name: 'A大会(1回目)',
+      date: '2020-01-10',
+      start: '19:00',
+      buyin: 1000,
+      addon: null,
+      stack: 10000,
+      guarantee: null,
+      reentry: false,
+      prize: null,
+      tags: [],
+      source: 'auto',
+      verified: false,
+    },
+    {
+      id: 'past-b-1',
+      venueId: 'v40',
+      name: 'B大会(1回目)',
+      date: '2020-01-03',
+      start: '19:00',
+      buyin: 1000,
+      addon: null,
+      stack: 10000,
+      guarantee: null,
+      reentry: false,
+      prize: null,
+      tags: [],
+      source: 'auto',
+      verified: false,
+    },
+    {
+      id: 'past-a-2',
+      venueId: 'v40',
+      name: 'A大会(2回目・日付順ではない)',
+      date: '2020-01-01',
+      start: '19:00',
+      buyin: 1000,
+      addon: null,
+      stack: 10000,
+      guarantee: null,
+      reentry: false,
+      prize: null,
+      tags: [],
+      source: 'auto',
+      verified: false,
+    },
+    {
+      id: 'future-1',
+      venueId: 'v40',
+      name: '未来の大会',
+      date: '2026-08-05',
+      start: '19:00',
+      buyin: 1000,
+      addon: null,
+      stack: 10000,
+      guarantee: null,
+      reentry: false,
+      prize: null,
+      tags: [],
+      source: 'manual',
+      verified: true,
+    },
+  ];
+  const before = tournaments; // past-b-2, past-a-1, past-b-1, past-a-2 の順(日付順でも大会名順でもない)
+
+  const { next } = merge.mergeStore(before, 'v40', [], TODAY);
+
+  // assertOnlyTargetChanged が例外を投げないこと(=誤検知しないこと)を確認するのが本題
+  assert.doesNotThrow(() => merge.assertOnlyTargetChanged(before, next, 'v40', TODAY));
+
+  // 過去日4件が、内容だけでなく並び順も完全にそのまま残っていること
+  const pastBefore = before.filter((t) => t.date < TODAY);
+  const pastAfter = next.filter((t) => t.date < TODAY);
+  assert.deepEqual(
+    pastAfter.map((t) => t.id),
+    pastBefore.map((t) => t.id),
+    '過去日の並び順が変化してはいけない'
+  );
+  assert.deepEqual(pastAfter, pastBefore, '過去日の内容も一切変化してはいけない');
+});
+
 test('carryOver: API_OWNED_TAGSでないタグ(人手タグ)とpinnedTagsを引き継ぐ', () => {
   const prev = { guarantee: 100, prize: '賞品あり', tags: ['ターボ', '大型'], pinnedTags: ['ディープ'] };
   const next = { tags: ['ターボ'] };

@@ -332,6 +332,10 @@ Claude APIキーは初回だけ「詳細設定」で登録すればよい（こ�
 - 実行例: `node tools/import-venue-image.js --venue v40 --image ./inbox/orio-2026-09.jpg`
   (`--dry-run` を付けると `data.js` を書き換えずに抽出結果だけ確認できる)。
 - 実行には環境変数 `ANTHROPIC_API_KEY` が必要(Vision抽出用。コードには直書きしない)。
+- **既知の制約**: 日程が大幅に変わった月を再取込みすると、前回取り込んだ`source: 'semi'`の
+  古いエントリが自動では消えず並存することがある(`tools/tournament-merge.js`のupsertは
+  「同じ(date,start)への置き換え」しか行わないため)。再取込み後は表示件数を確認し、
+  古いエントリが残っていれば admin.html 側で手動整理すること。
 
 ### 半自動パイプライン（LINE / IG 等の埋め合わせ）
 
