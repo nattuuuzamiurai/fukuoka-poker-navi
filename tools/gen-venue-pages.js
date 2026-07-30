@@ -23,8 +23,13 @@
  * 【焼き込む内容を「今日以降」にしない理由】
  *   静的HTMLに「実行した日から先」を焼くと、data.js を1文字も触っていないのに
  *   翌日には --check が落ちる。検査が毎日落ちるなら検査を見なくなるので、
- *   静的側は data.js に載っている期間(下記 dataRange)をそのまま焼く。
+ *   静的側は data.js に載っている期間(venue-schedule.js の venueRange)をそのまま焼く。
  *   閲覧者に出す「今日以降」への絞り込みはブラウザ側の描き直しが担当する。
+ *
+ * 【焼き込む期間は店舗ごとに決まる】
+ *   venueRange() はその店の日付つきトーナメントだけから期間を決める(全店共通の期間は使わない)。
+ *   見出しが自店の実データと一致し、1店の変更が他店のページに波及しない。理由は
+ *   tools/venue-schedule.js のコメントを参照。
  *
  * 【data.js から消えた店のページ(孤児)は消す】
  *   閉店・掲載終了で VENUES から店を削除すると、sitemap からはURLが消えるが
@@ -105,13 +110,11 @@ function validateUnverifiedFlags(venues) {
 validateUnverifiedFlags(VENUES);
 
 // ---- 日程表の組み立て(生成時と閲覧時で共有する1本) ----
-// SCHEDULE_JS / SCHED / dataRange は tools/venue-schedule.js が所有する。
+// SCHEDULE_JS / SCHED / venueRange は tools/venue-schedule.js が所有する。
 // 【なぜ切り出したか】gen-sitemap.js が「掲載0件の店」を判定して sitemap から外す。
 //   その判定基準がこちらと2箇所に分かれるとズレて、「sitemapには載っているのに中身は空」
 //   あるいはその逆が起きるため、判定を1箇所に寄せた。
-const { SCHEDULE_JS, SCHED, dataRange, hasSchedule } = require('./venue-schedule.js');
-
-const RANGE = dataRange(TOURNAMENTS);
+const { SCHEDULE_JS, SCHED, venueRange } = require('./venue-schedule.js');
 
 // ---- 店舗ページ本体 ----
 const VENUE_CSS = `  .vp-sub{font-size:.9em;color:var(--mut);margin-bottom:14px}
@@ -191,7 +194,10 @@ function metaRows(v) {
 function buildVenue(v) {
   const canonical = `${SITE}/venues/${v.slug}/`;
 
-  const rows = SCHED.vpRows(TOURNAMENTS, RECURRING, v.id, RANGE.from, RANGE.to);
+  // 焼き込む期間はこの店のデータだけで決まる(他店の日程には影響されない)。
+  // RANGE が null = 日付つきも定期開催も1件も無い店。期間の見出し自体を出さない。
+  const RANGE = venueRange(TOURNAMENTS, RECURRING, v.id);
+  const rows = RANGE ? SCHED.vpRows(TOURNAMENTS, RECURRING, v.id, RANGE.from, RANGE.to) : [];
   const schedHtml = SCHED.vpScheduleHtml(rows);
 
   // ★ title / description / リード文は「掲載日程があるか」で切り替える。
@@ -253,6 +259,15 @@ ${sameArea.map(x => `  <li><a href="/venues/${x.slug}/">${esc(x.name)}</a></li>`
     ? `主な情報源: <a href="${esc(v.sourceUrl)}" target="_blank" rel="noopener">${esc(v.sourceLabel)}</a>。`
     : '';
 
+  // 日程表の見出しと但し書き。期間を書けるのは RANGE がある店だけ。
+  // 日付つきも定期開催も無い店に「※ この一覧は◯月〜◯月の掲載分です」と出すと、
+  // 1行も載っていないのに期間を掲載したことになり、事実と合わない
+  // (以前は全店共通の期間を出していたので、掲載0件の店にもこの文が出ていた)。
+  const schedTitle = RANGE ? `トーナメント日程（${esc(RANGE.label)}の掲載分）` : 'トーナメント日程';
+  const schedNote = RANGE
+    ? `※ この一覧は${esc(RANGE.label)}の掲載分です。JavaScriptが有効な環境では、読み込み時に最新の掲載データから<b>今日以降</b>の日程に差し替わります。`
+    : '※ JavaScriptが有効な環境では、読み込み時に最新の掲載データから<b>今日以降</b>の日程に差し替わります。';
+
   const body = `
 <h1>${esc(v.name)}</h1>
 <p class="vp-sub">${sub}</p>
@@ -261,8 +276,8 @@ ${sameArea.map(x => `  <li><a href="/venues/${x.slug}/">${esc(x.name)}</a></li>`
 </div>
 <div class="disclaimer">${noteBlock}当サイトは店舗が公開している情報を集約している媒体で、この店舗の運営者ではありません。日程・料金・営業状況は変更されることがあるため、参加前に必ず店舗の公式情報・SNSをご確認ください。${sourceBlock}<br>${POSITIONING}</div>
 <a class="cta" href="/#venue/${esc(v.id)}">▶ 月を切り替えて日程を見る<small>サイト内の月別カレンダー（前月・翌月に移動できます）</small></a>
-<h2 class="vp-sec" id="vp-sched-title">トーナメント日程（${esc(RANGE.label)}の掲載分）</h2>
-<p class="lead" id="vp-sched-note">※ この一覧は${esc(RANGE.label)}の掲載分です。JavaScriptが有効な環境では、読み込み時に最新の掲載データから<b>今日以降</b>の日程に差し替わります。</p>
+<h2 class="vp-sec" id="vp-sched-title">${schedTitle}</h2>
+<p class="lead" id="vp-sched-note">${schedNote}</p>
 <div id="vp-sched">${schedHtml}</div>${areaBlock}
 <div class="links">
   ▶ <a href="/">福岡のポーカートーナメント日程を日付順に見る（全${VENUES.length}店舗）</a><br>
@@ -488,7 +503,7 @@ if (CHECK) {
     fs.writeFileSync(p, files[rel], 'utf8');
     wrote++;
   });
-  console.log(`完了。店舗ページ ${VENUES.length} 件（焼き込んだ期間: ${RANGE.label}）／ 書き換えたファイル ${wrote} 件`
+  console.log(`完了。店舗ページ ${VENUES.length} 件（焼き込む期間は店舗ごと）／ 書き換えたファイル ${wrote} 件`
     + (removed ? `／ 削除した店舗ディレクトリ ${removed} 件` : ''));
 
   if (kept.length) {

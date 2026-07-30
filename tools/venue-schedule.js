@@ -16,8 +16,21 @@
  *
  * 【日付に依存させない理由】
  *   判定に「今日」を使うと、データを1文字も触っていないのに翌日には --check が落ちる。
- *   判定はすべて dataRange() が返す固定の期間内で行う。閲覧時に「今日以降」へ描き直すのは
+ *   判定はすべて venueRange() が返す固定の期間内で行う。閲覧時に「今日以降」へ描き直すのは
  *   ブラウザ側の仕事で、静的HTMLの中身とは分けている。
+ *
+ * 【焼き込む期間は店舗ごとに独立させる】
+ *   以前は「data.js 全体の最小日〜最大日」を1つ作って全店で使い回していた。これには2つの害があった。
+ *     - 事実として不正確 … 9月分の日程を持つのが1店だけでも、他の34店のページに
+ *       「※ この一覧は2026年7月〜9月の掲載分です」と出て、9月分の定期開催行まで焼き込まれる。
+ *     - 波及が全店に及ぶ … 1店に1件足しただけで35ページ全部が書き換わる。実測で、
+ *       9月の1件が消えると36ファイル、2027年3月の大会が1件載ると venues/ が 1.1MB→1.4MB。
+ *       無人の日次自動取込でこれを毎朝やると、venues/ を触る他の作業と競合が常態化する。
+ *   そこで期間は venueRange() が【その店の日付つきトーナメントだけ】から決める。
+ *   1店の変更はその店のページにしか届かず、見出しもその店の実データと一致する。
+ *   ★ ブラウザ側(SCHEDULE_JS)はこの期間を使わない。閲覧時の窓は
+ *     gen-venue-pages.js が埋め込むスクリプトが「今日〜max(掲載最終日, 今日+60日)」として
+ *     その場で決めている。したがってこの変更で公開サイトの描画は変わらない。
  */
 
 const vm = require('vm');
@@ -118,16 +131,13 @@ const SCHED = vm.runInNewContext(SCHEDULE_JS
   + '\n;({ vpRows: vpRows, vpScheduleHtml: vpScheduleHtml, vpToIso: vpToIso, vpParse: vpParse })');
 
 // ---- 静的側に焼き込む期間 ----
-// data.js に載っている日付の範囲(月単位に丸めたもの)。実行日に依存させない。
-function dataRange(TOURNAMENTS) {
-  const dates = TOURNAMENTS.map(t => t.date).filter(Boolean).sort();
-  if (!dates.length) {
-    // 日付つきトーナメントが1件も無い状態。定期分だけでも出せるよう当月を使う。
-    throw new Error('TOURNAMENTS が空です。焼き込む期間を決められません。');
-  }
-  const first = dates[0], last = dates[dates.length - 1];
-  const [fy, fm] = first.split('-').map(Number);
-  const [ly, lm] = last.split('-').map(Number);
+
+/** YYYY-MM-DD の配列 → 月単位に丸めた期間。1件も無ければ null。実行日に依存させない。 */
+function monthRange(dates) {
+  const sorted = dates.filter(Boolean).slice().sort();
+  if (!sorted.length) return null;
+  const [fy, fm] = sorted[0].split('-').map(Number);
+  const [ly, lm] = sorted[sorted.length - 1].split('-').map(Number);
   const lastDay = new Date(Date.UTC(ly, lm, 0)).getUTCDate();
   return {
     from: `${fy}-${String(fm).padStart(2, '0')}-01`,
@@ -135,12 +145,59 @@ function dataRange(TOURNAMENTS) {
     label: (fy === ly && fm === lm) ? `${fy}年${fm}月` : `${fy}年${fm}月〜${ly === fy ? '' : ly + '年'}${lm}月`
   };
 }
+
 /**
- * RANGE 内にその店の掲載行が1行でもあるか。
- * 実行日に依存しない(RANGE は data.js の日付範囲そのもの)。
+ * 定期開催(RECURRING)しか持たない店に使う代表期間。
+ *
+ * 【なぜ必要か】その店由来の日付が1つも無いので、店舗別の期間を作れない。
+ *   かといって期間を決めないとページが空になる(定期開催は日付に展開して初めて行になる)。
+ * 【なぜ「サイト全体の掲載期間の先頭1ヶ月」なのか】
+ *   - 定期開催は毎週繰り返すので、1ヶ月あればその店の全曜日が1回以上出る。3ヶ月分並べても
+ *     同じ行が増えるだけで情報は増えない(むしろ重複コンテンツになる)。
+ *   - 先頭の月は過去側の端で、日次の自動取込では動かない(取込は今日以降しか作らず、
+ *     過去日のエントリには一切触れないため)。ここを「サイト全体の最終日」にすると、
+ *     どこかの店に来年の大会が1件載っただけで定期開催だけの店のページが数倍に膨らむ
+ *     ——まさに今回直した波及がそのまま戻ってくる。
+ *   - 全店ぶんを見るのはこの1ヶ月の起点を決めるためだけで、行の中身は各店のRECURRINGのみ。
+ * 該当は v5 / v19 / v41 の3店(2026-07-31時点)。
  */
-function hasSchedule(TOURNAMENTS, RECURRING, venueId, RANGE) {
-  return SCHED.vpRows(TOURNAMENTS, RECURRING, venueId, RANGE.from, RANGE.to).length > 0;
+function recurringOnlyRange(TOURNAMENTS) {
+  const all = monthRange(TOURNAMENTS.map(t => t.date));
+  if (!all) {
+    // data.js に日付つきトーナメントが1件も無い。起点が決められないので黙って何かを焼かない。
+    throw new Error('TOURNAMENTS が空です。定期開催のみの店舗に焼き込む期間を決められません。');
+  }
+  const [y, m] = all.from.split('-').map(Number);
+  const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  return {
+    from: all.from,
+    to: `${y}-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`,
+    label: `${y}年${m}月`
+  };
 }
 
-module.exports = { SCHEDULE_JS, SCHED, dataRange, hasSchedule };
+/**
+ * その店の静的ページに焼き込む期間。【店舗別】で、他店のデータには影響されない。
+ *   - 日付つきトーナメントがある店 … その店の日付の範囲(月単位に丸めたもの)
+ *   - 定期開催しか無い店           … recurringOnlyRange()(上記)
+ *   - どちらも無い店               … null(焼き込む日程が無い。期間の見出しも出さない)
+ */
+function venueRange(TOURNAMENTS, RECURRING, venueId) {
+  const own = monthRange(TOURNAMENTS.filter(t => t.venueId === venueId).map(t => t.date));
+  if (own) return own;
+  if (RECURRING.some(r => r.venueId === venueId)) return recurringOnlyRange(TOURNAMENTS);
+  return null;
+}
+
+/**
+ * その店に掲載中の日程が1行でもあるか。
+ * 期間の決定ごとこの関数が持つ(呼び出し側が別々に期間を作ると基準がズレるため)。
+ * 実行日に依存しない(期間は data.js の日付そのものから決まる)。
+ */
+function hasSchedule(TOURNAMENTS, RECURRING, venueId) {
+  const range = venueRange(TOURNAMENTS, RECURRING, venueId);
+  if (!range) return false;
+  return SCHED.vpRows(TOURNAMENTS, RECURRING, venueId, range.from, range.to).length > 0;
+}
+
+module.exports = { SCHEDULE_JS, SCHED, monthRange, venueRange, hasSchedule };
