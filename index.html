@@ -1634,12 +1634,20 @@
       // トップ内のテキスト増加で止まってしまうため、カードからは実URLへ送る。
       // ハッシュURL(#venue/<id>)のルート自体は既存リンク・ブックマーク互換のため残してあり、
       // 静的ページ側から「月別カレンダー」として相互にリンクしている。
-      return `<div class="vcard${v.featured?' feat':''}" onclick="if(!event.target.closest('a')) location.href='/venues/${v.slug}/'">
+      //
+      // ★ slug が無い店は【必ず】ハッシュURLに落とす。
+      //   admin.html + dev-server.py は生成スクリプト(tools/gen-venue-pages.js)を通さずに
+      //   data.js を保存するため、店舗を追加して slug を付け忘れた data.js が配信され得る。
+      //   フォールバック無しだと /venues/undefined/ という404リンクがトップに並ぶ。
+      //   ハッシュURLならその店の月別カレンダーは開けるので、閲覧者の行き先は失われない
+      //   (静的ページの欠落自体は gen-venue-pages.js が slug 未設定で異常終了して知らせる)。
+      const vurl = v.slug ? `/venues/${v.slug}/` : `#venue/${v.id}`;
+      return `<div class="vcard${v.featured?' feat':''}" onclick="if(!event.target.closest('a')) location.href='${vurl}'">
         <div class="vc-name">${v.featured?'<span class="star">★</span>':''}${v.name}</div>
         <div class="vc-area">${v.area}　|　${v.access||''}</div>
         <div class="vc-area" style="margin-top:4px;color:var(--felt);font-weight:700">今後の開催 ${upcoming}件</div>
         <div class="vc-links">${links.join('')}</div>
-        <a class="abtn pri vc-cta" href="/venues/${v.slug}/">日程・アクセスを見る →</a>
+        <a class="abtn pri vc-cta" href="${vurl}">日程・アクセスを見る →</a>
       </div>`;
     }).join('');
   }

@@ -26,6 +26,14 @@
  *   静的側は data.js に載っている期間(下記 dataRange)をそのまま焼く。
  *   閲覧者に出す「今日以降」への絞り込みはブラウザ側の描き直しが担当する。
  *
+ * 【data.js から消えた店のページ(孤児)は消す】
+ *   閉店・掲載終了で VENUES から店を削除すると、sitemap からはURLが消えるが
+ *   venues/<slug>/index.html はディスクに残る。放っておくと LocalBusiness の
+ *   構造化データ付きページが更新されないまま公開・インデックスされ続けるので、
+ *   VENUES の slug 集合に無い venues/ 直下のディレクトリを検出して削除する
+ *   (--check では非ゼロ終了)。
+ *   詳細は下の findOrphanVenueDirs() のコメントを参照。
+ *
  * 生成物:
  *   - venues/<slug>/index.html (全店)
  *   - index.html の【店舗リンク行(#venueLinks)だけ】を上書き同期する
@@ -401,6 +409,57 @@ function verify(files) {
   console.log('検査: 店舗ページ' + VENUES.length + '件・トップの店舗リンク行は data.js と一致');
 }
 
+// ---- data.js から消えた店のページ(孤児)を探す ----
+// 【なぜ必要か】
+//   VENUES から店を削除すると sitemap.xml からURLは消えるが、venues/<slug>/index.html は
+//   ディスクに残る。sitemap から消えただけではインデックスは落ちない(むしろ既にインデックス
+//   されているURLは残る)ため、閉店した店の LocalBusiness 構造化データ付きページが
+//   「更新されない状態で」公開され続ける。閉店店舗の営業情報を出し続けるのは
+//   READMEの編集方針(確度の低い情報を黙って出さない)に反する。
+//   さらに、この検出が無いと --check が「生成物はすべて最新」と言って通ってしまう
+//   = 検査がデータとディスクの不一致を見逃す。
+//   BAR BETTY(v32)は2026年9月に閉店予定で VENUES から削除することが決まっている
+//   (社長情報・2026-07-29)ため、これは近い将来に実際に起きる。
+//
+// 【events/ 側は対象外】
+//   gen-event-pages.js には同じ検出を入れていない。大会ページは会期が終わっても
+//   残す運用の可能性があり(過去大会の記録としての価値・被リンク)、店舗と同じ扱いに
+//   してよいか判断が必要なため。別issueとして切り出す。
+//
+// 【消す(警告に留めない)ことにした理由】
+//   通常実行で消さないと、削除された店の孤児が残っている間ずっと --check が落ちたままになり
+//   (=生成スクリプトを実行しても直らない検査失敗)、「まず手でディレクトリを消す」という
+//   スクリプト外の手順が運用に必要になる。それは忘れられるし、忘れると検査が常時赤になって
+//   誰も見なくなる。「node tools/gen-venue-pages.js . を実行すれば --check が通る」という
+//   関係を保つため、通常実行では削除する。
+//   ただし消すのは「このスクリプトが作ったと確認できるディレクトリ」だけに限る(下記)。
+const VENUES_DIR = 'venues';
+
+/** VENUES の slug 集合に無い venues/<名前>/ を、名前の昇順で返す。 */
+function findOrphanVenueDirs() {
+  let entries;
+  try {
+    entries = fs.readdirSync(path.join(REPO, VENUES_DIR), { withFileTypes: true });
+  } catch (e) {
+    if (e.code === 'ENOENT') return [];   // まだ1件も生成していない
+    throw e;
+  }
+  const known = new Set(VENUES.map(v => v.slug));
+  return entries
+    .filter(e => e.isDirectory() && !known.has(e.name))
+    .map(e => e.name)
+    .sort();
+}
+
+// 中身が index.html だけのディレクトリは、このスクリプトの生成物とみなして削除してよい。
+// 手で置いたファイル(画像・別ページ等)が混ざっている場合は削除せず、人間に判断させる
+// (生成物ではないものをスクリプトが消してしまうのを防ぐ。--check は落ちたままになる)。
+// .DS_Store は Finder が勝手に作るものなので数えない。
+function orphanExtraFiles(name) {
+  return fs.readdirSync(path.join(REPO, VENUES_DIR, name))
+    .filter(f => f !== 'index.html' && f !== '.DS_Store');
+}
+
 // ---- 書き出し / 検査 ----
 // 出力はいったん全部メモリ上で組み立ててから、まとめて書く(--check のときは書かずに突き合わせる)。
 const files = {};
@@ -410,18 +469,46 @@ Object.assign(files, sitemapFile(REPO));
 
 verify(files);
 
+// 孤児は「あるかどうか」を先に出す。どちらのモードでも対象名を標準出力に出す(気づけるように)。
+const orphans = findOrphanVenueDirs();
+if (orphans.length) {
+  console.log(`data.js の VENUES に無い店舗ディレクトリ ${orphans.length} 件:`);
+  orphans.forEach(name => {
+    const extra = orphanExtraFiles(name);
+    console.log(`  - ${VENUES_DIR}/${name}/`
+      + (extra.length ? `（index.html 以外のファイルあり: ${extra.join(', ')}）` : ''));
+  });
+}
+
 if (CHECK) {
   const stale = Object.keys(files).filter(rel => {
     let cur = null;
     try { cur = fs.readFileSync(path.join(REPO, rel), 'utf8'); } catch (e) { /* 未生成 */ }
     return cur !== files[rel];
   });
+  let ng = false;
   if (stale.length) {
     console.error('\n✗ 生成物が data.js と一致しません（node tools/gen-venue-pages.js <repo> を実行してください）:\n  - ' + stale.join('\n  - '));
-    process.exit(1);
+    ng = true;
   }
-  console.log('検査: 生成物はすべて最新（' + Object.keys(files).length + 'ファイル）');
+  // 孤児が残っている状態は「生成物がデータと一致していない」ので、--check は通してはいけない。
+  if (orphans.length) {
+    console.error('\n✗ data.js の VENUES に無い店舗ページが残っています（node tools/gen-venue-pages.js <repo> を実行すると削除されます）:\n  - '
+      + orphans.map(name => `${VENUES_DIR}/${name}/`).join('\n  - '));
+    ng = true;
+  }
+  if (ng) process.exit(1);
+  console.log('検査: 生成物はすべて最新（' + Object.keys(files).length + 'ファイル）／ 余分な店舗ディレクトリなし');
 } else {
+  // 削除を先にやる。残したままだとこの実行の直後に --check が落ちる。
+  const kept = [];
+  let removed = 0;
+  orphans.forEach(name => {
+    if (orphanExtraFiles(name).length) { kept.push(name); return; }
+    fs.rmSync(path.join(REPO, VENUES_DIR, name), { recursive: true });
+    removed++;
+  });
+
   let wrote = 0;
   Object.keys(files).forEach(rel => {
     const p = path.join(REPO, rel);
@@ -432,5 +519,14 @@ if (CHECK) {
     fs.writeFileSync(p, files[rel], 'utf8');
     wrote++;
   });
-  console.log(`完了。店舗ページ ${VENUES.length} 件（焼き込んだ期間: ${RANGE.label}）／ 書き換えたファイル ${wrote} 件`);
+  console.log(`完了。店舗ページ ${VENUES.length} 件（焼き込んだ期間: ${RANGE.label}）／ 書き換えたファイル ${wrote} 件`
+    + (removed ? `／ 削除した店舗ディレクトリ ${removed} 件` : ''));
+
+  if (kept.length) {
+    // 生成物以外が入っているので消さなかったもの。放置すると --check が落ち続けるので明示的に失敗させる。
+    console.error('\n✗ 次のディレクトリは index.html 以外のファイルを含むため削除していません。'
+      + '中身を確認して手で削除してください（残っている間 --check は落ちます）:\n  - '
+      + kept.map(name => `${VENUES_DIR}/${name}/`).join('\n  - '));
+    process.exit(1);
+  }
 }
