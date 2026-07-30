@@ -2,7 +2,7 @@
 /**
  * gen-event-pages.js
  *
- * 検索流入用に、大型イベント(JOPT / WJPT / NIPPON SERIES)のクローラブルな静的ページを生成する。
+ * 検索流入用に、大型イベント(JOPT / WJPT / NIPPON SERIES / FST)のクローラブルな静的ページを生成する。
  * SPAのハッシュURL(#jopt 等)は個別ページとしてインデックスされないため、
  * /events/<slug>/index.html という実URLの静的ページを用意する。
  *
@@ -10,11 +10,13 @@
  *   - JOPT:          jopt-data.js (window.JOPT_DATA / module.exports)
  *   - WJPT:          index.html 内の const WJPT = {...} を抽出
  *   - NIPPON SERIES: nippon-series-data.js
+ *   - FST:           index.html 内の const FST = {...} を抽出
  *
  * 生成物:
  *   - events/jopt-2026-fukuoka-01/index.html
  *   - events/wjpt-2026/index.html
  *   - events/nippon-series-2026-fukuoka/index.html
+ *   - events/fst-2026-fukuoka/index.html
  *   - sitemap.xml … 中身は tools/gen-sitemap.js が決める(店舗ページのURLも入るため)。
  *                    このスクリプトは受け取った文字列をそのまま書くだけで、組み立てない。
  *   - index.html の【恒久リンク行(#evtLinks)だけ】を上書き同期する
@@ -54,16 +56,19 @@ const JOPT = require(path.join(REPO, 'jopt-data.js'));
 const BIG = require(path.join(REPO, 'big-events.js'));
 const NIPPON = require(path.join(REPO, 'nippon-series-data.js'));
 
-function extractWJPT(indexHtml) {
-  const src = fs.readFileSync(indexHtml, 'utf8');
-  const m = src.match(/const WJPT = (\{[\s\S]*?\n  \});/);
-  if (!m) throw new Error('index.html から WJPT を抽出できませんでした');
-  // WJPT.days は big-events.js のレジストリを参照しているため、同じ関数を sandbox に渡す
+// index.html に直接書かれている大会データ(const WJPT / const FST)を、値を手打ちせずに取り出す。
+// 対象は「行頭から2スペース字下げの `};` で閉じるオブジェクトリテラル」= index.html の書式。
+// days は big-events.js のレジストリを参照しているため、同じ関数を sandbox に渡す。
+function extractConst(indexSrc, name) {
+  const m = indexSrc.match(new RegExp('const ' + name + ' = (\\{[\\s\\S]*?\\n  \\});'));
+  if (!m) throw new Error(`index.html から ${name} を抽出できませんでした`);
   const sandbox = { bigEventDays: BIG.bigEventDays };
   vm.createContext(sandbox);
   return vm.runInContext('(' + m[1] + ')', sandbox);
 }
-const WJPT = extractWJPT(path.join(REPO, 'index.html'));
+const INDEX_SRC = fs.readFileSync(path.join(REPO, 'index.html'), 'utf8');
+const WJPT = extractConst(INDEX_SRC, 'WJPT');
+const FST = extractConst(INDEX_SRC, 'FST');
 
 // ---- ページの骨格・恒久リンク行(site-shell.js) ----
 // pageHead / pageFoot / permanentEventLinks の実体は tools/site-shell.js にある。
@@ -317,6 +322,73 @@ ${schedTableNippon(NIPPON.events)}
   return pageHead({ title, desc, canonical, jsonld, image: 'img/nippon-series/nippon-series-banner.jpg' }) + body + pageFoot('/events/nippon-series-2026-fukuoka/');
 }
 
+// ---- FST 5.0 ページ ----
+// 個別トーナメント(タイムスケジュール・ストラクチャー)は未発表のため、
+// 会期・会場・発表済みの2大会(MAIN EVENT / CHAMPIONSHIP)の概要だけの薄いページ。
+// ★ ここに推測を足さないこと。値はすべて index.html の const FST(＝一次情報で裏取り済み)から取る。
+function buildFst() {
+  const canonical = `${SITE}/events/fst-2026-fukuoka/`;
+  const reg = BIG.bigEventById('fst');
+  const first = BIG.eventFirstDay(FST.days), last = BIG.eventLastDay(FST.days);
+  const f1 = fmtDate(first), f2 = fmtDate(last);
+  const main = FST.events[0];
+  const title = `FST 5.0（FUKUOKA SUPER TOURNAMENT）2026 福岡 開催概要（${f1.m}/${f1.d}〜${f2.m}/${f2.d} ホテルニューオータニ博多）| ふくおかポーカーナビ`;
+  const desc = `FST 5.0（FUKUOKA SUPER TOURNAMENT／2026年${f1.m}月${f1.d}日〜${f2.m}月${f2.d}日・ホテルニューオータニ博多）の開催概要。`
+    + `MAIN EVENT は Prize Total ${main.prize}、CHAMPIONSHIP は Prize Total ${FST.events[1].prize}。個別トーナメントの詳細は未発表です。`;
+  const jsonld = {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    "name": "FST 5.0 (FUKUOKA SUPER TOURNAMENT)",
+    "startDate": first,
+    "endDate": last,
+    "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+    "eventStatus": "https://schema.org/EventScheduled",
+    "location": {
+      "@type": "Place",
+      "name": "ホテルニューオータニ博多",
+      "address": { "@type": "PostalAddress", "streetAddress": "渡辺通1-1-2", "addressRegion": "福岡県", "addressLocality": "福岡市中央区", "postalCode": "810-0004", "addressCountry": "JP" }
+    },
+    "organizer": { "@type": "Organization", "name": FST.organizer, "url": FST.x },
+    "description": desc,
+    "url": canonical,
+    "isAccessibleForFree": false
+  };
+  // 発表済みの2大会。1大会=1テーブルの「項目 / 内容」形式にする。
+  // JOPT・NIPPON のような横並びの表にすると、エントリー欄(「¥50,000 ／ FSTチケット2枚 ／ …」)が
+  // 狭い画面で数文字ごとに折り返して読めなくなるため(375pxで実測)。
+  const tables = FST.events.map(e => `<h2 class="day">${esc(e.name)}</h2>
+<div class="sched-wrap"><table class="sched">
+  <tbody>
+    <tr><th>Prize Total</th><td class="fst-prize">${esc(e.prize)}</td></tr>
+    <tr><th>エントリー</th><td>${esc(e.entry)}</td></tr>
+${e.sched.map(([k, v]) => `    <tr><th>${esc(k)}</th><td class="start">${esc(v)}</td></tr>`).join('\n')}
+  </tbody>
+</table></div>`).join('\n');
+  const body = `
+<h1>FST 5.0（FUKUOKA SUPER TOURNAMENT）2026 福岡 開催概要</h1>
+<p class="lead">2026年${f1.m}月${f1.d}日（${f1.wd}）〜${f2.m}月${f2.d}日（${f2.wd}）／ホテルニューオータニ博多（福岡市中央区渡辺通）</p>
+<img class="evt-banner" src="/${esc(FST.banner)}" width="1024" height="412" alt="${esc(reg && reg.bannerAlt ? reg.bannerAlt : FST.name)}">
+<div class="evt-meta">
+  <b>大会名</b>　${esc(FST.edition)}（FUKUOKA SUPER TOURNAMENT）<br>
+  <b>会期</b>　2026年9月19日（土）・20日（日）・21日（月）・22日（火）・23日（水）の5日間<br>
+  <b>会場</b>　${esc(FST.venue)}<br>
+  <b>住所</b>　${esc(FST.address)}<br>
+  <b>主催</b>　${esc(FST.organizer)}<br>
+  <b>MAIN EVENT</b>　<span class="prize">Prize Total ${esc(main.prize)}</span>
+</div>
+<p class="lead" style="margin-top:-6px">※ 公式では「FST5.0」（スペースなし）とも表記されます。</p>
+<div class="tba"><b>個別トーナメントの詳細は未発表です。</b>タイムスケジュール・ブラインドストラクチャー・レイトレジ締切・サイドイベントの本数などは公表されていません。発表され次第、このページに掲載します。下表は現時点で公表されている MAIN EVENT と CHAMPIONSHIP の概要です。</div>
+<div class="disclaimer">当サイトはFSTの主催者・公式媒体ではありません。公開情報をもとに当サイトが独自に集約した<b>非公式のまとめ</b>です。掲載しているバナーは当サイトが作成したもので、ロゴ・大会名等の権利は主催者に帰属します。掲載内容は<b>${esc(FST.asOf)}時点</b>の公式告知にもとづきますが、当サイトによる転記の誤りが含まれる可能性があります。発表済みの内容も変更される場合があります。参加前に必ず<a href="${esc(FST.x)}" target="_blank" rel="noopener">公式X（@fst_202408）</a>等の公式情報をご確認ください。<br>${POSITIONING}</div>
+<a class="cta" href="/#fst">▶ サイト内のFSTサテライト（チケット獲得トーナメント）を見る<small>インタラクティブ版（日付・店舗つきで直近の開催予定を表示）</small></a>
+${tables}
+<p class="lead" style="margin-top:14px">※ エントリー方法の「FSTチケット」は、県内各店で開催されるサテライトで獲得できるチケットを指します。サテライトの開催予定は<a href="/#fst">トップページのFSTページ</a>に掲載しています。</p>
+<div class="links">
+  ▶ <a href="${esc(FST.x)}" target="_blank" rel="noopener">公式X（@fst_202408）</a>　／　<a href="${esc(FST.linktree)}" target="_blank" rel="noopener">公式Linktree</a>　／　<a href="${esc(FST.instagram)}" target="_blank" rel="noopener">公式Instagram</a><br>
+  ▶ <a href="/">福岡の他のポーカートーナメント日程を見る</a>
+</div>`;
+  return pageHead({ title, desc, canonical, jsonld, image: 'img/fst/fst-banner.jpg' }) + body + pageFoot('/events/fst-2026-fukuoka/');
+}
+
 // ---- 書き出し / 検査 ----
 // 出力はいったん全部メモリ上で組み立ててから、まとめて書く(--check のときは書かずに突き合わせる)。
 // --check は「big-events.js を直したのに再生成を忘れた」「生成物を手で書き換えた」を検出するためのもの。
@@ -324,6 +396,7 @@ const files = {
   'events/jopt-2026-fukuoka-01/index.html': buildJopt(),
   'events/wjpt-2026/index.html': buildWjpt(),
   'events/nippon-series-2026-fukuoka/index.html': buildNippon(),
+  'events/fst-2026-fukuoka/index.html': buildFst(),
   'index.html': buildIndexHtml(),     // 恒久リンク行(#evtLinks)だけを差し替えたもの
   // sitemap.xml の中身は tools/gen-sitemap.js が決める(このスクリプトは組み立てない)。
   // イベントページと店舗ページの両方のURLが必要なので、片方の生成スクリプトが自前で

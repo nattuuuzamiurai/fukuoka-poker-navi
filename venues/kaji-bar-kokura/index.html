@@ -67,6 +67,11 @@
   .disclaimer b{color:var(--txt)}
   .archived{font-size:.86em;line-height:1.7;color:#5b4a1e;background:#fbf1d8;border:1px solid #ecd9a6;border-radius:10px;padding:11px 13px;margin-bottom:14px}
   .archived b{color:#3a2a06}
+  /* 「まだ発表されていない」ことの告知(FST)。終了(.archived)と区別できる色にする */
+  .tba{font-size:.86em;line-height:1.7;color:#26424e;background:#eef6f8;border:1px solid #cfe3e9;border-radius:10px;padding:11px 13px;margin-bottom:14px}
+  .tba b{color:#14333d}
+  /* 大会バナー(当サイト作成)。狭い画面でも横幅いっぱいに収め、読み込み前後で高さが動かないようにする */
+  .evt-banner{display:block;width:100%;height:auto;aspect-ratio:1024/412;border-radius:var(--r);box-shadow:var(--sha);margin-bottom:14px}
   .cta{display:block;text-align:center;background:linear-gradient(135deg,var(--felt),var(--felt2));color:#fff;font-weight:800;text-decoration:none;border-radius:var(--r);padding:13px 16px;margin:6px 0 20px;box-shadow:var(--sha)}
   .cta small{display:block;font-weight:600;font-size:.8em;color:#cfe3dd;margin-top:3px}
   h2.day{font-size:1.05em;font-weight:800;color:var(--felt);margin:22px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--gold)}
@@ -78,6 +83,9 @@
   table.sched td.buyin{white-space:nowrap}
   table.sched tr:last-child td{border-bottom:none}
   table.sched .gtd{display:inline-block;background:#fbf1d8;border:1px solid #ecd9a6;color:#7a5711;font-size:.85em;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:5px}
+  /* 「項目 / 内容」形式(FST)。項目名は左の見出し列になる */
+  table.sched tbody th{width:1%;white-space:nowrap}
+  table.sched td.fst-prize{font-weight:800;color:var(--felt);font-variant-numeric:tabular-nums}
   .sched-wrap{overflow-x:auto}
   .links{font-size:.88em;line-height:2;margin:18px 0 8px}
   .links a{color:#0e6a72;font-weight:700}
@@ -142,7 +150,7 @@
 </div></main>
 <footer>
   <div><b style="color:#fff">ふくおかポーカーナビ</b> — 福岡ポーカートーナメント日程アグリゲーター</div>
-  <div style="margin-top:6px"><a href="/">トップ</a>　|　<a href="/events/wjpt-2026/">WJPT 2026</a>　|　<a href="/events/jopt-2026-fukuoka-01/">JOPT 2026 福岡</a>　|　<a href="/events/nippon-series-2026-fukuoka/">NIPPON SERIES 福岡 2026</a>　|　<a href="/#fst">FST 5.0 2026 福岡</a></div>
+  <div style="margin-top:6px"><a href="/">トップ</a>　|　<a href="/events/wjpt-2026/">WJPT 2026</a>　|　<a href="/events/jopt-2026-fukuoka-01/">JOPT 2026 福岡</a>　|　<a href="/events/nippon-series-2026-fukuoka/">NIPPON SERIES 福岡 2026</a>　|　<a href="/events/fst-2026-fukuoka/">FST 5.0 2026 福岡</a></div>
   <div style="margin-top:6px"><a href="/contact.html">お問い合わせ</a>　|　<a href="/privacy.html">プライバシーポリシー</a></div>
   <div id="evtFeature" style="display:none"></div>
 </footer>
