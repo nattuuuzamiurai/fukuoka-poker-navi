@@ -143,6 +143,57 @@ function verifyPermanentLinks(files) {
   console.log('検査: 恒久リンク行はトップ・静的ページとも一致（' + permanentEventLinksList().length + '件）');
 }
 
+// ---- Event 構造化データの推奨項目(image / organizer / offers / performer) ----
+// Search Console が4ページで「performer / offers / image / organizer がありません」と警告している。
+// いずれも Google が【重大ではない問題 = 推奨項目】と明記しているもので、欠けていても
+// ページや検索機能が出なくなることはない。したがって「警告を消すために値を作る」ことはせず、
+// 実データで裏が取れているものだけを埋め、取れないものは空欄のまま残す。
+//
+// 【performer は入れない(4ページとも)】
+//   schema.org の performer は「出演者(プレゼンター・音楽グループ・俳優など)」。
+//   ポーカートーナメントに出演者に当たる実体が無い。参加者は事前に確定しておらず、
+//   出演契約を結んだ演者でもない(そもそも当サイトは参加者名簿を持たない)。
+//   主催団体を performer とみなす案も検討したが、schema.org は organizer を別に持っており、
+//   主催者を「出演者」として宣言するのは意味が違う(Googleの表示上も出演者として扱われる)。
+//   結局どう埋めても当サイトが作った値になる = Google に対する虚偽の構造化データになるため入れない。
+//
+// 【offers.availability / offers.validFrom は入れない】
+//   availability(いま申し込めるか)と validFrom(受付開始日)は実行日に依存する主張で、
+//   静的ページに焼き込むと会期後には必ず嘘になる。受付開始日は公表もされていない。
+//   当リポジトリは生成物を実行日に依存させない方針(README「sitemap.xml の所有者」)でもある。
+//   どちらも推奨項目なので、欠けたままにしておく。
+//
+// 【image】og:image と同じ画像を絶対URLで入れる(Googleは構造化データの相対URLを受け付けない)。
+//   構造化データの画像に SVG は使えないため、SVG版のあるものも .jpg を指す。
+const abs = p => `${SITE}/${String(p).replace(/^\//, '')}`;
+
+// エントリー額の表記から Offer を作る。Offer.price は単一の数値なので、
+// 【現金だけで完結する選択肢がちょうど1つに定まるときだけ】作る。
+//   「¥12,000」                              → 12000
+//   「2 Tickets + ¥8,000 or ¥80,000」        → 80000（現金のみの選択肢は ¥80,000 の1つ）
+//   「¥50,000 ／ FSTチケット2枚 ／ ¥25,000＋FSTチケット1枚」→ 50000（同上）
+//   「Qualifier（通過者のみ）」「¥40,000（+施設料 ¥5,000）」「5,000 + 1,000」→ 作らない
+// 複数のエントリー方法が併記されている大会でも、当サイトが金額を計算・解釈して
+// 作り出すことはしない(チケットは円に換算できない／内訳の解釈は公式に明記が無い)。
+// 区切り文字にカンマを入れないこと。金額の桁区切り(¥10,000)を割ってしまう。
+const YEN_ONLY = /^¥([\d,]+)$/;
+const ENTRY_SPLIT = /\s*(?:／|\bor\b)\s*/;
+function cashOffer(name, entry, url) {
+  const cash = String(entry == null ? '' : entry).trim()
+    .split(ENTRY_SPLIT)
+    .map(s => s.trim())
+    .filter(s => YEN_ONLY.test(s));
+  if (cash.length !== 1) return null;   // 0=現金だけでは入れない / 2以上=金額が一意に決まらない
+  const o = {
+    '@type': 'Offer',
+    name,
+    price: YEN_ONLY.exec(cash[0])[1].replace(/,/g, ''),
+    priceCurrency: 'JPY'
+  };
+  if (url) o.url = url;   // 「どこで申し込めるか」= 主催者の公式ページ。当サイトは受付を行わない
+  return o;
+}
+
 // ---- スケジュール表(日別) ----
 function schedTable(tournaments) {
   // 日ごとにグループ化(元データの順序を保持)
@@ -177,12 +228,19 @@ ${rows}
 // ---- JOPTページ ----
 function buildJopt() {
   const canonical = `${SITE}/events/jopt-2026-fukuoka-01/`;
+  const image = 'img/jopt/jopt-banner.jpg';
   const title = 'JOPT 2026 Fukuoka #01 タイムスケジュール（7/30〜8/2 福岡・大名）| ふくおかポーカーナビ';
   const desc = 'JOPT 2026 Fukuoka #01（2026年7月30日〜8月2日・UNITEDLAB 福岡市中央区大名）の全' + JOPT.tournaments.length + 'トーナメントのタイムスケジュール・バイイン・スタックを一覧掲載。メインイベントはプライズ保証1,500万円。';
+  // 各トーナメントのバイインを Offer にする(1トーナメント=1エントリー商品)。
+  // 現金だけの金額が定まらないもの(サテライト通過者限定・Day2など)は落ちる。
+  const offers = JOPT.tournaments
+    .map(t => cashOffer(t.name, t.buyin, JOPT.guideUrl))
+    .filter(Boolean);
   const jsonld = {
     "@context": "https://schema.org",
     "@type": "Event",
     "name": "JOPT 2026 Fukuoka #01",
+    "image": abs(image),
     "startDate": "2026-07-30",
     "endDate": "2026-08-02",
     "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
@@ -193,6 +251,7 @@ function buildJopt() {
       "address": { "@type": "PostalAddress", "streetAddress": (JOPT.address || ""), "addressRegion": "福岡県", "addressLocality": "福岡市中央区", "addressCountry": "JP" }
     },
     "organizer": { "@type": "Organization", "name": "Japan Open Poker Tour", "url": "https://japanopenpoker.com/" },
+    "offers": offers,
     "description": desc,
     "url": canonical,
     "isAccessibleForFree": false
@@ -212,18 +271,27 @@ ${schedTable(JOPT.tournaments)}
   ▶ <a href="${esc(JOPT.guideUrl)}" target="_blank" rel="noopener">JOPT公式サイト</a>${JOPT.scheduleUrl ? `　／　<a href="${esc(JOPT.scheduleUrl)}" target="_blank" rel="noopener">公式スケジュール</a>` : ''}<br>
   ▶ <a href="/">福岡の他のポーカートーナメント日程を見る</a>
 </div>`;
-  return pageHead({ title, desc, canonical, jsonld }) + body + pageFoot('/events/jopt-2026-fukuoka-01/');
+  return pageHead({ title, desc, canonical, jsonld, image }) + body + pageFoot('/events/jopt-2026-fukuoka-01/');
 }
 
 // ---- WJPTページ(終了済み=アーカイブ) ----
 function buildWjpt() {
   const canonical = `${SITE}/events/wjpt-2026/`;
+  const image = WJPT.banner || 'img/wjpt/wjpt-banner.jpg';
   const title = 'WJPT 2026（West Japan Poker Tour 7/18〜7/20 北九州）タイムスケジュール | ふくおかポーカーナビ';
   const desc = 'WJPT（West Japan Poker Tour）2026年7月18日〜20日・北九州で開催された全' + WJPT.tournaments.length + 'トーナメントのタイムスケジュール・バイイン・スタックの記録。';
+  // ★ この大会は終了済み(アーカイブ)。
+  //   - offers は入れない。エントリーはもう買えないので、価格を出すと「まだ申し込める」という
+  //     誤ったシグナルになる(availability を入れない方針とも整合しない)。当時のバイインは
+  //     本文の表に記録として残してある。
+  //   - organizer も入れない。当サイトが持っている出典は第三者のテキスト共有サービス上に置かれた
+  //     公式プレイヤーズガイドだけで、主催団体の名称・公式サイトを裏付ける材料がない。
+  //     大会名(West Japan Poker Tour)をそのまま主催者として名乗らせることはしない。
   const jsonld = {
     "@context": "https://schema.org",
     "@type": "Event",
     "name": "WJPT 2026 (West Japan Poker Tour)",
+    "image": abs(image),
     "startDate": "2026-07-18",
     "endDate": "2026-07-20",
     "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
@@ -247,7 +315,7 @@ ${schedTable(WJPT.tournaments)}
 <div class="links">
   ▶ <a href="/">福岡の今後のポーカートーナメント日程を見る</a>
 </div>`;
-  return pageHead({ title, desc, canonical, jsonld, image: (WJPT.banner || 'img/wjpt/wjpt-banner.jpg') }) + body + pageFoot('/events/wjpt-2026/');
+  return pageHead({ title, desc, canonical, jsonld, image }) + body + pageFoot('/events/wjpt-2026/');
 }
 
 // ---- NIPPON SERIES ページ ----
@@ -283,12 +351,24 @@ ${rows}
 
 function buildNippon() {
   const canonical = `${SITE}/events/nippon-series-2026-fukuoka/`;
+  const image = 'img/nippon-series/nippon-series-banner.jpg';
   const title = 'NIPPON SERIES FUKUOKA 2026 タイムスケジュール（8/11〜8/16 福岡・渡辺通）| ふくおかポーカーナビ';
   const desc = `NIPPON SERIES FUKUOKA 2026（2026年8月11日〜16日・福岡 トヨタホールスカラエスパシオ）の全${NIPPON.eventCount}イベントのタイムスケジュール・Fee・登録締切・Prizeを一覧掲載。MAIN EVENT（#17）は Prize 5,000,000。`;
+  // ★ offers は入れない。
+  //   公式の Fee 表記は「5,000 + 1,000」の形で、内訳(何に対する +1,000 か)は公式に明記がない。
+  //   Offer.price は単一の数値なので、5,000 と 6,000 のどちらを出すにしても当サイトが
+  //   公式表記を解釈し直すことになる。本文でも「+ 1,000 を言い換えない」と明記している方針
+  //   (README・ページ内の免責)と矛盾するため、正確に表せない以上は出さない。
+  //
+  // ★ organizer は大会シリーズ自身を Organization として入れる。
+  //   url は当サイトが出典として持っている公式イベントページと同じドメイン(=公式サイト)を
+  //   そこから導出する。運営法人の名称は当サイトの手元に無いので名乗らせない。
+  const organizerUrl = new URL(NIPPON.siteUrl).origin + '/';
   const jsonld = {
     "@context": "https://schema.org",
     "@type": "Event",
     "name": NIPPON.name,
+    "image": abs(image),
     "startDate": NIPPON.days[0],
     "endDate": NIPPON.days[NIPPON.days.length - 1],
     "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
@@ -298,6 +378,7 @@ function buildNippon() {
       "name": NIPPON.venue,
       "address": { "@type": "PostalAddress", "streetAddress": "渡辺通4-8-28 F.Tビル 地下2階", "addressRegion": "福岡県", "addressLocality": "福岡市中央区", "postalCode": "810-0004", "addressCountry": "JP" }
     },
+    "organizer": { "@type": "Organization", "name": "NIPPON SERIES", "url": organizerUrl },
     "description": desc,
     "url": canonical,
     "isAccessibleForFree": false
@@ -319,7 +400,7 @@ ${schedTableNippon(NIPPON.events)}
   ▶ <a href="${esc(NIPPON.siteUrl)}" target="_blank" rel="noopener">NIPPON SERIES 公式イベントページ</a>　／　<a href="${esc(NIPPON.guidePdfUrl)}" target="_blank" rel="noopener">公式Players Guide(PDF)</a><br>
   ▶ <a href="/">福岡の他のポーカートーナメント日程を見る</a>
 </div>`;
-  return pageHead({ title, desc, canonical, jsonld, image: 'img/nippon-series/nippon-series-banner.jpg' }) + body + pageFoot('/events/nippon-series-2026-fukuoka/');
+  return pageHead({ title, desc, canonical, jsonld, image }) + body + pageFoot('/events/nippon-series-2026-fukuoka/');
 }
 
 // ---- FST 5.0 ページ ----
@@ -328,6 +409,7 @@ ${schedTableNippon(NIPPON.events)}
 // ★ ここに推測を足さないこと。値はすべて index.html の const FST(＝一次情報で裏取り済み)から取る。
 function buildFst() {
   const canonical = `${SITE}/events/fst-2026-fukuoka/`;
+  const image = 'img/fst/fst-banner.jpg';   // 本文のバナーは SVG だが、構造化データでは使えないため .jpg を指す
   const reg = BIG.bigEventById('fst');
   const first = BIG.eventFirstDay(FST.days), last = BIG.eventLastDay(FST.days);
   const f1 = fmtDate(first), f2 = fmtDate(last);
@@ -335,10 +417,16 @@ function buildFst() {
   const title = `FST 5.0（FUKUOKA SUPER TOURNAMENT）2026 福岡 開催概要（${f1.m}/${f1.d}〜${f2.m}/${f2.d} ホテルニューオータニ博多）| ふくおかポーカーナビ`;
   const desc = `FST 5.0（FUKUOKA SUPER TOURNAMENT／2026年${f1.m}月${f1.d}日〜${f2.m}月${f2.d}日・ホテルニューオータニ博多）の開催概要。`
     + `MAIN EVENT は Prize Total ${main.prize}、CHAMPIONSHIP は Prize Total ${FST.events[1].prize}。個別トーナメントの詳細は未発表です。`;
+  // entry は「¥50,000 ／ FSTチケット2枚 ／ ¥25,000＋FSTチケット1枚」の形。
+  // 現金のみで入れる額だけを Offer にする(申込先の案内は公式X。この大会は公式サイトを持たない)。
+  const offers = FST.events
+    .map(e => cashOffer(e.name, e.entry, FST.x))
+    .filter(Boolean);
   const jsonld = {
     "@context": "https://schema.org",
     "@type": "Event",
     "name": "FST 5.0 (FUKUOKA SUPER TOURNAMENT)",
+    "image": abs(image),
     "startDate": first,
     "endDate": last,
     "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
@@ -349,6 +437,7 @@ function buildFst() {
       "address": { "@type": "PostalAddress", "streetAddress": "渡辺通1-1-2", "addressRegion": "福岡県", "addressLocality": "福岡市中央区", "postalCode": "810-0004", "addressCountry": "JP" }
     },
     "organizer": { "@type": "Organization", "name": FST.organizer, "url": FST.x },
+    "offers": offers,
     "description": desc,
     "url": canonical,
     "isAccessibleForFree": false
@@ -386,7 +475,7 @@ ${tables}
   ▶ <a href="${esc(FST.x)}" target="_blank" rel="noopener">公式X（@fst_202408）</a>　／　<a href="${esc(FST.linktree)}" target="_blank" rel="noopener">公式Linktree</a>　／　<a href="${esc(FST.instagram)}" target="_blank" rel="noopener">公式Instagram</a><br>
   ▶ <a href="/">福岡の他のポーカートーナメント日程を見る</a>
 </div>`;
-  return pageHead({ title, desc, canonical, jsonld, image: 'img/fst/fst-banner.jpg' }) + body + pageFoot('/events/fst-2026-fukuoka/');
+  return pageHead({ title, desc, canonical, jsonld, image }) + body + pageFoot('/events/fst-2026-fukuoka/');
 }
 
 // ---- 書き出し / 検査 ----
