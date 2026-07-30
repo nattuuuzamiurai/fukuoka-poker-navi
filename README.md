@@ -156,7 +156,7 @@ node tools/gen-venue-pages.js .          # 店舗ページ35枚 + トップの�
 | 仕組み | いつ効くか | 何が起きるか |
 |---|---|---|
 | `node tools/gen-event-pages.js <repo>` | 大会を追加したとき | トップと静的ページの**両方**が同時に更新される（片方だけ、が起こらない） |
-| `node tools/gen-event-pages.js <repo> --check` | レビュー時・CI | 書き込まずに突き合わせ、1文字でも違えば**非ゼロ終了**して落とす |
+| `node tools/gen-event-pages.js <repo> --check` | レビュー時（手動） | 書き込まずに突き合わせ、1文字でも違えば**非ゼロ終了**して落とす |
 | `mountBigEventLinks()` の自己点検 | ブラウザで開いたとき（初回描画時） | HTMLの静的リンクがレジストリとズレていたら**コンソールに警告**を出す |
 
 > 過去に「大会特集は1件」という指示を取り違えて恒久リンク行ごと削ってしまい、
@@ -165,6 +165,19 @@ node tools/gen-venue-pages.js .          # 店舗ページ35枚 + トップの�
 > さらにその直後、**静的ページだけ直してトップを見落とす**という取りこぼしも起きた。
 > ズレていても `mountBigEventLinks()` が描き直すので**画面上は正常に見え、目視では気づけない**
 > （欠けるのはJSを実行しないクローラに対してだけ）。上表の仕組みはこの見えない壊れ方への対策。
+
+**CIは現時点で未実装**（`.github/workflows/` は無く、`--check` は人が手で走らせている）。
+将来CIを組む担当への注意が2点ある。
+
+1. **`<repo>` には絶対パスを渡すこと。** 相対パス（`.` など）だと
+   `require(path.join(REPO,'jopt-data.js'))` が `jopt-data.js` のようなベアモジュール指定になり、
+   Node がリポジトリのファイルではなくインストール済みパッケージとして探しに行って落ちる。
+   CI側で絶対パスを組むか、`tools/gen-event-pages.js` の `REPO` を `path.resolve(REPO)` に直す。
+   ```sh
+   node tools/gen-event-pages.js "$GITHUB_WORKSPACE" --check   # ← 絶対パスならそのまま動く
+   ```
+2. 上表の3つは**役割が違う**ので、CIを入れても `mountBigEventLinks()` の自己点検は残すこと
+   （CIはコミット時点のズレ、自己点検は実際に配信されたHTMLのズレを見ている）。
 
 ### トップのバナーの見せ方（社長指示・2026-07-29）
 
