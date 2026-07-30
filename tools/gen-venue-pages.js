@@ -1,0 +1,436 @@
+#!/usr/bin/env node
+/**
+ * gen-venue-pages.js
+ *
+ * 検索流入用に、掲載店舗ごとのクローラブルな静的ページを生成する。
+ * SPAのハッシュURL(#venue/v41 等)は独立したURLとして扱われずインデックスされないため、
+ * /venues/<slug>/index.html という実URLのページを用意する。
+ * 狙いは「行橋 ポーカー」「折尾 ポーカー」「大名 ポーカー」のような、
+ * トップページ1枚では取りにいけない地域×店名のロングテール。
+ *
+ * データは data.js からそのまま読み込む(数値・住所を手打ちしない)。
+ *   - VENUES     … 店舗情報。URLは各店の "slug"(data.js のヘッダーコメントを参照)
+ *   - TOURNAMENTS… 日付つきトーナメント
+ *   - RECURRING  … 毎週固定の定期トーナメント(その場で日付に展開する)
+ *
+ * 【日程はハイブリッド】
+ *   静的HTMLに焼き込む + 閲覧時に /data.js を読み直してクライアント側で描き直す。
+ *   - 静的だけ … 月次の日程入力(data.js更新)のたびに再生成しないと内容が古くなる
+ *   - JSだけ   … JSを実行しないクローラに日程が1件も見えない
+ *   どちらも困るので両方やる。表を組み立てるコードは SCHEDULE_JS 1本だけを持ち、
+ *   生成時(Node・vmで読み込む)と閲覧時(ブラウザ・そのまま埋め込む)で共有する。
+ *
+ * 【焼き込む内容を「今日以降」にしない理由】
+ *   静的HTMLに「実行した日から先」を焼くと、data.js を1文字も触っていないのに
+ *   翌日には --check が落ちる。検査が毎日落ちるなら検査を見なくなるので、
+ *   静的側は data.js に載っている期間(下記 dataRange)をそのまま焼く。
+ *   閲覧者に出す「今日以降」への絞り込みはブラウザ側の描き直しが担当する。
+ *
+ * 生成物:
+ *   - venues/<slug>/index.html (全店)
+ *   - index.html の【店舗リンク行(#venueLinks)だけ】を上書き同期する
+ *       … このスクリプトが index.html を触るのはこの1行だけ。他の箇所には一切手を出さない。
+ *   - sitemap.xml … 中身は tools/gen-sitemap.js が決める。ここでは組み立てず、そのまま書くだけ。
+ *
+ * 使い方:
+ *   node gen-venue-pages.js <リポジトリのパス>            … 生成/同期する
+ *   node gen-venue-pages.js <リポジトリのパス> --check     … 書き込まず、ディスクの内容と一致するかだけ見る
+ *                                                          (一致しなければ非ゼロ終了。CI・レビュー用)
+ */
+
+const fs = require('fs');
+const path = require('path');
+const vm = require('vm');
+
+const args = process.argv.slice(2);
+const CHECK = args.includes('--check');
+const REPO_ARG = args.filter(a => !a.startsWith('--'))[0];
+if (!REPO_ARG) { console.error('リポジトリのパスを指定してください'); process.exit(1); }
+// path.join('.', 'data.js') は 'data.js' に正規化され、require() がパッケージ名として
+// 解決しようとして失敗する。受け取ったパスは必ず絶対パスに直す。
+const REPO = path.resolve(REPO_ARG);
+
+const shell = require('./site-shell.js');
+const { SITE, POSITIONING, esc, pageHead, pageFoot } = shell;
+// sitemap.xml の唯一の所有者。中身はここでは組み立てず、丸ごと受け取って書くだけ。
+const { sitemapFile } = require('./gen-sitemap.js');
+
+// ---- データ読み込み ----
+const DATA = require(path.join(REPO, 'data.js'));
+const BIG = require(path.join(REPO, 'big-events.js'));
+const { VENUES, TOURNAMENTS, RECURRING, AREAS } = DATA;
+
+// slug が欠けている/重複している/使えない文字を含む場合はここで落ちる。
+// 生成してから気づくとURLの付け替え=被リンクの喪失になるため、生成前に止める。
+shell.validateVenueSlugs(VENUES);
+
+// ============================================================
+// 日程表を組み立てるコード(生成時と閲覧時で共有する1本)
+// ============================================================
+// ★ このコードは Node(生成時) と ブラウザ(閲覧時) の両方が実行する。
+//   2箇所に別々に書くと必ずズレるので、文字列として1本だけ持つ。
+//   - Node   : 下の SCHED で vm 経由で読み込んで、静的HTMLを組み立てる
+//   - ブラウザ: そのまま <script> に埋め込み、/data.js を読み直して描き直す
+//   日付計算はすべてUTCで行う。ローカルタイムゾーンに依存させると、
+//   生成環境(Node)と閲覧環境(端末)で曜日がずれることがある。
+const SCHEDULE_JS = `
+function vpEsc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+var VP_WD = ['日','月','火','水','木','金','土'];
+function vpParse(iso){ var a = iso.split('-'); return Date.UTC(+a[0], +a[1] - 1, +a[2]); }
+function vpToIso(ms){ var d = new Date(ms); return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0') + '-' + String(d.getUTCDate()).padStart(2, '0'); }
+function vpWeekday(iso){ return new Date(vpParse(iso)).getUTCDay(); }
+function vpNum(n){ return String(n).replace(/\\B(?=(\\d{3})+(?!\\d))/g, ','); }
+
+/* 毎週固定の定期トーナメント(RECURRING)を、日付つきの形に展開する。
+   index.html の expandRecurring() と同じ考え方。 */
+function vpExpandRecurring(RECURRING, venueId, fromIso, toIso){
+  var out = [], end = vpParse(toIso);
+  for (var ms = vpParse(fromIso); ms <= end; ms += 86400000) {
+    var iso = vpToIso(ms), wd = new Date(ms).getUTCDay();
+    for (var i = 0; i < RECURRING.length; i++) {
+      var r = RECURRING[i];
+      if (r.venueId !== venueId || r.weekday !== wd) continue;
+      out.push({ name: r.name, date: iso, start: r.start, buyin: r.buyin, addon: r.addon,
+                 stack: r.buyinStack || 0, lateReg: r.lateReg, guarantee: null,
+                 tags: r.tags || [], recurring: true });
+    }
+  }
+  return out;
+}
+
+/* その店の [fromIso, toIso] の日程を、日付→開始時刻の順に並べて返す。 */
+function vpRows(TOURNAMENTS, RECURRING, venueId, fromIso, toIso){
+  var abs = [];
+  for (var i = 0; i < TOURNAMENTS.length; i++) {
+    var t = TOURNAMENTS[i];
+    if (t.venueId !== venueId || t.date < fromIso || t.date > toIso) continue;
+    abs.push(t);
+  }
+  return abs.concat(vpExpandRecurring(RECURRING, venueId, fromIso, toIso))
+    .sort(function(a, b){
+      if (a.date !== b.date) return a.date < b.date ? -1 : 1;
+      var sa = a.start || '99:99', sb = b.start || '99:99';
+      return sa < sb ? -1 : (sa > sb ? 1 : 0);
+    });
+}
+
+/* バイインの表示。index.html のトーナメントカードと同じ判断にそろえる。
+   金額が入っていない場合に「無料」と決めつけないこと(タグにフリーロールと
+   書かれているものだけフリーロールとして出し、それ以外は店舗確認に誘導する)。 */
+function vpBuyin(t){
+  if (t.buyin) return '\\u00a5' + vpNum(t.buyin);
+  var tags = t.tags || [];
+  for (var i = 0; i < tags.length; i++) {
+    if (String(tags[i]).indexOf('フリーロール') >= 0) return 'フリーロール';
+  }
+  return '詳細は店舗SNSを確認';
+}
+
+function vpScheduleHtml(rows){
+  if (!rows.length) {
+    return '<div class="vp-empty">現在このサイトに掲載している開催予定はありません。<br>開催状況は店舗の公式情報・SNSをご確認ください。</div>';
+  }
+  var byDay = {}, order = [];
+  for (var i = 0; i < rows.length; i++) {
+    var d = rows[i].date;
+    if (!byDay[d]) { byDay[d] = []; order.push(d); }
+    byDay[d].push(rows[i]);
+  }
+  var out = [];
+  for (var j = 0; j < order.length; j++) {
+    var day = order[j], list = byDay[day], p = day.split('-');
+    var head = (+p[1]) + '月' + (+p[2]) + '日（' + VP_WD[vpWeekday(day)] + '）';
+    var trs = [];
+    for (var k = 0; k < list.length; k++) {
+      var t = list[k], extra = '';
+      if (t.guarantee) extra += '<span class="gtd">GTD ' + vpNum(t.guarantee) + '</span>';
+      if (t.recurring) extra += '<span class="vp-recur">毎週' + VP_WD[vpWeekday(day)] + '曜</span>';
+      var tg = t.tags || [];
+      if (tg.length) extra += '　<span class="vp-tags">' + tg.map(vpEsc).join('・') + '</span>';
+      /* 抽出確度が低いものは黙って混ぜず、その旨を出す(READMEの編集方針)。 */
+      if (t.lowConfidence) extra += '　<span class="vp-warn">⚠ 要確認</span>';
+      trs.push('<tr><td class="start">' + vpEsc(t.start || '—') + '</td>'
+        + '<td>' + vpEsc(t.name) + extra + '</td>'
+        + '<td class="buyin">' + vpEsc(vpBuyin(t)) + '</td>'
+        + '<td class="buyin">' + (t.stack ? vpNum(t.stack) + '点' : '—') + '</td></tr>');
+    }
+    out.push('<h3 class="vp-day">' + head + '</h3>'
+      + '<div class="sched-wrap"><table class="sched">'
+      + '<thead><tr><th>開始</th><th>トーナメント</th><th>バイイン</th><th>スタック</th></tr></thead>'
+      + '<tbody>' + trs.join('') + '</tbody></table></div>');
+  }
+  return out.join('\\n');
+}
+`;
+
+// Node側から同じ関数を使う。SCHEDULE_JS を書き換えれば静的側も自動で追随する。
+const SCHED = vm.runInNewContext(SCHEDULE_JS
+  + '\n;({ vpRows: vpRows, vpScheduleHtml: vpScheduleHtml, vpToIso: vpToIso, vpParse: vpParse })');
+
+// ---- 静的側に焼き込む期間 ----
+// data.js に載っている日付の範囲(月単位に丸めたもの)。実行日に依存させない。
+function dataRange() {
+  const dates = TOURNAMENTS.map(t => t.date).filter(Boolean).sort();
+  if (!dates.length) {
+    // 日付つきトーナメントが1件も無い状態。定期分だけでも出せるよう当月を使う。
+    throw new Error('TOURNAMENTS が空です。焼き込む期間を決められません。');
+  }
+  const first = dates[0], last = dates[dates.length - 1];
+  const [fy, fm] = first.split('-').map(Number);
+  const [ly, lm] = last.split('-').map(Number);
+  const lastDay = new Date(Date.UTC(ly, lm, 0)).getUTCDate();
+  return {
+    from: `${fy}-${String(fm).padStart(2, '0')}-01`,
+    to: `${ly}-${String(lm).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`,
+    label: (fy === ly && fm === lm) ? `${fy}年${fm}月` : `${fy}年${fm}月〜${ly === fy ? '' : ly + '年'}${lm}月`
+  };
+}
+const RANGE = dataRange();
+
+// ---- 店舗ページ本体 ----
+const VENUE_CSS = `  .vp-sub{font-size:.9em;color:var(--mut);margin-bottom:14px}
+  h2.vp-sec{font-size:1.05em;font-weight:800;color:var(--felt);margin:26px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--gold)}
+  h3.vp-day{font-size:.95em;font-weight:800;color:var(--felt);margin:16px 0 7px}
+  .vp-empty{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:18px 15px;font-size:.88em;color:var(--mut);text-align:center;line-height:1.9}
+  .vp-tags{color:var(--mut);font-size:.9em}
+  .vp-warn{color:var(--red);font-size:.9em;font-weight:700}
+  .vp-recur{display:inline-block;background:#eef3f1;border:1px solid var(--bor);color:var(--felt);font-size:.8em;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:5px}
+  .evt-meta a{color:#0e6a72;font-weight:700}
+  ul.vp-list{list-style:none;display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 6px}
+  ul.vp-list a{display:inline-block;background:var(--sur);border:1px solid var(--bor);border-radius:20px;padding:6px 13px;font-size:.85em;font-weight:700;color:var(--felt);text-decoration:none;box-shadow:var(--sha)}
+`;
+
+// 住所を PostalAddress に分解する。data.js の address 文字列を機械的に切るだけで、
+// 無い情報は足さない(市区町村が読み取れなければ addressLocality を出さない)。
+// addressRegion は当サイトが福岡県内の店舗だけを扱うため常に福岡県。
+function addressParts(address) {
+  const a = String(address).replace(/^福岡県/, '');
+  const m = a.match(/^(.+?[市郡])/);
+  if (!m) return { street: a, locality: null };
+  return { street: a.slice(m[1].length), locality: m[1] };
+}
+
+function venueJsonLd(v) {
+  // ★ data.js に無い項目は出さない。空文字を "" のまま出すと、
+  //   検索エンジンに「値が無い」ではなく「空という値」を渡すことになる。
+  const j = {
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    name: v.name
+  };
+  if (v.address) {
+    const p = addressParts(v.address);
+    const addr = { '@type': 'PostalAddress' };
+    if (p.locality) addr.addressLocality = p.locality;
+    if (p.street) addr.streetAddress = p.street;
+    addr.addressRegion = '福岡県';
+    addr.addressCountry = 'JP';
+    j.address = addr;
+  }
+  if (v.tel) j.telephone = v.tel;
+  // url は店舗自身のサイト。持っていない店では出さない。
+  if (v.website) j.url = v.website;
+  const sameAs = [v.x, v.instagram, v.threads, v.line].filter(Boolean);
+  if (sameAs.length) j.sameAs = sameAs;
+  return j;
+}
+
+function metaRows(v) {
+  const rows = [];
+  rows.push(`<b>エリア</b>　${esc(v.area)}`);
+  if (v.address) rows.push(`<b>住所</b>　${esc(v.address)}`);
+  if (v.access) rows.push(`<b>アクセス</b>　${esc(v.access)}`);
+  if (v.tel) rows.push(`<b>電話</b>　<a href="tel:${esc(v.tel.replace(/[^0-9+]/g, ''))}">${esc(v.tel)}</a>`);
+  if (v.website) rows.push(`<b>公式サイト</b>　<a href="${esc(v.website)}" target="_blank" rel="noopener">${esc(v.website)}</a>`);
+  const sns = [];
+  if (v.x) sns.push(`<a href="${esc(v.x)}" target="_blank" rel="noopener">X</a>`);
+  if (v.instagram) sns.push(`<a href="${esc(v.instagram)}" target="_blank" rel="noopener">Instagram</a>`);
+  if (v.threads) sns.push(`<a href="${esc(v.threads)}" target="_blank" rel="noopener">Threads</a>`);
+  if (v.line) sns.push(`<a href="${esc(v.line)}" target="_blank" rel="noopener">公式LINE</a>`);
+  if (sns.length) rows.push(`<b>SNS</b>　${sns.join('　／　')}`);
+  return rows.join('<br>\n  ');
+}
+
+function buildVenue(v) {
+  const canonical = `${SITE}/venues/${v.slug}/`;
+  const title = `${v.name}（${v.area}）のポーカートーナメント日程 | ふくおかポーカーナビ`;
+  const desc = `${v.name}（${v.area}${v.access ? '／' + v.access : ''}）で開催されるポーカートーナメントの日程を日付順に掲載。`
+    + `開始時刻・バイイン・スタックのほか、${v.address ? '住所・' : ''}アクセス・公式SNSもまとめて確認できます。`;
+
+  const rows = SCHED.vpRows(TOURNAMENTS, RECURRING, v.id, RANGE.from, RANGE.to);
+  const schedHtml = SCHED.vpScheduleHtml(rows);
+
+  // 同じエリアの他店。内部リンクを増やしつつ、読者にとっても「近くの別の店」になる。
+  const sameArea = VENUES.filter(x => x.area === v.area && x.id !== v.id);
+  const areaBlock = sameArea.length ? `
+<h2 class="vp-sec">同じエリア（${esc(v.area)}）の他のポーカー店</h2>
+<ul class="vp-list">
+${sameArea.map(x => `  <li><a href="/venues/${x.slug}/">${esc(x.name)}</a></li>`).join('\n')}
+</ul>` : '';
+
+  // ★ note は data.js の文面をそのまま出す。
+  //   「住所は第三者情報のため要確認。」のような留保はREADMEの編集方針に沿って
+  //   data.js 側で既に整えてあるので、生成スクリプトが要約・言い換えしてはいけない
+  //   (ヘッジが落ちると読者が確度の差を知らないまま行動することになる)。
+  const noteBlock = v.note ? `<b>${esc(v.name)}について</b>　${esc(v.note)}<br>` : '';
+  const sourceBlock = (v.sourceUrl && v.sourceLabel)
+    ? `主な情報源: <a href="${esc(v.sourceUrl)}" target="_blank" rel="noopener">${esc(v.sourceLabel)}</a>。`
+    : '';
+
+  const body = `
+<h1>${esc(v.name)}</h1>
+<p class="vp-sub">${esc(v.area)}のポーカースポット${v.access ? `（${esc(v.access)}）` : ''} — トーナメント日程・バイイン・アクセス</p>
+<div class="evt-meta">
+  ${metaRows(v)}
+</div>
+<div class="disclaimer">${noteBlock}当サイトは店舗が公開している情報を集約している媒体で、この店舗の運営者ではありません。日程・料金・営業状況は変更されることがあるため、参加前に必ず店舗の公式情報・SNSをご確認ください。${sourceBlock}<br>${POSITIONING}</div>
+<a class="cta" href="/#venue/${esc(v.id)}">▶ 月を切り替えて日程を見る<small>サイト内の月別カレンダー（前月・翌月に移動できます）</small></a>
+<h2 class="vp-sec" id="vp-sched-title">トーナメント日程（${esc(RANGE.label)}の掲載分）</h2>
+<p class="lead" id="vp-sched-note">※ この一覧は${esc(RANGE.label)}の掲載分です。JavaScriptが有効な環境では、読み込み時に最新の掲載データから<b>今日以降</b>の日程に差し替わります。</p>
+<div id="vp-sched">${schedHtml}</div>${areaBlock}
+<div class="links">
+  ▶ <a href="/">福岡のポーカートーナメント日程を日付順に見る（全${VENUES.length}店舗）</a><br>
+  ▶ <a href="/#venue/${esc(v.id)}">${esc(v.name)} の月別カレンダー</a>
+</div>`;
+
+  // 閲覧時の描き直し。/data.js を読み直して「今日以降」に差し替える。
+  // 店舗ページで他社イベントのバナーをOGP画像に使うのは不適切なので noImage(トップと同じ扱い)。
+  const scripts = `<script src="/data.js"></script>
+<script>
+${SCHEDULE_JS}
+/* 生成時に焼き込んだ日程を、いま読み込んだ data.js の内容で描き直す。
+   これがあるので、月次の日程入力(data.js更新)のあとに店舗ページを再生成し忘れても
+   閲覧者には最新が出る。ただしクローラが見るのは静的HTMLなので、再生成は必要
+   (README「data.jsを更新したら」を参照)。 */
+(function(){
+  if (typeof TOURNAMENTS === 'undefined' || typeof RECURRING === 'undefined') return;
+  var el = document.getElementById('vp-sched');
+  if (!el) return;
+  var n = new Date();
+  var pad = function(x){ return String(x).padStart(2, '0'); };
+  var today = n.getFullYear() + '-' + pad(n.getMonth() + 1) + '-' + pad(n.getDate());
+  /* 定期トーナメントは日付を持たないので、どこまで先まで展開するかを決める必要がある。
+     「掲載されている絶対日付の最終日」か「今日から60日後」の、遅いほうまで出す。 */
+  var last = today;
+  for (var i = 0; i < TOURNAMENTS.length; i++) {
+    if (TOURNAMENTS[i].date > last) last = TOURNAMENTS[i].date;
+  }
+  var plus60 = vpToIso(vpParse(today) + 60 * 86400000);
+  var rows = vpRows(TOURNAMENTS, RECURRING, ${JSON.stringify(v.id)}, today, last > plus60 ? last : plus60);
+  el.innerHTML = vpScheduleHtml(rows);
+  var t = document.getElementById('vp-sched-title');
+  if (t) t.textContent = '今後のトーナメント日程（' + rows.length + '件）';
+  var note = document.getElementById('vp-sched-note');
+  if (note && note.parentNode) note.parentNode.removeChild(note);
+})();
+</script>
+`;
+
+  return pageHead({
+    title, desc, canonical,
+    jsonld: venueJsonLd(v),
+    noImage: true,
+    ogType: 'website',
+    twitterCard: 'summary',
+    extraCss: VENUE_CSS
+  }) + body + pageFoot(BIG, null, scripts);
+}
+
+// ---- トップページ(index.html)の店舗リンク行(#venueLinks)を同期する ----
+// 【なぜ必要か】
+//   トップの店舗カードは JS(renderVenues) が描いている。JSを実行しないクローラには
+//   /venues/<slug>/ へのリンクが1本も見えないため、静的ページを作っただけでは
+//   クロール経路がsitemapだけになる。大会の恒久リンク行(#evtLinks)と同じ考え方で、
+//   HTMLに直接書いた静的リンクを1行置く。
+//   ★ 中身は自動生成。店舗を足せばこの行にも自動で増える。
+const INDEX_LINKS_PREFIX = '店舗ページ: ';
+// 置換対象は「行頭にある <div id="venueLinks" …>…</div> の1行」だけ。
+// 行頭アンカー(^ + m フラグ)は必須。これが無いと、説明のためにコメント内に書いた
+// `<div id="venueLinks">` という文字列にまで当たってコメントごと壊す
+// (#evtLinks で実際にやらかしている。gen-event-pages.js の同じ箇所のコメントを参照)。
+const INDEX_LINKS_RE = /^(\s*<div id="venueLinks"[^>]*>)([^\n]*?)(<\/div>)$/m;
+const INDEX_LINKS_RE_G = new RegExp(INDEX_LINKS_RE.source, 'gm');
+
+// エリアごとにまとめる。並びは data.js の AREAS の順、エリア内は VENUES の順。
+function venueLinksRow() {
+  const areas = AREAS.filter(a => VENUES.some(v => v.area === a));
+  // AREAS に無いエリアが VENUES 側に現れた場合も落とさず末尾に出す(掲載漏れを作らない)。
+  VENUES.forEach(v => { if (areas.indexOf(v.area) < 0) areas.push(v.area); });
+  return areas.map(a => `【${esc(a)}】`
+    + VENUES.filter(v => v.area === a)
+        .map(v => `<a href="/venues/${v.slug}/">${esc(v.name)}</a>`)
+        .join('・')
+  ).join('　');
+}
+
+function buildIndexHtml() {
+  const src = fs.readFileSync(path.join(REPO, 'index.html'), 'utf8');
+  // 「見つからない」も「複数見つかる」も、どちらも意図しない状態なので黙って通さず必ず落とす。
+  const hits = src.match(INDEX_LINKS_RE_G) || [];
+  if (hits.length !== 1) {
+    throw new Error(`index.html の店舗リンク行(<div id="venueLinks">…</div>)が ${hits.length} 件見つかりました。`
+      + '1件だけ、独立した1行として置いてください（トップの店舗リンク行を同期できません）。');
+  }
+  return src.replace(INDEX_LINKS_RE, (_m, open, _inner, close) =>
+    open + INDEX_LINKS_PREFIX + venueLinksRow() + close);
+}
+
+// ---- 検査 ----
+// 「店舗を足したのにトップの静的リンク行だけ古い」「店舗ページが1件足りない」を
+// 目視ではなくここで止める。
+function verify(files) {
+  const problems = [];
+  VENUES.forEach(v => {
+    const rel = `venues/${v.slug}/index.html`;
+    if (!files[rel]) problems.push(`${v.name}: ${rel} が生成物に含まれていない`);
+  });
+  const im = files['index.html'].match(INDEX_LINKS_RE);
+  if (!im) problems.push('index.html: #venueLinks が見つからない');
+  else {
+    const inner = im[2];
+    if (inner.indexOf(INDEX_LINKS_PREFIX) !== 0) problems.push('index.html: #venueLinks の見出し文字列が想定と違う');
+    const linked = (inner.match(/href="\/venues\/[^"]+\/"/g) || []).length;
+    if (linked !== VENUES.length) {
+      problems.push(`index.html #venueLinks のリンク数が ${linked} 件（VENUES は ${VENUES.length} 件）`);
+    }
+  }
+  if (problems.length) {
+    console.error('\n✗ 店舗ページの生成物が data.js と一致しません:\n  - ' + problems.join('\n  - '));
+    process.exit(1);
+  }
+  console.log('検査: 店舗ページ' + VENUES.length + '件・トップの店舗リンク行は data.js と一致');
+}
+
+// ---- 書き出し / 検査 ----
+// 出力はいったん全部メモリ上で組み立ててから、まとめて書く(--check のときは書かずに突き合わせる)。
+const files = {};
+VENUES.forEach(v => { files[`venues/${v.slug}/index.html`] = buildVenue(v); });
+files['index.html'] = buildIndexHtml();   // 店舗リンク行(#venueLinks)だけを差し替えたもの
+Object.assign(files, sitemapFile(REPO));
+
+verify(files);
+
+if (CHECK) {
+  const stale = Object.keys(files).filter(rel => {
+    let cur = null;
+    try { cur = fs.readFileSync(path.join(REPO, rel), 'utf8'); } catch (e) { /* 未生成 */ }
+    return cur !== files[rel];
+  });
+  if (stale.length) {
+    console.error('\n✗ 生成物が data.js と一致しません（node tools/gen-venue-pages.js <repo> を実行してください）:\n  - ' + stale.join('\n  - '));
+    process.exit(1);
+  }
+  console.log('検査: 生成物はすべて最新（' + Object.keys(files).length + 'ファイル）');
+} else {
+  let wrote = 0;
+  Object.keys(files).forEach(rel => {
+    const p = path.join(REPO, rel);
+    let cur = null;
+    try { cur = fs.readFileSync(p, 'utf8'); } catch (e) { /* 未生成 */ }
+    if (cur === files[rel]) return;
+    fs.mkdirSync(path.dirname(p), { recursive: true });
+    fs.writeFileSync(p, files[rel], 'utf8');
+    wrote++;
+  });
+  console.log(`完了。店舗ページ ${VENUES.length} 件（焼き込んだ期間: ${RANGE.label}）／ 書き換えたファイル ${wrote} 件`);
+}
