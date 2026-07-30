@@ -68,9 +68,10 @@ const BIG_EVENTS = [
     // 表記の詳細と他の裏取りは index.html の const FST のコメントを参照。
     label: 'FST 5.0 2026 福岡',
     days: ['2026-09-19', '2026-09-20', '2026-09-21', '2026-09-22', '2026-09-23'],
-    // FSTはまだ個別トーナメントが未発表のため静的ページを作っていない。
-    // 発表後に events/fst-2026-fukuoka/ を作ったら、この featureUrl をそちらに差し替える。
-    featureUrl: '/#fst',
+    // 個別トーナメントは未発表だが、会期・会場・プライズ概要だけの静的ページを用意している
+    // (ハッシュURLだと検索エンジンに個別ページとしてインデックスされないため)。
+    // 中身は tools/gen-event-pages.js が index.html の const FST から生成する。
+    featureUrl: '/events/fst-2026-fukuoka/',
     hash: '#fst',
     banner: 'img/fst/fst-banner.svg',
     bannerAlt: 'FST 5.0 FUKUOKA SUPER TOURNAMENT 9.19-9.23 ホテルニューオータニ博多',
