@@ -20,7 +20,27 @@
  *   6. 【SPA側が実際に間引きを通していること】… index.html から expandRecurring() を
  *      切り出して走らせ、返り値で確かめる。ここが「呼ぶのを忘れる」形で壊れると、
  *      サイトの主戦場であるトップページにだけ重複が出る(静的な店舗ページは無事なので気づきにくい)
- *   7. 現在の data.js では1行も抑止しないこと(= このPRで公開中の内容が変わらないこと)
+ *   7. 実データ(data.js)に対しては【件数ではなく性質】を見ること(下記)
+ *
+ * 【実データに固定の件数を書かないこと ★重要】
+ *   当初ここには「現在の data.js では1行も抑止しない」という検査を置いていた。
+ *   PR #23 の時点では正しかった(自動取込は v3 の1店だけで、その店に RECURRING が無かった)。
+ *   しかし翌日 2026-07-31 に v19 の自動取得を有効化した瞬間、日次の bot が9件を取込み、
+ *   設計どおり5行が間引かれて【誰も何も間違えていないのにテストが赤くなった】。
+ *
+ *   原因は「日次の自動取込で毎日変わりうる実データに、固定の数値で期待値を置いた」こと。
+ *   放っておくと店を1つ足すたびに同じことが起き、やがて「赤いのが普通」という学習を生んで
+ *   警報そのものの価値が壊れる。
+ *
+ *   そこで実データに対しては【いつ・どの店が自動取込に加わっても成り立つ性質】だけを見る。
+ *   固定の件数・固定の店IDを見たいものは、下の「固定フィクスチャ」側で押さえる
+ *   (venue-schedule.test.js が PR #15 で採った方針と同じ)。
+ *
+ *   ★ 当初の目的だった「既存の掲載内容に影響しない」は、より強い形で残してある:
+ *     - 自動取込が【無い】店 … 間引きの有無で日程表が1バイトも変わらない(永久に成り立つ)
+ *     - 自動取込が【ある】店 … 消えるのは「同じ枠に自動取込の実体がある行」だけで、
+ *       日付+開始時刻の枠そのものは1つも減らない
+ *   「0件だった」という一時点のスナップショットより強い主張になっている。
  */
 
 'use strict';
@@ -31,9 +51,39 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 const RD = require('../recurring-dedupe.js');
-const { SCHED, venueRange } = require('./venue-schedule.js');
+const { SCHEDULE_JS, SCHED, venueRange } = require('./venue-schedule.js');
 
 const REPO = path.join(__dirname, '..');
+
+/**
+ * 【間引きを外した状態の】日程表レンダラ。
+ * 出荷しているのと同じ SCHEDULE_JS を、素通しの RecurringDedupe で組み立て直す
+ * (判定だけを差し替えるので、行の作り方・並べ方・HTMLは出荷コードと完全に同じ)。
+ * これがあると「間引きの前後」を実データで直接比べられる。
+ */
+const NO_DEDUPE = vm.runInNewContext(
+  SCHEDULE_JS + '\n;({ vpRows: vpRows, vpScheduleHtml: vpScheduleHtml })',
+  { RecurringDedupe: { filterExpanded: (tournaments, rows) => rows } });
+
+/**
+ * その店の掲載期間ぶんの行を「間引き後」「間引き前」の両方で作って返す。期間が無い店は null。
+ *
+ * ★ Array.from で包み直しているのは、2つのレンダラが【別々の vm コンテキスト】に居るため。
+ *   vm が返す配列は host 側の Array.prototype を継承しないので、そのまま
+ *   assert.deepStrictEqual に渡すと中身が同一でも
+ *   「Values have same structure but are not reference-equal」で落ちる。
+ */
+function rowsBeforeAfter(D, venueId) {
+  const r = venueRange(D.TOURNAMENTS, D.RECURRING, venueId);
+  if (!r) return null;
+  return {
+    range: r,
+    before: Array.from(NO_DEDUPE.vpRows(D.TOURNAMENTS, D.RECURRING, venueId, r.from, r.to)),
+    after: Array.from(SCHED.vpRows(D.TOURNAMENTS, D.RECURRING, venueId, r.from, r.to))
+  };
+}
+
+const slotKey = t => t.date + '|' + RD.normStart(t.start);
 
 /**
  * index.html から【定期開催を展開する部分そのもの】を切り出して実行できる形にする。
@@ -264,17 +314,98 @@ test('判定の本体が2箇所に書き写されていない（index.html / ven
   }
 });
 
-// ---- 6. 現在のデータでは何も変わらないこと ----
+// ---- 6. 実データ(data.js)に対する検査。件数ではなく【性質】だけを見る ----
+//   ここに固定の件数・固定の店IDを書かないこと。日次の自動取込で毎日変わるため、
+//   書いた瞬間から「いつか誰も間違えていないのに落ちるテスト」になる(冒頭のコメント参照)。
 
-test('現在の data.js では1行も抑止しない（このPRで公開中の内容が変わらないことの担保）', () => {
+test('実データ: 自動取込が無い店の日程表は、間引きの有無で1バイトも変わらない', () => {
+  // 【当初の「公開中の内容が変わらない」を、永久に成り立つ形に置き換えたもの】
+  // この間引きが触れてよいのは自動取込のある店だけ。それ以外の店に1文字でも影響したら、
+  // 規則が広がった(＝レビュー部が禁じた方向へ動いた)ということ。
+  const D = require(path.join(REPO, 'data.js'));
+  const autoVenues = new Set(D.TOURNAMENTS.filter(t => t.source === 'auto').map(t => t.venueId));
+  let checked = 0;
+  for (const v of D.VENUES) {
+    if (autoVenues.has(v.id)) continue;
+    const rows = rowsBeforeAfter(D, v.id);
+    if (!rows) continue;
+    checked++;
+    assert.strictEqual(
+      SCHED.vpScheduleHtml(rows.after), NO_DEDUPE.vpScheduleHtml(rows.before),
+      `${v.id} ${v.name}: 自動取込が無い店なのに、間引きで日程表が変わっている`);
+  }
+  assert.ok(checked > 0, '検査対象の店が1件も無い（data.js の読み込みか venueRange が壊れている）');
+});
+
+test('実データ: 間引きで消えるのは「同じ枠に自動取込の実体がある定期開催」だけ', () => {
   const D = require(path.join(REPO, 'data.js'));
   for (const v of D.VENUES) {
-    const r = venueRange(D.TOURNAMENTS, D.RECURRING, v.id);
-    if (r) SCHED.vpRows(D.TOURNAMENTS, D.RECURRING, v.id, r.from, r.to);
+    const rows = rowsBeforeAfter(D, v.id);
+    if (!rows) continue;
+    // after は before の部分列(並べ替えや書き換えをしていない)
+    const afterIds = rows.after.map(t => JSON.stringify(t));
+    const beforeIds = rows.before.map(t => JSON.stringify(t));
+    assert.deepStrictEqual(afterIds, beforeIds.filter(x => afterIds.includes(x)),
+      `${v.id}: 間引きが行の並びや中身を変えている`);
+
+    // 消えた行はすべて「定期開催」で、かつ同じ枠に自動取込の行が残っている
+    const kept = new Set(afterIds);
+    for (const t of rows.before) {
+      if (kept.has(JSON.stringify(t))) continue;
+      assert.strictEqual(t.recurring, true, `${v.id} ${t.date} ${t.name}: 定期開催でない行が消えている`);
+      const partner = rows.after.find(x => slotKey(x) === slotKey(t) && x.source === 'auto');
+      assert.ok(partner,
+        `${v.id} ${t.date} ${t.start} 「${t.name}」を消したのに、同じ枠に自動取込の行が残っていない`);
+    }
   }
-  const s = RD.summary();
-  assert.strictEqual(s.count, 0,
-    '抑止が発生している(自動取込を有効にした店が増えたなら、この期待値ごと見直すこと): ' + RD.detailLines().join(' / '));
+});
+
+test('実データ: 間引きで「日付+開始時刻の枠」は1つも減らない（読者が枠を失わない）', () => {
+  // 行は減ってよいが、枠が減るのは「その時間の開催が消えた」ことになるので許さない。
+  const D = require(path.join(REPO, 'data.js'));
+  for (const v of D.VENUES) {
+    const rows = rowsBeforeAfter(D, v.id);
+    if (!rows) continue;
+    const before = [...new Set(rows.before.map(slotKey))].sort();
+    const after = [...new Set(rows.after.map(slotKey))].sort();
+    assert.deepStrictEqual(after, before, `${v.id} ${v.name}: 間引きで開催の枠そのものが消えている`);
+  }
+});
+
+test('実データ: 間引きで掲載0件になる店は無い（sitemap の掲載判定が変わらない）', () => {
+  const D = require(path.join(REPO, 'data.js'));
+  for (const v of D.VENUES) {
+    const rows = rowsBeforeAfter(D, v.id);
+    if (!rows) continue;
+    assert.strictEqual(rows.after.length > 0, rows.before.length > 0,
+      `${v.id} ${v.name}: 間引きで掲載行が0になった（sitemap から落ちる）`);
+  }
+});
+
+test('実データ: 抑止した行は1件残らず記録に残る（ログが唯一の観測手段なので）', () => {
+  // 件数そのものは見ない(毎日変わる)。「実際に消した数」と「記録した数」が一致することだけを見る。
+  RD.reset();
+  const D = require(path.join(REPO, 'data.js'));
+  let dropped = 0;
+  for (const v of D.VENUES) {
+    const rows = rowsBeforeAfter(D, v.id);
+    if (rows) dropped += rows.before.length - rows.after.length;
+  }
+  assert.strictEqual(RD.summary().count, dropped, '抑止した行数と記録の件数が食い違っている');
+  assert.strictEqual(RD.detailLines().length, dropped);
+});
+
+test('実データ: 抑止が起きるのは auto-import-stores.json に載っている店だけ', () => {
+  // 判定は source:'auto' で行っているが、結果として店リストの外に波及していないことを実データで確認する。
+  RD.reset();
+  const D = require(path.join(REPO, 'data.js'));
+  const listed = new Set(JSON.parse(fs.readFileSync(path.join(REPO, 'auto-import-stores.json'), 'utf8'))
+    .stores.map(s => s.venueId));
+  for (const v of D.VENUES) rowsBeforeAfter(D, v.id);
+  for (const venueId of Object.keys(RD.summary().byVenue)) {
+    assert.ok(listed.has(venueId),
+      `${venueId}: 自動取得の対象店ではないのに定期開催が抑止されている`);
+  }
 });
 
 test('抑止しても掲載行が0になることはない（sitemap の掲載判定が壊れない）', () => {
