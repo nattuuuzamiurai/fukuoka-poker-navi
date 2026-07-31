@@ -169,6 +169,16 @@ concurrency:
 jobs:
   monitor:
     runs-on: ubuntu-latest
+    # 【ハングを何時間も垂れ流さないための上限】GitHub Actions の既定は360分で、
+    # 何かが固まったときに6時間気づけない。実測では 6店 × 直近12投稿の初回バックログでも
+    # 全体約10分(Vision呼び出し27回)、Vision の max_tokens を上げた後の見積りでも20〜40分。
+    # 60分あれば正常な実行が切られることはなく、異常なら1時間で赤くなる。
+    #
+    # 【この上限はジョブ全体のもの】Apify取得・画像ダウンロード・Vision抽出に加え、
+    # git pull --rebase / gen-venue-pages / gen-sitemap の再生成も同じジョブに乗る。
+    # Vision 1回あたりの無音上限(tools/venue-schedule-vision.js の STREAM_IDLE_TIMEOUT_MS)
+    # だけを見て全体の所要時間を推し量らないこと。
+    timeout-minutes: 60
     steps:
       # 【このジョブが dry-run になる条件はこの1箇所だけで決まる】後続ステップは
       # steps.mode.outputs.dry_run を見るだけで、イベント種別も入力も自分では解釈しない。
