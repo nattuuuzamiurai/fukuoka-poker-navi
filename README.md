@@ -54,7 +54,7 @@ AdSense/PR枠が埋まるまでの間、自社アプリの導線を3か所に置
 | `tools/gen-sitemap.js` | **`sitemap.xml` の唯一の所有者**。トップ＋イベントページ＋店舗ページの全URLをここだけで組み立てる（詳細は下記「sitemap.xml の所有者」）。単独実行も可: `node tools/gen-sitemap.js <リポジトリのパス>`（`--check` あり） |
 | `tools/site-shell.js` | 静的ページ共通の「外側」（`<head>`・GA4タグ・共通CSS・ヘッダー・フッター・自社広告・大会の恒久リンク行）。イベントページと店舗ページで骨格が食い違わないよう、出どころを1つにしてある。**純粋なモジュールで、require しても何も書き込まない** |
 | `tools/import-venue-image.js` | 店舗から直接届いたトーナメント月間スケジュール画像を取り込むCLIツール（詳細は下記「データ取得アーキテクチャ」）。実行: `node tools/import-venue-image.js --venue <id> --image <path>`（`--dry-run` あり） |
-| `tools/venue-schedule-vision.js` | 画像→Tournamentスキーマの配列に正規化するVision抽出ロジック（`ANTHROPIC_API_KEY` が必要）。`tools/import-venue-image.js` と `tools/monitor-instagram-apify.js` から呼ばれる。**出力の切り捨て（`stop_reason: "max_tokens"` / 閉じフェンス欠落）を検出したら、部分的に採用せず必ず失敗させる**（理由は下記「データ取得アーキテクチャ」の**Visionの出力が途中で切れた場合**）。テスト: `node tools/venue-schedule-vision.test.js` |
+| `tools/venue-schedule-vision.js` | 画像→Tournamentスキーマの配列に正規化するVision抽出ロジック（`ANTHROPIC_API_KEY` が必要）。`tools/import-venue-image.js` と `tools/monitor-instagram-apify.js` から呼ばれる。**出力の切り捨て（`stop_reason: "max_tokens"` / 閉じフェンス欠落 / `stop_reason` 無しでのストリーム終了）を検出したら、部分的に採用せず必ず失敗させる**。`max_tokens` が ~16K を超えるため**ストリーミング（`stream: true`）で呼ぶ**（理由は下記「データ取得アーキテクチャ」の**Visionの出力が途中で切れた場合**）。テスト: `node tools/venue-schedule-vision.test.js` |
 | `tools/tournament-merge.js` | `data.js` の `TOURNAMENTS` に1店舗ぶんの取得結果を安全にupsertする共通ロジック（対象店舗以外・過去日には一切触れない）。`tools/import-venue-image.js` から呼ばれる |
 | `tools/instagram-oembed.js` | 店舗が画像ではなく投稿リンクだけ送ってきた場合の補助（公式oEmbedからサムネイルを取得。ログイン・巡回は行わない）。`tools/import-venue-image.js --instagram-url` から呼ばれる |
 | `tools/fetch-venue-posts-apify.js` | Apify（既製Instagramスクレイパー、pay-per-result）を呼び、指定ハンドルの最近の投稿一覧（画像URL・投稿日時・パーマリンク・キャプション）を取得する（`APIFY_API_TOKEN` が必要）。`tools/monitor-instagram-apify.js` から呼ばれる |
@@ -853,26 +853,51 @@ GET https://api.waitinglist-poker.com/v1/game-schedules/tournament?storeId=<stor
        `max_tokens` なら「max_tokensで打ち切られた」と分かる文面で失敗させる。
        `end_turn` / `stop_sequence` 以外(`refusal` など、モデルを差し替えたときに増える値)も
        素通しせず失敗させる。加えて `extractJson` は**開きフェンスがあるのに閉じフェンスが無い**
-       応答を明示的なエラーにする(フェンスが最初から無い純粋なJSONは従来どおり通す)
-    2. **そもそも切り捨てない** … `MAX_OUTPUT_TOKENS = 16384`。監視対象6店の実エントリ191件から
-       測るとモデルが出す pretty print で**1行あたり約240文字/259バイト**。1投稿=1ヶ月ぶんの
-       日程表1枚なので、想定すべき最大の150行(31日×最大5開催)で約36,300文字
-       ≒**13,700トークン(保守的な見積り)**、100行級なら約10,000トークン
-       (使用モデル `claude-sonnet-4-5` の最大出力は64,000トークンなのでその1/4に収まる)。
-       **旧値2048の裏付け**: 同じ換算で2048トークン ≒ 6,100文字 ≒ 25行しか出せない。
-       dry-runで「1投稿20件前後」の投稿は通り、月まるごとの日程表だけが落ちた観測と一致する
-  - **`max_tokens` を上げるならタイムアウトも上げる**。旧実装の60秒で足りていたのは上限が2048で
-    生成が約30秒で頭打ちになっていたからにすぎず、上限だけ上げると「切り捨て」が
-    「AbortErrorでスキップ」に変わるだけで何も直らない。`REQUEST_TIMEOUT_MS = 300000`(5分)は
-    16,384トークンを約55トークン/秒で出し切れる長さ。ジョブ全体の最悪所要時間
-    (12投稿×6店=72回 × 5分 = 360分)がGitHub Actionsの既定上限に並ぶので、
-    **これ以上伸ばすならワークフローに `timeout-minutes` を明示すること**
+       応答を明示的なエラーにする(フェンスが最初から無い純粋なJSONは従来どおり通す)。
+       ストリーミングでは**`stop_reason` を返さないまま終わったストリーム**(接続断)も
+       同じ「途中で切れた」として失敗させる — これも部分採用すれば同じ被害になるため
+    2. **そもそも切り捨てない** … `MAX_OUTPUT_TOKENS = 32768`
+  - **容量の3定数は必ずセットで動かす**。`MAX_EXPECTED_ROWS`(捨てずに通す行数)/
+    `MEASURED_TOKENS_PER_ROW`(1行あたりの実測トークン)/ `MAX_OUTPUT_TOKENS`(出力上限)は
+    `MAX_EXPECTED_ROWS × MEASURED_TOKENS_PER_ROW ≤ MAX_OUTPUT_TOKENS` を満たす必要がある。
+    - **最初の実装はここが矛盾していた**: 「200行までは捨てずに通す」と宣言しながら
+      `max_tokens` は166行分しか無く、**守るはずの月がその手前で切り捨てられる**状態だった
+    - 数字は**実トークナイザでの実測**を置く。文字数からの概算(「ASCII=3文字/トークン」等)は
+      実測より2〜3割少なく出て、足りない値を選んでしまう。実測は
+      1行あたり**実分布95.2〜98.5トークン / 全項目が埋まった最悪ケース約123.3トークン**
+      → `MEASURED_TOKENS_PER_ROW = 124`(切り上げ)。200行 × 124 = **24,800トークン**に対し
+      `MAX_OUTPUT_TOKENS = 32768` は約32%の余裕。`claude-sonnet-4-5` の最大出力64,000の半分
+    - 整合は `tools/venue-schedule-vision.test.js` が**直接assert**している(定数を下げると落ちる)
+    - **旧値2048の裏付け**: 124トークン/行なら2048で出せるのは20〜21行。
+      dry-runで「1投稿20件前後」の投稿は通り、月まるごとの日程表だけが落ちた観測と一致する
+  - **`max_tokens` が ~16K を超えるならストリーミング必須**。Anthropicの移行ガイドは
+    「非ストリーミングは高い `max_tokens` でHTTPタイムアウトに当たる。~16Kを超えるなら全モデルで
+    ストリーミングすること」と明示している。`MAX_OUTPUT_TOKENS = 32768` に伴い
+    `callVisionModel` は `stream: true` のSSEに移行済み。**非ストリーミングに戻さないこと**
+    (テストで `stream: true` を固定してある)。切り捨てのエラー文にもこの注意を入れてあるので、
+    運用者が「タイムアウトを伸ばす」誤った方向に進まない
+  - **タイムアウトは「全体」ではなく「無音」で測る**(`STREAM_IDLE_TIMEOUT_MS = 120000`)。
+    旧実装の「全体60秒」が成立していたのは上限が2048で生成が約30秒で頭打ちだったからにすぎず、
+    上限だけ上げると「切り捨て」が「AbortErrorでスキップ」に変わるだけで何も直らない。
+    生成中のSSEは1秒未満の間隔でイベントが流れるので、無音で測れば
+    **「接続が死んだら2分で赤くなる」と「本当に長い月は最後まで待てる」を両立**できる
+  - **ジョブ全体の上限はワークフローが持つ**。`.github/workflows/monitor-instagram-apify.yml` に
+    `timeout-minutes: 60` を明示してある(既定の360分では、何かが固まったとき6時間気づけない)。
+    Vision 1回あたりの無音上限だけを見て全体の所要時間を推し量らないこと —
+    Apify取得・画像DL・`git pull --rebase`・`gen-venue-pages`・`gen-sitemap` が同じジョブに乗る。
+    実測は初回バックログ(Vision 27回)で約10分、`max_tokens` を上げた後の見積りで20〜40分
   - 1枚の画像から `MAX_EXPECTED_ROWS = 200` 行を超えて返った場合は警告を出す(捨てはしない)。
     月は最長31日・1日6開催でも186行なので、超えるのは月間スケジュール以外の画像を読んでいるか
     同じ行を繰り返している可能性が高い。**本当に大きい月を落とす方が実害が大きい**ので例外は投げない
-  - **未対応(既知)**: Vision抽出に失敗した投稿は `console.warn` に出るだけで、
-    `::error::` 注記(「1行も採用できなかった投稿」)には含まれない。確認済み投稿日時は進むため
-    **その投稿は再試行されない**。定期実行を再開する前に、この経路も異常として集計するか要検討
+  - **配列でない応答を黙って0件に潰さない**。以前は `Array.isArray(result) ? result : []` で、
+    Visionが `{"tournaments": [...]}` のように包んで返すと**警告も破棄件数も出ないまま0件**になり、
+    店ごとのサマリは「1行も採用できなかった投稿 0件」と表示していた(=積極的な誤報)。
+    中身は失われているのだから、失われたと言えなければならないので明示的に失敗させる
+  - **未対応(既知)**: Vision抽出に失敗した投稿・画像ダウンロードに失敗した投稿は `console.warn` に
+    出るだけで、`::error::` 注記(「1行も採用できなかった投稿」)にも `lastExtraction` の件数にも
+    含まれない。確認済み投稿日時は進むため**その投稿は再試行されず、runログは90日で消える**。
+    **定期実行(cron)を再開する前に、`lastExtraction` に永続カウンタ
+    (`visionFailed` / `imageFailed` / `emptyResult`)を足してこの3経路を可視化すること**
 - **コスト目安**: 6店舗×日次×直近投稿十数件取得と仮定すると、月間の取得件数は約
   6店 × 12件 × 30日 = 2,160件。Apifyのpay-per-result単価($1〜1.6/1000件)で計算すると
   **月あたり実際の課金は$1〜数ドル程度の見込み**(投稿が少ない店舗ではもっと安くなる)。
