@@ -27,12 +27,136 @@ name: Instagram投稿の自動監視(Apify)
 # `2026-9-5` / `9/5` / `2026-07-01T00:00:00Z` のような値を持ち込みやすい。
 # その手の値は本番サイトの並び順を壊し、静的ページの再生成(=翌朝のジョブ)も落とすため、
 # コミット前にここで止める。
+#
+# ============================================================
+# 【実行モード】手動実行は既定 dry-run / 定期実行は無条件で本番
+# ============================================================
+# 本番実行は【不可逆】である。tools/monitor-instagram-apify.js は
+# 「確認済み投稿日時(apify-monitor-state.json の lastPostedAt)」を、採用できた件数に関係なく
+# その店で確認できた最新投稿まで無条件に前進させる。したがって Vision が読めなかった投稿・
+# 検査で捨てられた行は「次回に持ち越し」ではなく【自動経路から永久に失われる】。
+# とくに状態ファイルが空の初回実行は、6店 × 直近12投稿のバックログ全体を一度きりで消費する。
+#
+# 一方 --dry-run は data.js への書き込みと状態ファイルの保存の【両方より前に return】するので、
+# 取得と抽出だけ行い、バックログを1件も消費しない(=何度でもやり直せる)。
+# そこで【手動実行(workflow_dispatch)の既定を dry-run】にし、本番反映は
+# 入力 dry_run のチェックを外したときだけ行う。「うっかり dry-run」は何も起きずやり直せるが、
+# 「うっかり本番」は取り返しがつかないため。
+#
+# ★【定期実行(schedule)は入力を一切参照せず、無条件で本番実行する】★
+#   schedule には inputs が渡らない(github.event.inputs.* は空文字)。もし判定を
+#   「明示的に false でなければ dry-run」という形にすると【毎朝の定期実行が永久に dry-run になる】。
+#   その場合 Actions は毎日グリーンのまま data.js が1バイトも更新されず、【誰も気づけない】。
+#   これは「誤って本番を走らせる」より悪い。本番の誤実行は不可逆だが【見える】のに対し、
+#   dry-run の固着は可逆だが【見えない】からである。
+#   そのため判定は「イベント種別で先に分岐し、workflow_dispatch のときだけ入力を読む」形にしてある
+#   (下の「実行モードを判定する」ステップ)。この構造は変えないこと。
+#
+#   【固着に気づく方法(毎日効く順)】
+#     1. 判定ステップのログ先頭と注記が「実行モード: DRY-RUN」になる。定期実行なのにこう出ていたら固着。
+#     2. コミットステップが Actions の画面で【skipped】表示になる(本番なら必ず実行される)。
+#        この2つは毎回・確実に出るので、固着の一次検知はこちらで行う。
+#     3. 「確認済み投稿日時が前進したかを確認」ステップが件数を出す。ただし ::warning:: が出るのは
+#        状態ファイルが空(記録0店)のときだけで、【初回の本番実行が成功すると以後この警告は鳴らない】。
+#        2日目以降に固着した場合の表示は「前進したか: いいえ」で、新着0件の平常日と見分けが付かない。
+#        この項目は補助であって主防御ではない(初回の空振りを拾うのが役目)。
+#
+# 【型の落とし穴】入力を `type: boolean` にして、型付きの inputs コンテキストで
+#   `inputs.dry_run == 'true'` と比較してはいけない。GitHubの式は型が違う値を比較すると数値に
+#   変換するため、boolean の true と文字列 'true' の比較は false になる
+#   (= dry-run 指定が無視されて本番が走る。公式の式エンジンで実測済み)。
+#   ここでは github.event.inputs.*(type: boolean でも【常に文字列】)をenv経由でシェルに渡し、
+#   文字列として判定している。型付きで書くなら `inputs.dry_run` / `inputs.dry_run == true` /
+#   `fromJSON(github.event.inputs.dry_run)` が正しい形。
+#
+# ★【2026-07-31時点、このワークフローの定期実行は無効(disabled_manually)にしてある】★
+#   `gh workflow disable` で止めた。理由は、状態ファイルが {} の(=6店ぶんのバックログが
+#   まるごと残っている)状態で誰も見ていない早朝に初回の本番実行が走ると、上記のとおり
+#   バックログ全体が一度きり・不可逆に消費されてしまうため。
+#   【このPRがマージされても定期実行は無効のまま】である。
+#
+#   ▼ 初回の観測から有効化までの手順(この順序でしか実行できない)
+#     ★【無効化中は workflow_dispatch も 422 で弾かれる】★
+#       "Cannot trigger a 'workflow_dispatch' on a disabled workflow"(実測)。
+#       しかもこの判定は ref の検証より前に効く。つまり【手動 dry-run のために有効化は避けて通れず、
+#       有効化した瞬間に毎朝07:10 JSTのcron(=無条件で本番・不可逆)も同時に再武装する】。
+#       そのため「まず dry-run で観測してから有効化する」という順序は【実行不能】。
+#       有効化してから dry-run を回し、【判断を待たずにその場で無効化に戻す】こと。
+#
+#     下のコマンドは1回のコピペで「有効化 → dry-run実行 → 完了待ち → 無効化」まで行う。
+#     【このブロックごと貼ること】。手で enable / run / disable と分けて叩くと最後が抜ける。
+#
+#       bash -c '
+#       WF=.github/workflows/monitor-instagram-apify.yml
+#       cleanup() {
+#         trap - EXIT INT TERM HUP
+#         echo ""
+#         echo "--- 無効化に戻します ---"
+#         gh workflow disable "$WF" || echo "(disable が失敗しました。すでに無効なら正常。下の状態表示で確認すること)"
+#         gh workflow list --all | grep -i instagram || true
+#       }
+#       on_signal() { cleanup; exit 130; }
+#       trap cleanup EXIT
+#       trap on_signal INT TERM HUP
+#       gh workflow enable "$WF" || exit 1
+#       gh workflow run "$WF"
+#       sleep 15
+#       gh run watch "$(gh run list --workflow="$WF" --event workflow_dispatch --limit 1 --json databaseId --jq ".[0].databaseId")" --exit-status
+#       '
+#
+#     【なぜ trap か】`;` でつなぐ形は「前段のコマンドが失敗しても disable する」は守るが、
+#       【Ctrl-C や端末を閉じた場合には disable に到達しない】。中断は失敗ではないため。
+#       そこを通り抜けると workflow が有効のまま残り、次の07:10 JSTに無条件・本番・無人の実行が走る。
+#       trap で EXIT/INT/TERM/HUP を捕まえれば、正常終了・エラー・Ctrl-C・端末クローズの
+#       すべてで無効化に戻る(4経路とも実測済み。いずれも disable の呼び出しは1回)。
+#     【なぜ bash -c で包むか】対話シェルにそのまま貼ると EXIT トラップは【シェルを閉じるまで】
+#       発火しない。サブシェルに閉じ込めることで、このコマンドの終わりが trap の発火点になる。
+#     ★【bash -c を外さないこと】外して本文だけを対話シェルに貼ると、【正常終了しても
+#       EXIT トラップが発火せず disable が呼ばれないまま workflow が有効で残る】(zsh/bash とも実測)。
+#       このとき `--- 無効化に戻します ---` の行も状態表示も【出ない】ので、
+#       ★その2行が出なかったら有効のまま残っていると判断し、`gh workflow disable "$WF"` を
+#       手で叩くこと★(「出るはずのものが出ない」を検知の合図にする)。
+#     【trap - による再入防止は bash 固有の挙動に依存している】zsh でスクリプトとして同じ本文を
+#       実行すると、関数内の `trap - EXIT` が EXIT トラップを解除しきらず disable が2回走る
+#       (結果は無効化で安全だが403のノイズが出る)。bash -c を別のシェルに変えないこと。
+#     【cleanup 冒頭の `trap -` は必須】gh workflow disable は冪等でなく、すでに無効な状態で
+#       もう一度叩くと 403 で赤くなる。シグナル経路(on_signal→cleanup)の後に EXIT トラップが
+#       再度走ると二重に disable してしまうため、cleanup の先頭で自分自身を解除している。
+#       手順の外で追加の `gh workflow disable` を叩いた場合も同じ理由で403になる(無効という結果は同じ)。
+#     【最後に必ず状態を表示する】表示が `disabled_manually` でなければ、有効のまま残っている。
+#       その場合は手で `gh workflow disable "$WF"` を叩くこと(放置すると翌朝に本番実行が走る)。
+#
+#     1. 上のブロックを貼って実行する(入力は既定=dry_run ON のまま。--field は付けない)
+#        ・端末(TTY)から実行すると `gh workflow run` が dry_run の値を対話で聞いてくる。
+#          既定の true がプリフィルされているので【そのまま Enter】でよい。
+#          非TTY(スクリプト経由など)ではプロンプトは出ず、既定の dry-run で実行される。
+#        ・`gh run list` の `--event workflow_dispatch` は【外さないこと】。付けないと
+#          sleep 15 以内に新しいrunが現れなかったとき、直前の schedule のrun(過去の失敗)を掴んで
+#          「dry-runが失敗した」と誤読する。
+#     2. runのログ先頭が【実行モード: DRY-RUN】であることを必ず目視で確認してから内訳を読む
+#        (ここが「本番」なら即座に止めること。バックログを消費している)
+#     3. 6店ぶんの Vision出力(採用/正規化/破棄の内訳と破棄理由の分布)を読み、較正を判断する
+#     4. 判断が終わっていなくても、この時点で既に無効化に戻っている(上の trap)。
+#        次の07:10 JSTを跨ぐ可能性がある限り、有効化したまま放置しないこと
+#     5. 較正OKと判断できたら改めて `gh workflow enable "$WF"` で有効化し、
+#        ここに【いつ・誰が有効化したか】を追記する(以後は毎朝の定期実行が本番で走る)
 
 on:
   schedule:
     # cronはUTC。22:10 UTC = 07:10 JST(毎日1回。Waitinglist取込み(06:23 JST)の後にずらしてある)
+    # 【この経路は入力を一切参照せず、常に本番実行】(上の「実行モード」参照)
     - cron: '10 22 * * *'
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: >-
+          dry-run(書き込みなし)で実行する。ONのままなら Apify取得とVision抽出だけ行い、
+          data.js / apify-monitor-state.json / venues/ を一切書き換えない(コミット・pushもしない。
+          確認済み投稿日時も進まないので何度でもやり直せる)。本番反映したいときだけOFFにする
+          【OFFは不可逆】— その回で拾えなかった投稿は自動経路では二度と処理されない。
+        type: boolean
+        required: false
+        default: true
 
 permissions:
   contents: write
@@ -46,6 +170,82 @@ jobs:
   monitor:
     runs-on: ubuntu-latest
     steps:
+      # 【このジョブが dry-run になる条件はこの1箇所だけで決まる】後続ステップは
+      # steps.mode.outputs.dry_run を見るだけで、イベント種別も入力も自分では解釈しない。
+      #
+      #   イベントが workflow_dispatch 以外(schedule / API の workflow run 等)
+      #     … 入力を【一切参照せず】 dry_run=false(=従来どおり本番)。
+      #       ここで入力を見に行くと、空文字を dry-run と解釈して定期実行が永久に空回りする
+      #       (ヘッダの「定期実行は入力を一切参照せず」参照)。
+      #   イベントが workflow_dispatch
+      #     … 入力が【明示的に false のときだけ】本番。既定(true)・空・想定外の値はすべて dry-run。
+      #       手動実行では想定外の入力に出くわしたら安全側(何も書かない)に落とす。
+      #
+      # ★ログの先頭でモードが分かるよう、チェックアウトより前に置いてある。
+      #   Actions の実行サマリからも判別できるよう、注記(::notice:: / ::warning::)と
+      #   ジョブサマリ($GITHUB_STEP_SUMMARY)の両方に出す。
+      - name: 実行モードを判定する(手動実行の既定は dry-run / 定期実行は本番)
+        id: mode
+        env:
+          # 入力値を run: のシェルに ${{ }} で直接埋め込まない(値がそのままコマンドとして
+          # 解釈される経路を作らない)。github.event.inputs.* は type: boolean でも
+          # 常に文字列("true"/"false"、未指定なら空)なので、シェルでは文字列として比較する。
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_DRY_RUN: ${{ github.event.inputs.dry_run }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            if [ "$INPUT_DRY_RUN" = "false" ]; then
+              dry_run=false
+            else
+              dry_run=true
+            fi
+          else
+            # schedule など: 入力は参照しない。常に本番。
+            dry_run=false
+          fi
+          echo "dry_run=$dry_run" >> "$GITHUB_OUTPUT"
+          echo "イベント=$EVENT_NAME / 入力dry_run=${INPUT_DRY_RUN:-(なし)} / 判定=$dry_run"
+          if [ "$dry_run" = "true" ]; then
+            echo "=================================================="
+            echo " 実行モード: DRY-RUN(書き込みなし・コミットなし)"
+            echo "=================================================="
+            echo "::notice title=実行モード DRY-RUN::data.js / apify-monitor-state.json / venues/ は書き換えず、コミット・pushも行いません。確認済み投稿日時(lastPostedAt)も前進しないため、同じ投稿を後からもう一度処理できます。"
+            {
+              echo "# 実行モード: DRY-RUN(書き込みなし)"
+              echo ""
+              echo "\`node tools/monitor-instagram-apify.js --dry-run\` で実行します(イベント: \`$EVENT_NAME\`)。"
+              echo ""
+              echo "- \`data.js\` / \`apify-monitor-state.json\` / \`venues/\` は書き換えず、**コミット・pushも行いません**。"
+              echo "- **確認済み投稿日時(lastPostedAt)は前進しません**。取りこぼしても後からやり直せます。"
+              echo "- 抽出・正規化・破棄の内訳は「Instagram新着投稿を…」ステップのログを見てください"
+              echo "  (dry-run では状態ファイルを書かないので \`lastExtraction\` には残りません)。"
+              echo "- 本番反映するときは Run workflow の **dry_run のチェックを外して** 再実行してください。"
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "=================================================="
+            echo " 実行モード: 本番(差分があればコミット&プッシュ)"
+            echo "=================================================="
+            # 【注記の使い分け】定期実行の本番は「毎日の正常運転」なので ::notice::。
+            # ここを ::warning:: にすると成功した緑のrunにも毎回黄色が付き、
+            # 「warningが出ている = 見るべきもの」という読み方ができなくなる(固着警告も埋もれる)。
+            # 一方、手動でチェックを外した本番は【人が不可逆な操作をわざわざ選んだ回】なので
+            # ::warning:: で目立たせる(毎日は起きない)。
+            if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+              echo "::warning title=手動での本番実行::dry_run のチェックが外れています。data.js / apify-monitor-state.json を更新し、差分があればコミット&pushします。確認済み投稿日時が前進するため、この回で拾えなかった投稿は自動経路では二度と処理されません(不可逆)。"
+            else
+              echo "::notice title=実行モード 本番(定期実行)::data.js / apify-monitor-state.json を更新し、差分があればコミット&pushします。確認済み投稿日時が前進します(不可逆)。"
+            fi
+            {
+              echo "# 実行モード: 本番(コミット&プッシュあり)"
+              echo ""
+              echo "\`node tools/monitor-instagram-apify.js\` で実行します(イベント: \`$EVENT_NAME\`)。"
+              echo ""
+              echo "- 差分があれば \`data.js\` / \`apify-monitor-state.json\` / \`venues/\` をコミット&pushします。"
+              echo "- **確認済み投稿日時(lastPostedAt)が前進します**。この回で採用できなかった投稿は"
+              echo "  自動経路では二度と処理されません(不可逆)。"
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: リポジトリを取得
         uses: actions/checkout@v4
         with:
@@ -59,11 +259,25 @@ jobs:
         with:
           node-version: '22'
 
+      # dry-run では --dry-run を付けて呼ぶ。スクリプトは data.js の書き込みと
+      # 状態ファイルの保存の【両方より前に return】するので、バックログを1件も消費しない。
+      #
+      # 【ここだけは = "true" のまま(下の2ステップの != 'false' / == 'false' と非対称)】
+      #   判定ステップが壊れて空になった場合、ここを dry-run 側に倒すと
+      #   「緑のまま何も書かれない」= 見えない失敗になる。書き込ませておけば直後の
+      #   「書き込みが起きていないことを確認」が作業ツリーの変化を検知して【ジョブが赤くなる】。
+      #   その回はコミットステップに到達しないので、push は起きない(赤いが安全)。
       - name: Instagram新着投稿をApifyで取得し、スケジュール告知をdata.jsに反映
         env:
           APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: node tools/monitor-instagram-apify.js
+          DRY_RUN: ${{ steps.mode.outputs.dry_run }}
+        run: |
+          if [ "$DRY_RUN" = "true" ]; then
+            node tools/monitor-instagram-apify.js --dry-run
+          else
+            node tools/monitor-instagram-apify.js
+          fi
 
       # 壊れた data.js をコミットして本番サイトを白画面にしないための最終ゲート。
       # 構文・件数・id重複・【日付書式(YYYY-MM-DD ゼロ埋め)】を見る。中身は tools/validate-data.js
@@ -80,8 +294,69 @@ jobs:
           node tools/validate-data.js .
           node -e 'JSON.parse(require("fs").readFileSync("apify-monitor-state.json","utf8"))'
 
-      - name: 差分があればコミット & プッシュ
+      # 【dry-run の二重の安全・その1】--dry-run は1バイトも書かないはずなので、それを実測で確かめる。
+      # ここが落ちるのは「dry-run が書き込んだ」= スクリプト側の退行なので、ジョブを赤くして知らせる。
+      # このステップが失敗しても下のコミットステップは if で丸ごとスキップされるため、
+      # 書き換わった内容がコミット・pushされることはない(落ちたときの作業ツリーは捨てられる)。
+      #
+      # 【条件が == 'true' ではなく != 'false' な理由】判定ステップが壊れて出力が空になった場合
+      # (id の削除・出力名の改名など)、取込みは --dry-run なしで走って作業ツリーを書き換える。
+      # そのときこのステップも走らせておけば【ジョブが赤くなって気づける】。
+      # == 'true' だと素通りして「緑のまま何もpushされない」= 見えない失敗になる。
+      - name: 書き込みが起きていないことを確認(本番以外)
+        if: steps.mode.outputs.dry_run != 'false'
         run: |
+          if test -n "$(git status --porcelain)"; then
+            echo "::error title=dry-run なのに作業ツリーが変化::--dry-run では data.js / apify-monitor-state.json / venues/ を1バイトも書き換えないはずです。コミット・pushは行っていません(コミットステップはスキップ済み)。tools/monitor-instagram-apify.js の DRY_RUN 分岐か、実行モード判定ステップの出力(空になっていないか)を確認してください。"
+            git status --porcelain
+            git diff --stat
+            exit 1
+          fi
+          echo "作業ツリーに差分なし。dry-run が何も書き換えていないことを確認しました。"
+          echo "- dry-run 実行後の作業ツリーに差分が無いことを確認しました(1バイトも書き換わっていません)。" >> "$GITHUB_STEP_SUMMARY"
+
+      # 【状態ファイルの前進を記録する / dry-run固着の補助的な検出】
+      # 本番実行のたびに「確認済み投稿日時が前進したか」と「何店ぶん記録があるか」を実行サマリに残す。
+      # ★この ::warning:: は【状態ファイルが空(記録0店)のときだけ】鳴る。初回の本番実行が成功すると
+      #   以後は鳴らないので、これは固着の主防御ではない(初回の空振りを拾うのが役目)。
+      #   固着の一次検知は「判定ステップが DRY-RUN と出す」「コミットステップが skipped 表示になる」の2つ
+      #   (ヘッダの【固着に気づく方法】参照)。
+      - name: 確認済み投稿日時が前進したかを確認(本番のみ)
+        if: steps.mode.outputs.dry_run == 'false'
+        run: |
+          stores=$(node -e 'const s=JSON.parse(require("fs").readFileSync("apify-monitor-state.json","utf8"));console.log(Object.keys(s).length)')
+          if git diff --quiet -- apify-monitor-state.json; then
+            advanced="いいえ(新着なし、または全店で取得0件)"
+          else
+            advanced="はい"
+          fi
+          echo "確認済み投稿日時の記録がある店舗数: $stores / この実行で前進したか: $advanced"
+          {
+            echo ""
+            echo "## 確認済み投稿日時(apify-monitor-state.json)"
+            echo ""
+            echo "- 記録がある店舗数: **$stores**"
+            echo "- この実行で前進したか: **$advanced**"
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$stores" = "0" ]; then
+            echo "::warning title=状態ファイルが空のままです::本番実行なのに apify-monitor-state.json に1店も記録されていません。全店で新着0件だったか、【dry-run固着】(本番のはずが --dry-run で走っている)を疑ってください。緑のrunが続いているのに {} のままなら後者です。"
+          fi
+
+      # 【判定は「明示的に false のときだけ本番」で統一する】このステップに入ってよいのは
+      # dry_run が文字列 'false' のときだけ。!= 'true' にすると、判定ステップが壊れて出力が
+      # 空になった場合(id の削除・出力名の改名など)に【空文字が本番側に倒れて】
+      # コミット・pushまで進んでしまう。空・想定外の値は入口(入力の解釈)と同じく安全側に落とす。
+      - name: 差分があればコミット & プッシュ
+        if: steps.mode.outputs.dry_run == 'false'
+        env:
+          DRY_RUN: ${{ steps.mode.outputs.dry_run }}
+        run: |
+          # 【dry-run の二重の安全・その2】上の if が将来の編集で壊れても、
+          # 'false' 以外(dry-run・空・想定外の値)ならここで必ず止まる(git に触る前に落とす)。
+          if [ "$DRY_RUN" != "false" ]; then
+            echo "::error title=本番ではないのにコミットステップに到達::実行モードの判定が 'false' 以外(dry-run または空)です。ワークフローの条件設定に不具合があります。コミット・pushは行いません。"
+            exit 1
+          fi
           # 追加が git add -A なので、判定も未追跡ファイルを含む git status --porcelain で見る。
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
