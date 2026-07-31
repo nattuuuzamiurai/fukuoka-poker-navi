@@ -2184,22 +2184,49 @@ function assertNoCaptionLeak(haystacks) {
 }
 
 test('★漏洩走査: CLIの全出力(stdout/stderr/状態ファイル/data.js)にキャプションが1文字も出ない', () => {
-  // キーワードに当たる投稿(→ Vision 0件の経路)と、当たらない投稿(→ キーワード不一致の経路)の
-  // 両方に希少文字列を仕込み、【出力の全経路】を走査する。
+  // 【fixtureが痩せていると走査は空振りする】以前は Vision が常に [] を返す fixture だったため、
+  // 破棄行・正規化行・異常・失われた投稿・追加行のログ経路が1度も実行されず、
+  // formatDroppedRow に post.caption を混ぜる変異が生き残った。
+  // formatDroppedRow / formatNormalizedRow は【すでに post を引数に受け取っている】ので、
+  // 最も混入しやすい場所。ここでは以下の経路をすべて1回ずつ通してから走査する:
+  //   取り込めた(追加行のログ)/ 破棄行 / 正規化行 / 全行不採用(異常)/
+  //   Vision抽出失敗(失われた投稿)/ Vision抽出0件 / キーワード不一致 / 投稿別の内訳
   const root = makeTempRepoRoot();
+  const post = (slug, day, keyword) =>
+    `{ permalink: 'https://www.instagram.com/p/${slug}/', imageUrl: 'https://example.com/${slug}.jpg', postedAt: '2026-07-${day}T10:00:00.000Z', caption: ${JSON.stringify(leakCaption('KEYWORD')).replace('KEYWORD', '${keyword}')} }`;
   fs.writeFileSync(
     path.join(root, 'tools', 'fetch-venue-posts-apify.js'),
-    `exports.fetchInstagramPosts = async (handle) => {
+    `const cap = (kw) => ${JSON.stringify(leakCaption('__KW__'))}.replace('__KW__', kw);
+     exports.fetchInstagramPosts = async (handle) => {
        if (handle !== 'triple_orio') return [];
+       const p = (slug, day, kw) => ({
+         permalink: 'https://www.instagram.com/p/' + slug + '/',
+         imageUrl: 'https://example.com/' + slug + '.jpg',
+         postedAt: '2026-07-' + day + 'T10:00:00.000Z',
+         caption: cap(kw),
+       });
        return [
-         // キーワードに当たる → Vision に渡り、0件が返る経路
-         { permalink: 'https://www.instagram.com/p/HIT/', imageUrl: 'https://example.com/HIT.jpg', postedAt: '2026-07-20T10:00:00.000Z', caption: ${JSON.stringify(leakCaption('スケジュール'))} },
-         // キーワードに当たらない → 画像を見ずに捨てる経路
-         { permalink: 'https://www.instagram.com/p/MISS/', imageUrl: 'https://example.com/MISS.jpg', postedAt: '2026-07-21T10:00:00.000Z', caption: ${JSON.stringify(leakCaption('AUGUST'))} },
+         p('OK', '20', 'スケジュール'),    // 採用あり + 破棄行 + 正規化行 が同時に出る
+         p('BAD', '21', 'スケジュール'),   // 全行不採用(異常)
+         p('VF', '22', 'スケジュール'),    // Vision抽出失敗(失われた投稿)
+         p('EMPTY', '23', 'スケジュール'), // Vision抽出0件
+         p('MISS', '24', 'AUGUST'),        // キーワード不一致(画像を見ずに破棄)
        ];
      };\n`
   );
-  fs.writeFileSync(path.join(root, 'tools', 'venue-schedule-vision.js'), 'exports.extractTournaments = async () => [];\n');
+  fs.writeFileSync(
+    path.join(root, 'tools', 'venue-schedule-vision.js'),
+    `exports.extractTournaments = async (buf) => {
+       const s = String(buf);
+       if (s.includes('VF')) throw new Error('Visionモデルの出力が max_tokens で打ち切られました。');
+       if (s.includes('EMPTY')) return [];
+       if (s.includes('BAD')) return [{ date: '2099-9-14', start: '19:00', name: '日付不正', buyin: 3000, tags: [] }];
+       return [
+         { date: '2099-09-12', start: '9:00', name: '採用される大会', buyin: 3000, stack: 10000, tags: [] }, // 正規化される(9:00→09:00)
+         { date: '2099-9-13', start: '19:00', name: '捨てられる大会', buyin: 3000, tags: [] },              // 破棄される
+       ];
+     };\n`
+  );
   fs.writeFileSync(
     path.join(root, 'stub-fetch.js'),
     'globalThis.fetch = async (url) => ({ status: 200, arrayBuffer: async () => new TextEncoder().encode(String(url)).buffer });\n'
@@ -2212,9 +2239,20 @@ test('★漏洩走査: CLIの全出力(stdout/stderr/状態ファイル/data.js)
       encoding: 'utf8',
     });
     assert.equal(r.status, 0, `正常終了すること: ${r.stderr}`);
-    // 両方の経路が実際に通ったことを確認してから走査する(通っていなければ走査は無意味)
-    assert.match(r.stdout, /キーワード不一致で対象外/, 'キーワード不一致の経路を通っていない');
-    assert.match(r.stdout, /Vision抽出0件 1件/, 'Vision 0件の経路を通っていない');
+    // 【走査の前に、狙った経路を実際に通ったことを確かめる】通っていなければ走査は空振りになる。
+    const all = r.stdout + r.stderr;
+    for (const [label, re] of [
+      ['キーワード不一致', /キーワード不一致で対象外/],
+      ['Vision抽出0件', /Vision抽出0件 1件/],
+      ['破棄行(formatDroppedRow)', /抽出結果を1件破棄しました/],
+      ['正規化行(formatNormalizedRow)', /正規化/],
+      ['全行不採用(異常)', /投稿まるごと不採用/],
+      ['失われた投稿', /内容が失われた投稿/],
+      ['追加行の明細', /追加行: /],
+      ['投稿別の内訳', /投稿別: /],
+    ]) {
+      assert.match(all, re, `${label}の経路を通っていない(走査が空振りになる)`);
+    }
     assertNoCaptionLeak({
       stdout: r.stdout,
       stderr: r.stderr,
@@ -2252,4 +2290,408 @@ test('formatFilteredOutPost: 空白のみのキャプションは「実質なし
     assert.match(line, expected, `入力 ${JSON.stringify(caption)}`);
     assert.doesNotMatch(line, /日付らしき表記/, '実質なしのときに信号を並べても意味がない');
   }
+});
+
+// ============================================================
+// 手順⑤(採用行の全件照合)のための明細
+// ============================================================
+// dry-run は data.js を書かないので、「実際に何が増えるのか」がどこにも残らない。
+// 件数だけでは1行ずつ元の投稿画像と突き合わせる照合作業ができない。
+
+test('明細: 追加される行が、出所の投稿URL付きで1行1件で出る', async () => {
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
+    fakeLibsForBehaviour([
+      {
+        permalink: 'https://www.instagram.com/p/SRC/',
+        postedAt: '2026-07-20T10:00:00.000Z',
+        rows: [
+          { date: '2099-09-12', start: '19:00', name: 'マンデートナメ', buyin: 3000, stack: 10000, tags: [] },
+          { date: '2020-01-01', start: '19:00', name: '過去の大会', buyin: 3000, tags: [] }, // 過去日 → 増えない
+        ],
+      },
+    ])
+  );
+  const s = result.summaries[0];
+  assert.equal(s.addedRows.length, 1, '実際に増える行だけが明細に載ること(過去日は載らない)');
+  assert.equal(s.addedRows[0].entry.name, 'マンデートナメ');
+  assert.equal(s.addedRows[0].permalink, 'https://www.instagram.com/p/SRC/', '出所の投稿が分かること');
+
+  const lines = [];
+  const orig = console.log;
+  console.log = (...a) => lines.push(a.join(' '));
+  try {
+    monitor.reportAcceptedRows(result.summaries);
+  } finally {
+    console.log = orig;
+  }
+  const row = lines.find((l) => l.includes('追加行: '));
+  assert.ok(row, '追加行の明細が出ること');
+  for (const part of ['v40', '2099-09-12', '19:00', 'マンデートナメ', '参加費3000', 'スタック10000', 'https://www.instagram.com/p/SRC/']) {
+    assert.ok(row.includes(part), `照合に必要な項目が欠けている: ${part}`);
+  }
+});
+
+test('明細: 金額が読めなかった行は「不明」と出す(0=無料と混同しない)', async () => {
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
+    fakeLibsForBehaviour([
+      {
+        permalink: 'https://www.instagram.com/p/A/',
+        postedAt: '2026-07-20T10:00:00.000Z',
+        rows: [{ date: '2099-09-12', start: '19:00', name: '金額不明の大会', tags: [] }],
+      },
+    ])
+  );
+  const lines = [];
+  const orig = console.log;
+  console.log = (...a) => lines.push(a.join(' '));
+  try {
+    monitor.reportAcceptedRows(result.summaries);
+  } finally {
+    console.log = orig;
+  }
+  const row = lines.find((l) => l.includes('追加行: '));
+  assert.match(row, /参加費不明/);
+  assert.match(row, /スタック不明/);
+  assert.doesNotMatch(row, /参加費0/, '読めなかった値を0(=無料)として出してはいけない');
+});
+
+test('明細: 投稿別の内訳は【対象投稿と同じ件数】並び、どの結末になっても1行出る', async () => {
+  const dup = { date: '2099-09-12', start: '19:00', name: '大会A', buyin: 3000, tags: [] };
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
+    fakeLibsForBehaviour([
+      { permalink: 'https://www.instagram.com/p/OK/', postedAt: '2026-07-20T10:00:00.000Z', rows: [dup] },
+      { permalink: 'https://www.instagram.com/p/REPOST/', postedAt: '2026-07-21T10:00:00.000Z', rows: [{ ...dup }] },
+      { permalink: 'https://www.instagram.com/p/BAD/', postedAt: '2026-07-22T10:00:00.000Z', rows: [{ date: '2099-9-14', start: '19:00', name: 'X', buyin: 1, tags: [] }] },
+      { permalink: 'https://www.instagram.com/p/VF/', postedAt: '2026-07-23T10:00:00.000Z', visionThrows: '打ち切り' },
+      { permalink: 'https://www.instagram.com/p/IF/', postedAt: '2026-07-24T10:00:00.000Z', downloadThrows: 'HTTP 404' },
+      { permalink: 'https://www.instagram.com/p/EMPTY/', postedAt: '2026-07-25T10:00:00.000Z', rows: [] },
+    ])
+  );
+  const s = result.summaries[0];
+  // 【保存則と同じ考え方】途中の continue で記録が抜けると件数が食い違う。
+  assert.equal(s.posts.length, s.scheduleLikeCount, '対象投稿の数と明細の行数が一致すること');
+  assert.deepEqual(
+    s.posts.map((p) => p.outcome),
+    ['取り込めた', '再投稿', '全行不採用', 'Vision抽出失敗', '画像DL失敗', 'Vision抽出0件'],
+    'どの結末になったかが投稿ごとに分かること'
+  );
+});
+
+test('明細: 日付レンジはVisionが返した行から取る(「追加0」の理由を説明できること)', async () => {
+  // 久留米・黒崎の「抽出N行・追加0」が、過去日ばかりの月間表を読んだ結果なのかを検算するための情報。
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
+    fakeLibsForBehaviour([
+      {
+        permalink: 'https://www.instagram.com/p/MAR/',
+        postedAt: '2026-07-20T10:00:00.000Z',
+        rows: Array.from({ length: 10 }, (_, i) => ({
+          date: `2026-03-${String(i + 1).padStart(2, '0')}`,
+          start: '19:00',
+          name: `3月の大会${i}`,
+          buyin: 3000,
+          tags: [],
+        })),
+      },
+    ])
+  );
+  const p = result.summaries[0].posts[0];
+  assert.equal(p.rowCount, 10);
+  assert.equal(p.addedCount, 0);
+  assert.equal(p.dateMin, '2026-03-01');
+  assert.equal(p.dateMax, '2026-03-10', '採用後ではなくVisionが返した行のレンジであること');
+  // 行レベルの保存則でも「全部過去日」と説明が付く
+  assert.equal(monitor.checkRowAccounting(result.summaries[0]).pastDated, 10);
+});
+
+test('明細: 同じ店の複数投稿でも、追加行の出所がそれぞれ正しく紐づく', async () => {
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
+    fakeLibsForBehaviour([
+      {
+        permalink: 'https://www.instagram.com/p/FIRST/',
+        postedAt: '2026-07-20T10:00:00.000Z',
+        rows: [{ date: '2099-09-12', start: '19:00', name: '一番目', buyin: 3000, tags: [] }],
+      },
+      {
+        permalink: 'https://www.instagram.com/p/SECOND/',
+        postedAt: '2026-07-21T10:00:00.000Z',
+        rows: [{ date: '2099-09-13', start: '19:00', name: '二番目', buyin: 3000, tags: [] }],
+      },
+    ])
+  );
+  const s = result.summaries[0];
+  const byName = Object.fromEntries(s.addedRows.map((r) => [r.entry.name, r.permalink]));
+  assert.equal(byName['一番目'], 'https://www.instagram.com/p/FIRST/');
+  assert.equal(byName['二番目'], 'https://www.instagram.com/p/SECOND/');
+  assert.equal(s.posts.find((p) => p.permalink.endsWith('/FIRST/')).addedCount, 1);
+  assert.equal(s.posts.find((p) => p.permalink.endsWith('/SECOND/')).addedCount, 1);
+});
+
+test('明細: 追加行の合計が、行レベルの内訳の「追加」と一致する', async () => {
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
+    fakeLibsForBehaviour([
+      {
+        permalink: 'https://www.instagram.com/p/A/',
+        postedAt: '2026-07-20T10:00:00.000Z',
+        rows: [
+          { date: '2099-09-12', start: '19:00', name: 'A', buyin: 3000, tags: [] },
+          { date: '2099-09-13', start: '19:00', name: 'B', buyin: 3000, tags: [] },
+          { date: '2020-01-01', start: '19:00', name: '過去', buyin: 3000, tags: [] },
+          { date: '2099-9-14', start: '19:00', name: '不正', buyin: 3000, tags: [] },
+        ],
+      },
+    ])
+  );
+  const s = result.summaries[0];
+  const row = monitor.checkRowAccounting(s);
+  assert.equal(s.addedRows.length, row.added, '明細の件数とサマリの「追加」が食い違ってはいけない');
+  assert.equal(s.posts.reduce((a, p) => a + p.addedCount, 0), row.added);
+});
+
+// ============================================================
+// 明細は「data.js に書かれるとおり」の全項目を出す
+// ============================================================
+// 【なぜ全項目が要るか】明細に出ない項目は⑤の照合対象から外れる。
+// 例えば guarantee はサイトで「GTD ○万」バッジとして表示されるのに、明細に無ければ
+// 「画像には10万GTDとあるのにサイトには出ない」を見逃したまま【偽の合格】が出る。
+
+/** 明細1行を取り出すヘルパ。 */
+function captureAcceptedRowLines(summaries) {
+  const lines = [];
+  const orig = console.log;
+  console.log = (...a) => lines.push(a.join(' '));
+  try {
+    monitor.reportAcceptedRows(summaries);
+  } finally {
+    console.log = orig;
+  }
+  return lines;
+}
+
+test('明細: data.js に載る全項目(参加費/アドオン/スタック/GTD/再入場/賞品/タグ)が出る', async () => {
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
+    fakeLibsForBehaviour([
+      {
+        permalink: 'https://www.instagram.com/p/FULL/',
+        postedAt: '2026-07-20T10:00:00.000Z',
+        rows: [
+          {
+            date: '2099-09-12',
+            start: '19:00',
+            name: '全項目そろった大会',
+            buyin: 3000,
+            addon: 2000,
+            stack: 30000,
+            guarantee: 300000,
+            reentry: 'late',
+            prize: '1位 賞品あり',
+            tags: ['特別開催'],
+          },
+        ],
+      },
+    ])
+  );
+  const row = captureAcceptedRowLines(result.summaries).find((l) => l.includes('追加行: '));
+  assert.ok(row, '明細が出ること');
+  for (const part of ['参加費3000', 'アドオン2000', 'スタック30000', '再入場レイトのみ', 'タグ特別開催']) {
+    assert.ok(row.includes(part), `照合に必要な項目が欠けている: ${part}`);
+  }
+  // GTD と 賞品 も必ず項目として現れること(値そのものは下の回帰テストで固定する)
+  assert.match(row, /GTD/, 'GTDが明細に無いと、サイトのGTDバッジが照合対象から外れる');
+  assert.match(row, /賞品/);
+});
+
+test('★明細: GTD/賞品が data.js に載らない現状を、明細がそのまま映すこと(⑤で露見させるため)', async () => {
+  // 【既存の不具合をあえて固定する】tournament-merge.js の carryOver は guarantee/prize を
+  // 「既存エントリから取る、無ければ null」で上書きし、Visionが読み取った値にフォールバックしない。
+  // Waitinglist経路では guarantee/prize は人手専用なので正しいが、Vision経路では
+  // プロンプトが両方を要求している(venue-schedule-vision.js)ため成立しない。
+  //
+  // 【明細は「読み取った値」ではなく「data.js に書かれる値」を出す】ので `GTD不明` と出る。
+  // これが⑤の最中に「画像には30万GTDとあるのに明細はGTD不明」として必ず露見する。
+  // carryOver を直したらこのテストは落ちる。そのときは期待値を「GTD300000」に更新すること。
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
+    fakeLibsForBehaviour([
+      {
+        permalink: 'https://www.instagram.com/p/GTD/',
+        postedAt: '2026-07-20T10:00:00.000Z',
+        rows: [
+          {
+            date: '2099-09-12',
+            start: '19:00',
+            name: 'GTDつき大会',
+            buyin: 3000,
+            guarantee: 300000,
+            prize: '1位 賞品あり',
+            tags: [],
+          },
+        ],
+      },
+    ])
+  );
+  // data.js に入る行そのものを見る(明細の出所)
+  const entry = result.arr.find((t) => t.venueId === 'v40');
+  assert.equal(entry.guarantee, null, 'carryOver が読み取った GTD を捨てている(既存の不具合)');
+  assert.equal(entry.prize, null, 'carryOver が読み取った 賞品 を捨てている(既存の不具合)');
+  // 明細はその事実をそのまま映す = ⑤で気づける
+  const row = captureAcceptedRowLines(result.summaries).find((l) => l.includes('追加行: '));
+  assert.match(row, /GTD不明/, '明細が data.js の実態と食い違うと⑤が偽の合格を出す');
+  assert.match(row, /賞品不明/);
+});
+
+test('明細: 読み取れた 0 と「読み取れなかった」を混同しない', async () => {
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
+    fakeLibsForBehaviour([
+      {
+        permalink: 'https://www.instagram.com/p/FREE/',
+        postedAt: '2026-07-20T10:00:00.000Z',
+        rows: [{ date: '2099-09-12', start: '19:00', name: '無料大会', buyin: 0, addon: 0, stack: 0, tags: [] }],
+      },
+    ])
+  );
+  const row = captureAcceptedRowLines(result.summaries).find((l) => l.includes('追加行: '));
+  assert.match(row, /参加費0 /, '0(=無料)は「不明」にしない');
+  assert.match(row, /アドオン0 /);
+  assert.match(row, /スタック0 /);
+});
+
+// ---------- M-1: 既存の手入力を置き換えた行に印を付ける ----------
+
+test('明細: 既存の手入力と同じ枠を置き換えた行には★印と置き換え先のidが出る', async () => {
+  // 手入力は別idなので「idが増えた=新規」に見えるが、実際には人の入力を上書きしている。
+  // 監視6店には手入力が71件残っているので現実に起こりうる。
+  const manual = {
+    id: 'kq0804',
+    venueId: 'v40',
+    name: '人が入力した大会',
+    date: '2099-09-12',
+    start: '19:00',
+    buyin: 5000,
+    addon: null,
+    stack: 20000,
+    guarantee: null,
+    reentry: false,
+    prize: null,
+    tags: [],
+    source: 'manual',
+    verified: true,
+  };
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [manual], today: '2026-07-31', state: {} },
+    fakeLibsForBehaviour([
+      {
+        permalink: 'https://www.instagram.com/p/OVER/',
+        postedAt: '2026-07-20T10:00:00.000Z',
+        rows: [{ date: '2099-09-12', start: '19:00', name: 'Visionが読んだ大会', buyin: 3000, tags: [] }],
+      },
+    ])
+  );
+  const s = result.summaries[0];
+  assert.equal(s.addedRows.length, 1);
+  assert.deepEqual(s.addedRows[0].replacedManualIds, ['kq0804'], '置き換え先の既存idが分かること');
+  const row = captureAcceptedRowLines(result.summaries).find((l) => l.includes('追加行: '));
+  assert.match(row, /★既存の手入力\(id=kq0804\)を置き換え/);
+  // 【明細とサマリの「意味の違い」】明細=実際に増える行 / stats.added=mergeStoreの分類。
+  // 手入力の置き換えは added ではなく updated に入るので、両者は一致しない。
+  assert.equal(s.stats.added, 0);
+  assert.equal(s.stats.updated, 1);
+  assert.equal(s.stats.replacedManual.length, 1);
+});
+
+test('明細: 手入力の置き換えが無い通常の追加には★印を出さない', async () => {
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
+    fakeLibsForBehaviour([
+      {
+        permalink: 'https://www.instagram.com/p/NEW/',
+        postedAt: '2026-07-20T10:00:00.000Z',
+        rows: [{ date: '2099-09-12', start: '19:00', name: '新規', buyin: 3000, tags: [] }],
+      },
+    ])
+  );
+  const row = captureAcceptedRowLines(result.summaries).find((l) => l.includes('追加行: '));
+  assert.doesNotMatch(row, /★/, '通常の追加に印を付けるとノイズになる');
+});
+
+// ---------- M-2: 投稿ごとにまとまって並ぶ ----------
+
+test('明細: 追加行は投稿ごとにまとまり、その中で日付順に並ぶ', async () => {
+  // data.js は日付順なので、並べ替えないと同じ投稿の行がばらばらに出る。
+  // ⑤は「投稿を1回開いて、その投稿の行をまとめて確認 → 次の投稿」という作業。
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
+    fakeLibsForBehaviour([
+      {
+        permalink: 'https://www.instagram.com/p/AAA/',
+        postedAt: '2026-07-20T10:00:00.000Z',
+        rows: [
+          { date: '2099-09-15', start: '19:00', name: 'A後', buyin: 1, tags: [] },
+          { date: '2099-09-11', start: '19:00', name: 'A前', buyin: 1, tags: [] },
+        ],
+      },
+      {
+        permalink: 'https://www.instagram.com/p/BBB/',
+        postedAt: '2026-07-21T10:00:00.000Z',
+        rows: [
+          { date: '2099-09-13', start: '19:00', name: 'B中', buyin: 1, tags: [] },
+          { date: '2099-09-17', start: '19:00', name: 'B後', buyin: 1, tags: [] },
+        ],
+      },
+    ])
+  );
+  const s = result.summaries[0];
+  assert.deepEqual(
+    s.addedRows.map((r) => r.entry.name),
+    ['A前', 'A後', 'B中', 'B後'],
+    '投稿ごとにまとまり、その中で日付順であること(日付順に混ざってはいけない)'
+  );
+  // 並べ替えないと A前(09-11)→ B中(09-13)→ A後(09-15)→ B後(09-17) の順になる
+});
+
+// ---------- M-3: 日付レンジは書式が正しい日付だけ ----------
+
+test('明細: 日付レンジは破棄される不正日付を含めない(文字列比較で上端が歪むため)', async () => {
+  // `2026-3-31` は文字列比較で `2026-03-15` より大きく評価され、レンジ上端を歪める。
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
+    fakeLibsForBehaviour([
+      {
+        permalink: 'https://www.instagram.com/p/MIX/',
+        postedAt: '2026-07-20T10:00:00.000Z',
+        rows: [
+          { date: '2026-03-01', start: '19:00', name: '正しい1', buyin: 1, tags: [] },
+          { date: '2026-03-15', start: '19:00', name: '正しい2', buyin: 1, tags: [] },
+          { date: '2026-3-31', start: '19:00', name: '不正(破棄される)', buyin: 1, tags: [] },
+        ],
+      },
+    ])
+  );
+  const p = result.summaries[0].posts[0];
+  assert.equal(p.dateMin, '2026-03-01');
+  assert.equal(p.dateMax, '2026-03-15', '不正日付がレンジ上端を歪めてはいけない');
+  assert.equal(p.rowCount, 3, '行数そのものは3行のまま(不正日付も抽出されてはいる)');
+});
+
+// ---------- M-4: 投稿別の明細と対象投稿数の一致を実行時にも見る ----------
+
+test('CLI: 投稿別の明細が対象投稿数と食い違ったら ::error:: が出る', () => {
+  const r = runCliWithMutation((root) => {
+    // 明細を1件だけ記録し損ねる変異を注入する
+    const p = path.join(root, 'tools', 'monitor-instagram-apify.js');
+    const src = fs.readFileSync(p, 'utf8');
+    const out = src.replace('      postDetails.push(detail);', '      if (!post.permalink.includes("/B/")) postDetails.push(detail);');
+    assert.notEqual(out, src, '変異の当て先が見つからない(テストの前提が古い)');
+    fs.writeFileSync(p, out);
+  });
+  assert.equal(r.status, 0, 'ジョブは落とさない(注記で見せる)');
+  assert.match(r.stdout, /::error title=Instagram監視 - 投稿別の明細が合わない::/);
+  assert.match(r.stdout, /途中で記録されずに抜けた投稿があります/);
 });
