@@ -276,16 +276,32 @@ function toTournament(t, venueId) {
  *                 「画像だけの日程投稿」= キーワード方式では構造的に永久に拾えない、と原因が確定する
  *   hasDateLike … `8月` `8/1` のような日付らしき並びがあるか
  *   hasTimeLike … `19:30` `19時` のような時刻らしき並びがあるか
- * 日付と時刻が両方あるのにキーワードに当たらない投稿が多ければ、キーワード側を疑う根拠になる。
  * 全角数字も拾う(店の告知は全角混じりが多い)。
+ *
+ * 【★この2つは「片側の証拠」として読むこと★】
+ *   あり ⇒ 日程告知の可能性が高い(キーワード側を疑う根拠になる)
+ *   なし ⇒ 【何も言えない】
+ * 例えば `AUGUST SCHEDULE` は数字を1つも含まないので「日付=なし / 時刻=なし」と出るが、
+ * これは紛れもない日程告知である。**「両方なし」を「日程告知ではない」と読むと、
+ * 4本目の経路(キーワード不一致)の較正判断を誤る。**
  */
 const CAPTION_DATE_LIKE = /[0-9０-９]{1,2}\s*[/／月]/;
 const CAPTION_TIME_LIKE = /[0-9０-９]{1,2}\s*[:：時]/;
+
+/**
+ * 「実質的に空」と見なす文字。半角/全角の空白・改行は `trim()` が落とすが、
+ * 【ゼロ幅スペース(U+200B等)は落とさない】ので明示的に除く。
+ * 全角スペースだけ・ゼロ幅スペースだけのキャプションは looksLikeSchedulePost では
+ * 空文字と同じく【構造的に永久に拾えない】ため、`キャプション3字` のように出すと
+ * 「短いだけだからキーワードを足せば拾えるかも」と誤読される。
+ */
+const CAPTION_BLANK_CHARS = /[\s\u200B-\u200D\u2060\uFEFF]/g;
 
 function captionSignals(caption) {
   const text = String(caption || '');
   return {
     chars: [...text].length,
+    isBlank: text.replace(CAPTION_BLANK_CHARS, '') === '',
     hasDateLike: CAPTION_DATE_LIKE.test(text),
     hasTimeLike: CAPTION_TIME_LIKE.test(text),
   };
@@ -309,11 +325,15 @@ function captionSignals(caption) {
  */
 function formatFilteredOutPost(store, post) {
   const sig = captionSignals(post.caption);
-  const captionDesc =
-    sig.chars === 0
+  // 空白のみ・ゼロ幅スペースのみも「なし」側に寄せる。文字数だけ出すと
+  // 「短いだけだからキーワードを足せば拾えるかも」と誤読されるが、実際には空文字と同じで
+  // キーワード方式では【構造的に永久に拾えない】。
+  const captionDesc = sig.isBlank
+    ? sig.chars === 0
       ? 'キャプションなし(0字)'
-      : `キャプション${sig.chars}字 / 日付らしき表記=${sig.hasDateLike ? 'あり' : 'なし'}` +
-        ` / 時刻らしき表記=${sig.hasTimeLike ? 'あり' : 'なし'}`;
+      : `キャプション実質なし(空白のみ${sig.chars}字)`
+    : `キャプション${sig.chars}字 / 日付らしき表記=${sig.hasDateLike ? 'あり' : 'なし'}` +
+      ` / 時刻らしき表記=${sig.hasTimeLike ? 'あり' : 'なし'}`;
   return (
     `[monitor-instagram-apify] キーワード不一致で対象外: 店=${store.label}(${store.venueId})` +
     ` / 投稿=${post.permalink}(${post.postedAt})` +

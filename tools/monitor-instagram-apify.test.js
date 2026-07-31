@@ -1423,7 +1423,7 @@ test('★formatFilteredOutPost: キャプションが無い投稿はそれと分
 });
 
 test('captionSignals: 全角の数字・コロンでも日付/時刻らしき表記を拾う', () => {
-  assert.deepEqual(monitor.captionSignals(''), { chars: 0, hasDateLike: false, hasTimeLike: false });
+  assert.deepEqual(monitor.captionSignals(''), { chars: 0, isBlank: true, hasDateLike: false, hasTimeLike: false });
   assert.equal(monitor.captionSignals('８月のお知らせ').hasDateLike, true, '全角の月表記');
   assert.equal(monitor.captionSignals('１９：３０開始').hasTimeLike, true, '全角の時刻表記');
   assert.equal(monitor.captionSignals('19時スタート').hasTimeLike, true);
@@ -2130,5 +2130,126 @@ test('CLI: Vision抽出0件が無い回には但し書きを出さない(ノイ�
     assert.doesNotMatch(r.stdout, /要確認: 日程を含まない投稿か/);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+// ============================================================
+// 公開ログへのキャプション漏洩を「出力の全経路」に対して走査する
+// ============================================================
+// 【なぜ formatFilteredOutPost の戻り値だけでは足りないか】
+// 断片検査をその1関数にしか当てていないと、【別のログ行に本文を出す変異】が素通りする。
+// 実際、品質管理部の走査で「Vision 0件 のログ行に本文を出す」変異だけが生き残った。
+// しかも次の工程はまさに「Vision 0件 の全件目視」なので、
+// 「permalink だけだと確認が面倒だからキャプションも出そう」という変更が入りやすい場所。
+// そこで【CLIを実際に走らせ、stdout/stderr/状態ファイル/data.js のすべて】を走査する。
+
+/**
+ * 走査用の「希少文字列」。日本語の一般的な2文字(「スケ」「日程」など)と偶然一致すると
+ * 偽陽性になるので、ログにもコードにも現れない文字列を使う。
+ * 【先頭・中間・末尾の3箇所に置く】— 1箇所だけだと「冒頭N字だけ出す」「末尾だけ出す」
+ * といった部分的な漏洩を取り逃がす。
+ */
+// 2文字断片まで走査する印。ログにも data.js にも現れない文字だけで構成すること。
+const FRAGMENT_MARKERS = ['ZQXJVWKZ', '龗麤鑫', 'QJXZVWQK'];
+// 【2文字断片では走査しない印】電話番号は "09" "12" のような断片が
+// data.js の日付・時刻(2026-09-12 / 09:00)と当たり前に一致するので、偽陽性になる。
+// 個人情報として現実味のある形なので文面には残し、走査は「丸ごと一致」だけにする。
+const WHOLE_MARKERS = ['090-1234-5678', '09012345678'];
+
+/** 希少文字列を仕込んだキャプションを作る(キーワードに当てるかは keyword で選ぶ)。 */
+function leakCaption(keyword) {
+  return `ZQXJVWKZ ${keyword} 優勝は龗麤鑫さん 連絡先 090-1234-5678 QJXZVWQK`;
+}
+
+/** haystack 群に、希少文字列とその2文字断片が1つも現れないことを確かめる。 */
+function assertNoCaptionLeak(haystacks) {
+  let checked = 0;
+  for (const marker of FRAGMENT_MARKERS) {
+    const chars = [...marker];
+    for (let i = 0; i + 2 <= chars.length; i++) {
+      const frag = chars.slice(i, i + 2).join('');
+      checked += 1;
+      for (const [name, text] of Object.entries(haystacks)) {
+        assert.ok(!text.includes(frag), `${name} にキャプションの断片が漏れている: ${JSON.stringify(frag)}`);
+      }
+    }
+  }
+  for (const marker of [...FRAGMENT_MARKERS, ...WHOLE_MARKERS]) {
+    checked += 1;
+    for (const [name, text] of Object.entries(haystacks)) {
+      assert.ok(!text.includes(marker), `${name} にキャプション本文が漏れている: ${JSON.stringify(marker)}`);
+    }
+  }
+  assert.ok(checked >= 20, `走査した断片が少なすぎる(${checked}通り)`);
+}
+
+test('★漏洩走査: CLIの全出力(stdout/stderr/状態ファイル/data.js)にキャプションが1文字も出ない', () => {
+  // キーワードに当たる投稿(→ Vision 0件の経路)と、当たらない投稿(→ キーワード不一致の経路)の
+  // 両方に希少文字列を仕込み、【出力の全経路】を走査する。
+  const root = makeTempRepoRoot();
+  fs.writeFileSync(
+    path.join(root, 'tools', 'fetch-venue-posts-apify.js'),
+    `exports.fetchInstagramPosts = async (handle) => {
+       if (handle !== 'triple_orio') return [];
+       return [
+         // キーワードに当たる → Vision に渡り、0件が返る経路
+         { permalink: 'https://www.instagram.com/p/HIT/', imageUrl: 'https://example.com/HIT.jpg', postedAt: '2026-07-20T10:00:00.000Z', caption: ${JSON.stringify(leakCaption('スケジュール'))} },
+         // キーワードに当たらない → 画像を見ずに捨てる経路
+         { permalink: 'https://www.instagram.com/p/MISS/', imageUrl: 'https://example.com/MISS.jpg', postedAt: '2026-07-21T10:00:00.000Z', caption: ${JSON.stringify(leakCaption('AUGUST'))} },
+       ];
+     };\n`
+  );
+  fs.writeFileSync(path.join(root, 'tools', 'venue-schedule-vision.js'), 'exports.extractTournaments = async () => [];\n');
+  fs.writeFileSync(
+    path.join(root, 'stub-fetch.js'),
+    'globalThis.fetch = async (url) => ({ status: 200, arrayBuffer: async () => new TextEncoder().encode(String(url)).buffer });\n'
+  );
+  try {
+    // 【--dry-run を付けない】状態ファイルと data.js まで書かせて、書き込み先も走査対象にする。
+    const r = spawnSync('node', ['--require', './stub-fetch.js', 'tools/monitor-instagram-apify.js'], {
+      cwd: root,
+      env: { ...process.env, APIFY_API_TOKEN: 'dummy', ANTHROPIC_API_KEY: 'dummy' },
+      encoding: 'utf8',
+    });
+    assert.equal(r.status, 0, `正常終了すること: ${r.stderr}`);
+    // 両方の経路が実際に通ったことを確認してから走査する(通っていなければ走査は無意味)
+    assert.match(r.stdout, /キーワード不一致で対象外/, 'キーワード不一致の経路を通っていない');
+    assert.match(r.stdout, /Vision抽出0件 1件/, 'Vision 0件の経路を通っていない');
+    assertNoCaptionLeak({
+      stdout: r.stdout,
+      stderr: r.stderr,
+      'apify-monitor-state.json': fs.readFileSync(path.join(root, 'apify-monitor-state.json'), 'utf8'),
+      'data.js': fs.readFileSync(path.join(root, 'data.js'), 'utf8'),
+    });
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('captionSignals: 空白のみ・ゼロ幅スペースのみも「実質なし」と判定する', () => {
+  // trim() は全角スペースは落とすが【ゼロ幅スペースは落とさない】ので明示的に除いている。
+  for (const blank of ['', '   ', '\n\t ', '　　', '​​', '‍', '﻿', ' ​　']) {
+    assert.equal(captionSignalsIsBlank(blank), true, `空白扱いにならない: ${JSON.stringify(blank)}`);
+  }
+  for (const notBlank of ['8月', 'a', '　8　']) {
+    assert.equal(captionSignalsIsBlank(notBlank), false, `空白扱いにしてはいけない: ${JSON.stringify(notBlank)}`);
+  }
+});
+function captionSignalsIsBlank(s) {
+  return monitor.captionSignals(s).isBlank;
+}
+
+test('formatFilteredOutPost: 空白のみのキャプションは「実質なし」と出す(短いだけと誤読させない)', () => {
+  // 【誤読を防ぐのが目的】`キャプション3字` と出ると「短いだけだからキーワードを足せば拾えるかも」
+  // と読めてしまうが、実際には空文字と同じでキーワード方式では構造的に永久に拾えない。
+  for (const [caption, expected] of [
+    ['   ', /キャプション実質なし\(空白のみ3字\)/],
+    ['　　', /キャプション実質なし\(空白のみ2字\)/],
+    ['​​', /キャプション実質なし\(空白のみ2字\)/],
+    ['', /キャプションなし\(0字\)/],
+  ]) {
+    const line = monitor.formatFilteredOutPost({ venueId: 'v40', label: '店' }, { permalink: 'p', postedAt: 't', caption });
+    assert.match(line, expected, `入力 ${JSON.stringify(caption)}`);
+    assert.doesNotMatch(line, /日付らしき表記/, '実質なしのときに信号を並べても意味がない');
   }
 });
