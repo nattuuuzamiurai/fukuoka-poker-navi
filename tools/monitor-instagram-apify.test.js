@@ -1354,31 +1354,82 @@ test('キーワード不一致: 落とした投稿の件数とキャプション
   assert.equal(s.newPostCount, s.scheduleLikeCount + s.filteredOutCount);
 });
 
-test('formatFilteredOutPost: 店・投稿URL・キャプションの冒頭が1行に出る', () => {
+test('formatFilteredOutPost: 店・投稿URL・投稿日時が1行に出る', () => {
   const line = monitor.formatFilteredOutPost(
     { venueId: 'v40', label: 'TripleBarrel 折尾店' },
     {
       permalink: 'https://www.instagram.com/p/ABC/',
       postedAt: '2026-07-20T10:00:00.000Z',
-      caption: 'AUGUST SCHEDULE\n本日も\t営業しております',
+      caption: 'AUGUST SCHEDULE 8/1〜 19:30スタート',
     }
   );
   assert.match(line, /TripleBarrel 折尾店/);
   assert.match(line, /v40/);
-  assert.match(line, /https:\/\/www\.instagram\.com\/p\/ABC\//);
-  assert.match(line, /AUGUST SCHEDULE/);
+  assert.match(line, /https:\/\/www\.instagram\.com\/p\/ABC\//, '投稿を特定できること(本文の代わりにこれで確認する)');
+  assert.match(line, /2026-07-20T10:00:00\.000Z/);
   assert.doesNotMatch(line, /\n/, '改行を潰してログが崩れないようにすること');
 });
 
-test('formatFilteredOutPost: 長いキャプションは切り詰め、空なら「(なし)」と出す', () => {
-  const long = monitor.formatFilteredOutPost(
+test('★formatFilteredOutPost: キャプション本文を1文字も出さない(公開ログのため)', () => {
+  // 【この経路は収集が偏っている】ログに残るのは「キーワードに当たらなかった投稿」=
+  // 日程告知【以外】で、優勝者名・お礼・連絡先が入りやすい側。リポジトリは public で
+  // Actionsログは誰でも読める。permalink があれば全文は投稿を開けば読めるので、
+  // 本文の複製は人にできることを増やさないまま公開の複製だけを作る。
+  // 将来また本文を出すコードが入ったらこのテストが落ちる。
+  const caption = '優勝は山田太郎さんでした!おめでとうございます。お問い合わせは 090-1234-5678 まで';
+  const line = monitor.formatFilteredOutPost(
     { venueId: 'v40', label: '店' },
-    { permalink: 'p', postedAt: 't', caption: 'あ'.repeat(200) }
+    { permalink: 'https://www.instagram.com/p/ABC/', postedAt: 't', caption }
   );
-  assert.match(long, /…/, '切り詰めたことが分かること');
-  assert.ok(long.length < 200, `ログ1行が長すぎる: ${long.length}文字`);
+  for (const secret of ['山田', '太郎', '優勝', 'おめでとう', '090', '1234', '5678', 'お問い合わせ']) {
+    assert.ok(!line.includes(secret), `キャプション本文が漏れている: ${secret}`);
+  }
+  // 本文の断片(2文字以上の連続)が1つも含まれないことも機械的に確認する
+  const chars = [...caption];
+  for (let i = 0; i + 2 <= chars.length; i++) {
+    const gram = chars.slice(i, i + 2).join('');
+    if (/^[\s]*$/.test(gram)) continue;
+    assert.ok(!line.includes(gram), `キャプションの断片が漏れている: ${JSON.stringify(gram)}`);
+  }
+});
+
+test('formatFilteredOutPost: 本文の代わりに機械的な信号(文字数・日付/時刻らしき表記)を出す', () => {
+  const withBoth = monitor.formatFilteredOutPost(
+    { venueId: 'v40', label: '店' },
+    { permalink: 'p', postedAt: 't', caption: '8/1から 19:30スタートです' }
+  );
+  assert.match(withBoth, /キャプション\d+字/);
+  assert.match(withBoth, /日付らしき表記=あり/);
+  assert.match(withBoth, /時刻らしき表記=あり/);
+
+  const neither = monitor.formatFilteredOutPost(
+    { venueId: 'v40', label: '店' },
+    { permalink: 'p', postedAt: 't', caption: '本日も営業しております' }
+  );
+  assert.match(neither, /日付らしき表記=なし/);
+  assert.match(neither, /時刻らしき表記=なし/);
+});
+
+test('★formatFilteredOutPost: キャプションが無い投稿はそれと分かる(キーワード方式では永久に拾えない)', () => {
+  // 画像だけの日程投稿は、キャプションが空である限りキーワード方式では構造的に拾えない。
+  // これが分かるだけで「キーワードを増やしても解決しない」と原因が確定する。
   const none = monitor.formatFilteredOutPost({ venueId: 'v40', label: '店' }, { permalink: 'p', postedAt: 't' });
-  assert.match(none, /\(なし\)/);
+  assert.match(none, /キャプションなし\(0字\)/);
+  const empty = monitor.formatFilteredOutPost(
+    { venueId: 'v40', label: '店' },
+    { permalink: 'p', postedAt: 't', caption: '' }
+  );
+  assert.match(empty, /キャプションなし\(0字\)/);
+});
+
+test('captionSignals: 全角の数字・コロンでも日付/時刻らしき表記を拾う', () => {
+  assert.deepEqual(monitor.captionSignals(''), { chars: 0, hasDateLike: false, hasTimeLike: false });
+  assert.equal(monitor.captionSignals('８月のお知らせ').hasDateLike, true, '全角の月表記');
+  assert.equal(monitor.captionSignals('１９：３０開始').hasTimeLike, true, '全角の時刻表記');
+  assert.equal(monitor.captionSignals('19時スタート').hasTimeLike, true);
+  assert.equal(monitor.captionSignals('8/1開催').hasDateLike, true);
+  assert.equal(monitor.captionSignals('ありがとうございました').hasDateLike, false);
+  assert.equal(monitor.captionSignals('🎰🃏').chars, 2, '絵文字はコードポイントで数える');
 });
 
 test('キーワード不一致: レビュー部が挙げた表記はすべて現状のキーワードから漏れる(実測の固定)', () => {
@@ -1585,7 +1636,7 @@ test('CLI: 健全な実行では集計が合わない注記は出ない(誤検�
   assert.match(r.stdout, /残余なし/, '合計行に「残余なし」が出ること');
 });
 
-test('CLI: キーワード不一致の投稿はキャプション付きでログに出る(次のdry-runの計画がこれに依存する)', () => {
+test('CLI: キーワード不一致の投稿は、本文を出さずに投稿URLと信号でログに出る', () => {
   const root = makeTempRepoRoot();
   fs.writeFileSync(
     path.join(root, 'tools', 'fetch-venue-posts-apify.js'),
@@ -1607,8 +1658,9 @@ test('CLI: キーワード不一致の投稿はキャプション付きでログ
     });
     assert.equal(r.status, 0);
     assert.match(r.stdout, /キーワード不一致で対象外/, 'このログが無いと次のdry-runで何も測れない');
-    assert.match(r.stdout, /AUGUST SCHEDULE/, 'キャプションの中身が読めること');
-    assert.match(r.stdout, /https:\/\/www\.instagram\.com\/p\/EN\//, 'どの投稿かが分かること');
+    assert.match(r.stdout, /https:\/\/www\.instagram\.com\/p\/EN\//, 'どの投稿かが分かること(内容はここから辿る)');
+    assert.match(r.stdout, /キャプション\d+字/, '本文の代わりに機械的な信号が出ること');
+    assert.doesNotMatch(r.stdout, /AUGUST SCHEDULE/, '公開ログにキャプション本文を出してはいけない');
     assert.match(r.stdout, /キーワード不一致で対象外 1件/, '件数もサマリに出ること');
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
@@ -1999,4 +2051,84 @@ test('R-1: filteredOut の件数と、実際にログへ出るキャプション
   const reported = Number(r.stdout.match(/キーワード不一致で対象外 (\d+)件/)[1]);
   assert.equal(logged, 3, '落とした3件すべてがログに出ること');
   assert.equal(reported, logged, `サマリの件数(${reported})とログの行数(${logged})が食い違っている`);
+});
+
+// ============================================================
+// 「Vision抽出0件」を安心させる形で表示しないこと
+// ============================================================
+// 【この案件で繰り返し出た失敗の形】72/72消失で「1行も採用できなかった投稿 0件」と
+// 表示していたのと同じで、サマリが安心させる方向に誤解を招くのが最も危ない。
+// 0件は (a)日程を含まない投稿を拾った(正常) と (b)日程表なのに読めなかった(消失) の
+// どちらでも同じ数字になる。機械に分類させず、人のゲートに置く。
+
+test('emptyCaveat: 0件でない限り「判別できない」旨の但し書きを必ず付ける', () => {
+  assert.equal(monitor.emptyCaveat(0), '', '0件のときにノイズを出さない');
+  assert.match(monitor.emptyCaveat(1), /要確認/);
+  assert.match(monitor.emptyCaveat(1), /判別できません/);
+  assert.match(monitor.emptyCaveat(5), /日程を含まない投稿か、読めなかったか/);
+});
+
+test('CLI: Vision抽出0件があるとき、サマリの数字だけを出して安心させない', () => {
+  const root = makeTempRepoRoot();
+  fs.writeFileSync(
+    path.join(root, 'tools', 'fetch-venue-posts-apify.js'),
+    `exports.fetchInstagramPosts = async (handle) => {
+       if (handle !== 'triple_orio') return [];
+       return [{ permalink: 'https://www.instagram.com/p/EMPTY/', imageUrl: 'https://example.com/E.jpg', postedAt: '2026-07-20T10:00:00.000Z', caption: '8月のスケジュール' }];
+     };\n`
+  );
+  fs.writeFileSync(path.join(root, 'tools', 'venue-schedule-vision.js'), 'exports.extractTournaments = async () => [];\n');
+  fs.writeFileSync(
+    path.join(root, 'stub-fetch.js'),
+    'globalThis.fetch = async (url) => ({ status: 200, arrayBuffer: async () => new TextEncoder().encode(String(url)).buffer });\n'
+  );
+  try {
+    const r = spawnSync('node', ['--require', './stub-fetch.js', 'tools/monitor-instagram-apify.js', '--dry-run'], {
+      cwd: root,
+      env: { ...process.env, APIFY_API_TOKEN: 'dummy', ANTHROPIC_API_KEY: 'dummy' },
+      encoding: 'utf8',
+    });
+    assert.equal(r.status, 0);
+    // 店ごとのサマリにも全店合計にも但し書きが付く
+    const withCaveat = (r.stdout.match(/Vision抽出0件 1件\(要確認: 日程を含まない投稿か、読めなかったか判別できません\)/g) || []).length;
+    assert.equal(withCaveat, 2, `店ごと+全店合計の2箇所に但し書きが付くこと(実際=${withCaveat})`);
+    // ::warning:: 側も「正常の可能性が高い」と安心させない
+    const warn = r.stdout.split('\n').find((l) => l.startsWith('::warning'));
+    assert.ok(warn, '::warning:: が出ること');
+    assert.match(warn, /機械では判別できません/);
+    assert.doesNotMatch(warn, /可能性が高い/, '片方が正常だと示唆してはいけない');
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('CLI: Vision抽出0件が無い回には但し書きを出さない(ノイズにしない)', () => {
+  const root = makeTempRepoRoot();
+  fs.writeFileSync(
+    path.join(root, 'tools', 'fetch-venue-posts-apify.js'),
+    `exports.fetchInstagramPosts = async (handle) => {
+       if (handle !== 'triple_orio') return [];
+       return [{ permalink: 'https://www.instagram.com/p/A/', imageUrl: 'https://example.com/A.jpg', postedAt: '2026-07-20T10:00:00.000Z', caption: '8月のスケジュール' }];
+     };\n`
+  );
+  fs.writeFileSync(
+    path.join(root, 'tools', 'venue-schedule-vision.js'),
+    "exports.extractTournaments = async () => [{ date: '2099-09-12', start: '19:00', name: '大会', buyin: 3000, tags: [] }];\n"
+  );
+  fs.writeFileSync(
+    path.join(root, 'stub-fetch.js'),
+    'globalThis.fetch = async (url) => ({ status: 200, arrayBuffer: async () => new TextEncoder().encode(String(url)).buffer });\n'
+  );
+  try {
+    const r = spawnSync('node', ['--require', './stub-fetch.js', 'tools/monitor-instagram-apify.js', '--dry-run'], {
+      cwd: root,
+      env: { ...process.env, APIFY_API_TOKEN: 'dummy', ANTHROPIC_API_KEY: 'dummy' },
+      encoding: 'utf8',
+    });
+    assert.equal(r.status, 0);
+    assert.match(r.stdout, /Vision抽出0件 0件/);
+    assert.doesNotMatch(r.stdout, /要確認: 日程を含まない投稿か/);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
 });

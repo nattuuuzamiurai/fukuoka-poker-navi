@@ -269,28 +269,56 @@ function toTournament(t, venueId) {
  * 理由 / 店 / 投稿URL / 投稿日時 / 実際の date と name をすべて出す。
  */
 /**
+ * キャプションから【本文を出さずに】較正の判断材料になる機械的な信号だけを取り出す。
+ *
+ * 信号の意味:
+ *   chars       … 文字数。とくに【0 = キャプションが無い】が重要で、これが分かるだけで
+ *                 「画像だけの日程投稿」= キーワード方式では構造的に永久に拾えない、と原因が確定する
+ *   hasDateLike … `8月` `8/1` のような日付らしき並びがあるか
+ *   hasTimeLike … `19:30` `19時` のような時刻らしき並びがあるか
+ * 日付と時刻が両方あるのにキーワードに当たらない投稿が多ければ、キーワード側を疑う根拠になる。
+ * 全角数字も拾う(店の告知は全角混じりが多い)。
+ */
+const CAPTION_DATE_LIKE = /[0-9０-９]{1,2}\s*[/／月]/;
+const CAPTION_TIME_LIKE = /[0-9０-９]{1,2}\s*[:：時]/;
+
+function captionSignals(caption) {
+  const text = String(caption || '');
+  return {
+    chars: [...text].length,
+    hasDateLike: CAPTION_DATE_LIKE.test(text),
+    hasTimeLike: CAPTION_TIME_LIKE.test(text),
+  };
+}
+
+/**
  * キーワード判定(looksLikeSchedulePost)で落とした投稿を1行にする。
  *
- * 【キャプションの実物を出すことが目的】この経路は画像を1度も見ずに投稿を捨て、
- * それでいて lastPostedAt は前進する。件数だけ出しても「日程を投稿していない店」なのか
- * 「投稿しているが語に当たらない店」なのか区別できないので、実際の文面を見せる。
- * 先頭120字に切るのは、1投稿のキャプションが数百字になることがありログが読めなくなるため。
- * 【50字では足りない】日本語の告知は「いつもありがとうございます!」のような定型挨拶で
- * 始まることが多く、50字だと肝心の「8月のトナメ表です」に届かないまま切れて、
- * キーワードを増やすべきかの判断ができない。改行はログが崩れるので潰す。
+ * この経路は画像を1度も見ずに投稿を捨て、それでいて lastPostedAt は前進する。
+ * 件数だけでは「日程を投稿していない店」なのか「投稿しているが語に当たらない店」なのか
+ * 区別できないので、どの投稿を落としたかを追える情報を出す。
+ *
+ * 【★キャプション本文は出さない(2026-08-01)★】
+ * このリポジトリは public で、Actions のログは誰でも読める(既定90日保持)。
+ * しかもこのログが集めるのは「キーワードに当たらなかった投稿」= 日程告知【以外】であり、
+ * 優勝者名・お礼・連絡先が入りやすい側に【収集が偏っている】。
+ * 一方で診断に必要なのは「取りこぼしていないか」の判断で、それは permalink を開けば
+ * キャプション全文が読める以上、本文の複製が人にできることを増やしていない。
+ * 便益がほぼ無くリスクだけがあるので、本文は出さず【機械的な信号だけ】にする。
+ * 「本文を出さない」ことはテストで固定してある(将来また出すコードが入ったら落ちる)。
  */
-const FILTERED_CAPTION_HEAD_CHARS = 120;
-
 function formatFilteredOutPost(store, post) {
-  const caption = String(post.caption || '')
-    .replace(/\s+/g, ' ')
-    .trim();
-  const head =
-    caption.length > FILTERED_CAPTION_HEAD_CHARS ? `${caption.slice(0, FILTERED_CAPTION_HEAD_CHARS)}…` : caption;
+  const sig = captionSignals(post.caption);
+  const captionDesc =
+    sig.chars === 0
+      ? 'キャプションなし(0字)'
+      : `キャプション${sig.chars}字 / 日付らしき表記=${sig.hasDateLike ? 'あり' : 'なし'}` +
+        ` / 時刻らしき表記=${sig.hasTimeLike ? 'あり' : 'なし'}`;
   return (
     `[monitor-instagram-apify] キーワード不一致で対象外: 店=${store.label}(${store.venueId})` +
     ` / 投稿=${post.permalink}(${post.postedAt})` +
-    ` / キャプション=${caption ? JSON.stringify(head) : '(なし)'}`
+    ` / ${captionDesc}` +
+    ' ※本文は出しません(公開ログのため)。内容は投稿URLで確認してください'
   );
 }
 
@@ -734,6 +762,20 @@ function checkRowAccounting(summary) {
  * 件数の記録は apify-monitor-state.json の lastExtraction 側(コミットされ、git履歴に残る)が持つ。
  */
 /**
+ * 「Vision抽出0件」に必ず添える注意書き。
+ *
+ * 【0件を「異常なし」と読ませないため】0件は (a)日程を含まない投稿を拾った(正常) と
+ * (b)日程表なのに読めなかった(内容が失われた) の【どちらでも同じ数字】になる。
+ * 機械には分類できないので分類させず、人のゲートに置く。ただし注意書きを外して
+ * 数字だけにすると「0件=問題なし」と読まれる — この案件で繰り返し出た失敗の形
+ * (72/72消失で「1行も採用できなかった投稿 0件」と表示していたのと同じ)なので、
+ * 件数が0でない限り必ずこの但し書きを付ける。
+ */
+function emptyCaveat(count) {
+  return count > 0 ? '(要確認: 日程を含まない投稿か、読めなかったか判別できません)' : '';
+}
+
+/**
  * 全店の合計を1ブロックで出す。
  *
  * 【dry-run でもカウンタを観測できるようにするため必要】dry-run は状態ファイルを書かないので、
@@ -763,8 +805,8 @@ function reportTotals(summaries) {
     `  投稿の行き先: 取り込めた ${sum((s) => s.importedPostCount)}件 / 再投稿 ${sum((s) => s.repostedPostCount)}件 / ` +
       `【失われた ${lost}件】(画像DL失敗 ${sum((s) => s.imageFailedCount)} / ` +
       `Vision抽出失敗 ${sum((s) => s.visionFailedCount)} / 全行不採用 ${sum((s) => s.unusablePostCount)}) / ` +
-      `Vision 0件 ${sum((s) => s.emptyResultCount)}件` +
-      `${postResidual === 0 ? '(残余なし)' : ` ← 残余 ${postResidual}件`}`
+      `Vision抽出0件 ${sum((s) => s.emptyResultCount)}件${emptyCaveat(sum((s) => s.emptyResultCount))}` +
+      `${postResidual === 0 ? ' / 残余なし' : ` ← 残余 ${postResidual}件`}`
   );
   const rows = summaries.map(checkRowAccounting);
   const rsum = (f) => rows.reduce((a, r) => a + f(r), 0);
@@ -824,8 +866,9 @@ function reportEmptyResults(emptyResults) {
   console.log(
     `::warning title=Instagram監視 - Visionが0件を返した投稿::` +
       `${emptyResults.length}件の投稿から大会を1件も読み取れませんでした。` +
-      'スケジュール告知でない投稿を拾った(誤検知=正常)可能性が高いですが、' +
-      '日程表なのに読み取れていない場合も同じ数字になります。件数が増え続けるようなら確認してください。'
+      '【この2つは機械では判別できません】(a) 日程を含まない投稿を拾った(=何も失われていない) / ' +
+      '(b) 日程表なのに読み取れなかった(=その投稿の内容が失われ、再試行もされない)。' +
+      '投稿URLを開いて人が確かめてください。'
   );
   for (const p of emptyResults) {
     console.log(
@@ -913,7 +956,7 @@ async function main() {
     console.log(
       `  投稿の行き先: 取り込めた ${s.importedPostCount}件 / 再投稿 ${s.repostedPostCount}件 / ` +
         `【失われた ${lost}件】(画像DL失敗 ${s.imageFailedCount} / Vision抽出失敗 ${s.visionFailedCount} / ` +
-        `全行不採用 ${s.unusablePostCount}) / Vision 0件 ${s.emptyResultCount}件`
+        `全行不採用 ${s.unusablePostCount}) / Vision抽出0件 ${s.emptyResultCount}件${emptyCaveat(s.emptyResultCount)}`
     );
     const post = checkPostAccounting(s);
     if (!post.ok) {
@@ -1000,6 +1043,8 @@ module.exports = {
   formatDroppedRow,
   formatNormalizedRow,
   formatFilteredOutPost,
+  captionSignals,
+  emptyCaveat,
   pickNewPostsWithStats,
   checkIntakeAccounting,
   reportAnomalies,
