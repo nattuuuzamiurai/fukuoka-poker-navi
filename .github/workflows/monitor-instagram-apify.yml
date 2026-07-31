@@ -314,6 +314,24 @@ jobs:
             echo "\`node tools/import-venue-image.js --venue <id> --instagram-url <投稿URL>\` で手動取込みしてください。"
           } >> "$GITHUB_STEP_SUMMARY"
 
+          # 【採用行の明細もサマリに出す】公開前の全件照合(手順⑤)は、増える行を1件ずつ
+          # 元の投稿画像と突き合わせる作業。dry-run は data.js を書かないので、ここに出しておかないと
+          # 生ログを開かない限り照合できない。出るのは日付・開始時刻・大会名・参加費・permalink、
+          # つまり data.js に載せてサイトで公開する内容そのもので、公開範囲は増えない
+          # (キーワード不一致ログの「キャプション本文」とは性質が正反対。あちらは出さない)。
+          {
+            echo ""
+            echo "## 追加される行の明細(公開前の全件照合用)"
+            echo ""
+            if grep -q '=== 追加される行の明細' /tmp/monitor-output.txt; then
+              echo '```'
+              sed -n '/=== 追加される行の明細/,/=== 全店合計 ===/p' /tmp/monitor-output.txt | sed '$d'
+              echo '```'
+            else
+              echo "(明細が見つかりませんでした。上のステップのログを直接確認してください)"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
       # 壊れた data.js をコミットして本番サイトを白画面にしないための最終ゲート。
       # 構文・件数・id重複・【日付書式(YYYY-MM-DD ゼロ埋め)】を見る。中身は tools/validate-data.js
       # (import-waitinglist.yml と同じものを呼ぶ。検査を2箇所に書くと必ず片方だけ古くなるため)。
