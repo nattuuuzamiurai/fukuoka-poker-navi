@@ -285,6 +285,9 @@ function toTournament(t, venueId) {
  * これは紛れもない日程告知である。**「両方なし」を「日程告知ではない」と読むと、
  * 4本目の経路(キーワード不一致)の較正判断を誤る。**
  */
+/** 日付レンジの集計に使ってよい書式(YYYY-MM-DD ゼロ埋め)。 */
+const VALID_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
 const CAPTION_DATE_LIKE = /[0-9０-９]{1,2}\s*[/／月]/;
 const CAPTION_TIME_LIKE = /[0-9０-９]{1,2}\s*[:：時]/;
 
@@ -540,7 +543,10 @@ async function runMonitor(opts, libs) {
       // 日付レンジは【Visionが返した行そのもの】から取る。過去日の行はマージで落ちるので、
       // 採用後の行から取ると「なぜ追加0なのか」の説明にならない。
       {
-        const dates = rows.map((t) => t && t.date).filter((d) => typeof d === 'string' && d);
+        // 【書式が正しい日付だけを見る】文字列比較なので `2026-3-31` は `2026-03-15` より
+        // 大きく評価され、レンジの上端が歪む。不正日付の行はどのみち破棄され、
+        // その事実は破棄ログに出るので、ここで除いても情報は失われない。
+        const dates = rows.map((t) => t && t.date).filter((d) => typeof d === 'string' && VALID_DATE.test(d));
         detail.dateMin = dates.length ? dates.reduce((a, b) => (a < b ? a : b)) : null;
         detail.dateMax = dates.length ? dates.reduce((a, b) => (a > b ? a : b)) : null;
       }
@@ -670,9 +676,32 @@ async function runMonitor(opts, libs) {
       arr = next;
       changed = true;
       summary.stats = stats;
+      // 【M-1】同じ (date,start) の既存手入力を置き換えた行に印を付ける。
+      // 手入力は別idなので「idが増えた=新規」に見えるが、実際には人の入力を上書きしている。
+      // ⑤の照合では「これは新規ではなく人の入力を置き換えた」と分かる方が重要
+      // (「人の手入力が次回実行で消える」問題の可視化にもなる)。
+      const replacedBySlot = new Map();
+      for (const t of stats.replacedManual) {
+        const k = `${t.date} ${t.start}`;
+        if (!replacedBySlot.has(k)) replacedBySlot.set(k, []);
+        replacedBySlot.get(k).push(t.id);
+      }
       summary.addedRows = next
         .filter((t) => t.venueId === store.venueId && !beforeIds.has(t.id))
-        .map((entry) => ({ entry, permalink: sourceByEntryId.get(entry.id) || null }));
+        .map((entry) => ({
+          entry,
+          permalink: sourceByEntryId.get(entry.id) || null,
+          replacedManualIds: replacedBySlot.get(`${entry.date} ${entry.start}`) || [],
+        }))
+        // 【M-2】投稿ごとにまとめる。data.js は日付順なので、そのままだと同じ投稿の行が
+        // ばらばらに並ぶ。⑤は「投稿を1回開いて、その投稿の行をまとめて確認 → 次の投稿」
+        // という作業なので、permalink → 日付 → 開始時刻 の順に並べ替える。
+        .sort(
+          (a, b) =>
+            String(a.permalink).localeCompare(String(b.permalink)) ||
+            String(a.entry.date).localeCompare(String(b.entry.date)) ||
+            String(a.entry.start).localeCompare(String(b.entry.start))
+        );
       for (const row of summary.addedRows) {
         const d = postDetails.find((x) => x.permalink === row.permalink);
         if (d) d.addedCount += 1;
@@ -854,11 +883,20 @@ function reportAcceptedRows(summaries) {
     console.log('  (data.js に増える行はありません)');
   }
   for (const s of withRows) {
-    for (const { entry, permalink } of s.addedRows) {
-      const yen = (v) => (v == null ? '不明' : String(v));
+    for (const { entry, permalink, replacedManualIds } of s.addedRows) {
+      // 【data.js に書かれるとおりの値を出す】読み取れなかった項目は `不明`。
+      // 0 は「無料」という読み取れた値なので `不明` と区別する。
+      const num = (v) => (v == null ? '不明' : String(v));
+      const reentry = entry.reentry === 'late' ? 'レイトのみ' : entry.reentry ? 'あり' : 'なし';
+      const tags = entry.tags && entry.tags.length ? entry.tags.join('・') : 'なし';
+      const replaced = replacedManualIds.length
+        ? ` / ★既存の手入力(id=${replacedManualIds.join(', ')})を置き換え`
+        : '';
       console.log(
         `[monitor-instagram-apify] 追加行: ${entry.venueId} / ${entry.date} / ${entry.start} / ${entry.name}` +
-          ` / 参加費${yen(entry.buyin)} / スタック${yen(entry.stack)} / ${permalink || '出所不明'}`
+          ` / 参加費${num(entry.buyin)} / アドオン${num(entry.addon)} / スタック${num(entry.stack)}` +
+          ` / GTD${num(entry.guarantee)} / 再入場${reentry} / 賞品${entry.prize == null ? '不明' : entry.prize}` +
+          ` / タグ${tags} / ${permalink || '出所不明'}${replaced}`
       );
     }
   }
@@ -1074,6 +1112,15 @@ async function main() {
         `【失われた ${lost}件】(画像DL失敗 ${s.imageFailedCount} / Vision抽出失敗 ${s.visionFailedCount} / ` +
         `全行不採用 ${s.unusablePostCount}) / Vision抽出0件 ${s.emptyResultCount}件${emptyCaveat(s.emptyResultCount)}`
     );
+    // 【M-4】投稿別の明細が対象投稿数と一致すること。他の3つの保存則と同じ扱いにする
+    // (テストだけで固定していると、実運用で崩れたときに誰も気づけない)。
+    if (s.posts.length !== s.scheduleLikeCount) {
+      console.log(
+        `::error title=Instagram監視 - 投稿別の明細が合わない::${s.store.label}(${s.store.venueId}): ` +
+          `対象${s.scheduleLikeCount}投稿に対し明細が${s.posts.length}行しかありません。` +
+          '途中で記録されずに抜けた投稿があります(バグ)。'
+      );
+    }
     const post = checkPostAccounting(s);
     if (!post.ok) {
       // ここが合わない = どの結末にも数えられていない投稿がある(未知の消失経路)。
