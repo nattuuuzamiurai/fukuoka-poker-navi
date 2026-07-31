@@ -283,11 +283,36 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           DRY_RUN: ${{ steps.mode.outputs.dry_run }}
         run: |
+          # 【出力を握って STEP SUMMARY にも載せる】
+          # dry-run は状態ファイルを書かないので、投稿・行の内訳(lastExtraction)がディスクに残らない。
+          # dry-run の判断材料はログだけなので、全店合計のブロックだけはジョブサマリにも出して
+          # 「Actionsの画面を開けば分かる」状態にする(生ログを開かないと読めない、をやめる)。
+          # tee でそのまま標準出力にも流すため、::error:: / ::warning:: の注記は従来どおり機能する。
+          set -o pipefail
           if [ "$DRY_RUN" = "true" ]; then
-            node tools/monitor-instagram-apify.js --dry-run
+            node tools/monitor-instagram-apify.js --dry-run | tee /tmp/monitor-output.txt
           else
-            node tools/monitor-instagram-apify.js
+            node tools/monitor-instagram-apify.js | tee /tmp/monitor-output.txt
           fi
+
+          # 「=== 全店合計 ===」からその段落の終わり(空行)までを抜き出す。
+          # 見つからない場合でもジョブは落とさない(集計の抜き出しは補助であって本質ではない)。
+          {
+            echo ""
+            echo "## 取り込み結果(全店合計)"
+            echo ""
+            if grep -q '=== 全店合計 ===' /tmp/monitor-output.txt; then
+              echo '```'
+              sed -n '/=== 全店合計 ===/,/^$/p' /tmp/monitor-output.txt
+              echo '```'
+            else
+              echo "(合計行が見つかりませんでした。上のステップのログを直接確認してください)"
+            fi
+            echo ""
+            echo "**「失われた」件数が0でない場合**、その投稿の内容はサイトに一切入らず、"
+            echo "確認済み投稿日時が進むため自動経路では二度と処理されません。"
+            echo "\`node tools/import-venue-image.js --venue <id> --instagram-url <投稿URL>\` で手動取込みしてください。"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       # 壊れた data.js をコミットして本番サイトを白画面にしないための最終ゲート。
       # 構文・件数・id重複・【日付書式(YYYY-MM-DD ゼロ埋め)】を見る。中身は tools/validate-data.js

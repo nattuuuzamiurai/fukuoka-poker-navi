@@ -56,7 +56,11 @@ function normalizeApifyItem(item) {
 /**
  * 指定ハンドルの最近の投稿一覧をApify経由で取得する。
  * @param {string} handle Instagramのハンドル(@なし)
- * @param {{ apifyApiToken?: string, actorId?: string, resultsLimit?: number }} [opts]
+ * @param {{ apifyApiToken?: string, actorId?: string, resultsLimit?: number, stats?: object }} [opts]
+ *   `opts.stats` にオブジェクトを渡すと `{ rawCount, malformed }` を書き込む。
+ *   【なぜ戻り値ではなく引数で渡すか】戻り値の形を変えると既存の呼び出し側・テストの
+ *   スタブ(配列を返すだけ)がすべて壊れる。引数なら、埋めない実装でも呼び出し側は
+ *   「不明」として扱えるだけで動き続ける。
  * @returns {Promise<Array<{permalink:string, imageUrl:string, postedAt:string, caption:string}>>}
  *   失敗時は例外を投げる(呼び出し側で「data.jsを書き換えずに終了」の判断に使うため)。
  */
@@ -87,7 +91,22 @@ async function fetchInstagramPosts(handle, opts = {}) {
   if (!Array.isArray(items)) {
     throw new Error('Apifyのレスポンス形式が想定外です(配列ではありません)。');
   }
-  return items.map(normalizeApifyItem).filter(Boolean);
+  const normalized = items.map(normalizeApifyItem).filter(Boolean);
+  // 【必須フィールドが欠けて捨てた件数を呼び出し側に伝える】
+  // ここで捨てた投稿は、Vision にも保存則のカウンタにも一切現れないまま消える
+  // (しかも確認済み投稿日時は前進する)。取込みの一番上流の消失経路なので必ず数える。
+  //
+  // 【★残差(items.length - normalized.length)で数えてはいけない★】
+  // それだと「normalized に入らなかった全て」を意味してしまい、呼び出し側の保存則が
+  // 恒等式になる。この先この関数に絞り込みが1段増えただけで、消えた投稿がそのまま
+  // 「形式不正」に吸い込まれ、【正常な投稿が「形式不正」として誤報される】。
+  // 必ず「正規化に失敗した」という性質そのものを数えること(tournament-merge.js の
+  // pastDated が同じ罠にはまった。理由はそちらのコメントに詳しい)。
+  if (opts.stats && typeof opts.stats === 'object') {
+    opts.stats.rawCount = items.length;
+    opts.stats.malformed = items.filter((it) => normalizeApifyItem(it) === null).length;
+  }
+  return normalized;
 }
 
 module.exports = {

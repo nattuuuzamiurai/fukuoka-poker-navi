@@ -180,14 +180,43 @@ function looksLikeSchedulePost(caption) {
  * (Apifyは常に直近 resultsLimit 件までしか返さないため、初回でも件数は有界)。
  */
 function pickNewPosts(posts, lastPostedAt) {
-  const valid = (Array.isArray(posts) ? posts : []).filter(
-    (p) => p && p.postedAt && !Number.isNaN(Date.parse(p.postedAt))
-  );
+  return pickNewPostsWithStats(posts, lastPostedAt).posts;
+}
+
+/**
+ * pickNewPosts と同じ選別を行い、【何件をどの理由で落としたか】も返す。
+ *
+ * 【なぜ内訳が要るか】この関数は2種類の投稿を静かに捨てる:
+ *   1. postedAt が読めない投稿(不正データ)
+ *   2. 既に確認済みの投稿(正常。毎回拾い直さないための仕組み)
+ * 1は【消失】で2は【正常】だが、どちらも結果は「配列から消える」で区別が付かなかった。
+ * 保存則の左辺(scheduleLikeCount)はこの選別より【後】の値なので、ここで落ちた投稿は
+ * どのカウンタにも現れない。取込みの上流まで遡って数えられるようにする。
+ *
+ * 【★件数は残差で数えないこと★】`all.length - valid.length` や
+ * `sorted.length - fresh.length` のような引き算にすると、呼び出し側の保存則
+ * (checkIntakeAccounting)が恒等式になり何も検査しなくなる。この先ここに絞り込みが
+ * 1段増えただけで、消えた投稿がそのまま「日時が読めない」「既読」に吸い込まれ、
+ * 【未読の投稿が黙って消えたのに「既読」と誤報される】。必ず性質そのものを数えること。
+ * (tournament-merge.js の pastDated が同じ罠にはまった。理由はそちらのコメントに詳しい)
+ *
+ * @returns {{ posts: Array, invalidPostedAt: number, alreadySeen: number }}
+ */
+const hasReadablePostedAt = (p) => Boolean(p && p.postedAt && !Number.isNaN(Date.parse(p.postedAt)));
+
+function pickNewPostsWithStats(posts, lastPostedAt) {
+  const all = Array.isArray(posts) ? posts : [];
+  const valid = all.filter(hasReadablePostedAt);
+  const invalidPostedAt = all.filter((p) => !hasReadablePostedAt(p)).length;
   const sorted = [...valid].sort((a, b) => Date.parse(a.postedAt) - Date.parse(b.postedAt));
-  if (!lastPostedAt) return sorted;
-  const lastMs = Date.parse(lastPostedAt);
-  if (Number.isNaN(lastMs)) return sorted;
-  return sorted.filter((p) => Date.parse(p.postedAt) > lastMs);
+  const lastMs = lastPostedAt ? Date.parse(lastPostedAt) : NaN;
+  if (!lastPostedAt || Number.isNaN(lastMs)) {
+    // 記録が無い(初回)= 「既読」の投稿は1件も無い。これは残差ではなく事実として0。
+    return { posts: sorted, invalidPostedAt, alreadySeen: 0 };
+  }
+  const fresh = sorted.filter((p) => Date.parse(p.postedAt) > lastMs);
+  const alreadySeen = sorted.filter((p) => Date.parse(p.postedAt) <= lastMs).length;
+  return { posts: fresh, invalidPostedAt, alreadySeen };
 }
 
 function slugify(name) {
@@ -239,6 +268,32 @@ function toTournament(t, venueId) {
  * 「どの店の・どの投稿の・どんな値だったか」が揃っていないとVisionの抽出品質を測れないので、
  * 理由 / 店 / 投稿URL / 投稿日時 / 実際の date と name をすべて出す。
  */
+/**
+ * キーワード判定(looksLikeSchedulePost)で落とした投稿を1行にする。
+ *
+ * 【キャプションの実物を出すことが目的】この経路は画像を1度も見ずに投稿を捨て、
+ * それでいて lastPostedAt は前進する。件数だけ出しても「日程を投稿していない店」なのか
+ * 「投稿しているが語に当たらない店」なのか区別できないので、実際の文面を見せる。
+ * 先頭120字に切るのは、1投稿のキャプションが数百字になることがありログが読めなくなるため。
+ * 【50字では足りない】日本語の告知は「いつもありがとうございます!」のような定型挨拶で
+ * 始まることが多く、50字だと肝心の「8月のトナメ表です」に届かないまま切れて、
+ * キーワードを増やすべきかの判断ができない。改行はログが崩れるので潰す。
+ */
+const FILTERED_CAPTION_HEAD_CHARS = 120;
+
+function formatFilteredOutPost(store, post) {
+  const caption = String(post.caption || '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const head =
+    caption.length > FILTERED_CAPTION_HEAD_CHARS ? `${caption.slice(0, FILTERED_CAPTION_HEAD_CHARS)}…` : caption;
+  return (
+    `[monitor-instagram-apify] キーワード不一致で対象外: 店=${store.label}(${store.venueId})` +
+    ` / 投稿=${post.permalink}(${post.postedAt})` +
+    ` / キャプション=${caption ? JSON.stringify(head) : '(なし)'}`
+  );
+}
+
 function formatDroppedRow(store, post, row, reason) {
   return (
     `[monitor-instagram-apify] 抽出結果を1件破棄しました: ${reason}` +
@@ -293,6 +348,10 @@ async function runMonitor(opts, libs) {
   const nextState = { ...state };
   const summaries = [];
   const anomalies = [];
+  // 内容が確実に失われた投稿(画像DL失敗 / Vision抽出失敗)。::error:: で報告する。
+  const lostPosts = [];
+  // Visionが0件を返した投稿。誤検知の可能性があるので ::warning:: で報告する。
+  const emptyResults = [];
   // 今回の取込みで既に採用した id。id は venueId を含むので店を跨いだ衝突は起きないが、
   // 「同じ投稿が2回、同じ行を返す」「同じ日・同じ大会名で start が読めなかった2行」の衝突を拾う。
   const usedIds = new Set();
@@ -300,20 +359,38 @@ async function runMonitor(opts, libs) {
 
   for (const store of stores) {
     const prev = state[store.venueId] || null;
-    const posts = await fetchLib.fetchInstagramPosts(store.handle);
+    // fetchStats には Apifyが返した生の件数と、必須フィールド欠落で捨てた件数が入る
+    // (埋めない実装のときは undefined のままで、下で「捨てていない」として扱う)。
+    const fetchStats = {};
+    const posts = await fetchLib.fetchInstagramPosts(store.handle, { stats: fetchStats });
 
-    const newPosts = pickNewPosts(posts, prev && prev.lastPostedAt);
+    const picked = pickNewPostsWithStats(posts, prev && prev.lastPostedAt);
+    const newPosts = picked.posts;
     const summary = {
       store,
+      // 取込みの最上流から数える。Apifyが返した生の件数が分からない実装では
+      // 「1件も捨てていない」とみなす(誤って残余を出さないため)。
+      apifyRawCount: typeof fetchStats.rawCount === 'number' ? fetchStats.rawCount : posts.length,
+      malformedCount: typeof fetchStats.malformed === 'number' ? fetchStats.malformed : 0,
+      invalidPostedAtCount: picked.invalidPostedAt,
+      alreadySeenCount: picked.alreadySeen,
       newPostCount: newPosts.length,
       scheduleLikeCount: 0,
+      filteredOutCount: 0,
       extractedCount: 0,
       droppedCount: 0,
       dropped: [],
       normalizedCount: 0,
       normalized: [],
-      unusablePostCount: 0,
+      // 投稿レベルの内訳。scheduleLike の1投稿は必ずこのどれか1つに入る(下の保存則を参照)。
+      importedPostCount: 0,
       repostedPostCount: 0,
+      unusablePostCount: 0,
+      visionFailedCount: 0,
+      imageFailedCount: 0,
+      emptyResultCount: 0,
+      // 行レベル。visionRowCount = Visionが返した行の総数。
+      visionRowCount: 0,
       stats: null,
     };
 
@@ -324,6 +401,24 @@ async function runMonitor(opts, libs) {
 
     const scheduleLike = newPosts.filter((p) => looksLikeSchedulePost(p.caption));
     summary.scheduleLikeCount = scheduleLike.length;
+    // 【残差(newPosts.length - scheduleLike.length)で数えないこと】保存則が恒等式になるうえ、
+    // 下のキャプション出力ループは looksLikeSchedulePost しか見ていないので、
+    // scheduleLike の条件が増えると【件数だけ増えてログには出ない】不一致も生じる。
+    // 同じ述語で数えれば、件数とログは常に一致する。
+    summary.filteredOutCount = newPosts.filter((p) => !looksLikeSchedulePost(p.caption)).length;
+
+    // 【キーワードで落とした投稿は画像を1度も見ないまま捨てられる】しかも lastPostedAt は
+    // 下で無条件に前進するので二度と処理されない。looksLikeSchedulePost は日本語9語の
+    // 単純な部分一致でしかなく、`AUGUST SCHEDULE`(英語)・`トナメ表`・`8月分アップしました`・
+    // 絵文字のみ、はすべて素通りする。
+    // 「日程を投稿していないから0件」なのか「投稿しているが語に当たらず全部捨てている」のかは
+    // 【キャプションを見なければ区別できない】ので、ここで実際の文面をログに出す。
+    // dry-runは消費ゼロで何度でも回せるため、これで推測を測定に変えられる。
+    // ★キーワードを増やすのは、この実測を見てから。想像で先回りしないこと。
+    for (const p of newPosts) {
+      if (looksLikeSchedulePost(p.caption)) continue;
+      console.log(formatFilteredOutPost(store, p));
+    }
 
     // data.js 側の id → スロット。mergeStore は (date,start) が一致する既存しか置き換えないので、
     // 「同じidだがスロットが違う」既存があると両方残って id が重複する(人が admin.html で
@@ -333,11 +428,19 @@ async function runMonitor(opts, libs) {
     const extracted = [];
     let unusablePosts = 0; // 抽出行はあったのに1件も採用できなかった投稿の数(異常)
     let repostedPosts = 0; // 全行が「既に取込み済み」だった投稿の数(再投稿。異常ではない)
+    let importedPosts = 0; // 1件以上採用できた投稿の数
+    let visionFailedPosts = 0; // Vision抽出が例外で終わった投稿の数(内容は失われる)
+    let imageFailedPosts = 0; // 画像ダウンロードが失敗した投稿の数(内容は失われる)
+    let emptyResultPosts = 0; // Visionが0行を返した投稿の数(誤検知なら正常)
+    let visionRows = 0; // Visionが返した行の総数(行レベルの突き合わせの左辺)
     for (const post of scheduleLike) {
       let imageBuffer;
       try {
         imageBuffer = await download(post.imageUrl);
       } catch (e) {
+        // 【この投稿の内容は失われ、二度と再試行されない】ので必ず数える。
+        imageFailedPosts += 1;
+        lostPosts.push({ store, permalink: post.permalink, postedAt: post.postedAt, kind: 'image-failed', detail: e.message });
         console.warn(
           `[monitor-instagram-apify] ${store.label}: 画像ダウンロード失敗、この投稿はスキップ (${post.permalink}): ${e.message}`
         );
@@ -347,6 +450,8 @@ async function runMonitor(opts, libs) {
       try {
         raw = await visionLib.extractTournaments(imageBuffer, { postedDateHint: post.postedAt.slice(0, 10) });
       } catch (e) {
+        visionFailedPosts += 1;
+        lostPosts.push({ store, permalink: post.permalink, postedAt: post.postedAt, kind: 'vision-failed', detail: e.message });
         console.warn(
           `[monitor-instagram-apify] ${store.label}: Vision抽出失敗、この投稿はスキップ (${post.permalink}): ${e.message}`
         );
@@ -355,6 +460,20 @@ async function runMonitor(opts, libs) {
       // Visionの戻り値は無検証では使えない。1行ずつ「直せるものは直してから」検査し、
       // それでも不正な行だけを捨てて残りは取り込む。
       const rows = Array.isArray(raw) ? raw : [];
+      visionRows += rows.length;
+      // 0行 = 「この画像から大会を1件も読み取れなかった」。looksLikeSchedulePost は
+      // わざと緩くしてあり誤検知した投稿はここに来るので、異常(赤)ではなく警告(黄)扱いにする。
+      // ただし【黙って通してはいけない】— 本当は日程表なのに読めていない場合と区別が付かず、
+      // 以前はログにも件数にも一切出ていなかった。
+      if (rows.length === 0) {
+        emptyResultPosts += 1;
+        emptyResults.push({ store, permalink: post.permalink, postedAt: post.postedAt });
+        console.warn(
+          `[monitor-instagram-apify] ${store.label}: Visionが0件を返しました (${post.permalink})。` +
+            'スケジュール告知ではない投稿を拾った(誤検知)か、日程表なのに読み取れていない可能性があります。'
+        );
+        continue;
+      }
       let keptFromPost = 0;
       const droppedFromPost = [];
       for (const t of rows) {
@@ -411,7 +530,9 @@ async function runMonitor(opts, libs) {
       // 空振りで埋まり、本物の異常が読めなくなる。ログには残す(上の破棄ログ+下の1行)。
       // なお「再投稿だが、その画像に元々読めない行も含まれていた」場合(重複+別理由の混在)は
       // 異常として上げる。その行はどの投稿からも取り込めておらず、本当に失われているため。
-      if (rows.length > 0 && keptFromPost === 0) {
+      if (keptFromPost > 0) {
+        importedPosts += 1;
+      } else {
         const allAlreadyImported =
           droppedFromPost.length > 0 && droppedFromPost.every((d) => d.kind === 'duplicate-in-run');
         if (allAlreadyImported) {
@@ -438,18 +559,37 @@ async function runMonitor(opts, libs) {
     summary.normalizedCount = summary.normalized.length;
     summary.unusablePostCount = unusablePosts;
     summary.repostedPostCount = repostedPosts;
+    summary.importedPostCount = importedPosts;
+    summary.visionFailedCount = visionFailedPosts;
+    summary.imageFailedCount = imageFailedPosts;
+    summary.emptyResultCount = emptyResultPosts;
+    summary.visionRowCount = visionRows;
 
     // 新着の確認記録は、Vision抽出の成否に関わらずこの店で確認できた最新投稿まで進める
     // (同じ投稿を毎回「新着」として拾い直し続けないため)。
     const newest = newPosts[newPosts.length - 1];
     nextState[store.venueId] = { handle: store.handle, lastPostedAt: newest.postedAt, lastPermalink: newest.permalink };
 
+    // 【マージを先に行う】行レベルの内訳(added/updated/unchanged/pastDated)は mergeStore が
+    // 返すので、これを lastExtraction に書くにはマージが先に済んでいる必要がある。
+    if (extracted.length > 0) {
+      const { next, stats } = mergeLib.mergeStore(arr, store.venueId, extracted, today);
+      mergeLib.assertOnlyTargetChanged(arr, next, store.venueId, today);
+      arr = next;
+      changed = true;
+      summary.stats = stats;
+    }
+
     // 抽出品質を【記録として残す】。GitHub Actions の注記は緑のrunでは通知が飛ばず、
     // runログも既定90日で消えるため、注記だけでは「Visionの抽出品質を人が測れる」を満たせない。
     // この状態ファイルは元から毎回コミットされるので、ここに書けばgit履歴に差分として残り、
     // ダッシュボードからも読める。Vision抽出を実際に行った店だけ更新し、行っていない店は
     // 前回値をそのまま持ち越す(毎回変わる値を足して無意味な日次差分を増やさないため)。
-    if (scheduleLike.length > 0) {
+    // 【M-2】キーワード不一致で全部落ちた店(折尾の「新着12件→対象0件」がまさにこれ)でも記録する。
+    // ここを `scheduleLike.length > 0` だけにしていると、【このカウンタが最も必要な場面】で
+    // lastExtraction 自体が書かれず、状態ファイルに lastPostedAt しか残らない。
+    // 「runログは90日で消えるので永続カウンタが要る」という理屈がそこだけ破れてしまう。
+    if (scheduleLike.length > 0 || summary.filteredOutCount > 0) {
       nextState[store.venueId].lastExtraction = {
         checkedAt: today,
         posts: scheduleLike.length,
@@ -461,22 +601,120 @@ async function runMonitor(opts, libs) {
         normalized: summary.normalizedCount,
         unusablePosts,
         reposts: repostedPosts,
+        // 【ここから下が「静かに失われていた経路」の永続カウンタ】
+        // runログは既定90日で消えるので、注記やconsole.warnだけでは後から追えない。
+        // この状態ファイルは毎回コミットされるため、書けばgit履歴に残る。
+        // 取込みの最上流(Apifyの応答)から数える。ここが無いと、Visionに届く前に
+        // 消えた投稿(形式不正・投稿日時が読めない)が git履歴のどこにも残らない。
+        apifyRaw: summary.apifyRawCount,
+        malformed: summary.malformedCount,
+        invalidPostedAt: summary.invalidPostedAtCount,
+        alreadySeen: summary.alreadySeenCount,
+        newPosts: summary.newPostCount,
+        filteredOut: summary.filteredOutCount, // キーワードに当たらず画像を見ないまま捨てた投稿
+        importedPosts,
+        visionFailed: visionFailedPosts,
+        imageFailed: imageFailedPosts,
+        emptyResult: emptyResultPosts,
+        // 行レベルの突き合わせ用(抽出 = 追加+更新+変更なし+過去日+破棄 が成り立つか)
+        visionRows,
+        pastDated: summary.stats ? summary.stats.pastDated : 0,
+        added: summary.stats ? summary.stats.added : 0,
+        updated: summary.stats ? summary.stats.updated : 0,
+        unchanged: summary.stats ? summary.stats.unchanged : 0,
       };
     } else if (prev && prev.lastExtraction) {
       nextState[store.venueId].lastExtraction = prev.lastExtraction;
     }
 
-    if (extracted.length > 0) {
-      const { next, stats } = mergeLib.mergeStore(arr, store.venueId, extracted, today);
-      mergeLib.assertOnlyTargetChanged(arr, next, store.venueId, today);
-      arr = next;
-      changed = true;
-      summary.stats = stats;
-    }
     summaries.push(summary);
   }
 
-  return { arr, state: nextState, changed, summaries, anomalies };
+  return { arr, state: nextState, changed, summaries, anomalies, lostPosts, emptyResults };
+}
+
+/**
+ * 【取込みレベルの保存則】Apifyが返した1件は、必ずどれか1つの結末に落ちる。
+ *
+ *   Apifyが返した件数 = 形式不正で除外 + 投稿日時が読めない + 既読 + キーワード不一致 + 対象
+ *
+ * 【なぜ投稿レベルより上流が要るか】投稿レベルの保存則の左辺(scheduleLikeCount)は、
+ * 「Apifyの応答を正規化し」「投稿日時で選別し」「キーワードで絞った】【後】の値。
+ * 上流で捨てられた投稿はどのカウンタにも現れないのに、確認済み投稿日時だけは前進する
+ * (=二度と処理されない)。キーワード不一致より更に見えにくい経路なので、左辺を
+ * 「Apifyが返した件数」まで遡らせて塞ぐ。
+ *
+ * @returns {{ ok: boolean, expected: number, actual: number, missing: number }}
+ */
+function checkIntakeAccounting(summary) {
+  const actual =
+    summary.malformedCount +
+    summary.invalidPostedAtCount +
+    summary.alreadySeenCount +
+    summary.filteredOutCount +
+    summary.scheduleLikeCount;
+  return {
+    ok: actual === summary.apifyRawCount,
+    expected: summary.apifyRawCount,
+    actual,
+    missing: summary.apifyRawCount - actual,
+  };
+}
+
+/**
+ * 【投稿レベルの保存則】新着の1投稿は、必ずどれか1つの結末に落ちる。
+ *
+ * 【なぜカウンタを足すだけで終わらせないか】
+ * 2026-07-31 の dry-run では、72投稿すべてがVision抽出に失敗しながら
+ * ::error:: も ::warning:: も出ず、サマリは「1行も採用できなかった投稿 0件」と表示していた。
+ * 原因は「結末が6通りあるのに、そのうち3つがどのカウンタにも入っていなかった」こと。
+ * カウンタを3本足すだけでは【7本目の結末が生まれたときに同じことが起きる】ので、
+ * 「すべての投稿がちょうど1つのバケツに入る」ことを不変条件として固定する。
+ * 将来ここに `continue` を1本足すと、この検査が即座に落ちる。
+ *
+ * @returns {{ ok: boolean, expected: number, actual: number, missing: number }}
+ */
+function checkPostAccounting(summary) {
+  const actual =
+    summary.importedPostCount +
+    summary.repostedPostCount +
+    summary.unusablePostCount +
+    summary.visionFailedCount +
+    summary.imageFailedCount +
+    summary.emptyResultCount;
+  return {
+    ok: actual === summary.scheduleLikeCount,
+    expected: summary.scheduleLikeCount,
+    actual,
+    missing: summary.scheduleLikeCount - actual,
+  };
+}
+
+/**
+ * 【行レベルの保存則】Visionが返した1行は、必ずどれか1つの結末に落ちる。
+ *
+ *   Visionが返した行 = 破棄 + 過去日 + 追加 + 更新 + 変更なし
+ *
+ * 2026-07-31 の dry-run では「久留米: 抽出20 / 破棄0 / 追加0」のように、
+ * 抽出した行がどこへ消えたのか誰も説明できない数字が並んでいた(正常に全部過去日だったのか、
+ * 別の経路で消えたのかが区別できない)。残余が出るなら、それが未知の消失経路そのもの。
+ *
+ * @returns {{ ok: boolean, rows: number, dropped: number, pastDated: number,
+ *             added: number, updated: number, unchanged: number, residual: number }}
+ */
+function checkRowAccounting(summary) {
+  const s = summary.stats || { pastDated: 0, added: 0, updated: 0, unchanged: 0 };
+  const accounted = summary.droppedCount + s.pastDated + s.added + s.updated + s.unchanged;
+  return {
+    ok: accounted === summary.visionRowCount,
+    rows: summary.visionRowCount,
+    dropped: summary.droppedCount,
+    pastDated: s.pastDated,
+    added: s.added,
+    updated: s.updated,
+    unchanged: s.unchanged,
+    residual: summary.visionRowCount - accounted,
+  };
 }
 
 /**
@@ -495,6 +733,108 @@ async function runMonitor(opts, libs) {
  * なお注記は「緑のrunに赤い注記が付く」だけなので通知は飛ばず、runログも既定90日で消える。
  * 件数の記録は apify-monitor-state.json の lastExtraction 側(コミットされ、git履歴に残る)が持つ。
  */
+/**
+ * 全店の合計を1ブロックで出す。
+ *
+ * 【dry-run でもカウンタを観測できるようにするため必要】dry-run は状態ファイルを書かないので、
+ * lastExtraction に入れた永続カウンタはディスクに残らない。dry-run の判断材料は
+ * このログだけなので、店ごとの内訳とは別に合計をここで出す。
+ */
+function reportTotals(summaries) {
+  const sum = (f) => summaries.reduce((a, s) => a + f(s), 0);
+  const lost = sum((s) => s.imageFailedCount + s.visionFailedCount + s.unusablePostCount);
+  const intakeResidual = sum((s) => checkIntakeAccounting(s).missing);
+  const postResidual = sum((s) => checkPostAccounting(s).missing);
+  console.log('');
+  console.log('[monitor-instagram-apify] === 全店合計 ===');
+  console.log(
+    `  Apify取得 ${sum((s) => s.apifyRawCount)}件 → 新着 ${sum((s) => s.newPostCount)}件 ` +
+      `(形式不正 ${sum((s) => s.malformedCount)} / 投稿日時が読めない ${sum((s) => s.invalidPostedAtCount)} / ` +
+      `既読 ${sum((s) => s.alreadySeenCount)})` +
+      `${intakeResidual === 0 ? '' : ` ← 残余 ${intakeResidual}件`}`
+  );
+  console.log(
+    `  新着投稿 ${sum((s) => s.newPostCount)}件 → 対象 ${sum((s) => s.scheduleLikeCount)}件 / ` +
+      `キーワード不一致で対象外 ${sum((s) => s.filteredOutCount)}件`
+  );
+  // 【M-5】行側だけでなく投稿側にも残余マーカーを出す(片方だけ出ていると、
+  // 「投稿側は常に合っている」と誤読される)。
+  console.log(
+    `  投稿の行き先: 取り込めた ${sum((s) => s.importedPostCount)}件 / 再投稿 ${sum((s) => s.repostedPostCount)}件 / ` +
+      `【失われた ${lost}件】(画像DL失敗 ${sum((s) => s.imageFailedCount)} / ` +
+      `Vision抽出失敗 ${sum((s) => s.visionFailedCount)} / 全行不採用 ${sum((s) => s.unusablePostCount)}) / ` +
+      `Vision 0件 ${sum((s) => s.emptyResultCount)}件` +
+      `${postResidual === 0 ? '(残余なし)' : ` ← 残余 ${postResidual}件`}`
+  );
+  const rows = summaries.map(checkRowAccounting);
+  const rsum = (f) => rows.reduce((a, r) => a + f(r), 0);
+  console.log(
+    `  行の行き先: Vision抽出 ${rsum((r) => r.rows)}行 = 追加 ${rsum((r) => r.added)} + ` +
+      `更新 ${rsum((r) => r.updated)} + 変更なし ${rsum((r) => r.unchanged)} + ` +
+      `過去日 ${rsum((r) => r.pastDated)} + 破棄 ${rsum((r) => r.dropped)}` +
+      `${rows.every((r) => r.ok) ? '(残余なし)' : ` ← 残余 ${rsum((r) => r.residual)}行`}`
+  );
+}
+
+/**
+ * 内容が確実に失われた投稿(画像DL失敗 / Vision抽出失敗)を ::error:: で報告する。
+ *
+ * 【この経路が今回いちばん危険だった】どちらも console.warn しか出しておらず、
+ * 確認済み投稿日時は前進するので二度と再試行されない。2026-07-31 の dry-run では
+ * 72投稿すべてがVision抽出に失敗しながら注記は1件も出ず、サマリは「1行も採用できなかった
+ * 投稿 0件」と表示していた(集計から漏れているのではなく、積極的に「異常なし」と誤報していた)。
+ */
+function reportLostPosts(lostPosts) {
+  if (!lostPosts || lostPosts.length === 0) return;
+  const byKind = (k) => lostPosts.filter((p) => p.kind === k).length;
+  console.log('');
+  console.log(
+    `::error title=Instagram監視 - 内容が失われた投稿::` +
+      `${lostPosts.length}件の投稿を処理できませんでした` +
+      `(画像ダウンロード失敗 ${byKind('image-failed')}件 / Vision抽出失敗 ${byKind('vision-failed')}件)。` +
+      'これらの投稿の内容はサイトに一切入らず、確認済み投稿日時が進むため【再試行されません】。' +
+      'ジョブは継続しています(取り込めた他の投稿は反映済み)。人の確認が必要です。'
+  );
+  for (const p of lostPosts) {
+    const label = p.kind === 'image-failed' ? '画像ダウンロード失敗' : 'Vision抽出失敗';
+    console.log(
+      `[monitor-instagram-apify] 内容が失われた投稿(${label}): 店=${p.store.label}(${p.store.venueId})` +
+        ` / 投稿=${p.permalink}(${p.postedAt}) / 理由=${p.detail}`
+    );
+  }
+  console.log(
+    '[monitor-instagram-apify] 内容が必要なら ' +
+      '`node tools/import-venue-image.js --venue <id> --instagram-url <投稿URL>` で手動取込みしてください。'
+  );
+}
+
+/**
+ * Visionが0件を返した投稿を ::warning:: で報告する。
+ *
+ * 【赤(::error::)にしない理由】looksLikeSchedulePost はわざと緩く作ってあり
+ * (「取りこぼしより誤検知の方が実害が小さい」)、誤検知した投稿は正常に0件で返る。
+ * これを赤にすると、既存の duplicate-in-run を異常から外したのと同じ理由 —
+ * 「唯一の警告チャネルが空振りで埋まり、本物の異常が読めなくなる」— に抵触する。
+ * 一方で【黙って通してもいけない】(本当は日程表なのに読めていない場合と区別が付かない)ので、
+ * 黄色で残して人が件数の推移を見られるようにする。
+ */
+function reportEmptyResults(emptyResults) {
+  if (!emptyResults || emptyResults.length === 0) return;
+  console.log('');
+  console.log(
+    `::warning title=Instagram監視 - Visionが0件を返した投稿::` +
+      `${emptyResults.length}件の投稿から大会を1件も読み取れませんでした。` +
+      'スケジュール告知でない投稿を拾った(誤検知=正常)可能性が高いですが、' +
+      '日程表なのに読み取れていない場合も同じ数字になります。件数が増え続けるようなら確認してください。'
+  );
+  for (const p of emptyResults) {
+    console.log(
+      `[monitor-instagram-apify] Vision 0件: 店=${p.store.label}(${p.store.venueId})` +
+        ` / 投稿=${p.permalink}(${p.postedAt})`
+    );
+  }
+}
+
 function reportAnomalies(anomalies) {
   if (!anomalies || anomalies.length === 0) return;
   console.log('');
@@ -546,26 +886,70 @@ async function main() {
     return;
   }
 
-  const { arr, state: nextState, changed, summaries, anomalies } = result;
+  const { arr, state: nextState, changed, summaries, anomalies, lostPosts, emptyResults } = result;
 
   for (const s of summaries) {
     console.log('');
     console.log(`[${s.store.label} / ${s.store.venueId} / @${s.store.handle}]`);
+    // 【投稿の行き先を先に出す】以前は「1行も採用できなかった投稿 N件」しか出しておらず、
+    // 全投稿がVision抽出に失敗しても「0件」=異常なしに読めてしまった。
+    const lost = s.imageFailedCount + s.visionFailedCount + s.unusablePostCount;
     console.log(
-      `  新着投稿 ${s.newPostCount}件 / うちスケジュール告知らしき投稿 ${s.scheduleLikeCount}件 / ` +
-        `取り込んだトーナメント ${s.extractedCount}件 / 正規化した抽出行 ${s.normalizedCount}件 / ` +
-        `破棄した抽出行 ${s.droppedCount}件 / 再投稿(取込み済み)の投稿 ${s.repostedPostCount}件 / ` +
-        `1行も採用できなかった投稿 ${s.unusablePostCount}件`
+      `  Apify取得 ${s.apifyRawCount}件 → 新着 ${s.newPostCount}件 ` +
+        `(形式不正 ${s.malformedCount} / 投稿日時が読めない ${s.invalidPostedAtCount} / 既読 ${s.alreadySeenCount})`
     );
+    const intake = checkIntakeAccounting(s);
+    if (!intake.ok) {
+      console.log(
+        `::error title=Instagram監視 - 取得件数の集計が合わない::${s.store.label}(${s.store.venueId}): ` +
+          `Apifyが返した${intake.expected}件に対し内訳の合計が${intake.actual}件で、${intake.missing}件がどこにも数えられていません。` +
+          'Vision に届く前の段階で投稿が消えています(バグ)。'
+      );
+    }
+    console.log(
+      `  新着投稿 ${s.newPostCount}件 → 対象 ${s.scheduleLikeCount}件 / ` +
+        `キーワード不一致で対象外 ${s.filteredOutCount}件`
+    );
+    console.log(
+      `  投稿の行き先: 取り込めた ${s.importedPostCount}件 / 再投稿 ${s.repostedPostCount}件 / ` +
+        `【失われた ${lost}件】(画像DL失敗 ${s.imageFailedCount} / Vision抽出失敗 ${s.visionFailedCount} / ` +
+        `全行不採用 ${s.unusablePostCount}) / Vision 0件 ${s.emptyResultCount}件`
+    );
+    const post = checkPostAccounting(s);
+    if (!post.ok) {
+      // ここが合わない = どの結末にも数えられていない投稿がある(未知の消失経路)。
+      console.log(
+        `::error title=Instagram監視 - 投稿の集計が合わない::${s.store.label}(${s.store.venueId}): ` +
+          `対象${post.expected}件に対し内訳の合計が${post.actual}件で、${post.missing}件がどこにも数えられていません。` +
+          'tools/monitor-instagram-apify.js に、どの結末にも記録されない経路が増えています(バグ)。'
+      );
+    }
+    const row = checkRowAccounting(s);
+    console.log(
+      `  行の行き先: Vision抽出 ${row.rows}行 = 追加 ${row.added} + 更新 ${row.updated} + ` +
+        `変更なし ${row.unchanged} + 過去日 ${row.pastDated} + 破棄 ${row.dropped}` +
+        `${row.ok ? '' : ` ← 残余 ${row.residual}行`}`
+    );
+    if (!row.ok) {
+      console.log(
+        `::error title=Instagram監視 - 行の集計が合わない::${s.store.label}(${s.store.venueId}): ` +
+          `Visionが返した${row.rows}行のうち${row.residual}行の行き先が説明できません。` +
+          '未知の消失経路がある可能性があります。'
+      );
+    }
+    console.log(`  正規化した抽出行 ${s.normalizedCount}件`);
     if (s.stats) {
       console.log(
-        `  追加 ${s.stats.added}件 / 更新 ${s.stats.updated}件 / 変更なし ${s.stats.unchanged}件 / ` +
-          `削除(投稿から消滅) ${s.stats.removed}件 / 手入力の置き換え ${s.stats.replacedManual.length}件 / ` +
+        `  既存側の変化: 削除(投稿から消滅) ${s.stats.removed}件 / ` +
+          `手入力の置き換え ${s.stats.replacedManual.length}件 / ` +
           `投稿未掲載の手入力 ${s.stats.keptManual.length}件`
       );
     }
   }
 
+  reportTotals(summaries);
+  reportLostPosts(lostPosts);
+  reportEmptyResults(emptyResults);
   reportAnomalies(anomalies);
 
   // 対象外店舗・過去日が変化していないことの最終自己チェック(店舗ごとのassertOnlyTargetChangedに加えた二重チェック)
@@ -615,7 +999,15 @@ module.exports = {
   toTournament,
   formatDroppedRow,
   formatNormalizedRow,
+  formatFilteredOutPost,
+  pickNewPostsWithStats,
+  checkIntakeAccounting,
   reportAnomalies,
+  reportLostPosts,
+  reportEmptyResults,
+  reportTotals,
+  checkPostAccounting,
+  checkRowAccounting,
   runMonitor,
   loadState,
   saveState,

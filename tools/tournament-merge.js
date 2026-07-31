@@ -6,18 +6,29 @@
  * 共通ロジック。**PR #11(`feat/waitinglist-auto-import` / `tools/import-waitinglist.js`)の
  * 安全設計(upsert規則・安全弁)をそのまま踏襲**している。
  *
- * 【由来・利用箇所】
+ * 【由来】
  *   もともとPR #13(Instagram自動巡回・中止)で切り出したモジュール。Instagram巡回自体は
  *   セッションCookie注入+検知回避を伴う設計だったため中止したが、この upsert ロジック自体は
- *   取得元(Waitinglist API / 店舗が直接送ってきた画像 等)に依存しない汎用部分なのでそのまま残す。
- *   現在は `tools/import-venue-image.js`(店舗から直接届いたスケジュール画像の取込み)が使う。
+ *   取得元に依存しない汎用部分なのでそのまま残す。
  *
- * 【PR #11 と重複コードになっている理由】
- *   PR #11 はまだ未マージで、このリポジトリの `main` には `tools/import-waitinglist.js` が
- *   存在しない。このPRは PR #11 に依存させず単独でマージ可能にする方針のため、
- *   ロジックをここに再実装した(コピペではなく、Waitinglist固有の変換処理を除いた
- *   upsert・安全弁の部分だけを切り出している)。PR #11 マージ後、両スクリプトが
- *   このモジュールを共有するようリファクタリングする余地がある(将来のTODO)。
+ * 【★このモジュールを require しているのは誰か(2026-08-01 時点の事実)★】
+ *   ・`tools/import-venue-image.js` … 店舗から直接届いたスケジュール画像の取込み
+ *   ・`tools/monitor-instagram-apify.js` … Instagram投稿の日次自動監視
+ *   この2つ【だけ】である。
+ *
+ *   【Waitinglist取込み(`tools/import-waitinglist.js`)は使っていない】
+ *   同ファイルは自前の `mergeStore` を持つ【別実装】で、このモジュールを require していない。
+ *   したがってここを変更してもWaitinglist取込みには影響しない(逆も同じ)。
+ *
+ *   ※以前このヘッダには「`main` に `import-waitinglist.js` は存在しない」「現在は
+ *     `import-venue-image.js` が使う」と書かれていたが、どちらも既に事実と違っていた。
+ *     この陳腐化した記述が「Waitinglistとロジックを共有している」という誤解を生んだため、
+ *     2026-08-01 に事実で書き直した。**利用箇所を増減させたらここも必ず直すこと。**
+ *
+ * 【重複コードについて(将来のTODO)】
+ *   `import-waitinglist.js` の `mergeStore` とこのモジュールは、同じ upsert規則を
+ *   別々に実装している。統合すれば重複は消えるが、統合そのものが「両方の取込み経路を
+ *   同時に壊しうる変更」になるため、着手するなら単独のPRで行うこと。
  *
  * 【この店(venueId)以外・過去日には一切触れない】(PR #11と同じ upsert規則)
  *   1. 過去日(JST基準の今日より前)のエントリは一切触らない
@@ -124,7 +135,32 @@ function mergeStore(all, venueId, scraped, today) {
   const apiCountBySlot = new Map();
   for (const t of rawFuture) apiCountBySlot.set(slotOf(t), (apiCountBySlot.get(slotOf(t)) || 0) + 1);
 
-  const stats = { added: 0, updated: 0, unchanged: 0, removed: 0, carried: 0, ambiguous: 0, keptManual: [], replacedManual: [] };
+  // pastDated = 渡された行のうち【実際に過去日だった】数。
+  // 【この1つが無いと行レベルの突き合わせができない】呼び出し側は「Visionが何行返して、
+  // その各行がどうなったか」を説明できる必要があるが、過去日の行はここで静かに落ちるため、
+  // added/updated/unchanged を足しても渡した行数に届かず、差が「説明の付かない残余」に見えてしまう。
+  // (実際 2026-07-31 の dry-run では久留米が20行抽出・追加0で、内訳が誰にも分からなかった)
+  //
+  // 【★残差(scraped.length - rawFuture.length)で定義してはいけない★】
+  // それだと「rawFuture に入らなかった全て」を意味してしまい、呼び出し側の保存則
+  // (added+updated+unchanged+pastDated+破棄 = 渡した行数)が【恒等式】になる。
+  // 恒等式は何も検査していない: この先 rawFuture の絞り込み条件が1つ増えただけで、
+  // 未来日の行が黙って消えても差分がそのまま pastDated に吸い込まれ、
+  // 【「過去日」として積極的に誤報される】(この保存則が殺そうとした構図そのもの)。
+  // 必ず「過去日である」という性質そのものを数えること。
+  // 副次的な利点として、date が undefined/null/数値の行も「過去日」に化けなくなる
+  // (`undefined < today` は false なので、そういう行は残余として表に出る)。
+  const stats = {
+    added: 0,
+    updated: 0,
+    unchanged: 0,
+    pastDated: scraped.filter((t) => t.date < today).length,
+    removed: 0,
+    carried: 0,
+    ambiguous: 0,
+    keptManual: [],
+    replacedManual: [],
+  };
 
   const future$ = [];
   for (const raw of rawFuture) {
