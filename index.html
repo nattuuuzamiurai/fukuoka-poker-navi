@@ -732,6 +732,9 @@
 <!-- 大型イベントのレジストリと掲載期間ルール。data.js より先に読む(バナー・フッターの判定に使う) -->
 <script src="big-events.js"></script>
 <script src="data.js"></script>
+<!-- 「自動取込と同じ枠の定期開催は出さない」判定。静的な店舗ページ(tools/venue-schedule.js)と
+     同じ1本を読む。判定を書き写さないこと(必ず片方が古くなる) -->
+<script src="recurring-dedupe.js"></script>
 <script>
 (function(){
   const WD = ['日','月','火','水','木','金','土'];
@@ -836,6 +839,27 @@
   // 月の入れ替え作業なしで「ずっと同じトーナメントを表示」できるよう、date は表示対象の期間に合わせて都度計算する。
   const RECURRING_LIST = (typeof RECURRING !== 'undefined') ? RECURRING : [];
   function dateStr(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+  // 店の予約システムから自動取込んだ日程(source:'auto')と (日付, 開始時刻) が一致する定期開催は、
+  // 同じ大会を2行で見せることになるので出さない。判定は recurring-dedupe.js が【唯一の所有者】で、
+  // 静的な店舗ページ(tools/venue-schedule.js の vpRows)も同じファイルを読む。ここに書き写さないこと。
+  // ★ 間引きは expandRecurring() の【出口1箇所】で行う。この関数の下流には消費点が4つあり
+  //   (ALL_TOURNAMENTS / monthTournaments() / thisMonthCount / 店舗モーダル)、
+  //   消費点ごとに書くと足し忘れた1つだけ重複が残る。
+  // ★ ここで例外を外に出さないこと。判定は data.js の中身次第で落ちうる(展開行に venueId が無い等)。
+  //   落として一覧ごと真っ白にするより、重複したまま出すほうが害が小さい。
+  //   生成側(tools/gen-venue-pages.js)は同じ状況で【止まる】ので、異常は日次ジョブが検知する。
+  function dedupeRecurring(rows){
+    if (typeof RecurringDedupe === 'undefined'){
+      console.error('[recurring-dedupe] recurring-dedupe.js が読み込まれていません。自動取込と重複した定期開催がそのまま出ます。');
+      return rows;
+    }
+    try {
+      return RecurringDedupe.filterExpanded(TOURNAMENTS, rows);
+    } catch (e) {
+      console.error('[recurring-dedupe] 重複判定に失敗しました。重複したまま表示します:', e);
+      return rows;
+    }
+  }
   function expandRecurring(fromDate, toDate){
     const out = [];
     if (!RECURRING_LIST.length) return out;
@@ -853,7 +877,7 @@
       });
       d.setDate(d.getDate() + 1);
     }
-    return out;
+    return dedupeRecurring(out);
   }
   const addDays = (d,n) => { const x=new Date(d); x.setDate(x.getDate()+n); return x; };
   // 店舗カードの「今後の開催件数」・FSTサテライト・月の選択肢の導出用に、
@@ -884,6 +908,12 @@
   const thisMonthCount = TOURNAMENTS.filter(t => t.date >= monthStartStr && t.date <= monthEndStr).length
     + expandRecurring(monthStart, monthEnd).length;
   document.getElementById('stat-t').textContent = thisMonthCount;
+  // 「今月の開催数」は自動取込と重複した定期開催を数えない(数えると水増しになる)。
+  // 間引いた行の件数と内訳はここで一度だけ出す。利用者の画面には出さない。
+  if (typeof RecurringDedupe !== 'undefined'){
+    const dd = RecurringDedupe.summary();
+    if (dd.count) console.info(`[recurring-dedupe] 自動取込と重複した定期開催 ${dd.count}行を非表示（${dd.text}）`, dd.rows);
+  }
   document.getElementById('stat-v').textContent = VENUES.length;
   const todayStr = iso(today).toISOString().slice(0,10);
   const _t = new Date(); _t.setHours(0,0,0,0);

@@ -114,7 +114,7 @@ validateUnverifiedFlags(VENUES);
 // 【なぜ切り出したか】gen-sitemap.js が「掲載0件の店」を判定して sitemap から外す。
 //   その判定基準がこちらと2箇所に分かれるとズレて、「sitemapには載っているのに中身は空」
 //   あるいはその逆が起きるため、判定を1箇所に寄せた。
-const { SCHEDULE_JS, SCHED, venueRange } = require('./venue-schedule.js');
+const { SCHEDULE_JS, SCHED, venueRange, RecurringDedupe } = require('./venue-schedule.js');
 
 // ---- 店舗ページ本体 ----
 const VENUE_CSS = `  .vp-sub{font-size:.9em;color:var(--mut);margin-bottom:14px}
@@ -301,7 +301,11 @@ ${sameArea.map(x => `  <li><a href="/venues/${x.slug}/">${esc(x.name)}</a></li>`
 
   // 閲覧時の描き直し。/data.js を読み直して「今日以降」に差し替える。
   // 店舗ページで他社イベントのバナーをOGP画像に使うのは不適切なので noImage(トップと同じ扱い)。
-  const scripts = `<script src="/data.js"></script>
+  // recurring-dedupe.js は data.js より先でも後でもよいが、下の即時関数より前に読む必要がある。
+  // 読めなかった場合は下の即時関数が何もしないので、生成時に間引き済みの静的HTMLがそのまま残る
+  // (= 重複が復活するのではなく、描き直しが起きないだけ)。
+  const scripts = `<script src="/recurring-dedupe.js"></script>
+<script src="/data.js"></script>
 <script>
 ${SCHEDULE_JS}
 /* 生成時に焼き込んだ日程を、いま読み込んだ data.js の内容で描き直す。
@@ -310,6 +314,9 @@ ${SCHEDULE_JS}
    (README「data.jsを更新したら」を参照)。 */
 (function(){
   if (typeof TOURNAMENTS === 'undefined' || typeof RECURRING === 'undefined') return;
+  /* recurring-dedupe.js が読めていないときは描き直さない。描き直すと、生成時に間引いた
+     「自動取込と重複する定期開催」が閲覧時だけ復活してしまう(古い日程が残るほうがまだ軽い)。 */
+  if (typeof RecurringDedupe === 'undefined') return;
   var el = document.getElementById('vp-sched');
   if (!el) return;
   var n = new Date();
@@ -467,6 +474,26 @@ files['index.html'] = buildIndexHtml();   // 店舗リンク行(#venueLinks)だ�
 Object.assign(files, sitemapFile(REPO));
 
 verify(files);
+
+// ---- 自動取込と重複したために出さなかった定期開催の行を報告する ----
+// 【なぜログに出すか】この間引きは「出力に何も現れないこと」で成功するため、画面を見ても
+//   効いているのか壊れているのか分からない。日次ジョブ(GitHub Actions)のログに件数と内訳を残し、
+//   想定より多い/少ないときに気づけるようにする。--check でも同じものを出す(押す前に見えるように)。
+{
+  const dd = RecurringDedupe.summary();
+  if (dd.count) {
+    console.log(`定期開催の重複: 自動取込(source:'auto')と同じ枠の ${dd.count} 行を静的ページから除外（${dd.text}）`);
+    RecurringDedupe.detailLines().forEach(l => console.log(l));
+  }
+  // 判定は source:'auto' で行っている。auto-import-stores.json との食い違いはここで監査だけする
+  // (振る舞いは変えない。理由は recurring-dedupe.js の冒頭コメント)。
+  let storesJson = null;
+  try { storesJson = JSON.parse(fs.readFileSync(path.join(REPO, 'auto-import-stores.json'), 'utf8')); } catch (e) { /* 無くてよい */ }
+  if (storesJson) {
+    RecurringDedupe.auditAutoStores(TOURNAMENTS, storesJson)
+      .forEach(w => console.log('注意: ' + w));
+  }
+}
 
 // 孤児は「あるかどうか」を先に出す。どちらのモードでも対象名を標準出力に出す(気づけるように)。
 const orphans = findOrphanVenueDirs();

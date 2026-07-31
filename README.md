@@ -40,6 +40,7 @@ AdSense/PR枠が埋まるまでの間、自社アプリの導線を3か所に置
 | `dev-server.py` | 管理コンソール用のローカルサーバー（`/save-data` で `data.js` に自動保存） |
 | `data.js` | 表示用の正規化済みデータ（`VENUES` / `TOURNAMENTS` / `AREAS` / `RECURRING`）とスキーマ定義。`VENUES` の `slug` は店舗静的ページのURL（`/venues/<slug>/`）そのもの。**一度公開したslugは変更しない**（URLが変わって被リンクを失う）。店舗を追加したらslugも付ける（付け忘れは `tools/gen-venue-pages.js` が店名を挙げて異常終了する） |
 | `big-events.js` | **大型イベント（WJPT/JOPT/FST…）のレジストリと掲載期間ルール**。会期（`days`）とバナー／フッターの表示判定の**唯一の正**。トップページと `events/<slug>/` の静的ページの両方が読み込む。詳細は下記「大型イベントの追加手順と掲載期間ルール」 |
+| `recurring-dedupe.js` | **「自動取込（`source:'auto'`）と同じ枠の定期開催（`RECURRING`）は出さない」判定の唯一の所有者**。同じ大会が2行に見えるのを防ぐ。**リポジトリ直下に置いてあるのは、3つの実行環境（Node＝静的ページ生成／店舗静的ページ／トップのSPA）が同じ1本のバイト列を読む必要があるため**（詳細と、やってはいけない実装は下記「定期開催と自動取込の重複をどう消しているか」）。テスト: `node tools/recurring-dedupe.test.js` |
 | `jopt-data.js` | 大型イベント JOPT 2026 Fukuoka #01 のトーナメント・ストラクチャーデータ（約116KB）。**`#jopt` を開いたときにだけ動的読み込みされる**（全ページで読むには重いため）。件数（`index.html` の `JOPT_META.tournamentCount`）のみ二重管理で、ズレはデータ読み込み時に自動訂正される（会期は `big-events.js` 側が正） |
 | `nippon-series-data.js` | 大型イベント NIPPON SERIES FUKUOKA 2026 の全38イベント（データ行は42行＝MAIN EVENTが5フライト）。**`#nippon` を開いたときにだけ動的読み込みされる**。公式ページのHTMLからスクリプトで機械抽出したもので手打ちしていない。Fee・Prize は公式表記のまま（`+ 1,000` の内訳を言い換えない） |
 | `fukuoka-venues.json` | 実在店の調査結果（出典・注記付き。`data.js` の VENUES の原典） |
@@ -48,7 +49,7 @@ AdSense/PR枠が埋まるまでの間、自社アプリの導線を3か所に置
 | `venues/<slug>/index.html` | 店舗個別の**静的ページ**（検索流入用）。SPAのハッシュURL(`#venue/v41`)は独立URLとして扱われずインデックスされないため、実URL(`/venues/poker-studio-deep-blue-yukuhashi/` 等)でクローラブルな店舗ページを別途用意する。狙いは「行橋 ポーカー」「折尾 ポーカー」のようにトップ1枚では取りにいけない地域×店名のロングテール。LocalBusiness構造化データ・canonical付き |
 | `tools/gen-event-pages.js` | 上記イベント静的ページと**トップの恒久リンク行（`index.html` の `#evtLinks` 1行）**の**生成スクリプト**。データは `jopt-data.js` と `index.html` の `const WJPT` からそのまま読み込む（数値を手打ちしない=転記ミス防止）。実行: `node tools/gen-event-pages.js <リポジトリのパス>`（`--check` を付けると書き込まずに一致確認だけ行い、ズレていれば非ゼロ終了）。**JOPT等のデータや `big-events.js` を更新したら必ず再実行すること**（静的ページはデータのスナップショットのため） |
 | `tools/gen-venue-pages.js` | 店舗静的ページと**トップの店舗リンク行（`index.html` の `#venueLinks` 1行）**の**生成スクリプト**。データは `data.js` の `VENUES` / `TOURNAMENTS` / `RECURRING` からそのまま読み込む。実行: `node tools/gen-venue-pages.js <リポジトリのパス>`（`--check` あり）。**`data.js` を更新したら必ず再実行すること**（下記「`data.js` を更新したら」。自動取込ぶん（Waitinglist / Instagram監視）は各日次ワークフローが自動で再生成する） |
-| `tools/venue-schedule.js` | 店舗ページの日程表を組み立てるコードの**唯一の所有者**。生成時（Node）と閲覧時（ブラウザに埋め込む `SCHEDULE_JS`）で同じ1本を共有する。**焼き込む期間を店舗別に決める `venueRange()`** もここが持つ（`gen-venue-pages.js` の見出しと `gen-sitemap.js` の掲載判定が同じ基準を使うため）。テスト: `node tools/venue-schedule.test.js` |
+| `tools/venue-schedule.js` | 店舗ページの日程表を組み立てるコードの**唯一の所有者**。生成時（Node）と閲覧時（ブラウザに埋め込む `SCHEDULE_JS`）で同じ1本を共有する。**焼き込む期間を店舗別に決める `venueRange()`** もここが持つ（`gen-venue-pages.js` の見出しと `gen-sitemap.js` の掲載判定が同じ基準を使うため）。ただし**定期開催の重複判定だけは持たない**（トップのSPAも同じ判定を必要とするため `recurring-dedupe.js` に外出しし、こちらは `require` して呼ぶだけ）。テスト: `node tools/venue-schedule.test.js` |
 | `tools/validate-data.js` | **`data.js` をコミットしてよいかを判定する共通ゲート**（構文 / `TOURNAMENTS` の件数 / `id` 重複 / **日付書式 `YYYY-MM-DD`（実在する日付か）**）。落ちたときは**不正値と該当トーナメント（venueId・id・name）**を出す。実行: `node tools/validate-data.js .`。2つの日次ワークフロー（Waitinglist取込み / Instagram監視）が**コミット前と `git pull --rebase` の後**にこれを呼ぶ。**取込んでよい行かの判定（`dateProblem` / `extractedRowProblem` / `duplicateIdProblem`）と、その前段の正規化（`normalizeExtractedRow` … `9:00`→`09:00`・全角コロン・読めない金額をその項目だけ `null` に）もこのファイルが持ち**、取込み側（`monitor-instagram-apify.js` / `import-venue-image.js`）が `require` して使う（同じ規則を2箇所に書くと必ず片方が古くなり、「取込み側は通すのにゲートで落ちる＝毎朝ジョブが止まる」ズレが生じるため）。**ゲート側にしか無い検査（件数）もあるので「取込み側を通れば必ずゲートも通る」ではない**点に注意。テスト: `node tools/validate-data.test.js` |
 | `tools/gen-sitemap.js` | **`sitemap.xml` の唯一の所有者**。トップ＋イベントページ＋店舗ページの全URLをここだけで組み立てる（詳細は下記「sitemap.xml の所有者」）。単独実行も可: `node tools/gen-sitemap.js <リポジトリのパス>`（`--check` あり） |
 | `tools/site-shell.js` | 静的ページ共通の「外側」（`<head>`・GA4タグ・共通CSS・ヘッダー・フッター・自社広告・大会の恒久リンク行）。イベントページと店舗ページで骨格が食い違わないよう、出どころを1つにしてある。**純粋なモジュールで、require しても何も書き込まない** |
@@ -123,6 +124,98 @@ node tools/gen-venue-pages.js .          # 店舗ページ35枚 + トップの�
 - **片方を実行し忘れてsitemapが古くなることもない**（どちらを実行しても全URLが揃う）
 - `changefreq` / `priority` は**日付で変えない**。終了した大会を低優先度に落とす分岐を入れると
   「データを触っていないのに翌日 `--check` が落ちる」ことになるため。この2項目はクローラへの弱いヒントに過ぎない
+
+### 定期開催（`RECURRING`）と自動取込の重複をどう消しているか
+
+店の予約システムから自動取込んだ日程（`source:'auto'`）と、こちらが手で登録した毎週固定の定期開催（`RECURRING`）は、
+**同じ大会を指していることがある**。両方を並べると同じ枠が2行になる。
+
+```
+ 8月2日（日）
+    16:10  2000 Turbo      ターボ  ¥2,000  30,000点   ← 自動取込
+    16:10  Turbo 毎週日曜  ターボ  ¥2,000  30,000点   ← RECURRING
+```
+
+矛盾した情報ではない（時刻・参加費・スタックまで一致している）が、トップの一覧には「毎週◯曜」バッジが無く、
+副文言（`+AO ¥1,000` / `STACK 30,000`）だけが食い違うため **「16:10開始の別大会が2つある」ように読める**。
+「今月の開催数」も水増しされる。日程を正確に一覧できることが売りの媒体で、
+**同じ大会が2行に見えるのは1行足りないより信用を損なう**（レビュー部の判断・2026-07-30）。
+
+**規則**: その店の `source:'auto'` のエントリと **(`venueId`, `date`, 開始時刻) が完全に一致する** `RECURRING` の展開行だけを出さない。
+残すのは必ず自動取込のほう（**店自身の予約システムが正**。名前が食い違う場合もAPI版を採用し、食い違いはログに残す）。
+
+#### ⚠ 絶対に避けるべき実装
+
+> **「自動取込の掲載期間まるごと `RECURRING` を止める」形にしてはいけない。**
+> APIは**店が登録したぶんしか返さない**ため、登録が無い曜日の定期開催が全滅する。
+> v19（CASINO Arrows 小倉店）で実測すると **28行 → 9行**になり、
+> **土曜 Deep Stack 5回と月曜 Free Roll 5回が丸ごと消える**（品質管理部の実測・レビュー部が名指しで警告）。
+> 必ず**一致した行だけ**を落とすこと。
+
+規則をこれ以上広げないこと。特に次の2つは**触ってはいけない**（どちらも実在するデータで、消すと事実と食い違う）。
+
+- **`source:'auto'` 以外の同時刻衝突**。例: v33 `2026-07-10 19:00` の `FPC AJPC DAY1`（¥0・`source:'semi'`）と、
+  毎週金曜19:00の `JOPT福岡サテライト`（¥4,000）。**参加費が違う別の大会**である
+- **開始時刻が `HH:MM` として読めない行**（空文字・`未定` 等）。例: v35 の5件（7/4・7/10・7/11・7/12・7/25）は
+  `start` が**空文字どうし**。空文字を一致とみなすと無関係な大会が消える
+
+#### なぜ独立した1ファイル（`recurring-dedupe.js`）なのか
+
+`RECURRING` の展開は**2箇所**にあり、**生成するフィールドも元から違っていた**。
+
+- `tools/venue-schedule.js` の `vpExpandRecurring()` … 静的な店舗ページ用
+- `index.html` の `expandRecurring()` … トップのSPA用
+
+同じ判定を2つ書けば必ず片方が古くなる（PR #15 が潰した不整合の再導入）。そこで**判定だけ**を素のJSファイルに切り出し、
+**3つの実行環境が同じ1本のバイト列を読む**形にした。
+
+| 実行環境 | 読み方 |
+|---|---|
+| Node（静的ページ生成・`hasSchedule`） | `tools/venue-schedule.js` が `require` |
+| 店舗静的ページ（閲覧時の描き直し） | 生成HTMLの `<script src="/recurring-dedupe.js">` |
+| トップのSPA | `index.html` の `<script src="recurring-dedupe.js">` |
+
+**「共通化のためにどこかへ寄せよう」として壊さないこと。** 寄せられない理由は2つある。
+
+- `tools/venue-schedule.js` に**戻せない**。あそこの `SCHEDULE_JS` は Node の `vm` で回す**文字列**で、`index.html` からは読めない
+- `index.html` に**注入できない**。注入するとトップページが新たに「生成物」になり、生成ステップと `--check` がもう1本増える
+  （現在 `gen-venue-pages.js` が `index.html` に触るのは `#venueLinks` の1行だけ、という不変条件も崩れる）
+
+`data.js` / `big-events.js` と同じ「ブラウザからも Node からも読める素のJS」なのでリポジトリ直下に置いてある。
+ES5で書いてあるのは、店舗ページに埋め込まれる `SCHEDULE_JS` と同水準に合わせるため。
+
+#### 実装上の注意
+
+- **SPA側の間引きは `expandRecurring()` の出口1箇所**で行う。消費点は4つ
+  （`ALL_TOURNAMENTS` / `monthTournaments()` / `thisMonthCount` / 店舗モーダル）あり、
+  消費点ごとに書くと**足し忘れた1つだけ重複が残る**
+- **展開行は必ず `venueId` を持たせる**。判定は `venueId` を鍵に使うので、欠けると
+  **例外も出さずに黙って空振りする**（実際、静的側の `vpExpandRecurring()` は元々 `venueId` を持っておらず、
+  この形にした初回は静的側だけ無反応だった）。`recurring-dedupe.js` は `venueId` の無い行を見つけたら落ちる
+- **`auto-import-stores.json` ではなくエントリの `source` で判定している**。ブラウザは JSON を同期的に読めず、
+  店リストを `index.html` に写すと今度はデータ側でズレるため。`source:'auto'` を書くのは
+  `tools/import-waitinglist.js` だけ（Instagram監視は `'semi'`）なので signal としては同じで、
+  抑止される集合も変わらない。両者の食い違いは `auditAutoStores()` が生成時に照合して**警告だけ**出す
+- 抑止した行の**件数と内訳**は `node tools/gen-venue-pages.js .` の標準出力（＝日次ジョブのログ）に出る。
+  この間引きは「出力に何も現れないこと」で成功するので、ログが唯一の観測手段
+- 壊れたときの挙動は**わざと非対称**にしてある。店舗静的ページは
+  `recurring-dedupe.js` が読めなければ**描き直しを行わない**（生成時に間引き済みのHTMLが残る＝重複は復活しない）。
+  トップのSPAは `console.error` を出して**重複したまま表示**する（一覧ごと真っ白にするより害が小さい）。
+  同じ状況で生成側は**止まる**ので、異常は日次ジョブが検知する
+- **SPA側が間引きを通していることはテストで固定してある**（`tools/recurring-dedupe.test.js` が
+  `index.html` から `expandRecurring()` を切り出して実行し、返り値で確かめる）。
+  文字列一致ではなく挙動で見ているのは、変数名を変えただけで落ちる／別の書き方に変えると通ってしまうのを避けるため。
+  切り出しの目印は `const RECURRING_LIST =` 〜 `const addDays =` で、動かすとテストが明示的に落ちる
+
+#### 既知の見え方（改善候補・2026-07-31時点は対応しない）
+
+抑止された枠では、`RECURRING` 側が持っていた **「毎週◯曜」バッジが消える**（残るのは自動取込の行で、
+そちらは日付つきの単発として登録されているため）。同じ週次大会でも、
+**APIに登録のある週はバッジ無し・登録の無い週はバッジ有り**、という並びになる。
+
+誤りではない（どちらも実際の開催で、時刻・参加費・スタックは正しい）ので今回は手を入れていない。
+気になる場合の改善候補は「**抑止するときに、残す側へ `recurring` の印だけ引き継ぐ**」。
+名前は引き継がないこと（店自身の予約システムが正なので、名前はAPI版のままにする）。
 
 ## 大型イベントの追加手順と掲載期間ルール
 

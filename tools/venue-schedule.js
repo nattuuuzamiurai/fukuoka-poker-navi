@@ -31,9 +31,22 @@
  *   ★ ブラウザ側(SCHEDULE_JS)はこの期間を使わない。閲覧時の窓は
  *     gen-venue-pages.js が埋め込むスクリプトが「今日〜max(掲載最終日, 今日+60日)」として
  *     その場で決めている。したがってこの変更で公開サイトの描画は変わらない。
+ *
+ * 【ここが持たないもの: 定期開催の重複判定】
+ *   「自動取込(source:'auto')と同じ枠の RECURRING を出さない」規則は、このファイルではなく
+ *   リポジトリ直下の recurring-dedupe.js が所有する。トップのSPA(index.html)も同じ規則を
+ *   必要とするが、あちらは SCHEDULE_JS を読めない(こちらは Node の vm で回す文字列)。
+ *   同じ判定を2箇所に書けば必ず片方が古くなるので、判定だけを素のJSファイルに切り出し、
+ *   Node は require、店舗ページとSPAは <script src> で【同じ1本を読む】形にした。
  */
 
 const vm = require('vm');
+const path = require('path');
+
+/* 「自動取込(source:'auto')と同じ枠の定期開催は出さない」判定は recurring-dedupe.js が所有する。
+   ここに書き写すと index.html 側と必ずズレるため、Node も店舗ページも同じファイルを読む
+   (店舗ページ側は gen-venue-pages.js が <script src="/recurring-dedupe.js"> で読み込む)。 */
+const RecurringDedupe = require(path.join(__dirname, '..', 'recurring-dedupe.js'));
 
 // ============================================================
 const SCHEDULE_JS = `
@@ -53,7 +66,9 @@ function vpExpandRecurring(RECURRING, venueId, fromIso, toIso){
     for (var i = 0; i < RECURRING.length; i++) {
       var r = RECURRING[i];
       if (r.venueId !== venueId || r.weekday !== wd) continue;
-      out.push({ name: r.name, date: iso, start: r.start, buyin: r.buyin, addon: r.addon,
+      /* venueId は表には出ないが、自動取込との重複判定(recurring-dedupe.js)が鍵に使うので必ず持たせる。
+         ここが欠けると判定が黙って空振りする(index.html 側の展開行は元から持っている)。 */
+      out.push({ venueId: r.venueId, name: r.name, date: iso, start: r.start, buyin: r.buyin, addon: r.addon,
                  stack: r.buyinStack || 0, lateReg: r.lateReg, guarantee: null,
                  tags: r.tags || [], recurring: true });
     }
@@ -69,7 +84,13 @@ function vpRows(TOURNAMENTS, RECURRING, venueId, fromIso, toIso){
     if (t.venueId !== venueId || t.date < fromIso || t.date > toIso) continue;
     abs.push(t);
   }
-  return abs.concat(vpExpandRecurring(RECURRING, venueId, fromIso, toIso))
+  /* 自動取込(source:'auto')と (日付, 開始時刻) が一致する定期開催の行は出さない。
+     判定は recurring-dedupe.js が持つ(index.html の expandRecurring も同じファイルを読む)。
+     ★ 抑止した行と対になる自動取込の行は必ず同じ日付 = 必ず abs に入っているので、
+       この間引きで行が0件になることはない(sitemap の掲載判定 hasSchedule が壊れない)。 */
+  var rec = vpExpandRecurring(RECURRING, venueId, fromIso, toIso);
+  if (typeof RecurringDedupe !== 'undefined') rec = RecurringDedupe.filterExpanded(TOURNAMENTS, rec);
+  return abs.concat(rec)
     .sort(function(a, b){
       if (a.date !== b.date) return a.date < b.date ? -1 : 1;
       var sa = a.start || '99:99', sb = b.start || '99:99';
@@ -127,8 +148,11 @@ function vpScheduleHtml(rows){
 `;
 
 // Node側から同じ関数を使う。SCHEDULE_JS を書き換えれば静的側も自動で追随する。
+// RecurringDedupe はブラウザではグローバル(<script src>)なので、vm 側にも同じ名前で渡す
+// = 静的ページに埋め込むコードと Node が走らせるコードを1文字も分岐させない。
 const SCHED = vm.runInNewContext(SCHEDULE_JS
-  + '\n;({ vpRows: vpRows, vpScheduleHtml: vpScheduleHtml, vpToIso: vpToIso, vpParse: vpParse })');
+  + '\n;({ vpRows: vpRows, vpScheduleHtml: vpScheduleHtml, vpToIso: vpToIso, vpParse: vpParse })',
+  { RecurringDedupe });
 
 // ---- 静的側に焼き込む期間 ----
 
@@ -240,4 +264,4 @@ function hasSchedule(TOURNAMENTS, RECURRING, venueId) {
   return SCHED.vpRows(TOURNAMENTS, RECURRING, venueId, range.from, range.to).length > 0;
 }
 
-module.exports = { SCHEDULE_JS, SCHED, monthRange, venueRange, hasSchedule };
+module.exports = { SCHEDULE_JS, SCHED, monthRange, venueRange, hasSchedule, RecurringDedupe };
