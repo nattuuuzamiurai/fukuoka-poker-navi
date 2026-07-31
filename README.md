@@ -58,7 +58,7 @@ AdSense/PR枠が埋まるまでの間、自社アプリの導線を3か所に置
 | `tools/tournament-merge.js` | `data.js` の `TOURNAMENTS` に1店舗ぶんの取得結果を安全にupsertする共通ロジック（対象店舗以外・過去日には一切触れない）。`tools/import-venue-image.js` から呼ばれる |
 | `tools/instagram-oembed.js` | 店舗が画像ではなく投稿リンクだけ送ってきた場合の補助（公式oEmbedからサムネイルを取得。ログイン・巡回は行わない）。`tools/import-venue-image.js --instagram-url` から呼ばれる |
 | `tools/fetch-venue-posts-apify.js` | Apify（既製Instagramスクレイパー、pay-per-result）を呼び、指定ハンドルの最近の投稿一覧（画像URL・投稿日時・パーマリンク・キャプション）を取得する（`APIFY_API_TOKEN` が必要）。`tools/monitor-instagram-apify.js` から呼ばれる |
-| `tools/monitor-instagram-apify.js` | 公式サイトAPIが無い6店舗のInstagram投稿を日次で自動監視し、新着のスケジュール告知らしき投稿をVisionで抽出して `data.js` に安全にupsertするCLIツール（詳細は下記「データ取得アーキテクチャ」）。実行: `node tools/monitor-instagram-apify.js`（`--dry-run` あり）。**Visionが返した行は1行ずつ「直せるものを直してから」検査し（`tools/validate-data.js` と同じ正規化・判定。`9:00`→`09:00` の正規化、日付書式・実在日・開始時刻の書式・金額が数値か・id重複）、それでも不正な行だけを捨てて残りは取り込む**（ジョブは落とさない。理由は下記「データ取得アーキテクチャ」の日付の検査は2層）。正規化・破棄・不採用の件数は `apify-monitor-state.json` の `lastExtraction` に記録される。GitHub Actions `.github/workflows/monitor-instagram-apify.yml` が毎日自動実行する（**2026-07-31時点は定期実行を無効化中。手動実行の既定は dry-run**。理由は下記「データ取得アーキテクチャ」の実行の項）。テスト: `node tools/monitor-instagram-apify.test.js` |
+| `tools/monitor-instagram-apify.js` | 公式サイトAPIが無い6店舗のInstagram投稿を日次で自動監視し、新着のスケジュール告知らしき投稿をVisionで抽出して `data.js` に安全にupsertするCLIツール（詳細は下記「データ取得アーキテクチャ」）。実行: `node tools/monitor-instagram-apify.js`（`--dry-run` あり）。**Visionが返した行は1行ずつ「直せるものを直してから」検査し（`tools/validate-data.js` と同じ正規化・判定。`9:00`→`09:00` の正規化、日付書式・実在日・開始時刻の書式・金額が数値か・id重複）、それでも不正な行だけを捨てて残りは取り込む**（ジョブは落とさない。理由は下記「データ取得アーキテクチャ」の日付の検査は2層）。正規化・破棄・不採用の件数は `apify-monitor-state.json` の `lastExtraction` に記録される。**投稿と行の「保存則」を常に検査する**（投稿: 取り込めた+再投稿+全行不採用+Vision抽出失敗+画像DL失敗+Vision0件 = 対象投稿数 / 行: 追加+更新+変更なし+過去日+破棄 = Visionが返した行数）。**合わなければ `::error::`**（=どこにも数えられない消失経路が増えた証拠）。内容が失われた投稿は `::error::`、Visionが0件の投稿は `::warning::` で報告し、キーワード判定で落とした投稿はキャプション冒頭とともにログに出す。GitHub Actions `.github/workflows/monitor-instagram-apify.yml` が毎日自動実行する（**2026-07-31時点は定期実行を無効化中。手動実行の既定は dry-run**。理由は下記「データ取得アーキテクチャ」の実行の項）。テスト: `node tools/monitor-instagram-apify.test.js` |
 
 `data.js` を差し替えるだけでサイトが更新される設計。CDN/静的ホスティング（GitHub Pages 等）にそのまま置ける。
 ただし静的ページ（`events/` `venues/` `sitemap.xml`）はデータのスナップショットなので、下記の再生成が必要。
@@ -893,11 +893,55 @@ GET https://api.waitinglist-poker.com/v1/game-schedules/tournament?storeId=<stor
     Visionが `{"tournaments": [...]}` のように包んで返すと**警告も破棄件数も出ないまま0件**になり、
     店ごとのサマリは「1行も採用できなかった投稿 0件」と表示していた(=積極的な誤報)。
     中身は失われているのだから、失われたと言えなければならないので明示的に失敗させる
-  - **未対応(既知)**: Vision抽出に失敗した投稿・画像ダウンロードに失敗した投稿は `console.warn` に
-    出るだけで、`::error::` 注記(「1行も採用できなかった投稿」)にも `lastExtraction` の件数にも
-    含まれない。確認済み投稿日時は進むため**その投稿は再試行されず、runログは90日で消える**。
-    **定期実行(cron)を再開する前に、`lastExtraction` に永続カウンタ
-    (`visionFailed` / `imageFailed` / `emptyResult`)を足してこの3経路を可視化すること**
+- **投稿と行の「保存則」(2026-08-01追加)**: **静かに失われる経路を、個別に塞ぐのではなく
+  構造的に塞ぐ**
+  - **何が起きていたか**: 2026-07-31 の dry-run で、72投稿すべてがVision抽出に失敗しながら
+    `::error::` も `::warning::` も1件も出ず、店ごとのサマリは
+    **「1行も採用できなかった投稿 0件」= 異常なし** と表示していた。
+    集計から漏れていたのではなく、**サマリが積極的に誤報していた**
+  - **原因**: 1投稿がたどる結末は6通りあるのに、**3つがどのカウンタにも入っていなかった**
+    (画像DL失敗 / Vision抽出失敗 / Visionが0件)。とくに0件は `console.warn` すら出なかった
+  - **なぜカウンタを足すだけで終わらせないか**: それでは**7本目の結末が生まれたときに同じことが
+    起きる**。実際この不具合は「経路が3本漏れていた」のではなく「漏れても誰も気づけない構造」だった
+  - **対策 = 2つの保存則をコードとテストで固定する**
+    1. **投稿レベル**:
+       `対象投稿 = 取り込めた + 再投稿 + 全行不採用 + Vision抽出失敗 + 画像DL失敗 + Vision0件`
+       (`checkPostAccounting`)。**将来ここに `continue` を1本足すとテストが即座に落ちる**
+    2. **行レベル**:
+       `Visionが返した行 = 追加 + 更新 + 変更なし + 過去日 + 破棄`(`checkRowAccounting`)。
+       **過去日は `mergeStore` の中で静かに落ちていた**ので `stats.pastDated` を新設した。
+       これが無いと「久留米: 抽出20 / 破棄0 / 追加0」のような、行の行き先を誰も説明できない
+       数字が並ぶ(正常に全部過去日だったのか、別の経路で消えたのか区別できない)
+  - **合わなければ `::error::`** を出す(残余の件数付き)。合わないこと自体がバグの証拠
+  - **重大度の使い分け**: 画像DL失敗・Vision抽出失敗・全行不採用は内容が確実に失われるので
+    **赤(`::error::`)**。Visionが0件は `looksLikeSchedulePost` の誤検知(=正常)である可能性が
+    高いので**黄(`::warning::`)**。0件を赤にすると、`duplicate-in-run` を異常から外したのと
+    同じ理由(唯一の警告チャネルが空振りで埋まり本物の異常が読めなくなる)に抵触する
+  - **件数は `lastExtraction` に残す**(git履歴に残る)。runログは既定90日で消えるため。
+    追加したのは `newPosts` / `filteredOut` / `importedPosts` / `visionFailed` / `imageFailed` /
+    `emptyResult` / `visionRows` / `pastDated` / `added` / `updated` / `unchanged`
+  - **dry-run でも読めること**が要件。dry-run は状態ファイルを書かないので、全店合計を
+    ログに出し、ワークフローが `$GITHUB_STEP_SUMMARY` にも転記する
+  - **⚠ この経路では「変更なし」は基本的に0のまま**。取り込んだ行には `source:'semi'` が付くが
+    (PR #16 の `auto` → `semi` 変更)、`mergeStore` が `unchanged` を出せるのは既存が
+    `source:'auto'` のときだけで、`'semi'` は**手入力扱い**になる。そのため同じ内容を再取込みしても
+    `unchanged` ではなく `updated`(かつ `replacedManual`)に入る。**数字を読むときに必要な知識**
+- **キーワード判定で落ちる投稿(2026-08-01追加)**: **画像を1度も見ずに捨てる4本目の経路**
+  - `looksLikeSchedulePost` は**キャプション本文に対する日本語9語の単純な部分一致だけ**。
+    どれにも当たらない投稿は画像を見ないまま捨てられ、しかも `lastPostedAt` は前進するので
+    **二度と処理されない**。Vision に到達しないため、上の保存則のカウンタにも入らない
+  - 外れる例(テストで固定済み): **`AUGUST SCHEDULE`(キーワードは全て日本語なので英語表記は
+    1語も当たらない)** / `8月のトナメ表です`(`トーナメント表` とは一致しない) /
+    `8月分アップしました` / `＼8月のイベント／` / 絵文字のみ / キャプションなし
+  - **疑うべき観測値**: 2026-07-31 の dry-run で **TripleBarrel 折尾は新着12件→告知らしき投稿0件**。
+    「実際に日程を投稿していない(正常)」のか「投稿しているが語に当たらず全部素通り(静かな損失)」
+    なのかが**区別されていない**
+  - **対策は「先に測る」**: 落とした投稿の**permalinkとキャプション冒頭50字をログに出す**。
+    件数(`filteredOut`)もサマリと `lastExtraction` に出す。dry-runは消費ゼロで何度でも回せるので、
+    **推測を測定に変えられる**(折尾の12件はApifyで取得済み=課金済みなので追加コストもかからない)
+  - **★キーワードを増やすのは、実際のキャプションを見てから。想像で先回りしないこと。**
+    現状の「漏れている」状態はテストで固定してあるので、増やせばそのテストが落ちる
+    (落ちたら期待値を更新する)
 - **コスト目安**: 6店舗×日次×直近投稿十数件取得と仮定すると、月間の取得件数は約
   6店 × 12件 × 30日 = 2,160件。Apifyのpay-per-result単価($1〜1.6/1000件)で計算すると
   **月あたり実際の課金は$1〜数ドル程度の見込み**(投稿が少ない店舗ではもっと安くなる)。

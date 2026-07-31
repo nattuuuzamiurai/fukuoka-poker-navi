@@ -124,7 +124,22 @@ function mergeStore(all, venueId, scraped, today) {
   const apiCountBySlot = new Map();
   for (const t of rawFuture) apiCountBySlot.set(slotOf(t), (apiCountBySlot.get(slotOf(t)) || 0) + 1);
 
-  const stats = { added: 0, updated: 0, unchanged: 0, removed: 0, carried: 0, ambiguous: 0, keptManual: [], replacedManual: [] };
+  // pastDated = 渡された行のうち「過去日なので rawFuture に入らなかった」数。
+  // 【この1つが無いと行レベルの突き合わせができない】呼び出し側は「Visionが何行返して、
+  // その各行がどうなったか」を説明できる必要があるが、過去日の行はここで静かに落ちるため、
+  // added/updated/unchanged を足しても渡した行数に届かず、差が「説明の付かない残余」に見えてしまう。
+  // (実際 2026-07-31 の dry-run では久留米が20行抽出・追加0で、内訳が誰にも分からなかった)
+  const stats = {
+    added: 0,
+    updated: 0,
+    unchanged: 0,
+    pastDated: scraped.length - rawFuture.length,
+    removed: 0,
+    carried: 0,
+    ambiguous: 0,
+    keptManual: [],
+    replacedManual: [],
+  };
 
   const future$ = [];
   for (const raw of rawFuture) {

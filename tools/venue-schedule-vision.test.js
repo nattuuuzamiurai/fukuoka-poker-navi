@@ -8,7 +8,7 @@
  *   ・途中まで読めたぶんを【部分的に採用しないこと】
  * の2点。ここが緩むと「月の後半が丸ごと欠けた日程」が無言で公開される。
  *
- * 加えて、容量の3つの定数(MAX_EXPECTED_ROWS / MEASURED_TOKENS_PER_ROW / MAX_OUTPUT_TOKENS)が
+ * 加えて、容量の3つの定数(MAX_EXPECTED_ROWS / WORST_CASE_TOKENS_PER_ROW / MAX_OUTPUT_TOKENS)が
  * 【互いに整合していること】を直接assertする。最初の実装は「200行までは捨てずに通す」と
  * 宣言しながら max_tokens が166行分しか無く、守るはずの月がその手前で切り捨てられていた。
  *
@@ -258,6 +258,254 @@ function withStubbedFetch(handler, fn) {
 
 const sseResponse = (chunks) => ({ status: 200, body: streamOf(chunks), text: async () => '' });
 
+// ---------- タイムアウト機構(2本立て) ----------
+// 【なぜテストするか】「全体5分 → 無音2分」への作り替えが PR #26 の設計変更の柱だったのに、
+// 機構そのものにテストが1本も無く、定数を1msにしても24時間にしても誰も気づけなかった。
+// 定数は callVisionModel の第5引数で上書きできるようにしてあるので、ms単位で実際に発火させる。
+
+/**
+ * 指定ミリ秒ごとに chunks を1つずつ流し、尽きたら【閉じずに黙る】ストリーム。
+ *
+ * 【signal を必ず渡すこと】本物の fetch は signal が abort されるとレスポンス本文の
+ * ストリームを AbortError で error にする。ここを再現しないと、タイムアウトで abort しても
+ * 読み手が永遠に待ち続け、テストがハングする(=本番の挙動とも違う)。
+ */
+function slowStream(chunks, intervalMs, { closeAtEnd = false, signal } = {}) {
+  const encoder = new TextEncoder();
+  let i = 0;
+  return new ReadableStream({
+    start(controller) {
+      if (!signal) return;
+      const onAbort = () => {
+        const err = new Error('The operation was aborted.');
+        err.name = 'AbortError';
+        try {
+          controller.error(err);
+        } catch (_) {
+          /* すでに閉じている場合は何もしない */
+        }
+      };
+      if (signal.aborted) onAbort();
+      else signal.addEventListener('abort', onAbort, { once: true });
+    },
+    pull(controller) {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          if (i < chunks.length) {
+            try {
+              controller.enqueue(encoder.encode(chunks[i++]));
+            } catch (_) {
+              /* abort 済み */
+            }
+          } else if (closeAtEnd) {
+            try {
+              controller.close();
+            } catch (_) {
+              /* abort 済み */
+            }
+          }
+          // closeAtEnd でなければ resolve するだけ = 以後この pull は二度と何も出さず沈黙する
+          resolve();
+        }, intervalMs);
+      });
+    },
+  });
+}
+
+test('タイムアウト: 中身のあるイベントが来なくなったら無音タイムアウトで中断する', async () => {
+  const chunks = [sse('message_start', { type: 'message_start', message: { usage: { input_tokens: 1 } } })];
+  await withStubbedFetch(
+    async (url, init) => ({ status: 200, body: slowStream(chunks, 5, { signal: init.signal }), text: async () => '' }),
+    async () => {
+      await assert.rejects(
+        () => vision.callVisionModel(Buffer.from('img'), 'sys', 'user', 'image/jpeg', { idleTimeoutMs: 120 }),
+        (e) => {
+          assert.match(e.message, /中身のあるイベントが 0\.12秒 届かなかった/);
+          return true;
+        }
+      );
+    }
+  );
+});
+
+test('タイムアウト: ping だけが流れ続けても無音タイムアウトが発火する(pingで延命されない)', async () => {
+  // 【この挙動が本体】以前はチャンク到着だけでタイマーを延ばしていたため、
+  // pingを送り続ける相手に対して無音タイムアウトが永久に発火しなかった。
+  const pings = Array.from({ length: 200 }, () => sse('ping', { type: 'ping' }));
+  await withStubbedFetch(
+    async (url, init) => ({ status: 200, body: slowStream(pings, 5, { signal: init.signal }), text: async () => '' }),
+    async () => {
+      await assert.rejects(
+        () => vision.callVisionModel(Buffer.from('img'), 'sys', 'user', 'image/jpeg', { idleTimeoutMs: 120 }),
+        (e) => {
+          assert.match(e.message, /中身のあるイベントが/);
+          assert.match(e.message, /pingだけが流れている可能性/);
+          return true;
+        }
+      );
+    }
+  );
+});
+
+test('タイムアウト: 中身のあるイベントが届き続ける間は無音タイムアウトで切られない', async () => {
+  // 逆側の保証。これが無いと「無音タイムアウトを極端に短くする」改悪に気づけない。
+  const chunks = okStreamChunks('[{"date":"2026-08-01","name":"デイリー"}]');
+  await withStubbedFetch(
+    async (url, init) => ({
+      status: 200,
+      body: slowStream(chunks, 5, { closeAtEnd: true, signal: init.signal }),
+      text: async () => '',
+    }),
+    async () => {
+      // 1イベントあたり5ms間隔 < idleTimeout 200ms なので、最後まで読み切れる
+      const got = await vision.callVisionModel(Buffer.from('img'), 'sys', 'user', 'image/jpeg', {
+        idleTimeoutMs: 200,
+      });
+      assert.deepEqual(got, [{ date: '2026-08-01', name: 'デイリー' }]);
+    }
+  );
+});
+
+test('タイムアウト: ゆっくり流れ続けて終わらない相手は、総時間の上限で中断する', async () => {
+  // 無音タイムアウトだけでは止められないケース(中身のあるイベントが遅いが届き続ける)。
+  const many = Array.from({ length: 500 }, (_, i) =>
+    sse('content_block_delta', { type: 'content_block_delta', index: 0, delta: { type: 'text_delta', text: 'x' } })
+  );
+  await withStubbedFetch(
+    async (url, init) => ({ status: 200, body: slowStream(many, 5, { signal: init.signal }), text: async () => '' }),
+    async () => {
+      await assert.rejects(
+        () =>
+          vision.callVisionModel(Buffer.from('img'), 'sys', 'user', 'image/jpeg', {
+            idleTimeoutMs: 5000, // 無音では切れない(5msごとに中身のあるイベントが届く)
+            totalTimeoutMs: 150,
+          }),
+        (e) => {
+          assert.match(e.message, /0\.15秒 で完了しなかった/);
+          return true;
+        }
+      );
+    }
+  );
+});
+
+test('【整合】タイムアウトの既定値が妥当なレンジにあること', () => {
+  // 定数を1msや24時間にする改悪を止める(上のテストは引数で上書きするため定数自体は見ない)。
+  assert.ok(
+    vision.STREAM_IDLE_TIMEOUT_MS >= 30000 && vision.STREAM_IDLE_TIMEOUT_MS <= 600000,
+    `STREAM_IDLE_TIMEOUT_MS=${vision.STREAM_IDLE_TIMEOUT_MS} が 30秒〜10分 のレンジ外`
+  );
+  assert.ok(
+    vision.STREAM_TOTAL_TIMEOUT_MS > vision.STREAM_IDLE_TIMEOUT_MS,
+    '総時間の上限が無音タイムアウト以下では、無音タイムアウトが意味を持たない'
+  );
+  // MAX_OUTPUT_TOKENS を悲観的な生成速度(40トークン/秒)で出し切れる長さがあること
+  assert.ok(
+    vision.STREAM_TOTAL_TIMEOUT_MS / 1000 >= vision.MAX_OUTPUT_TOKENS / 40,
+    `STREAM_TOTAL_TIMEOUT_MS が短く、正当な長い応答を切る恐れがある`
+  );
+});
+
+test('ping は無音タイマーを延ばす対象に含めない(MEANINGFUL_STREAM_EVENTS の内容を固定)', () => {
+  assert.ok(!vision.MEANINGFUL_STREAM_EVENTS.has('ping'), 'ping を含めると無音タイムアウトが効かなくなる');
+  for (const t of ['message_start', 'content_block_delta', 'message_delta', 'message_stop']) {
+    assert.ok(vision.MEANINGFUL_STREAM_EVENTS.has(t), `${t} は生成が進んでいる証拠なので含めること`);
+  }
+});
+
+// ---------- thinking_delta が本文に混ざらないこと ----------
+
+test('readMessageStream: thinking_delta は本文に混ぜない(text_delta だけを採る)', async () => {
+  // ANTHROPIC_VISION_MODEL で Sonnet 5 / Opus 5 に差し替えると adaptive thinking が既定でONになり、
+  // thinking_delta が流れてくる。これを本文に混ぜると JSON パースが壊れる(あるいは最悪、
+  // 思考の断片がJSONとして解釈できてしまう)。
+  const chunks = [
+    sse('message_start', { type: 'message_start', message: { usage: { input_tokens: 1 } } }),
+    sse('content_block_start', { type: 'content_block_start', index: 0, content_block: { type: 'thinking' } }),
+    sse('content_block_delta', {
+      type: 'content_block_delta',
+      index: 0,
+      delta: { type: 'thinking_delta', thinking: 'まず画像を見る。8月の表だ。[{"date":"9999-99-99"}]' },
+    }),
+    sse('content_block_stop', { type: 'content_block_stop', index: 0 }),
+    sse('content_block_start', { type: 'content_block_start', index: 1, content_block: { type: 'text', text: '' } }),
+    sse('content_block_delta', {
+      type: 'content_block_delta',
+      index: 1,
+      delta: { type: 'text_delta', text: '[{"date":"2026-08-01","name":"デイリー"}]' },
+    }),
+    sse('message_delta', { type: 'message_delta', delta: { stop_reason: 'end_turn' }, usage: { output_tokens: 50 } }),
+  ];
+  const msg = await vision.readMessageStream(streamOf(chunks));
+  assert.equal(msg.content[0].text, '[{"date":"2026-08-01","name":"デイリー"}]');
+  assert.doesNotMatch(msg.content[0].text, /まず画像を見る/, '思考の断片が本文に混ざっている');
+  assert.doesNotMatch(msg.content[0].text, /9999-99-99/, '思考の中のJSONらしき断片が本文に混ざっている');
+});
+
+test('readMessageStream: signature_delta など未知のdelta型も本文に混ぜない', async () => {
+  const chunks = [
+    sse('message_start', { type: 'message_start', message: { usage: { input_tokens: 1 } } }),
+    sse('content_block_delta', {
+      type: 'content_block_delta',
+      index: 0,
+      delta: { type: 'signature_delta', signature: 'AAAA' },
+    }),
+    sse('content_block_delta', {
+      type: 'content_block_delta',
+      index: 1,
+      delta: { type: 'input_json_delta', partial_json: '{"x":' },
+    }),
+    sse('content_block_delta', { type: 'content_block_delta', index: 2, delta: { type: 'text_delta', text: '[]' } }),
+    sse('message_delta', { type: 'message_delta', delta: { stop_reason: 'end_turn' }, usage: { output_tokens: 3 } }),
+  ];
+  const msg = await vision.readMessageStream(streamOf(chunks));
+  assert.equal(msg.content[0].text, '[]');
+});
+
+// ---------- 接続失敗とプログラミングミスを取り違えないこと ----------
+
+test('callVisionModel: ネットワーク由来のTypeError(causeあり)は「接続に失敗」として報告する', async () => {
+  const networkError = new TypeError('fetch failed');
+  networkError.cause = new Error('other side closed');
+  await withStubbedFetch(
+    async () => {
+      throw networkError;
+    },
+    async () => {
+      await assert.rejects(
+        () => vision.callVisionModel(Buffer.from('img'), 'sys', 'user'),
+        (e) => {
+          assert.match(e.message, /接続に失敗しました/);
+          assert.match(e.message, /other side closed/);
+          return true;
+        }
+      );
+    }
+  );
+});
+
+test('callVisionModel: 自分のコードのバグ(causeなしのTypeError)を「接続に失敗」に化けさせない', async () => {
+  // `null.foo` のようなプログラミングミスまで「接続に失敗しました」と報告すると、
+  // 原因を取り違えて延々とネットワークを疑うことになる。実測では、ネットワーク由来の
+  // TypeError には必ず cause が付き、プログラミングミス由来には付かない。
+  await withStubbedFetch(
+    async () => {
+      // eslint-disable-next-line no-unused-expressions
+      null.foo;
+    },
+    async () => {
+      await assert.rejects(
+        () => vision.callVisionModel(Buffer.from('img'), 'sys', 'user'),
+        (e) => {
+          assert.ok(e instanceof TypeError, 'プログラミングミスは元の TypeError のまま投げること');
+          assert.doesNotMatch(e.message, /接続に失敗しました/);
+          return true;
+        }
+      );
+    }
+  );
+});
+
 test('callVisionModel: 打ち切られた応答は、JSONパースエラーではなく max_tokens の失敗として報告される', async () => {
   // 実際のAPIが返す形: stop_reason=max_tokens + 閉じフェンスの無い本文
   const truncatedText = '```json\n[\n  {"date": "2026-08-01", "name": "デイリー"';
@@ -303,22 +551,27 @@ test('callVisionModel: max_tokens が MAX_OUTPUT_TOKENS のまま、かつ strea
 
 test('【整合】MAX_EXPECTED_ROWS 行を出し切れるだけの MAX_OUTPUT_TOKENS があること', () => {
   // 「200行までは捨てずに通す」と決めた以上、200行を出し切れる上限が要る。
-  // 実測(全項目が埋まった行の最悪値124トークン/行)で直接assertする。
-  const needed = vision.MAX_EXPECTED_ROWS * vision.MEASURED_TOKENS_PER_ROW;
+  // 実測の【最悪値】(131トークン/行)で直接assertする。
+  const needed = vision.MAX_EXPECTED_ROWS * vision.WORST_CASE_TOKENS_PER_ROW;
   assert.ok(
     vision.MAX_OUTPUT_TOKENS >= needed,
-    `MAX_EXPECTED_ROWS=${vision.MAX_EXPECTED_ROWS}行 × ${vision.MEASURED_TOKENS_PER_ROW}トークン/行 = ${needed} を` +
+    `MAX_EXPECTED_ROWS=${vision.MAX_EXPECTED_ROWS}行 × ${vision.WORST_CASE_TOKENS_PER_ROW}トークン/行 = ${needed} を` +
       ` MAX_OUTPUT_TOKENS=${vision.MAX_OUTPUT_TOKENS} が下回っている` +
       '(「捨てない設計なのに、その手前で切り捨てられる」矛盾)'
   );
 });
 
-test('【整合】MEASURED_TOKENS_PER_ROW が実測レンジから外れていないこと', () => {
-  // 実トークナイザ3種での実測: 実分布95.2〜98.5 / 全項目が埋まった最悪ケース約123.3。
-  // 楽観側(実分布の平均など)に緩めると MAX_OUTPUT_TOKENS の見積りが再び足りなくなる。
+test('【整合】WORST_CASE_TOKENS_PER_ROW が実測の最大値を下回っていないこと', () => {
+  // 実トークナイザ3種での実測: 実分布95.2〜98.5 / 全項目が埋まった行 約123.3 /
+  // 全項目が埋まり大会名が日本語だけの行 約130.4(全シナリオ中の最大)。
+  //
+  // 【平均や「実測レンジの下の方」に置き換えないこと】この定数が最大でないと、
+  // 上のassertが「通ったのに実際には危ない」を許す。例えば123.3(=日本語名を含まない値)を
+  // 置いたまま MAX_EXPECTED_ROWS を250に上げると 250×124=31,000 で通るが、
+  // 実際の最悪値では 250×130.4=32,600 で余裕がほぼ消える。
   assert.ok(
-    vision.MEASURED_TOKENS_PER_ROW >= 124,
-    `MEASURED_TOKENS_PER_ROW=${vision.MEASURED_TOKENS_PER_ROW} は実測の最悪値(123.3の切り上げ=124)を下回っている`
+    vision.WORST_CASE_TOKENS_PER_ROW >= 131,
+    `WORST_CASE_TOKENS_PER_ROW=${vision.WORST_CASE_TOKENS_PER_ROW} は実測の最大値(130.4の切り上げ=131)を下回っている`
   );
 });
 

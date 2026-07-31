@@ -70,35 +70,46 @@ const DEFAULT_MODEL = 'claude-sonnet-4-5-20250929'; // 要確認: 運用開始�
 const MAX_EXPECTED_ROWS = 200;
 
 /**
- * 抽出行1件あたりの出力トークン数(実測・最悪値)。
+ * 抽出行1件あたりの出力トークン数の【最悪値】(実測)。
+ *
+ * 【名前が WORST_CASE_ である理由 — 平均に置き換えないこと】
+ * ここに平均や「実測レンジの下の方」を置くと、`MAX_EXPECTED_ROWS × この値 ≤ MAX_OUTPUT_TOKENS`
+ * の整合assertが【通ったのに実際には危ない】状態を許してしまう。
+ * 例: 124(全項目埋めの値)を置いたまま誰かが MAX_EXPECTED_ROWS を250に上げると、
+ * assert は 250×124 = 31,000 ≤ 32,768 で通るが、実際の最悪値では 250×130.4 = 32,600 と
+ * 余裕がほぼ消える。これは PR #26 が差し戻された構図そのものが規模を縮めて残ったもの。
+ * **この定数は常に「観測された最大」でなければならない。**
  *
  * 品質管理部が実トークナイザ3種(tiktoken o200k_base / cl100k_base / @anthropic-ai/tokenizer)で
  * 独立に計測した値。pretty print(2スペースインデント)前提:
  *   ・data.js の実分布の行 … 95.2〜98.5 トークン/行
- *   ・全項目が埋まった行(guarantee/prize/addon まで全部ある最悪ケース)… 約123.3 トークン/行
- * 安全側の123.3を切り上げて 124 とする。
+ *   ・全項目が埋まった行(guarantee/prize/addon まで全部ある)… 約123.3 トークン/行
+ *   ・全項目が埋まり、かつ【大会名が日本語だけ】の行(全シナリオ中の最大)… 約130.4 トークン/行
+ * 最大の130.4を切り上げて 131 とする。
  *
  * 【文字数からの概算に戻さないこと】以前この定数の代わりに「ASCII=3文字/トークン」という
  * 楽観的なヒューリスティックで見積もっていたが、実測より2〜3割少なく出たため
  * MAX_OUTPUT_TOKENS を実際には足りない値に決めてしまった。数字は実測を置くこと。
  */
-const MEASURED_TOKENS_PER_ROW = 124;
+const WORST_CASE_TOKENS_PER_ROW = 131;
 
 /**
  * 1回の応答で許す最大出力トークン数。
  *
  * 【この値の根拠(実測)】
  * 守るべき最大は「MAX_EXPECTED_ROWS(=200行)を捨てずに通す」こと。上の実測から
- *   200行 × 124トークン/行 = 24,800トークン
- * が最悪ケース(全項目が埋まった200行を pretty print で出す)。32,768(2^15)はこれに
- * 約32%の余裕を足した値で、使用モデル claude-sonnet-4-5 の最大出力64,000トークンの半分。
+ *   200行 × 131トークン/行 = 26,200トークン
+ * が最悪ケース(全項目が埋まり大会名が日本語だけの200行を pretty print で出す)。
+ * 32,768(2^15)はこれに約25%の余裕を足した値で、使用モデル claude-sonnet-4-5 の
+ * 最大出力64,000トークンの半分。
  *
  * 参考(同じ実測での他のシナリオ):
  *   実分布100行 … 10,010 / 実分布150行 … 14,772 / 実分布186行 … 18,188 / 実分布200行 … 19,689
  *
- * 【旧値 2048 が壊れていたことの裏付け】124トークン/行なら2048トークンで出せるのは
- * 20〜21行。2026-07-31 の dry-run で「1投稿あたり20件前後」の投稿は通り、それより大きい
- * 投稿(=月まるごとの日程表)だけが切り捨てで落ちた、という観測と一致する。
+ * 【旧値 2048 が壊れていたことの裏付け】131トークン/行なら2048トークンで出せるのは
+ * 15〜16行(実分布の98.5トークン/行でも20〜21行)。2026-07-31 の dry-run で
+ * 「1投稿あたり20件前後」の投稿は通り、それより大きい投稿(=月まるごとの日程表)だけが
+ * 切り捨てで落ちた、という観測と一致する。
  *
  * 【max_tokens は「予約」ではなく「上限」】課金も所要時間も実際に生成したトークン数で
  * 決まる。大きめに取ること自体のコストは無い。逆に小さすぎると【黙ってデータが欠ける】。
@@ -119,21 +130,51 @@ const MAX_OUTPUT_TOKENS = 32768;
 const NON_STREAMING_SAFE_MAX_TOKENS = 16000;
 
 /**
- * ストリームが無音になってから諦めるまでの時間(ミリ秒)。
+ * ストリームから【中身のあるイベントが1つも来なくなって】から諦めるまでの時間(ミリ秒)。
  *
- * 【全体のタイムアウトではなく「無音」のタイムアウトにした理由】
+ * 【「無音」のタイムアウトにした理由】
  * 生成中のSSEはトークンが出るたびにイベントが流れるので、正常なら間隔は1秒未満。
  * 全体時間で切ると「本当に長い(=正当な)応答」を途中で殺してしまうが、無音で切れば
- *   ・接続が死んだ/相手が固まった → 2分で赤くなる(何時間も垂れ流さない)
+ *   ・中身のあるイベントが来なくなった → 2分で赤くなる(何時間も垂れ流さない)
  *   ・大きい月を延々と出し続けている → 最後まで待てる
  * を両立できる。旧実装の「全体60秒」は max_tokens が2048で生成が約30秒で頭打ちに
  * なっていたから成立していただけで、上限を上げるなら必ず作り直す必要があった。
+ *
+ * 【★「1バイトも来なくなったら」ではない★】このタイマーを延ばすのは
+ * MEANINGFUL_STREAM_EVENTS に挙げたイベントを【受け取ったときだけ】。
+ * 以前はチャンクを受け取るたびに延ばしていたため、`ping` を定期的に送り続ける相手
+ * (実測: 500msごとのping)に対して永久に発火しなかった。pingは接続が生きている証拠では
+ * あっても【生成が進んでいる証拠ではない】ので、無音判定の延命に使ってはいけない。
  *
  * 120秒は、画像を読んでから最初のトークンが出るまでの待ちに十分な余裕を見た値。
  * なおジョブ全体の上限は .github/workflows/monitor-instagram-apify.yml の
  * `timeout-minutes` が持つ(ここだけ見て全体の時間を推し量らないこと)。
  */
 const STREAM_IDLE_TIMEOUT_MS = 120000;
+
+/**
+ * 1回のVision呼び出しにかけてよい総時間(ミリ秒)。無音タイムアウトとは別に置く2本目の上限。
+ *
+ * 無音タイムアウトだけでは「中身のあるイベントが極端にゆっくり(例: 100秒に1回)届き続ける」
+ * 相手を止められない。生成トークン数から見た上限は
+ *   MAX_OUTPUT_TOKENS(32,768) ÷ 悲観的な生成速度(40トークン/秒) ≒ 819秒
+ * なので、900秒(15分)なら正常な応答を切ることはなく、異常は15分で打ち切れる。
+ * ワークフローのジョブ上限60分に対しても、最悪ケースが4回ぶんに収まる。
+ */
+const STREAM_TOTAL_TIMEOUT_MS = 900000;
+
+/**
+ * 無音タイマーを延ばしてよい(=生成が進んでいる証拠になる)SSEイベント。
+ * `ping` と未知のイベントは意図的に含めない(上の STREAM_IDLE_TIMEOUT_MS 参照)。
+ */
+const MEANINGFUL_STREAM_EVENTS = new Set([
+  'message_start',
+  'content_block_start',
+  'content_block_delta',
+  'content_block_stop',
+  'message_delta',
+  'message_stop',
+]);
 
 const MEDIA_TYPE_BY_EXT = {
   '.png': 'image/png',
@@ -237,7 +278,8 @@ function assertNotTruncated(json, model) {
  * 切断は max_tokens と並ぶもう1つの切り捨て要因なので、必ずここで捕まえる。
  *
  * @param {ReadableStream} body fetchのレスポンスボディ
- * @param {Function} [onActivity] バイトを受け取るたびに呼ぶ(無音タイムアウトのリセット用)
+ * @param {Function} [onActivity] 【中身のあるイベント】を受け取ったときだけ呼ぶ
+ *   (無音タイムアウトのリセット用)。ping では呼ばない — 理由は STREAM_IDLE_TIMEOUT_MS のコメント。
  */
 async function readMessageStream(body, onActivity) {
   if (!body || typeof body.getReader !== 'function') {
@@ -265,6 +307,9 @@ async function readMessageStream(body, onActivity) {
     } catch (e) {
       throw new Error(`Visionモデルのストリームに解釈できないイベントがありました: ${payload.slice(0, 200)}`);
     }
+    // 【中身のあるイベントだけ】が無音タイマーを延ばす。pingで延びると、pingを送り続ける
+    // 相手に対して無音タイムアウトが永久に発火しない(STREAM_IDLE_TIMEOUT_MS のコメント参照)。
+    if (onActivity && MEANINGFUL_STREAM_EVENTS.has(ev.type)) onActivity();
     switch (ev.type) {
       case 'message_start':
         inputTokens = ev.message && ev.message.usage ? ev.message.usage.input_tokens : null;
@@ -306,7 +351,9 @@ async function readMessageStream(body, onActivity) {
     }
     const { done, value } = chunk;
     if (done) break;
-    if (onActivity) onActivity();
+    // ここでは onActivity を【呼ばない】。チャンク到着だけで無音タイマーを延ばすと、
+    // pingを送り続ける相手に対して永久に発火しなくなる。延命は handleEvent 側で
+    // 「中身のあるイベント」を受け取ったときにだけ行う。
     buffer += decoder.decode(value, { stream: true });
     // 1回の chunk に複数イベントが入ることも、1イベントが複数 chunk に割れることもあるので、
     // 空行(イベント区切り)が現れたぶんだけ取り出し、残りは次の chunk と繋ぐ。
@@ -339,25 +386,37 @@ async function readMessageStream(body, onActivity) {
  * @param {string} systemPrompt
  * @param {string} userPrompt JSON形式で答えるよう明示すること
  * @param {string} [mediaType] 画像のMIMEタイプ(既定 image/jpeg)
+ * @param {{ idleTimeoutMs?: number, totalTimeoutMs?: number }} [opts]
+ *   タイムアウトの上書き。【テストから短い値を渡して実際に発火することを確かめるため】に
+ *   引数にしてある(定数のままだと、値を1msにしても24時間にしても誰も気づけない)。
+ *   本番の呼び出し元は渡さないこと。
  */
-async function callVisionModel(imageBuffer, systemPrompt, userPrompt, mediaType = 'image/jpeg') {
+async function callVisionModel(imageBuffer, systemPrompt, userPrompt, mediaType = 'image/jpeg', opts = {}) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     throw new Error('ANTHROPIC_API_KEY が未設定です(Vision抽出に必須)。');
   }
   const model = process.env.ANTHROPIC_VISION_MODEL || DEFAULT_MODEL;
+  const idleTimeoutMs = opts.idleTimeoutMs != null ? opts.idleTimeoutMs : STREAM_IDLE_TIMEOUT_MS;
+  const totalTimeoutMs = opts.totalTimeoutMs != null ? opts.totalTimeoutMs : STREAM_TOTAL_TIMEOUT_MS;
 
-  // 無音タイムアウト。バイトが届くたびに timer を張り直す(詳細は STREAM_IDLE_TIMEOUT_MS)。
+  // 上限は2本。
+  //   idle  … 中身のあるイベントが来なくなってから idleTimeoutMs(pingでは延びない)
+  //   total … 呼び出し開始から totalTimeoutMs(ゆっくり流し続ける相手を止める)
   const controller = new AbortController();
   let idleTimer = null;
-  let abortedByIdle = false;
+  let abortReason = null; // 'idle' | 'total' | null
   const touch = () => {
     if (idleTimer) clearTimeout(idleTimer);
     idleTimer = setTimeout(() => {
-      abortedByIdle = true;
+      abortReason = 'idle';
       controller.abort();
-    }, STREAM_IDLE_TIMEOUT_MS);
+    }, idleTimeoutMs);
   };
+  const totalTimer = setTimeout(() => {
+    abortReason = 'total';
+    controller.abort();
+  }, totalTimeoutMs);
 
   try {
     touch();
@@ -396,16 +455,27 @@ async function callVisionModel(imageBuffer, systemPrompt, userPrompt, mediaType 
     const text = (message.content || []).map((b) => b.text || '').join('');
     return extractJson(text);
   } catch (e) {
-    if (abortedByIdle) {
+    if (abortReason === 'idle') {
       throw new Error(
-        `Visionモデルの応答が ${STREAM_IDLE_TIMEOUT_MS / 1000}秒 無音になったため中断しました` +
-          '(接続が切れた/相手が固まった可能性)。この投稿は取り込みません。'
+        `Visionモデルから中身のあるイベントが ${idleTimeoutMs / 1000}秒 届かなかったため中断しました` +
+          '(接続が切れた/相手が固まった/pingだけが流れている可能性)。この投稿は取り込みません。'
+      );
+    }
+    if (abortReason === 'total') {
+      throw new Error(
+        `Visionモデルの応答が ${totalTimeoutMs / 1000}秒 で完了しなかったため中断しました` +
+          '(少しずつ流れ続けているが終わらない状態)。この投稿は取り込みません。'
       );
     }
     // 接続そのものが張れなかった場合、Node の fetch は `TypeError: fetch failed` としか
     // 言わない。どこで失敗したのか分かるように、原因(cause)を添えて包み直す。
-    if (e instanceof TypeError) {
-      const cause = e.cause && e.cause.message ? e.cause.message : '';
+    //
+    // 【`e instanceof TypeError` だけで判定しないこと】それでは `null.foo` のような
+    // 【自分のコードのバグ】まで「接続に失敗しました」に化けて、原因を取り違える。
+    // 実測: ネットワーク由来の TypeError には必ず `cause` が付き(例: "other side closed")、
+    // プログラミングミス由来の TypeError には付かない。この違いで切り分ける。
+    if (e instanceof TypeError && e.cause !== undefined) {
+      const cause = e.cause && e.cause.message ? e.cause.message : String(e.cause);
       throw new Error(
         `Visionモデルへの接続に失敗しました: ${e.message}${cause ? `(${cause})` : ''}。この投稿は取り込みません。`
       );
@@ -413,6 +483,7 @@ async function callVisionModel(imageBuffer, systemPrompt, userPrompt, mediaType 
     throw e;
   } finally {
     if (idleTimer) clearTimeout(idleTimer);
+    clearTimeout(totalTimer);
   }
 }
 
@@ -487,8 +558,10 @@ module.exports = {
   readMessageStream,
   DEFAULT_MODEL,
   MAX_OUTPUT_TOKENS,
-  MEASURED_TOKENS_PER_ROW,
+  WORST_CASE_TOKENS_PER_ROW,
   MAX_EXPECTED_ROWS,
   NON_STREAMING_SAFE_MAX_TOKENS,
   STREAM_IDLE_TIMEOUT_MS,
+  STREAM_TOTAL_TIMEOUT_MS,
+  MEANINGFUL_STREAM_EVENTS,
 };
