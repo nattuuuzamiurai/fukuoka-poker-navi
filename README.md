@@ -58,7 +58,7 @@ AdSense/PR枠が埋まるまでの間、自社アプリの導線を3か所に置
 | `tools/tournament-merge.js` | `data.js` の `TOURNAMENTS` に1店舗ぶんの取得結果を安全にupsertする共通ロジック（対象店舗以外・過去日には一切触れない）。`tools/import-venue-image.js` から呼ばれる |
 | `tools/instagram-oembed.js` | 店舗が画像ではなく投稿リンクだけ送ってきた場合の補助（公式oEmbedからサムネイルを取得。ログイン・巡回は行わない）。`tools/import-venue-image.js --instagram-url` から呼ばれる |
 | `tools/fetch-venue-posts-apify.js` | Apify（既製Instagramスクレイパー、pay-per-result）を呼び、指定ハンドルの最近の投稿一覧（画像URL・投稿日時・パーマリンク・キャプション）を取得する（`APIFY_API_TOKEN` が必要）。`tools/monitor-instagram-apify.js` から呼ばれる |
-| `tools/monitor-instagram-apify.js` | 公式サイトAPIが無い6店舗のInstagram投稿を日次で自動監視し、新着のスケジュール告知らしき投稿をVisionで抽出して `data.js` に安全にupsertするCLIツール（詳細は下記「データ取得アーキテクチャ」）。実行: `node tools/monitor-instagram-apify.js`（`--dry-run` あり）。**Visionが返した行は1行ずつ「直せるものを直してから」検査し（`tools/validate-data.js` と同じ正規化・判定。`9:00`→`09:00` の正規化、日付書式・実在日・開始時刻の書式・金額が数値か・id重複）、それでも不正な行だけを捨てて残りは取り込む**（ジョブは落とさない。理由は下記「データ取得アーキテクチャ」の日付の検査は2層）。正規化・破棄・不採用の件数は `apify-monitor-state.json` の `lastExtraction` に記録される。GitHub Actions `.github/workflows/monitor-instagram-apify.yml` が毎日自動実行する。テスト: `node tools/monitor-instagram-apify.test.js` |
+| `tools/monitor-instagram-apify.js` | 公式サイトAPIが無い6店舗のInstagram投稿を日次で自動監視し、新着のスケジュール告知らしき投稿をVisionで抽出して `data.js` に安全にupsertするCLIツール（詳細は下記「データ取得アーキテクチャ」）。実行: `node tools/monitor-instagram-apify.js`（`--dry-run` あり）。**Visionが返した行は1行ずつ「直せるものを直してから」検査し（`tools/validate-data.js` と同じ正規化・判定。`9:00`→`09:00` の正規化、日付書式・実在日・開始時刻の書式・金額が数値か・id重複）、それでも不正な行だけを捨てて残りは取り込む**（ジョブは落とさない。理由は下記「データ取得アーキテクチャ」の日付の検査は2層）。正規化・破棄・不採用の件数は `apify-monitor-state.json` の `lastExtraction` に記録される。GitHub Actions `.github/workflows/monitor-instagram-apify.yml` が毎日自動実行する（**2026-07-31時点は定期実行を無効化中。手動実行の既定は dry-run**。理由は下記「データ取得アーキテクチャ」の実行の項）。テスト: `node tools/monitor-instagram-apify.test.js` |
 
 `data.js` を差し替えるだけでサイトが更新される設計。CDN/静的ホスティング（GitHub Pages 等）にそのまま置ける。
 ただし静的ページ（`events/` `venues/` `sitemap.xml`）はデータのスナップショットなので、下記の再生成が必要。
@@ -605,9 +605,110 @@ GET https://api.waitinglist-poker.com/v1/game-schedules/tournament?storeId=<stor
 ```
 
 - **実行**: GitHub Actions `.github/workflows/monitor-instagram-apify.yml` が**毎日 07:10 JST**
-  (cronは `10 22 * * *` UTC)に実行。手動実行(`workflow_dispatch`)も可。Apifyは正規の従量課金APIで
+  (cronは `10 22 * * *` UTC)に実行。Apifyは正規の従量課金APIで
   検知回避の必要が無いため、Waitinglist取込みのような確率抽選・ランダム遅延・巡回ウィンドウは無く、
   単純な日次cron。差分があるときだけ `github-actions[bot]` がコミット＆プッシュする
+  - ⚠ **2026-07-31時点、この定期実行は無効(`disabled_manually`)にしてある**。`apify-monitor-state.json` が
+    `{}`(=6店ぶんのバックログがまるごと残っている)状態で、誰も見ていない早朝に初回の本番実行が走ると、
+    **バックログ全体が一度きり・不可逆に消費される**ため(下記「本番実行は不可逆」)
+  - **★初回の観測から有効化までの手順(この順序でしか実行できない)★**
+    - **無効化中は `workflow_dispatch` も 422 で弾かれる**(`Cannot trigger a 'workflow_dispatch' on a
+      disabled workflow`。実測済み。しかもこの判定は ref の検証より前に効く)。つまり
+      **手動 dry-run のために有効化は避けて通れず、有効化した瞬間に毎朝07:10 JSTのcron
+      (=無条件で本番・不可逆)も同時に再武装する**。「まず dry-run で観測してから有効化」という
+      順序は**実行不能**なので、**有効化 → dry-run → 判断を待たずその場で無効化に戻す**の順で行う
+    - 下の1コマンドで「有効化 → dry-run実行 → 完了待ち → 無効化」まで済む。**このブロックごと貼ること**
+      (手で `enable` / `run` / `disable` と分けて叩くと最後が抜ける)
+
+      ```sh
+      bash -c '
+      WF=.github/workflows/monitor-instagram-apify.yml
+      cleanup() {
+        trap - EXIT INT TERM HUP
+        echo ""
+        echo "--- 無効化に戻します ---"
+        gh workflow disable "$WF" || echo "(disable が失敗しました。すでに無効なら正常。下の状態表示で確認すること)"
+        gh workflow list --all | grep -i instagram || true
+      }
+      on_signal() { cleanup; exit 130; }
+      trap cleanup EXIT
+      trap on_signal INT TERM HUP
+      gh workflow enable "$WF" || exit 1
+      gh workflow run "$WF"
+      sleep 15
+      gh run watch "$(gh run list --workflow="$WF" --event workflow_dispatch --limit 1 --json databaseId --jq ".[0].databaseId")" --exit-status
+      '
+      ```
+
+      - **なぜ `trap` か**: `;` でつなぐ形は「前段が失敗しても disable する」は守るが、
+        **Ctrl-C や端末を閉じた場合には `disable` に到達しない**(中断は失敗ではないため)。
+        そこを通り抜けると**workflow が有効のまま残り、次の07:10 JSTに無条件・本番・無人の実行が走る**。
+        `trap` で EXIT/INT/TERM/HUP を捕まえれば、**正常終了・エラー・Ctrl-C・端末クローズのすべて**で
+        無効化に戻る(4経路とも実測済み。いずれも `disable` の呼び出しは1回)
+      - **なぜ `bash -c` で包むか**: 対話シェルにそのまま貼ると EXIT トラップは**シェルを閉じるまで**
+        発火しない。サブシェルに閉じ込めることで、このコマンドの終わりが trap の発火点になる
+      - **★`bash -c` を外さないこと★**: 外して本文だけを対話シェルに貼ると、**正常終了しても
+        EXIT トラップが発火せず `disable` が呼ばれないまま workflow が有効で残る**(zsh/bash とも実測)。
+        このとき `--- 無効化に戻します ---` の行も状態表示も**出ない**ので、
+        **その2行が出なかったら有効のまま残っていると判断し、`gh workflow disable "$WF"` を手で叩くこと**
+        (「出るはずのものが出ない」を検知の合図にする)
+      - **`trap -` による再入防止は bash 固有の挙動に依存している**: zsh でスクリプトとして同じ本文を
+        実行すると、関数内の `trap - EXIT` が EXIT トラップを解除しきらず `disable` が2回走る
+        (結果は無効化で安全だが403のノイズが出る)。`bash -c` を別のシェルに変えないこと
+      - **`cleanup` 冒頭の `trap -` は必須**: `gh workflow disable` は**冪等ではなく**、すでに無効な状態で
+        もう一度叩くと **403** で赤くなる。シグナル経路の後に EXIT トラップが再度走ると二重に叩いてしまう
+        ため、`cleanup` の先頭で自分自身を解除している(手順の外で追加の `disable` を叩いた場合も
+        同じ理由で403になる。無効という結果は同じ)
+      - **最後に必ず状態が表示される**。ここが `disabled_manually` でなければ**有効のまま残っている**ので、
+        手で `gh workflow disable "$WF"` を叩くこと
+      - **TTYから実行すると `gh workflow run` が `dry_run` の値を対話で聞いてくる**。既定の `true` が
+        プリフィルされているので**そのまま Enter** でよい(非TTYではプロンプトは出ず、既定の dry-run で実行)
+      - **`gh run list` の `--event workflow_dispatch` は外さないこと**。付けないと `sleep 15` 以内に
+        新しいrunが現れなかったとき、**直前の `schedule` のrun(過去の失敗)を掴んで**「dry-runが失敗した」と
+        誤読する
+    - 実行したら**runのログ先頭が「実行モード: DRY-RUN」であることを必ず目視で確認**してから内訳を読む
+      (ここが「本番」なら即座に止める。バックログを消費している)
+    - 6店ぶんのVision出力(採用/正規化/破棄の内訳・破棄理由の分布)を読んで較正を判断する。この時点で
+      既に無効化に戻っているので、**次の07:10 JSTを跨いでも安全**
+    - 較正OKと判断できたら改めて `gh workflow enable "$WF"` で有効化し、ワークフローのヘッダコメントに
+      **いつ・誰が有効化したか**を追記する
+- **手動実行(`workflow_dispatch`)の既定は dry-run**: 入力 `dry_run`(チェックボックス、**既定ON**)。
+  ONのままなら `--dry-run` 付きで走り、`data.js` / `apify-monitor-state.json` / `venues/` を**1バイトも書き換えず、
+  コミット・pushのステップにも到達しない**(スクリプトが書き込みより前に return するのに加え、
+  ワークフロー側でもコミットステップを `if` で丸ごと飛ばし、さらにステップ内にガードを置いた二重の安全)。
+  **本番反映したいときだけチェックを外す**
+  - **【本番実行は不可逆】** `lastPostedAt` は採用件数に関係なく前進するため、Visionが読めなかった投稿・
+    検査で捨てられた行は「次回に持ち越し」ではなく**自動経路から永久に失われる**。
+    「うっかり dry-run」は何も起きずやり直せるが、「うっかり本番」は取り返しがつかないので既定を dry-run にした
+  - **★定期実行(`schedule`)は入力を一切参照せず、無条件で本番実行する★** `schedule` には inputs が渡らず
+    `github.event.inputs.*` は空文字になる。もし判定を「明示的に false でなければ dry-run」という形にすると
+    **毎朝の定期実行が永久に dry-run になり、Actionsは毎日グリーンなのに `data.js` が1バイトも更新されない**
+    (=**誰も気づけない**)。本番の誤実行は不可逆だが**見える**、dry-runの固着は可逆だが**見えない**ため、
+    後者の方が危険。判定は「イベント種別で先に分岐し、`workflow_dispatch` のときだけ入力を読む」形に固定してある
+  - **dry-run固着に気づく方法(毎日効く順)**
+    1. **判定ステップのログ先頭と注記が「実行モード: DRY-RUN」になる**。定期実行なのにこう出ていたら固着
+    2. **コミットステップが Actions の画面で `skipped` 表示になる**(本番なら必ず実行される)。
+       この2つは毎回・確実に出るので、**固着の一次検知はこちら**
+    3. 「確認済み投稿日時が前進したか」ステップが件数を実行サマリに出す。ただし ⚠ の注記が鳴るのは
+       **状態ファイルが空(記録0店)のときだけ**で、**初回の本番実行が成功すると以後この警告は鳴らない**。
+       2日目以降に固着した場合の表示は「前進したか: いいえ」で、**新着0件の平常日と見分けが付かない**。
+       この項目は補助であって主防御ではない(初回の空振りを拾うのが役目)
+  - **注記(annotation)の使い分け**: 定期実行の本番は毎日の正常運転なので `::notice::`。
+    **正常な定期実行に ⚠ は出ない**ので、「⚠ が出ている = 見るべきもの」と読んでよい
+    (⚠ が出るのは「手動でチェックを外した本番実行」と「状態ファイルが空のまま」の2つ)。
+    ここを `::warning::` にすると成功した緑のrunにも毎回黄色が付き、上記3の固着警告が埋もれる
+  - 入力を `type: boolean` にしたうえで、**型付きの `inputs` コンテキスト**で
+    `inputs.dry_run == 'true'` と比較してはいけない(GitHubの式は型が違う値を数値化して比較するため、
+    boolean の `true` と文字列 `'true'` は**一致しない**。公式の式エンジンで実測済み)。
+    - **`github.event.inputs.dry_run == 'true'`(常に文字列)なら成立する**が、型付きの `inputs` では成立しない。
+      型付きで書くなら `if: inputs.dry_run` / `inputs.dry_run == true` /
+      `fromJSON(github.event.inputs.dry_run)` が正しい形
+    - このワークフローは `github.event.inputs.dry_run`(常に文字列)をenv経由でシェルに渡して判定している
+      (payloadが文字列でも真のbooleanでも同じ結果になるので、将来GitHubが型を変えても壊れない)
+  - **判定は入口も出口も「明示的に `false` のときだけ本番」**で統一してある。コミットステップの `if` は
+    `steps.mode.outputs.dry_run == 'false'`、ステップ内ガードは `[ "$DRY_RUN" != "false" ]` で落とす。
+    `!= 'true'` にすると、判定ステップが壊れて出力が**空**になったとき(`id` の削除・出力名の改名など)に
+    **空文字が本番側に倒れて**二重の安全が2枚とも素通りする
 - **対象店舗**: `tools/monitor-instagram-apify.js` 冒頭の `STORES` 配列で管理(公式サイトAPIが無い
   v40/v20/v18/v21/v34/v35の6店舗、Instagramハンドルはdata.jsの`instagram`欄と対応)
 - **新着判定**: `apify-monitor-state.json`(店舗ごとに `lastPostedAt` / `lastPermalink` を記録)より
