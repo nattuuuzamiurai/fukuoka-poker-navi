@@ -95,9 +95,16 @@ async function fetchInstagramPosts(handle, opts = {}) {
   // 【必須フィールドが欠けて捨てた件数を呼び出し側に伝える】
   // ここで捨てた投稿は、Vision にも保存則のカウンタにも一切現れないまま消える
   // (しかも確認済み投稿日時は前進する)。取込みの一番上流の消失経路なので必ず数える。
+  //
+  // 【★残差(items.length - normalized.length)で数えてはいけない★】
+  // それだと「normalized に入らなかった全て」を意味してしまい、呼び出し側の保存則が
+  // 恒等式になる。この先この関数に絞り込みが1段増えただけで、消えた投稿がそのまま
+  // 「形式不正」に吸い込まれ、【正常な投稿が「形式不正」として誤報される】。
+  // 必ず「正規化に失敗した」という性質そのものを数えること(tournament-merge.js の
+  // pastDated が同じ罠にはまった。理由はそちらのコメントに詳しい)。
   if (opts.stats && typeof opts.stats === 'object') {
     opts.stats.rawCount = items.length;
-    opts.stats.malformed = items.length - normalized.length;
+    opts.stats.malformed = items.filter((it) => normalizeApifyItem(it) === null).length;
   }
   return normalized;
 }

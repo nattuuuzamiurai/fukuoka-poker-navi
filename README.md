@@ -923,12 +923,27 @@ GET https://api.waitinglist-poker.com/v1/game-schedules/tournament?storeId=<stor
        これが無いと「久留米: 抽出20 / 破棄0 / 追加0」のような、行の行き先を誰も説明できない
        数字が並ぶ(正常に全部過去日だったのか、別の経路で消えたのか区別できない)
   - **合わなければ `::error::`** を出す(残余の件数付き)。合わないこと自体がバグの証拠
-  - **⚠ 保存則の項を「残差」で定義しないこと**。`stats.pastDated` を
-    `scraped.length - rawFuture.length`(= rawFuture に入らなかった全て)で定義していた時期があり、
-    そのときこの保存則は**恒等式**で、何も検査していなかった。実際、`rawFuture` の絞り込み条件を
-    1つ足すだけで**未来日の行が黙って消えても差分が `pastDated` に吸い込まれ「過去日 1」と
-    積極的に誤報**された(この保存則が殺そうとした構図そのもの)。
-    **必ず「その性質を持つこと」そのものを数える**(`scraped.filter((t) => t.date < today).length`)
+  - **⚠⚠ 保存則の項を「残差」で定義しないこと(この落とし穴に2回はまっている)**
+    - **1回目**: `stats.pastDated` を `scraped.length - rawFuture.length`(= rawFuture に
+      入らなかった全て)で定義していた。`rawFuture` の絞り込み条件を1つ足すだけで
+      **未来日の行が黙って消えても差分が `pastDated` に吸い込まれ「過去日 1」と積極的に誤報**された
+    - **2回目**: 取込みレベルを足したとき、`malformed` / `invalidPostedAt` / `alreadySeen` /
+      `filteredOut` の**4項すべてを隣接する段の差**で数えてしまった。これは
+      **望遠鏡和**(`(a−b)+(b−c)+(c−d)+(d−e)+e ≡ a`)で、合計は**絶対に元の件数と一致する** —
+      つまり検査として完全に無意味だった。実際、正規化の後に絞り込みを1段足すと
+      **未読の投稿が消えたのに「既読」と誤報**された
+    - **必ず「その性質を持つこと」そのものを正の述語で数える**。
+      `scraped.filter((t) => t.date < today).length` /
+      `items.filter((it) => normalizeApifyItem(it) === null).length` /
+      `sorted.filter((p) => Date.parse(p.postedAt) <= lastMs).length` /
+      `newPosts.filter((p) => !looksLikeSchedulePost(p.caption)).length` のように書く
+    - **見分け方**: 保存則の各項が `A.length - B.length` の形をしていたら、その保存則は
+      恒等式である可能性が高い。「その段で**何が起きたか**」ではなく
+      「**通り抜けなかった全部**」を数えているため、新しい消失経路が必ず既存の項に吸収される
+    - 副次的な利点として、`filteredOut` を同じ述語で数えるとキャプションを出力するループと
+      件数が構造的に一致する(残差だと「件数だけ増えてログには出ない」が起こりうる)
+    - 回帰テストは**各段に絞り込みを1つ注入して CLI を回し、残余が出ること**を確かめている
+      (`R-1:` で始まるテスト)。この形でしか「恒等式ではない」は確かめられない
   - **検知側にもテストを置くこと**。「健全な入力で `ok` が true になる」テストだけでは、
     `ok: actual === expected` を `ok: true` に潰す変異も、`if (!row.ok)` を `if (false)` にする変異も
     生き残る。**壊れた入力で偽になること**と、**その結果 `::error::` が実際に stdout に出ること**

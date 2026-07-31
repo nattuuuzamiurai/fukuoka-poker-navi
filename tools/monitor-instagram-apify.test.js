@@ -1820,3 +1820,183 @@ test('CLI: 取込みの上流で投稿が消えたら ::error::(取得件数の�
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
+
+// ============================================================
+// R-1: 取込みレベルの保存則が「恒等式」になっていないこと
+// ============================================================
+// 【C-1と同じ罠】各段の件数を「隣接する段の差」で数えると、合計は必ず元の件数に一致する
+// (望遠鏡和)ので、保存則は絶対に破れず何も検査しない。しかも消えた投稿は隣の項に
+// 吸い込まれ、「形式不正」「既読」として【積極的に誤報】される。
+// ここでは実際に各段へ絞り込みを1つ注入し、残余が表に出ることを確かめる。
+
+/**
+ * 【本物の fetch-venue-posts-apify.js を通す】CLIハーネス。
+ * これまでの runCliWithMutation は fetch lib をスタブに置き換えていたため、
+ * 取込み最上流(正規化)の段を実際には通っていなかった。
+ * globalThis.fetch を差し替えて Apify のレスポンスだけを偽装する。
+ */
+function runCliWithRealFetchLib({ apifyItems, state = {}, mutate = () => {} }) {
+  const root = makeTempRepoRoot();
+  fs.copyFileSync(
+    path.join(TOOLS_DIR, 'fetch-venue-posts-apify.js'),
+    path.join(root, 'tools', 'fetch-venue-posts-apify.js')
+  );
+  fs.writeFileSync(path.join(root, 'apify-monitor-state.json'), `${JSON.stringify(state, null, 2)}\n`);
+  fs.writeFileSync(
+    path.join(root, 'tools', 'venue-schedule-vision.js'),
+    "exports.extractTournaments = async () => [{ date: '2099-09-12', start: '19:00', name: '大会', buyin: 3000, tags: [] }];\n"
+  );
+  fs.writeFileSync(
+    path.join(root, 'stub-fetch.js'),
+    // Apifyのレスポンスだけを偽装する。【ハンドルを見て v40 の1店だけに返す】—
+    // 全店に同じ投稿を返すと、6店ぶんの同一idが衝突して測りたいものが測れない。
+    `const ITEMS = ${JSON.stringify(apifyItems)};
+     globalThis.fetch = async (url, init) => {
+       if (String(url).includes('apify.com')) {
+         const body = init && init.body ? JSON.parse(init.body) : {};
+         const handle = Array.isArray(body.username) ? body.username[0] : null;
+         return { status: 200, json: async () => (handle === 'triple_orio' ? ITEMS : []), text: async () => '' };
+       }
+       return { status: 200, arrayBuffer: async () => new TextEncoder().encode(String(url)).buffer };
+     };\n`
+  );
+  mutate(root);
+  const r = spawnSync('node', ['--require', './stub-fetch.js', 'tools/monitor-instagram-apify.js', '--dry-run'], {
+    cwd: root,
+    env: { ...process.env, APIFY_API_TOKEN: 'dummy', ANTHROPIC_API_KEY: 'dummy' },
+    encoding: 'utf8',
+  });
+  fs.rmSync(root, { recursive: true, force: true });
+  return r;
+}
+
+/** v40(triple_orio)向けの Apify 生アイテム。 */
+const apifyItem = (slug, timestamp, caption) => ({
+  url: `https://www.instagram.com/p/${slug}/`,
+  displayUrl: `https://example.com/${slug}.jpg`,
+  timestamp,
+  caption,
+});
+
+function patchFile(root, file, from, to) {
+  const p = path.join(root, 'tools', file);
+  const src = fs.readFileSync(p, 'utf8');
+  const out = src.replace(from, to);
+  assert.notEqual(out, src, `変異の当て先が見つからない(テストの前提が古い): ${file}`);
+  fs.writeFileSync(p, out);
+}
+
+test('R-1: 本物のfetch libを通した正常系では、取込みの内訳が実データと一致し残余も出ない', () => {
+  const r = runCliWithRealFetchLib({
+    apifyItems: [
+      apifyItem('A', '2026-07-20T10:00:00.000Z', '8月のスケジュール'),
+      apifyItem('B', '2026-07-21T10:00:00.000Z', 'AUGUST SCHEDULE'), // キーワード不一致
+      { url: 'https://www.instagram.com/p/C/' }, // 必須フィールド欠落 → 形式不正
+      // 日時が読めないアイテムも normalizeApifyItem が弾くので【形式不正】に入る。
+      // monitor 側の「投稿日時が読めない」は、fetch lib を経ない経路(テストのスタブなど)の
+      // ための後段の守りで、本物の fetch lib を通す限り常に0になる。
+      apifyItem('D', 'これは日付ではない', '8月のスケジュール'),
+    ],
+  });
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, /Apify取得 4件 → 新着 2件 \(形式不正 2 \/ 投稿日時が読めない 0 \/ 既読 0\)/);
+  assert.match(r.stdout, /新着投稿 2件 → 対象 1件 \/ キーワード不一致で対象外 1件/);
+  assert.doesNotMatch(r.stdout, /集計が合わない/);
+});
+
+test('R-1: 既読の投稿がある場合も内訳が正しく、残余は出ない', () => {
+  const r = runCliWithRealFetchLib({
+    apifyItems: [
+      apifyItem('OLD', '2026-05-10T10:00:00.000Z', '8月のスケジュール'), // 既読
+      apifyItem('NEW', '2026-07-21T10:00:00.000Z', '8月のスケジュール'),
+    ],
+    state: { v40: { handle: 'triple_orio', lastPostedAt: '2026-06-01T00:00:00.000Z' } },
+  });
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, /Apify取得 2件 → 新着 1件 \(形式不正 0 \/ 投稿日時が読めない 0 \/ 既読 1\)/);
+  assert.doesNotMatch(r.stdout, /集計が合わない/);
+});
+
+test('R-1: 正規化の後に絞り込みを1段足すと「形式不正」に吸い込まれず残余として表に出る', () => {
+  // 望遠鏡和のままなら、消えた投稿は malformed に吸収されて ::error:: は出ない。
+  const r = runCliWithRealFetchLib({
+    apifyItems: [
+      apifyItem('A', '2026-07-20T10:00:00.000Z', '8月のスケジュール'),
+      apifyItem('DROPME', '2026-07-21T10:00:00.000Z', '8月のスケジュール'),
+    ],
+    mutate: (root) =>
+      patchFile(
+        root,
+        'fetch-venue-posts-apify.js',
+        'const normalized = items.map(normalizeApifyItem).filter(Boolean);',
+        "const normalized = items.map(normalizeApifyItem).filter(Boolean).filter((p) => !p.permalink.includes('DROPME'));"
+      ),
+  });
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(
+    r.stdout,
+    /::error title=Instagram監視 - 取得件数の集計が合わない::/,
+    '正規化の後で消えた投稿が「形式不正」に吸い込まれている(保存則が恒等式に戻っている)'
+  );
+  assert.doesNotMatch(r.stdout, /形式不正 1/, '消えた投稿を「形式不正」として誤報してはいけない');
+});
+
+test('R-1: 新着判定に絞り込みを1段足すと「既読」に吸い込まれず残余として表に出る', () => {
+  const r = runCliWithRealFetchLib({
+    apifyItems: [
+      apifyItem('A', '2026-05-10T10:00:00.000Z', '8月のスケジュール'),
+      apifyItem('DROPME', '2026-05-11T10:00:00.000Z', '8月のスケジュール'),
+    ],
+    state: { v40: { handle: 'triple_orio', lastPostedAt: '2026-04-01T00:00:00.000Z' } },
+    mutate: (root) =>
+      patchFile(
+        root,
+        'monitor-instagram-apify.js',
+        '  const fresh = sorted.filter((p) => Date.parse(p.postedAt) > lastMs);',
+        "  const fresh = sorted.filter((p) => Date.parse(p.postedAt) > lastMs).filter((p) => !p.permalink.includes('DROPME'));"
+      ),
+  });
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(
+    r.stdout,
+    /::error title=Instagram監視 - 取得件数の集計が合わない::/,
+    '新着判定で消えた投稿が「既読」に吸い込まれている(未読なのに既読と誤報される)'
+  );
+  assert.doesNotMatch(r.stdout, /既読 1/, '未読の投稿を「既読」として誤報してはいけない');
+});
+
+test('R-1: キーワード判定に絞り込みを1段足すと残余として表に出る', () => {
+  const r = runCliWithRealFetchLib({
+    apifyItems: [
+      apifyItem('A', '2026-07-20T10:00:00.000Z', '8月のスケジュール'),
+      apifyItem('DROPME', '2026-07-21T10:00:00.000Z', '8月のスケジュール'),
+    ],
+    mutate: (root) =>
+      patchFile(
+        root,
+        'monitor-instagram-apify.js',
+        '    const scheduleLike = newPosts.filter((p) => looksLikeSchedulePost(p.caption));',
+        "    const scheduleLike = newPosts.filter((p) => looksLikeSchedulePost(p.caption)).filter((p) => !p.permalink.includes('DROPME'));"
+      ),
+  });
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, /::error title=Instagram監視 - 取得件数の集計が合わない::/);
+});
+
+test('R-1: filteredOut の件数と、実際にログへ出るキャプション行の数が一致する', () => {
+  // 【残差で持っていると壊れる不変条件】件数を引き算で出すと、
+  // 「件数だけ増えてログには出ない」という不一致が起こりうる。同じ述語で数えれば必ず一致する。
+  const r = runCliWithRealFetchLib({
+    apifyItems: [
+      apifyItem('A', '2026-07-20T10:00:00.000Z', '8月のスケジュール'),
+      apifyItem('EN', '2026-07-21T10:00:00.000Z', 'AUGUST SCHEDULE'),
+      apifyItem('TNM', '2026-07-22T10:00:00.000Z', '8月のトナメ表です'),
+      apifyItem('EMOJI', '2026-07-23T10:00:00.000Z', '🎰🃏'),
+    ],
+  });
+  assert.equal(r.status, 0, r.stderr);
+  const logged = (r.stdout.match(/キーワード不一致で対象外: /g) || []).length;
+  const reported = Number(r.stdout.match(/キーワード不一致で対象外 (\d+)件/)[1]);
+  assert.equal(logged, 3, '落とした3件すべてがログに出ること');
+  assert.equal(reported, logged, `サマリの件数(${reported})とログの行数(${logged})が食い違っている`);
+});

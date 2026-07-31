@@ -193,19 +193,30 @@ function pickNewPosts(posts, lastPostedAt) {
  * 保存則の左辺(scheduleLikeCount)はこの選別より【後】の値なので、ここで落ちた投稿は
  * どのカウンタにも現れない。取込みの上流まで遡って数えられるようにする。
  *
+ * 【★件数は残差で数えないこと★】`all.length - valid.length` や
+ * `sorted.length - fresh.length` のような引き算にすると、呼び出し側の保存則
+ * (checkIntakeAccounting)が恒等式になり何も検査しなくなる。この先ここに絞り込みが
+ * 1段増えただけで、消えた投稿がそのまま「日時が読めない」「既読」に吸い込まれ、
+ * 【未読の投稿が黙って消えたのに「既読」と誤報される】。必ず性質そのものを数えること。
+ * (tournament-merge.js の pastDated が同じ罠にはまった。理由はそちらのコメントに詳しい)
+ *
  * @returns {{ posts: Array, invalidPostedAt: number, alreadySeen: number }}
  */
+const hasReadablePostedAt = (p) => Boolean(p && p.postedAt && !Number.isNaN(Date.parse(p.postedAt)));
+
 function pickNewPostsWithStats(posts, lastPostedAt) {
   const all = Array.isArray(posts) ? posts : [];
-  const valid = all.filter((p) => p && p.postedAt && !Number.isNaN(Date.parse(p.postedAt)));
-  const invalidPostedAt = all.length - valid.length;
+  const valid = all.filter(hasReadablePostedAt);
+  const invalidPostedAt = all.filter((p) => !hasReadablePostedAt(p)).length;
   const sorted = [...valid].sort((a, b) => Date.parse(a.postedAt) - Date.parse(b.postedAt));
   const lastMs = lastPostedAt ? Date.parse(lastPostedAt) : NaN;
   if (!lastPostedAt || Number.isNaN(lastMs)) {
+    // 記録が無い(初回)= 「既読」の投稿は1件も無い。これは残差ではなく事実として0。
     return { posts: sorted, invalidPostedAt, alreadySeen: 0 };
   }
   const fresh = sorted.filter((p) => Date.parse(p.postedAt) > lastMs);
-  return { posts: fresh, invalidPostedAt, alreadySeen: sorted.length - fresh.length };
+  const alreadySeen = sorted.filter((p) => Date.parse(p.postedAt) <= lastMs).length;
+  return { posts: fresh, invalidPostedAt, alreadySeen };
 }
 
 function slugify(name) {
@@ -390,7 +401,11 @@ async function runMonitor(opts, libs) {
 
     const scheduleLike = newPosts.filter((p) => looksLikeSchedulePost(p.caption));
     summary.scheduleLikeCount = scheduleLike.length;
-    summary.filteredOutCount = newPosts.length - scheduleLike.length;
+    // 【残差(newPosts.length - scheduleLike.length)で数えないこと】保存則が恒等式になるうえ、
+    // 下のキャプション出力ループは looksLikeSchedulePost しか見ていないので、
+    // scheduleLike の条件が増えると【件数だけ増えてログには出ない】不一致も生じる。
+    // 同じ述語で数えれば、件数とログは常に一致する。
+    summary.filteredOutCount = newPosts.filter((p) => !looksLikeSchedulePost(p.caption)).length;
 
     // 【キーワードで落とした投稿は画像を1度も見ないまま捨てられる】しかも lastPostedAt は
     // 下で無条件に前進するので二度と処理されない。looksLikeSchedulePost は日本語9語の
