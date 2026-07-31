@@ -10,7 +10,22 @@ const { execFileSync, spawnSync } = require('node:child_process');
 const monitor = require('./monitor-instagram-apify');
 const mergeLib = require('./tournament-merge');
 
-const TARGET_VENUE_IDS = ['v40', 'v20', 'v18', 'v21', 'v34', 'v35'];
+// 監視対象は monitor-instagram-apify.js の STORES が唯一の正。ここに書き写さない。
+// 【理由】以前は ['v40','v20','v18','v21','v34','v35'] と直書きしていたが、それだと
+//   店を1つ足しただけで【機能は何も壊れていないのに】このテストが落ちる。
+//   ここで見たいのは「どの6店か」ではなく「設定した全店の状態が前進すること」なので、
+//   店リストは設定から引く(recurring-dedupe.test.js の冒頭コメントと同じ理由)。
+const TARGET_VENUE_IDS = monitor.STORES.map((s) => s.venueId);
+
+test('STORES: 監視対象の設定が空になっていない / 必要な項目が揃っている', () => {
+  // 店リストを直書きしなくなったぶん、設定そのものの形はここで押さえる
+  // (STORES が空になると、下の各テストが「0店ぶん確認して合格」になってしまうため)。
+  assert.ok(monitor.STORES.length > 0, 'STORES が空');
+  for (const s of monitor.STORES) {
+    assert.ok(s.venueId && s.handle && s.label, `STORES の項目が欠けている: ${JSON.stringify(s)}`);
+  }
+  assert.equal(new Set(TARGET_VENUE_IDS).size, TARGET_VENUE_IDS.length, 'venueId が重複している');
+});
 
 // ---------- 新着検知ロジック(pickNewPosts) ----------
 
@@ -322,8 +337,11 @@ test('runMonitor: 投稿から1行も採用できなければ異常(anomalies)�
   assert.equal(result.state.v40.lastPostedAt, '2026-07-20T10:00:00.000Z');
 });
 
-test('runMonitor: 6店のうち1店で不正が出ても、他5店の取込みは完了し、6店すべての状態が前進する', async () => {
-  const BROKEN = 'pokerbar_iris'; // v18
+test('runMonitor: 1店で不正が出ても、残りの店の取込みは完了し、全店の状態が前進する', async () => {
+  // 「6店のうち1店」と数で書かない。店が増減しても意味が変わらないよう、すべて STORES から引く。
+  const BROKEN = 'pokerbar_iris';
+  const brokenVenueId = monitor.STORES.find((s) => s.handle === BROKEN).venueId;   // 現在は v18
+  const okVenueIds = TARGET_VENUE_IDS.filter((id) => id !== brokenVenueId);
   const fetchLib = {
     async fetchInstagramPosts(handle) {
       return [
@@ -352,12 +370,12 @@ test('runMonitor: 6店のうち1店で不正が出ても、他5店の取込み�
   );
 
   assert.equal(result.changed, true);
-  assert.equal(result.arr.length, 5, '不正だった1店を除く5店ぶんが取り込まれていること');
+  assert.equal(result.arr.length, okVenueIds.length, '不正だった1店を除く全店ぶんが取り込まれていること');
   const importedVenues = result.arr.map((t) => t.venueId).sort();
-  assert.deepEqual(importedVenues, ['v20', 'v21', 'v34', 'v35', 'v40'].sort());
-  assert.equal(result.arr.some((t) => t.venueId === 'v18'), false);
+  assert.deepEqual(importedVenues, okVenueIds.slice().sort());
+  assert.equal(result.arr.some((t) => t.venueId === brokenVenueId), false);
 
-  // 6店すべての確認済み投稿日時が進む(1店の不正で全店が翌日も同じ投稿を拾い直す状態にしない)
+  // 全店の確認済み投稿日時が進む(1店の不正で全店が翌日も同じ投稿を拾い直す状態にしない)
   assert.deepEqual(Object.keys(result.state).sort(), TARGET_VENUE_IDS.slice().sort());
   for (const id of TARGET_VENUE_IDS) {
     assert.equal(result.state[id].lastPostedAt, '2026-07-20T10:00:00.000Z');
@@ -365,8 +383,8 @@ test('runMonitor: 6店のうち1店で不正が出ても、他5店の取込み�
 
   // 異常は不正だった店の1投稿ぶんだけ
   assert.equal(result.anomalies.length, 1);
-  assert.equal(result.anomalies[0].store.venueId, 'v18');
-  const brokenSummary = result.summaries.find((s) => s.store.venueId === 'v18');
+  assert.equal(result.anomalies[0].store.venueId, brokenVenueId);
+  const brokenSummary = result.summaries.find((s) => s.store.venueId === brokenVenueId);
   assert.equal(brokenSummary.droppedCount, 1);
   assert.equal(brokenSummary.extractedCount, 0);
 });
