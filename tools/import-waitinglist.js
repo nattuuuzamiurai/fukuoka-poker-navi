@@ -27,13 +27,31 @@
  *   (タイムスタンプを入れると日次実行のたびに差分が出てコミットが増える)。
  *
  * 【安全弁】外部APIの一時障害でサイトのデータが消えるのを防ぐため、次のいずれかが起きたら
- * data.js を一切書き換えずに非ゼロ終了する。「HTTP 200だが中身が壊れている」部分障害も止める:
+ * その店舗のデータを一切書き換えない。「HTTP 200だが中身が壊れている」部分障害も止める:
  *   1. fetch失敗 / HTTP 200以外 / レスポンス形状が想定外
  *   2. ある店舗の取得件数が0件
  *   3. ページング不整合(totalRecords に対して「重複排除後の」実取得件数が足りない = 途中で切れている)
  *   4. store.displayId が無い / 要求した storeId と違う(別店舗のデータ混入)
  *   5. 今日以降の件数の急減(前回の半分未満、または一度に MAX_ABS_DROP 件以上の減少。--allow-shrink で解除)
- *   6. 書き込み直前の自己チェック(対象外店舗・過去日エントリが変化していないか)
+ *   6. 書き込み直前の自己チェック(取得に成功した店以外・過去日エントリが変化していないか)
+ *
+ * 【失敗の隔離は店舗単位】1〜5 はその店の中で完結する異常なので、失敗した店だけをスキップし、
+ * 他店は通常どおり取り込む。6 だけは自分のバグを疑う検査なので全体を止める。
+ *
+ *   ★ もともとは「全店そろって成功しなければ1文字も書かない」という設計だった。狙いは
+ *     【中途半端な書き込みを残さないこと】で、それ自体は今も正しい。ただし店ごとのデータは
+ *     互いに独立していて、A店の取込が失敗してもB店の結果は完全に整合しているため、
+ *     「B店を書かない」ことが安全性に寄与していなかった。むしろ弊害のほうが大きく、
+ *     たとえば毎月1日にAPIが翌月ぶんを返さない店が1つあるだけで
+ *     【正常な他店の取込まで丸ごと止まる】(=社長の手入力を消している v3 の自動化が、
+ *     他店のAPI登録状況に人質に取られる)。そこで隔離の単位を「全店」から「1店」に変えた。
+ *     店をまたいで中途半端になることは無い(店ごとに全件そろってから mergeStore に渡す)。
+ *
+ * 【終了コード】
+ *   0 … 全店成功
+ *   2 … 一部の店だけ失敗。【成功した店のぶんは書き込み済み】。ワークフローは
+ *       コミット・pushまで進めたうえで、最後にジョブを失敗させて Actions を赤くする
+ *   1 … 何も書いていない(全店失敗 / data.js を読めない / 自己チェックでバグを検出)
  */
 
 'use strict';
@@ -78,6 +96,10 @@ const DATA_JS = path.join(__dirname, '..', 'data.js');
 // 掲載管理コンソール向けの「自動取得している店」のリスト(下記 writeStoreList)
 const STORES_JSON = path.join(__dirname, '..', 'auto-import-stores.json');
 
+// 一部の店だけ失敗したときの終了コード。0(全店成功)とも 1(何も書いていない)とも
+// 区別できる値にしてある。ワークフローはこれを見て「コミットは進めるが最後に赤くする」を選ぶ。
+const EXIT_PARTIAL = 2;
+
 const DRY_RUN = process.argv.includes('--dry-run');
 // 件数の急減ガードを人の判断で外すためのフラグ(閉店・長期休業など正当な減少のとき)
 const ALLOW_SHRINK = process.argv.includes('--allow-shrink');
@@ -105,6 +127,16 @@ function todayJst() {
   const j = new Date(Date.now() + 9 * 60 * 60 * 1000);
   return `${j.getUTCFullYear()}-${pad2(j.getUTCMonth() + 1)}-${pad2(j.getUTCDate())}`;
 }
+
+/**
+ * GitHub Actions のワークフローコマンド(::error::)に載せる文字列の百分率符号化。
+ * `%` と改行をそのまま書くと、注記が壊れる・改行以降が切れる。
+ *   - ghMsg  … 本文用。急減ガードの文面に「前回の50%未満」と生の % が入る
+ *   - ghProp … title= などのプロパティ用。区切り文字の : と , も逃がす必要がある
+ * GitHub 側が復号するので、画面には元の文字が出る。
+ */
+const ghMsg = (s) => String(s).replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A');
+const ghProp = (s) => ghMsg(s).replace(/:/g, '%3A').replace(/,/g, '%2C');
 
 function fail(msg) {
   console.error(`[import-waitinglist] ERROR: ${msg}`);
@@ -439,6 +471,72 @@ function mergeStore(all, store, apiEntries, today) {
   return { next, stats };
 }
 
+// ---------- 1店舗ぶんの取得と検査 ----------
+
+/**
+ * 1店舗ぶんを取得し、その店だけで完結する検査をすべて通す。
+ *
+ * 【throw する。process.exit しない】ここで落ちてよいのはその店だけで、
+ * 他店の取込まで道連れにしてはいけない(呼び出し側が catch してスキップする)。
+ * 呼び出し側が店名を添えるので、メッセージに店名は入れない。
+ */
+async function loadStore(store, before, today) {
+  let raw;
+  try {
+    raw = await fetchStore(store);
+  } catch (e) {
+    throw new Error(`取得に失敗: ${e.message}`);
+  }
+  if (raw.length === 0) {
+    // 月初に出やすい。APIは当月1日以降しか返さないので、その店が翌月ぶんを
+    // まだ登録していない朝は 0件 になる(店が潰れたわけではない)。
+    throw new Error('トーナメントが0件でした。API側の異常か、翌月ぶんが未登録の可能性があります。');
+  }
+
+  // 店舗の同一性検証。storeIdが無視されて別店舗が返ってきた場合に、
+  // よその店のトーナメントをこの店として書き込んでしまうのを防ぐ。
+  // ★ store フィールドが「無い」応答を素通りさせないため、存在自体を必須にする
+  //   (フィールドが落ちているだけで検証がスキップされては検証の意味がない)。
+  const noStore = raw.find((t) => !t.store || !t.store.displayId);
+  if (noStore) {
+    throw new Error(`store.displayId を持たないレコードがあります(id=${noStore.id})。店舗の同一性を確認できません。`);
+  }
+  const wrong = raw.find((t) => String(t.store.displayId) !== String(store.displayId));
+  if (wrong) {
+    throw new Error(`別店舗(displayId=${wrong.store.displayId} / ${wrong.store.name})のデータが混入しています。`);
+  }
+
+  const mapped = raw.map((t) => toTournament(t, store.venueId)).filter(Boolean);
+  if (mapped.length === 0) {
+    throw new Error('変換結果が0件でした(startAtが不正?)。');
+  }
+
+  // 「今日以降の件数が急に減った」= API側の部分障害を疑う。
+  // HTTP 200で中身だけ欠けている応答(件数が足りない / 過去日しか返らない 等)はここで止まる。
+  // 比率(半分未満)だけだと、件数が多い店ほど「しきい値ちょうど」で大量に消せてしまうため、
+  // 「1回で MAX_ABS_DROP 件以上減ったら止める」絶対値の上限も併用する。
+  // 閉店・長期休業など正当な大幅減のときは --allow-shrink で人が明示的に通す。
+  // ★ 開催日が過ぎるだけでは発火しない。prevFuture と nextFuture は同じ today で数えるので
+  //   両方が同時に減り、差は0にしかならない。ここが鳴るのは店が未来の大会を取り消したとき。
+  const prevFuture = before.filter((t) => t.venueId === store.venueId && t.date >= today).length;
+  const nextFuture = mapped.filter((t) => t.date >= today).length;
+  const drop = prevFuture - nextFuture;
+  if (!ALLOW_SHRINK && prevFuture > 0 && nextFuture < Math.ceil(prevFuture * SHRINK_RATIO)) {
+    throw new Error(
+      `今日以降の件数が ${prevFuture}件 → ${nextFuture}件 と急減(前回の${Math.round(SHRINK_RATIO * 100)}%未満)。` +
+        'API側の部分障害の可能性があります(意図した減少なら --allow-shrink)。'
+    );
+  }
+  if (!ALLOW_SHRINK && drop >= MAX_ABS_DROP) {
+    throw new Error(
+      `今日以降の件数が ${prevFuture}件 → ${nextFuture}件 と一度に${drop}件減っています(上限${MAX_ABS_DROP}件)。` +
+        'API側の部分障害の可能性があります(意図した減少なら --allow-shrink)。'
+    );
+  }
+
+  return { mapped, raw, prevFuture, nextFuture };
+}
+
 // ---------- main ----------
 
 async function main() {
@@ -449,60 +547,37 @@ async function main() {
   const before = file.arr;
   const beforeJson = JSON.stringify(before);
 
-  // 1) 先に全店ぶん取得しきる(途中失敗で中途半端に書き込まないため)
+  // 1) 先に全店ぶん取得しきる。
+  //    店ごとに独立して成否を判定し、【失敗した店だけを落として他店は通す】。
+  //    失敗は StoreError として捨てずに集め、最後にまとめて報告する。
   const fetched = [];
+  const failures = [];
   for (const store of STORES) {
-    let raw;
     try {
-      raw = await fetchStore(store);
+      const { mapped, raw, prevFuture, nextFuture } = await loadStore(store, before, today);
+      console.log(`[import-waitinglist] ${store.label}: API ${raw.length}件 取得 / 変換 ${mapped.length}件 / うち ${today} 以降 ${nextFuture}件(前回 ${prevFuture}件)`);
+      fetched.push({ store, mapped });
     } catch (e) {
-      fail(`${store.label} (storeId=${store.displayId}) の取得に失敗: ${e.message}`);
+      failures.push({ store, message: e.message });
+      // 当番が最初に見る情報なので、その場で目立たせる。GitHub Actions では
+      // ::error:: 注記が実行サマリの先頭に出るため、ログを遡らなくても店名が分かる。
+      console.error(`[import-waitinglist] ✗ ${store.label} (storeId=${store.displayId}) をスキップ: ${e.message}`);
+      console.error(`::error title=${ghProp(`Waitinglist取込に失敗 (${store.label})`)}::${ghMsg(e.message)}`);
     }
-    if (raw.length === 0) {
-      fail(`${store.label} (storeId=${store.displayId}) のトーナメントが0件でした。API側の異常の可能性があるため中止します。`);
-    }
+  }
 
-    // 店舗の同一性検証。storeIdが無視されて別店舗が返ってきた場合に、
-    // よその店のトーナメントをこの店として書き込んでしまうのを防ぐ。
-    // ★ store フィールドが「無い」応答を素通りさせないため、存在自体を必須にする
-    //   (フィールドが落ちているだけで検証がスキップされては検証の意味がない)。
-    const noStore = raw.find((t) => !t.store || !t.store.displayId);
-    if (noStore) {
-      fail(`${store.label}: store.displayId を持たないレコードがあります(id=${noStore.id})。店舗の同一性を確認できないため中止します。`);
-    }
-    const wrong = raw.find((t) => String(t.store.displayId) !== String(store.displayId));
-    if (wrong) {
-      fail(`${store.label}: 別店舗(displayId=${wrong.store.displayId} / ${wrong.store.name})のデータが混入しています。中止します。`);
-    }
+  // 失敗した店を先頭付近でまとめて出す(1店ずつのログは他店の出力に埋もれるため)。
+  if (failures.length) {
+    console.error('');
+    console.error(`[import-waitinglist] ===== 取得に失敗した店舗 ${failures.length}/${STORES.length}件 =====`);
+    for (const f of failures) console.error(`  ✗ ${f.store.label} (${f.store.venueId} / storeId=${f.store.displayId}): ${f.message}`);
+    console.error('[import-waitinglist] ※ この店のデータは今回いっさい変更しません(前回の内容がそのまま残ります)。');
+    console.error('');
+  }
 
-    const mapped = raw.map((t) => toTournament(t, store.venueId)).filter(Boolean);
-    if (mapped.length === 0) {
-      fail(`${store.label} の変換結果が0件でした(startAtが不正?)。中止します。`);
-    }
-
-    // 「今日以降の件数が急に減った」= API側の部分障害を疑う。
-    // HTTP 200で中身だけ欠けている応答(件数が足りない / 過去日しか返らない 等)はここで止まる。
-    // 比率(半分未満)だけだと、件数が多い店ほど「しきい値ちょうど」で大量に消せてしまうため、
-    // 「1回で MAX_ABS_DROP 件以上減ったら止める」絶対値の上限も併用する。
-    // 閉店・長期休業など正当な大幅減のときは --allow-shrink で人が明示的に通す。
-    const prevFuture = before.filter((t) => t.venueId === store.venueId && t.date >= today).length;
-    const nextFuture = mapped.filter((t) => t.date >= today).length;
-    const drop = prevFuture - nextFuture;
-    if (!ALLOW_SHRINK && prevFuture > 0 && nextFuture < Math.ceil(prevFuture * SHRINK_RATIO)) {
-      fail(
-        `${store.label}: 今日以降の件数が ${prevFuture}件 → ${nextFuture}件 と急減(前回の${Math.round(SHRINK_RATIO * 100)}%未満)。` +
-          'API側の部分障害の可能性があるため中止します(意図した減少なら --allow-shrink)。'
-      );
-    }
-    if (!ALLOW_SHRINK && drop >= MAX_ABS_DROP) {
-      fail(
-        `${store.label}: 今日以降の件数が ${prevFuture}件 → ${nextFuture}件 と一度に${drop}件減っています(上限${MAX_ABS_DROP}件)。` +
-          'API側の部分障害の可能性があるため中止します(意図した減少なら --allow-shrink)。'
-      );
-    }
-
-    console.log(`[import-waitinglist] ${store.label}: API ${raw.length}件 取得 / 変換 ${mapped.length}件 / うち ${today} 以降 ${nextFuture}件(前回 ${prevFuture}件)`);
-    fetched.push({ store, mapped });
+  // 全店だめだったときは書くものが無い。従来どおり何も触らずに終了コード1。
+  if (!fetched.length) {
+    fail(`対象 ${STORES.length}店すべての取得に失敗しました。data.js は書き換えていません。`);
   }
 
   // 2) マージ
@@ -538,14 +613,26 @@ async function main() {
   }
 
   // 4) 他店に影響が出ていないことの自己チェック
-  const targets = new Set(STORES.map((s) => s.venueId));
+  //    ★ 基準は STORES 全体ではなく【今回取得に成功した店だけ】。こうすると
+  //      「スキップした店のデータが変わっていないこと」まで同時に検査できる
+  //      (スキップした店は others 側に入るため)。
+  //
+  //    ★ 比較の左辺には【マージ前に取っておいたディープコピー】を使う。
+  //      before と arr は同じ要素オブジェクトを共有しているので、左辺に before を渡すと
+  //      「エントリを in-place で書き換えるバグ」が両辺に同じように映って素通りする
+  //      (品質管理部の変異試験で実証済み: 構造的な差し替えは検知できるが in-place は抜ける)。
+  //      beforeJson は冒頭で取得済みなので、そこから復元すれば実行時のコストもほぼ無い。
+  //      現在の mergeStore / carryOver は常に新しいオブジェクトを作るので今のところ実害は無いが、
+  //      将来 in-place な実装が紛れ込んでも検査が効くようにしておく。
+  const beforeSnapshot = JSON.parse(beforeJson);
+  const targets = new Set(fetched.map(({ store }) => store.venueId));
   const others = (list) => list.filter((t) => !targets.has(t.venueId));
-  if (JSON.stringify(others(before)) !== JSON.stringify(others(arr))) {
-    fail('対象外の店舗のデータが変化しています(バグ)。書き込みを中止します。');
+  if (JSON.stringify(others(beforeSnapshot)) !== JSON.stringify(others(arr))) {
+    fail('取得に成功した店舗以外のデータが変化しています(バグ)。書き込みを中止します。');
   }
-  // 過去日のエントリが変化していないことも確認
+  // 過去日のエントリが変化していないことも確認(同じ理由で左辺はスナップショット)
   const pastOf = (list) => list.filter((t) => targets.has(t.venueId) && t.date < today);
-  if (JSON.stringify(pastOf(before)) !== JSON.stringify(pastOf(arr))) {
+  if (JSON.stringify(pastOf(beforeSnapshot)) !== JSON.stringify(pastOf(arr))) {
     fail('過去日のエントリが変化しています(バグ)。書き込みを中止します。');
   }
 
@@ -558,21 +645,38 @@ async function main() {
     if (writeStoreList(true)) {
       console.log('[import-waitinglist] auto-import-stores.json は STORES とズレています（--dry-run 無しで実行すると更新されます）。');
     }
-    return;
+    return failures.length ? EXIT_PARTIAL : 0;
   }
 
   // 5) 掲載管理コンソール向けの対象店リスト。
   //    data.js に差分があるかどうかとは無関係に、常に STORES と一致させる
   //    (下の「変更が無いため書き換えていません」で早期returnする前に処理すること)。
+  //    ★ 中身は STORES(設定)であって「今回成功した店」ではない。取得に失敗した日でも
+  //      その店が自動取得対象であることに変わりはないため、失敗の有無で内容を変えない
+  //      (変えると失敗した日だけこのファイルが差分になり、無意味なコミットが増える)。
   const storeListChanged = writeStoreList(false);
   console.log(`[import-waitinglist] auto-import-stores.json: ${storeListChanged ? '更新しました' : '変更なし'}（対象 ${STORES.length}店）`);
 
   if (!changed) {
     console.log('[import-waitinglist] 変更が無いため data.js は書き換えていません。');
-    return;
+  } else {
+    writeDataJs(file, arr);
+    console.log('[import-waitinglist] data.js を更新しました。');
   }
-  writeDataJs(file, arr);
-  console.log('[import-waitinglist] data.js を更新しました。');
+
+  if (failures.length) {
+    console.error(
+      `[import-waitinglist] 成功 ${fetched.length}店 / 失敗 ${failures.length}店。` +
+        `成功したぶんは書き込み済みです。終了コード ${EXIT_PARTIAL} で終わります(ワークフローは赤くなります)。`
+    );
+    return EXIT_PARTIAL;
+  }
+  return 0;
 }
 
-main().catch((e) => fail(e && e.stack ? e.stack : String(e)));
+// 終了コードは main() の戻り値で決める(0 = 全店成功 / EXIT_PARTIAL = 一部失敗・成功分は書込済 /
+// 1 = 何も書いていない致命的な失敗)。呼び出し側のワークフローは EXIT_PARTIAL を
+// 「コミットは進めるが最後にジョブを失敗させる」として扱う。
+main()
+  .then((code) => { process.exitCode = code || 0; })
+  .catch((e) => fail(e && e.stack ? e.stack : String(e)));
