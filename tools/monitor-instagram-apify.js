@@ -180,14 +180,32 @@ function looksLikeSchedulePost(caption) {
  * (Apifyは常に直近 resultsLimit 件までしか返さないため、初回でも件数は有界)。
  */
 function pickNewPosts(posts, lastPostedAt) {
-  const valid = (Array.isArray(posts) ? posts : []).filter(
-    (p) => p && p.postedAt && !Number.isNaN(Date.parse(p.postedAt))
-  );
+  return pickNewPostsWithStats(posts, lastPostedAt).posts;
+}
+
+/**
+ * pickNewPosts と同じ選別を行い、【何件をどの理由で落としたか】も返す。
+ *
+ * 【なぜ内訳が要るか】この関数は2種類の投稿を静かに捨てる:
+ *   1. postedAt が読めない投稿(不正データ)
+ *   2. 既に確認済みの投稿(正常。毎回拾い直さないための仕組み)
+ * 1は【消失】で2は【正常】だが、どちらも結果は「配列から消える」で区別が付かなかった。
+ * 保存則の左辺(scheduleLikeCount)はこの選別より【後】の値なので、ここで落ちた投稿は
+ * どのカウンタにも現れない。取込みの上流まで遡って数えられるようにする。
+ *
+ * @returns {{ posts: Array, invalidPostedAt: number, alreadySeen: number }}
+ */
+function pickNewPostsWithStats(posts, lastPostedAt) {
+  const all = Array.isArray(posts) ? posts : [];
+  const valid = all.filter((p) => p && p.postedAt && !Number.isNaN(Date.parse(p.postedAt)));
+  const invalidPostedAt = all.length - valid.length;
   const sorted = [...valid].sort((a, b) => Date.parse(a.postedAt) - Date.parse(b.postedAt));
-  if (!lastPostedAt) return sorted;
-  const lastMs = Date.parse(lastPostedAt);
-  if (Number.isNaN(lastMs)) return sorted;
-  return sorted.filter((p) => Date.parse(p.postedAt) > lastMs);
+  const lastMs = lastPostedAt ? Date.parse(lastPostedAt) : NaN;
+  if (!lastPostedAt || Number.isNaN(lastMs)) {
+    return { posts: sorted, invalidPostedAt, alreadySeen: 0 };
+  }
+  const fresh = sorted.filter((p) => Date.parse(p.postedAt) > lastMs);
+  return { posts: fresh, invalidPostedAt, alreadySeen: sorted.length - fresh.length };
 }
 
 function slugify(name) {
@@ -245,14 +263,19 @@ function toTournament(t, venueId) {
  * 【キャプションの実物を出すことが目的】この経路は画像を1度も見ずに投稿を捨て、
  * それでいて lastPostedAt は前進する。件数だけ出しても「日程を投稿していない店」なのか
  * 「投稿しているが語に当たらない店」なのか区別できないので、実際の文面を見せる。
- * 先頭50字に切るのは、1投稿のキャプションが数百字になることがありログが読めなくなるため
- * (判定に必要なのは冒頭の言い回しで、全文ではない)。改行はログが崩れるので潰す。
+ * 先頭120字に切るのは、1投稿のキャプションが数百字になることがありログが読めなくなるため。
+ * 【50字では足りない】日本語の告知は「いつもありがとうございます!」のような定型挨拶で
+ * 始まることが多く、50字だと肝心の「8月のトナメ表です」に届かないまま切れて、
+ * キーワードを増やすべきかの判断ができない。改行はログが崩れるので潰す。
  */
+const FILTERED_CAPTION_HEAD_CHARS = 120;
+
 function formatFilteredOutPost(store, post) {
   const caption = String(post.caption || '')
     .replace(/\s+/g, ' ')
     .trim();
-  const head = caption.length > 50 ? `${caption.slice(0, 50)}…` : caption;
+  const head =
+    caption.length > FILTERED_CAPTION_HEAD_CHARS ? `${caption.slice(0, FILTERED_CAPTION_HEAD_CHARS)}…` : caption;
   return (
     `[monitor-instagram-apify] キーワード不一致で対象外: 店=${store.label}(${store.venueId})` +
     ` / 投稿=${post.permalink}(${post.postedAt})` +
@@ -325,11 +348,21 @@ async function runMonitor(opts, libs) {
 
   for (const store of stores) {
     const prev = state[store.venueId] || null;
-    const posts = await fetchLib.fetchInstagramPosts(store.handle);
+    // fetchStats には Apifyが返した生の件数と、必須フィールド欠落で捨てた件数が入る
+    // (埋めない実装のときは undefined のままで、下で「捨てていない」として扱う)。
+    const fetchStats = {};
+    const posts = await fetchLib.fetchInstagramPosts(store.handle, { stats: fetchStats });
 
-    const newPosts = pickNewPosts(posts, prev && prev.lastPostedAt);
+    const picked = pickNewPostsWithStats(posts, prev && prev.lastPostedAt);
+    const newPosts = picked.posts;
     const summary = {
       store,
+      // 取込みの最上流から数える。Apifyが返した生の件数が分からない実装では
+      // 「1件も捨てていない」とみなす(誤って残余を出さないため)。
+      apifyRawCount: typeof fetchStats.rawCount === 'number' ? fetchStats.rawCount : posts.length,
+      malformedCount: typeof fetchStats.malformed === 'number' ? fetchStats.malformed : 0,
+      invalidPostedAtCount: picked.invalidPostedAt,
+      alreadySeenCount: picked.alreadySeen,
       newPostCount: newPosts.length,
       scheduleLikeCount: 0,
       filteredOutCount: 0,
@@ -537,7 +570,11 @@ async function runMonitor(opts, libs) {
     // この状態ファイルは元から毎回コミットされるので、ここに書けばgit履歴に差分として残り、
     // ダッシュボードからも読める。Vision抽出を実際に行った店だけ更新し、行っていない店は
     // 前回値をそのまま持ち越す(毎回変わる値を足して無意味な日次差分を増やさないため)。
-    if (scheduleLike.length > 0) {
+    // 【M-2】キーワード不一致で全部落ちた店(折尾の「新着12件→対象0件」がまさにこれ)でも記録する。
+    // ここを `scheduleLike.length > 0` だけにしていると、【このカウンタが最も必要な場面】で
+    // lastExtraction 自体が書かれず、状態ファイルに lastPostedAt しか残らない。
+    // 「runログは90日で消えるので永続カウンタが要る」という理屈がそこだけ破れてしまう。
+    if (scheduleLike.length > 0 || summary.filteredOutCount > 0) {
       nextState[store.venueId].lastExtraction = {
         checkedAt: today,
         posts: scheduleLike.length,
@@ -552,6 +589,12 @@ async function runMonitor(opts, libs) {
         // 【ここから下が「静かに失われていた経路」の永続カウンタ】
         // runログは既定90日で消えるので、注記やconsole.warnだけでは後から追えない。
         // この状態ファイルは毎回コミットされるため、書けばgit履歴に残る。
+        // 取込みの最上流(Apifyの応答)から数える。ここが無いと、Visionに届く前に
+        // 消えた投稿(形式不正・投稿日時が読めない)が git履歴のどこにも残らない。
+        apifyRaw: summary.apifyRawCount,
+        malformed: summary.malformedCount,
+        invalidPostedAt: summary.invalidPostedAtCount,
+        alreadySeen: summary.alreadySeenCount,
         newPosts: summary.newPostCount,
         filteredOut: summary.filteredOutCount, // キーワードに当たらず画像を見ないまま捨てた投稿
         importedPosts,
@@ -573,6 +616,34 @@ async function runMonitor(opts, libs) {
   }
 
   return { arr, state: nextState, changed, summaries, anomalies, lostPosts, emptyResults };
+}
+
+/**
+ * 【取込みレベルの保存則】Apifyが返した1件は、必ずどれか1つの結末に落ちる。
+ *
+ *   Apifyが返した件数 = 形式不正で除外 + 投稿日時が読めない + 既読 + キーワード不一致 + 対象
+ *
+ * 【なぜ投稿レベルより上流が要るか】投稿レベルの保存則の左辺(scheduleLikeCount)は、
+ * 「Apifyの応答を正規化し」「投稿日時で選別し」「キーワードで絞った】【後】の値。
+ * 上流で捨てられた投稿はどのカウンタにも現れないのに、確認済み投稿日時だけは前進する
+ * (=二度と処理されない)。キーワード不一致より更に見えにくい経路なので、左辺を
+ * 「Apifyが返した件数」まで遡らせて塞ぐ。
+ *
+ * @returns {{ ok: boolean, expected: number, actual: number, missing: number }}
+ */
+function checkIntakeAccounting(summary) {
+  const actual =
+    summary.malformedCount +
+    summary.invalidPostedAtCount +
+    summary.alreadySeenCount +
+    summary.filteredOutCount +
+    summary.scheduleLikeCount;
+  return {
+    ok: actual === summary.apifyRawCount,
+    expected: summary.apifyRawCount,
+    actual,
+    missing: summary.apifyRawCount - actual,
+  };
 }
 
 /**
@@ -657,17 +728,28 @@ function checkRowAccounting(summary) {
 function reportTotals(summaries) {
   const sum = (f) => summaries.reduce((a, s) => a + f(s), 0);
   const lost = sum((s) => s.imageFailedCount + s.visionFailedCount + s.unusablePostCount);
+  const intakeResidual = sum((s) => checkIntakeAccounting(s).missing);
+  const postResidual = sum((s) => checkPostAccounting(s).missing);
   console.log('');
   console.log('[monitor-instagram-apify] === 全店合計 ===');
+  console.log(
+    `  Apify取得 ${sum((s) => s.apifyRawCount)}件 → 新着 ${sum((s) => s.newPostCount)}件 ` +
+      `(形式不正 ${sum((s) => s.malformedCount)} / 投稿日時が読めない ${sum((s) => s.invalidPostedAtCount)} / ` +
+      `既読 ${sum((s) => s.alreadySeenCount)})` +
+      `${intakeResidual === 0 ? '' : ` ← 残余 ${intakeResidual}件`}`
+  );
   console.log(
     `  新着投稿 ${sum((s) => s.newPostCount)}件 → 対象 ${sum((s) => s.scheduleLikeCount)}件 / ` +
       `キーワード不一致で対象外 ${sum((s) => s.filteredOutCount)}件`
   );
+  // 【M-5】行側だけでなく投稿側にも残余マーカーを出す(片方だけ出ていると、
+  // 「投稿側は常に合っている」と誤読される)。
   console.log(
     `  投稿の行き先: 取り込めた ${sum((s) => s.importedPostCount)}件 / 再投稿 ${sum((s) => s.repostedPostCount)}件 / ` +
       `【失われた ${lost}件】(画像DL失敗 ${sum((s) => s.imageFailedCount)} / ` +
       `Vision抽出失敗 ${sum((s) => s.visionFailedCount)} / 全行不採用 ${sum((s) => s.unusablePostCount)}) / ` +
-      `Vision 0件 ${sum((s) => s.emptyResultCount)}件`
+      `Vision 0件 ${sum((s) => s.emptyResultCount)}件` +
+      `${postResidual === 0 ? '(残余なし)' : ` ← 残余 ${postResidual}件`}`
   );
   const rows = summaries.map(checkRowAccounting);
   const rsum = (f) => rows.reduce((a, r) => a + f(r), 0);
@@ -798,6 +880,18 @@ async function main() {
     // 全投稿がVision抽出に失敗しても「0件」=異常なしに読めてしまった。
     const lost = s.imageFailedCount + s.visionFailedCount + s.unusablePostCount;
     console.log(
+      `  Apify取得 ${s.apifyRawCount}件 → 新着 ${s.newPostCount}件 ` +
+        `(形式不正 ${s.malformedCount} / 投稿日時が読めない ${s.invalidPostedAtCount} / 既読 ${s.alreadySeenCount})`
+    );
+    const intake = checkIntakeAccounting(s);
+    if (!intake.ok) {
+      console.log(
+        `::error title=Instagram監視 - 取得件数の集計が合わない::${s.store.label}(${s.store.venueId}): ` +
+          `Apifyが返した${intake.expected}件に対し内訳の合計が${intake.actual}件で、${intake.missing}件がどこにも数えられていません。` +
+          'Vision に届く前の段階で投稿が消えています(バグ)。'
+      );
+    }
+    console.log(
       `  新着投稿 ${s.newPostCount}件 → 対象 ${s.scheduleLikeCount}件 / ` +
         `キーワード不一致で対象外 ${s.filteredOutCount}件`
     );
@@ -891,6 +985,8 @@ module.exports = {
   formatDroppedRow,
   formatNormalizedRow,
   formatFilteredOutPost,
+  pickNewPostsWithStats,
+  checkIntakeAccounting,
   reportAnomalies,
   reportLostPosts,
   reportEmptyResults,

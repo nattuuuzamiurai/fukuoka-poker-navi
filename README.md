@@ -55,10 +55,10 @@ AdSense/PR枠が埋まるまでの間、自社アプリの導線を3か所に置
 | `tools/site-shell.js` | 静的ページ共通の「外側」（`<head>`・GA4タグ・共通CSS・ヘッダー・フッター・自社広告・大会の恒久リンク行）。イベントページと店舗ページで骨格が食い違わないよう、出どころを1つにしてある。**純粋なモジュールで、require しても何も書き込まない** |
 | `tools/import-venue-image.js` | 店舗から直接届いたトーナメント月間スケジュール画像を取り込むCLIツール（詳細は下記「データ取得アーキテクチャ」）。実行: `node tools/import-venue-image.js --venue <id> --image <path>`（`--dry-run` あり） |
 | `tools/venue-schedule-vision.js` | 画像→Tournamentスキーマの配列に正規化するVision抽出ロジック（`ANTHROPIC_API_KEY` が必要）。`tools/import-venue-image.js` と `tools/monitor-instagram-apify.js` から呼ばれる。**出力の切り捨て（`stop_reason: "max_tokens"` / 閉じフェンス欠落 / `stop_reason` 無しでのストリーム終了）を検出したら、部分的に採用せず必ず失敗させる**。`max_tokens` が ~16K を超えるため**ストリーミング（`stream: true`）で呼ぶ**（理由は下記「データ取得アーキテクチャ」の**Visionの出力が途中で切れた場合**）。テスト: `node tools/venue-schedule-vision.test.js` |
-| `tools/tournament-merge.js` | `data.js` の `TOURNAMENTS` に1店舗ぶんの取得結果を安全にupsertする共通ロジック（対象店舗以外・過去日には一切触れない）。`tools/import-venue-image.js` から呼ばれる |
+| `tools/tournament-merge.js` | `data.js` の `TOURNAMENTS` に1店舗ぶんの取得結果を安全にupsertする共通ロジック（対象店舗以外・過去日には一切触れない）。**`tools/import-venue-image.js` と `tools/monitor-instagram-apify.js` の2つだけが `require` する**。⚠ **Waitinglist取込み（`tools/import-waitinglist.js`）は自前の `mergeStore` を持つ別実装で、このモジュールを使っていない**（ここを変えてもWaitinglist取込みには影響しない。逆も同じ）。行レベルの突き合わせ用に `stats.pastDated`（**実際に過去日だった行数**。残差で定義してはいけない理由は同ファイルのコメント）を返す |
 | `tools/instagram-oembed.js` | 店舗が画像ではなく投稿リンクだけ送ってきた場合の補助（公式oEmbedからサムネイルを取得。ログイン・巡回は行わない）。`tools/import-venue-image.js --instagram-url` から呼ばれる |
 | `tools/fetch-venue-posts-apify.js` | Apify（既製Instagramスクレイパー、pay-per-result）を呼び、指定ハンドルの最近の投稿一覧（画像URL・投稿日時・パーマリンク・キャプション）を取得する（`APIFY_API_TOKEN` が必要）。`tools/monitor-instagram-apify.js` から呼ばれる |
-| `tools/monitor-instagram-apify.js` | 公式サイトAPIが無い6店舗のInstagram投稿を日次で自動監視し、新着のスケジュール告知らしき投稿をVisionで抽出して `data.js` に安全にupsertするCLIツール（詳細は下記「データ取得アーキテクチャ」）。実行: `node tools/monitor-instagram-apify.js`（`--dry-run` あり）。**Visionが返した行は1行ずつ「直せるものを直してから」検査し（`tools/validate-data.js` と同じ正規化・判定。`9:00`→`09:00` の正規化、日付書式・実在日・開始時刻の書式・金額が数値か・id重複）、それでも不正な行だけを捨てて残りは取り込む**（ジョブは落とさない。理由は下記「データ取得アーキテクチャ」の日付の検査は2層）。正規化・破棄・不採用の件数は `apify-monitor-state.json` の `lastExtraction` に記録される。**投稿と行の「保存則」を常に検査する**（投稿: 取り込めた+再投稿+全行不採用+Vision抽出失敗+画像DL失敗+Vision0件 = 対象投稿数 / 行: 追加+更新+変更なし+過去日+破棄 = Visionが返した行数）。**合わなければ `::error::`**（=どこにも数えられない消失経路が増えた証拠）。内容が失われた投稿は `::error::`、Visionが0件の投稿は `::warning::` で報告し、キーワード判定で落とした投稿はキャプション冒頭とともにログに出す。GitHub Actions `.github/workflows/monitor-instagram-apify.yml` が毎日自動実行する（**2026-07-31時点は定期実行を無効化中。手動実行の既定は dry-run**。理由は下記「データ取得アーキテクチャ」の実行の項）。テスト: `node tools/monitor-instagram-apify.test.js` |
+| `tools/monitor-instagram-apify.js` | 公式サイトAPIが無い6店舗のInstagram投稿を日次で自動監視し、新着のスケジュール告知らしき投稿をVisionで抽出して `data.js` に安全にupsertするCLIツール（詳細は下記「データ取得アーキテクチャ」）。実行: `node tools/monitor-instagram-apify.js`（`--dry-run` あり）。**Visionが返した行は1行ずつ「直せるものを直してから」検査し（`tools/validate-data.js` と同じ正規化・判定。`9:00`→`09:00` の正規化、日付書式・実在日・開始時刻の書式・金額が数値か・id重複）、それでも不正な行だけを捨てて残りは取り込む**（ジョブは落とさない。理由は下記「データ取得アーキテクチャ」の日付の検査は2層）。正規化・破棄・不採用の件数は `apify-monitor-state.json` の `lastExtraction` に記録される。**取込み・投稿・行の3つの「保存則」を常に検査する**（取込み: 形式不正+日時不正+既読+キーワード不一致+対象 = Apifyが返した件数 / 投稿: 取り込めた+再投稿+全行不採用+Vision抽出失敗+画像DL失敗+Vision0件 = 対象投稿数 / 行: 追加+更新+変更なし+過去日+破棄 = Visionが返した行数）。**合わなければ `::error::`**（=どこにも数えられない消失経路が増えた証拠）。内容が失われた投稿は `::error::`、Visionが0件の投稿は `::warning::` で報告し、キーワード判定で落とした投稿はキャプション冒頭とともにログに出す。GitHub Actions `.github/workflows/monitor-instagram-apify.yml` が毎日自動実行する（**2026-07-31時点は定期実行を無効化中。手動実行の既定は dry-run**。理由は下記「データ取得アーキテクチャ」の実行の項）。テスト: `node tools/monitor-instagram-apify.test.js` |
 
 `data.js` を差し替えるだけでサイトが更新される設計。CDN/静的ホスティング（GitHub Pages 等）にそのまま置ける。
 ただし静的ページ（`events/` `venues/` `sitemap.xml`）はデータのスナップショットなので、下記の再生成が必要。
@@ -858,17 +858,22 @@ GET https://api.waitinglist-poker.com/v1/game-schedules/tournament?storeId=<stor
        同じ「途中で切れた」として失敗させる — これも部分採用すれば同じ被害になるため
     2. **そもそも切り捨てない** … `MAX_OUTPUT_TOKENS = 32768`
   - **容量の3定数は必ずセットで動かす**。`MAX_EXPECTED_ROWS`(捨てずに通す行数)/
-    `MEASURED_TOKENS_PER_ROW`(1行あたりの実測トークン)/ `MAX_OUTPUT_TOKENS`(出力上限)は
-    `MAX_EXPECTED_ROWS × MEASURED_TOKENS_PER_ROW ≤ MAX_OUTPUT_TOKENS` を満たす必要がある。
+    `WORST_CASE_TOKENS_PER_ROW`(1行あたりの実測トークンの**最悪値**)/ `MAX_OUTPUT_TOKENS`(出力上限)は
+    `MAX_EXPECTED_ROWS × WORST_CASE_TOKENS_PER_ROW ≤ MAX_OUTPUT_TOKENS` を満たす必要がある。
     - **最初の実装はここが矛盾していた**: 「200行までは捨てずに通す」と宣言しながら
       `max_tokens` は166行分しか無く、**守るはずの月がその手前で切り捨てられる**状態だった
     - 数字は**実トークナイザでの実測**を置く。文字数からの概算(「ASCII=3文字/トークン」等)は
       実測より2〜3割少なく出て、足りない値を選んでしまう。実測は
-      1行あたり**実分布95.2〜98.5トークン / 全項目が埋まった最悪ケース約123.3トークン**
-      → `MEASURED_TOKENS_PER_ROW = 124`(切り上げ)。200行 × 124 = **24,800トークン**に対し
-      `MAX_OUTPUT_TOKENS = 32768` は約32%の余裕。`claude-sonnet-4-5` の最大出力64,000の半分
+      1行あたり**実分布95.2〜98.5トークン / 全項目が埋まった行 約123.3トークン /
+      全項目が埋まり大会名が日本語だけの行 約130.4トークン(全シナリオ中の最大)**
+      → `WORST_CASE_TOKENS_PER_ROW = 131`(切り上げ)。200行 × 131 = **26,200トークン**に対し
+      `MAX_OUTPUT_TOKENS = 32768` は約25%の余裕。`claude-sonnet-4-5` の最大出力64,000の半分
+    - **定数名が `WORST_CASE_` である理由**: ここに平均や「レンジの下の方」を置くと、整合assertが
+      **「通ったのに実際には危ない」を許す**。例えば123.3(日本語名を含まない値)を置いたまま
+      `MAX_EXPECTED_ROWS` を250に上げると `250×124=31,000` で通るが、実際の最悪値では
+      `250×130.4=32,600` で余裕がほぼ消える。**常に「観測された最大」を置くこと**
     - 整合は `tools/venue-schedule-vision.test.js` が**直接assert**している(定数を下げると落ちる)
-    - **旧値2048の裏付け**: 124トークン/行なら2048で出せるのは20〜21行。
+    - **旧値2048の裏付け**: 131トークン/行なら2048で出せるのは15〜16行(実分布の98.5でも20〜21行)。
       dry-runで「1投稿20件前後」の投稿は通り、月まるごとの日程表だけが落ちた観測と一致する
   - **`max_tokens` が ~16K を超えるならストリーミング必須**。Anthropicの移行ガイドは
     「非ストリーミングは高い `max_tokens` でHTTPタイムアウトに当たる。~16Kを超えるなら全モデルで
@@ -903,23 +908,45 @@ GET https://api.waitinglist-poker.com/v1/game-schedules/tournament?storeId=<stor
     (画像DL失敗 / Vision抽出失敗 / Visionが0件)。とくに0件は `console.warn` すら出なかった
   - **なぜカウンタを足すだけで終わらせないか**: それでは**7本目の結末が生まれたときに同じことが
     起きる**。実際この不具合は「経路が3本漏れていた」のではなく「漏れても誰も気づけない構造」だった
-  - **対策 = 2つの保存則をコードとテストで固定する**
-    1. **投稿レベル**:
+  - **対策 = 3つの保存則をコードとテストで固定する**
+    1. **取込みレベル**(`checkIntakeAccounting`):
+       `Apifyが返した件数 = 形式不正 + 投稿日時が読めない + 既読 + キーワード不一致 + 対象`
+       — 保存則の左辺を**取込みの最上流まで遡らせる**。`normalizeApifyItem` の欠落判定と
+       `pickNewPosts` の日時判定で捨てられた投稿は、キーワード不一致より更に見えにくい
+       (`fetchInstagramPosts(handle, { stats })` が生件数と除外件数を書き戻す)
+    2. **投稿レベル**(`checkPostAccounting`):
        `対象投稿 = 取り込めた + 再投稿 + 全行不採用 + Vision抽出失敗 + 画像DL失敗 + Vision0件`
-       (`checkPostAccounting`)。**将来ここに `continue` を1本足すとテストが即座に落ちる**
-    2. **行レベル**:
-       `Visionが返した行 = 追加 + 更新 + 変更なし + 過去日 + 破棄`(`checkRowAccounting`)。
+       **将来ここに `continue` を1本足すとテストが即座に落ちる**
+    3. **行レベル**(`checkRowAccounting`):
+       `Visionが返した行 = 追加 + 更新 + 変更なし + 過去日 + 破棄`。
        **過去日は `mergeStore` の中で静かに落ちていた**ので `stats.pastDated` を新設した。
        これが無いと「久留米: 抽出20 / 破棄0 / 追加0」のような、行の行き先を誰も説明できない
        数字が並ぶ(正常に全部過去日だったのか、別の経路で消えたのか区別できない)
   - **合わなければ `::error::`** を出す(残余の件数付き)。合わないこと自体がバグの証拠
+  - **⚠ 保存則の項を「残差」で定義しないこと**。`stats.pastDated` を
+    `scraped.length - rawFuture.length`(= rawFuture に入らなかった全て)で定義していた時期があり、
+    そのときこの保存則は**恒等式**で、何も検査していなかった。実際、`rawFuture` の絞り込み条件を
+    1つ足すだけで**未来日の行が黙って消えても差分が `pastDated` に吸い込まれ「過去日 1」と
+    積極的に誤報**された(この保存則が殺そうとした構図そのもの)。
+    **必ず「その性質を持つこと」そのものを数える**(`scraped.filter((t) => t.date < today).length`)
+  - **検知側にもテストを置くこと**。「健全な入力で `ok` が true になる」テストだけでは、
+    `ok: actual === expected` を `ok: true` に潰す変異も、`if (!row.ok)` を `if (false)` にする変異も
+    生き残る。**壊れた入力で偽になること**と、**その結果 `::error::` が実際に stdout に出ること**
+    (CLIレベル)まで固定してある
   - **重大度の使い分け**: 画像DL失敗・Vision抽出失敗・全行不採用は内容が確実に失われるので
     **赤(`::error::`)**。Visionが0件は `looksLikeSchedulePost` の誤検知(=正常)である可能性が
     高いので**黄(`::warning::`)**。0件を赤にすると、`duplicate-in-run` を異常から外したのと
     同じ理由(唯一の警告チャネルが空振りで埋まり本物の異常が読めなくなる)に抵触する
   - **件数は `lastExtraction` に残す**(git履歴に残る)。runログは既定90日で消えるため。
-    追加したのは `newPosts` / `filteredOut` / `importedPosts` / `visionFailed` / `imageFailed` /
-    `emptyResult` / `visionRows` / `pastDated` / `added` / `updated` / `unchanged`
+    追加したのは `apifyRaw` / `malformed` / `invalidPostedAt` / `alreadySeen` / `newPosts` /
+    `filteredOut` / `importedPosts` / `visionFailed` / `imageFailed` / `emptyResult` /
+    `visionRows` / `pastDated` / `added` / `updated` / `unchanged`
+  - **記録する条件は「Vision抽出をした店」ではなく「新着に何かあった店」**。
+    `scheduleLike.length > 0` だけを条件にしていると、**折尾のような「新着12件→対象0件」の店で
+    `lastExtraction` 自体が書かれない** — このカウンタが最も必要な場面で
+    「runログは90日で消えるから永続化する」という理屈が破れる。
+    そのため `scheduleLike.length > 0 || filteredOutCount > 0` を条件にしてある
+    (新着そのものが0件の店は従来どおり前回値を持ち越し、無意味な日次差分を作らない)
   - **dry-run でも読めること**が要件。dry-run は状態ファイルを書かないので、全店合計を
     ログに出し、ワークフローが `$GITHUB_STEP_SUMMARY` にも転記する
   - **⚠ この経路では「変更なし」は基本的に0のまま**。取り込んだ行には `source:'semi'` が付くが
@@ -936,7 +963,9 @@ GET https://api.waitinglist-poker.com/v1/game-schedules/tournament?storeId=<stor
   - **疑うべき観測値**: 2026-07-31 の dry-run で **TripleBarrel 折尾は新着12件→告知らしき投稿0件**。
     「実際に日程を投稿していない(正常)」のか「投稿しているが語に当たらず全部素通り(静かな損失)」
     なのかが**区別されていない**
-  - **対策は「先に測る」**: 落とした投稿の**permalinkとキャプション冒頭50字をログに出す**。
+  - **対策は「先に測る」**: 落とした投稿の**permalinkとキャプション冒頭120字をログに出す**
+    (50字では「いつもありがとうございます!」のような定型挨拶で終わってしまい、
+    肝心の「8月のトナメ表です」に届かないまま切れる)。
     件数(`filteredOut`)もサマリと `lastExtraction` に出す。dry-runは消費ゼロで何度でも回せるので、
     **推測を測定に変えられる**(折尾の12件はApifyで取得済み=課金済みなので追加コストもかからない)
   - **★キーワードを増やすのは、実際のキャプションを見てから。想像で先回りしないこと。**

@@ -328,23 +328,70 @@ test('タイムアウト: 中身のあるイベントが来なくなったら無
   );
 });
 
-test('タイムアウト: ping だけが流れ続けても無音タイムアウトが発火する(pingで延命されない)', async () => {
-  // 【この挙動が本体】以前はチャンク到着だけでタイマーを延ばしていたため、
+/**
+ * ping を【無限に】流し続けるストリーム。打ち切りは呼び出し側の totalTimeoutMs が担保する。
+ *
+ * 【有限のping列ではこのバグを再現できない】ping列が尽きた後は本当に無音になるので、
+ * 「チャンク到着で延命する」壊れた実装でも結局は発火してしまい、テストが空振りする
+ * (実際、最初に書いた 200個×5ms の列では修正前の実装でも通ってしまっていた)。
+ * 無限に流し続けて初めて「pingでは延びない」ことを検査できる。
+ */
+function infinitePingStream(intervalMs, signal) {
+  const encoder = new TextEncoder();
+  return new ReadableStream({
+    start(controller) {
+      const onAbort = () => {
+        const err = new Error('The operation was aborted.');
+        err.name = 'AbortError';
+        try {
+          controller.error(err);
+        } catch (_) {
+          /* すでに閉じている */
+        }
+      };
+      if (signal.aborted) onAbort();
+      else signal.addEventListener('abort', onAbort, { once: true });
+    },
+    pull(controller) {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          try {
+            controller.enqueue(encoder.encode(sse('ping', { type: 'ping' })));
+          } catch (_) {
+            /* abort 済み */
+          }
+          resolve();
+        }, intervalMs);
+      });
+    },
+  });
+}
+
+test('タイムアウト: ping が【無限に】流れ続けても無音タイムアウトが発火する(pingで延命されない)', async () => {
+  // 【この1本がバグの本体を固定している】以前はチャンク到着だけでタイマーを延ばしていたため、
   // pingを送り続ける相手に対して無音タイムアウトが永久に発火しなかった。
-  const pings = Array.from({ length: 200 }, () => sse('ping', { type: 'ping' }));
+  const started = Date.now();
   await withStubbedFetch(
-    async (url, init) => ({ status: 200, body: slowStream(pings, 5, { signal: init.signal }), text: async () => '' }),
+    async (url, init) => ({ status: 200, body: infinitePingStream(5, init.signal), text: async () => '' }),
     async () => {
       await assert.rejects(
-        () => vision.callVisionModel(Buffer.from('img'), 'sys', 'user', 'image/jpeg', { idleTimeoutMs: 120 }),
+        () =>
+          vision.callVisionModel(Buffer.from('img'), 'sys', 'user', 'image/jpeg', {
+            idleTimeoutMs: 150,
+            // 総時間の方で先に切れてしまうと「無音で切れた」ことの検査にならないので、
+            // 無音側より十分長くしておく(ハング防止の保険としては機能する)。
+            totalTimeoutMs: 10000,
+          }),
         (e) => {
-          assert.match(e.message, /中身のあるイベントが/);
+          assert.match(e.message, /中身のあるイベントが/, 'pingでは延命されず無音として中断すること');
           assert.match(e.message, /pingだけが流れている可能性/);
           return true;
         }
       );
     }
   );
+  // 総時間(10秒)ではなく無音(0.15秒)で切れたことを、実際の所要時間でも確かめる
+  assert.ok(Date.now() - started < 5000, '総時間の上限まで待ってしまっている(無音判定が効いていない)');
 });
 
 test('タイムアウト: 中身のあるイベントが届き続ける間は無音タイムアウトで切られない', async () => {
@@ -440,6 +487,31 @@ test('readMessageStream: thinking_delta は本文に混ぜない(text_delta だ�
   assert.equal(msg.content[0].text, '[{"date":"2026-08-01","name":"デイリー"}]');
   assert.doesNotMatch(msg.content[0].text, /まず画像を見る/, '思考の断片が本文に混ざっている');
   assert.doesNotMatch(msg.content[0].text, /9999-99-99/, '思考の中のJSONらしき断片が本文に混ざっている');
+});
+
+test('readMessageStream: 採否は delta.type === "text_delta" で決まる(中身の形では決まらない)', async () => {
+  // 【M-4】「thinking_delta を落とす」ではなく「text_delta だけを採る」実装であることを固定する。
+  // 除外リスト方式(thinking_delta だけ弾く)に書き換えると、将来増える新しいdelta型が
+  // 素通りして本文を汚す。thinking_delta に text フィールドを持たせても採られないことで確認する。
+  const chunks = [
+    sse('message_start', { type: 'message_start', message: { usage: { input_tokens: 1 } } }),
+    // text フィールドを持つが type は text_delta ではない → 採ってはいけない
+    sse('content_block_delta', {
+      type: 'content_block_delta',
+      index: 0,
+      delta: { type: 'thinking_delta', text: '混ざってはいけない', thinking: '混ざってはいけない' },
+    }),
+    // type が未知で text を持つ → 採ってはいけない
+    sse('content_block_delta', {
+      type: 'content_block_delta',
+      index: 1,
+      delta: { type: 'future_delta_type', text: '混ざってはいけない2' },
+    }),
+    sse('content_block_delta', { type: 'content_block_delta', index: 2, delta: { type: 'text_delta', text: '[]' } }),
+    sse('message_delta', { type: 'message_delta', delta: { stop_reason: 'end_turn' }, usage: { output_tokens: 3 } }),
+  ];
+  const msg = await vision.readMessageStream(streamOf(chunks));
+  assert.equal(msg.content[0].text, '[]', 'text_delta 以外の delta は type だけで除外すること');
 });
 
 test('readMessageStream: signature_delta など未知のdelta型も本文に混ぜない', async () => {
