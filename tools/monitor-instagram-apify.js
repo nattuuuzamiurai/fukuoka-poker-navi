@@ -243,10 +243,263 @@ function slugify(name) {
  * 表示はどちらも「詳細は店舗SNSを確認」(index.html / tools/venue-schedule.js の vpBuyin)で
  * 変わらないが、データとしての意味が逆になる。
  */
-function toTournament(t, venueId) {
-  const start = t.start || '00:00';
+/**
+ * 「この行は大会ではない」ことを判定する。
+ *
+ * 【設計をやり直した経緯(2026-08-01)】
+ * 最初は「トーナメントである積極的な証拠(開始時刻/参加費/スタック/保証額)を1つも持たない行は
+ * 大会として扱わない」という【構造だけの判定】にした。語彙に依存しないので漏れない、と考えたが、
+ * **これは誤りだった**。実際の画像を確認したところ:
+ *   v20 8月分 … 月間カレンダーに【大会名のみ】。時刻の記載なし
+ *   v18 8月分 … 【大会名と日付のみ】。時刻・参加費とも記載なし
+ * つまり `FST SATELLITE` `華金` `DEEP STACK` のような【正当な大会】も証拠ゼロで、
+ * 定休日のマスとまったく同じ形をしている。構造判定は
+ * 「大会か否か」ではなく「詳細が書かれているか否か」を見ていただけで、
+ * **v18の30行がまるごと消える**ところだった。
+ *
+ * 【結論: 構造では分離できない】「休み」と「FST SATELLITE」を分けているのは
+ * 【名前の意味】だけ。したがってここは語で判定するしかなく、**語のリストは必ず漏れる**。
+ * そこで「漏れない判定」を目指すのをやめ、**漏れた場合の被害を抑える多層防御**にした:
+ *   1. ここ(語の判定)で、よくある表現を落とす
+ *   2. 証拠ゼロの行は捨てずに `lowConfidence: true` を付ける
+ *      → サイトに【⚠ 要確認】バッジが出る。漏れた定休日も、詳細未定の大会も、
+ *        どちらに対しても表示の意味が正しい
+ *   3. 公開前は⑤(人による全件照合)が最後の関門
+ */
+const CLOSURE_TERMS = [
+  '休み',
+  'お休み',
+  '定休日',
+  '休業',
+  '休館',
+  'closed',
+  'close',
+  'holiday',
+  'no game',
+  'nogame',
+  'off',
+];
+
+/** 正規化(全角→半角・小文字・区切りの揺れ吸収)。名前の判定はすべてこれを通す。 */
+function normalizeName(name) {
+  return String(name == null ? '' : name)
+    .normalize('NFKC')
+    .toLowerCase()
+    .replace(/[・/\-_]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * 定休日・休業のマスか。
+ * 記号だけ(`×` `✕` `-` `—` `ー`)や空に近い名前もここで落とす。
+ */
+function isClosureRow(name) {
+  const key = normalizeName(name);
+  if (!key) return true;
+  if (/^[×✕xx*ー—–\-~〜・.,、。\s]+$/u.test(key)) return true;
+  // 【★部分一致にしないこと★】`some((w) => key.includes(w))` にすると、短い語が
+  // 単語の内側で一致して【正当な大会を落とす】。実測では
+  //   OFFICIAL TOURNAMENT / PLAYOFF / KICK OFF / TAKE OFF(← 'off')
+  //   夏休みスペシャル / 冬休みトナメ(← '休み')
+  //   HOLIDAY SPECIAL / CLOSE THE DEAL
+  // が破棄され、12件中10件が過剰破棄だった。対象6店は英語名を多用するので理論上の話ではない。
+  //
+  // しかも【層1で捨てた行は層2に届かない】— 「⚠を付けて残す」多層防御に到達しないまま、
+  // 内容が完全に失われ、lastPostedAt は前進するので再試行もされない。
+  //
+  // そこで isHeadingRow と同じ形にする: 休業語を取り除いて【何も残らない】ときだけ休業とみなす。
+  // 副作用として `本日休み` `お休みです` のような複合表現は漏れるが、
+  // 漏れた定休日は証拠ゼロなので lowConfidence(⚠要確認)が付き、層2が受け止める。
+  // 【非対称性】漏れ=⚠付きで公開(⑤で拾える) / 過剰破棄=完全に失われ再試行なし。
+  let rest = key;
+  for (const w of [...CLOSURE_TERMS].sort((a, b) => b.length - a.length)) rest = rest.split(w).join(' ');
+  rest = rest.replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+  return rest === '';
+}
+
+/**
+ * 画像の見出しを行として拾ったものか。
+ * `月間TOURNAMENT` のように【大会の固有性がなく、日程表そのものを指す語だけ】でできた名前。
+ * 部分一致にすると `FST TOURNAMENT` のような正当な名前まで落ちるので、
+ * **見出し語を取り除いたあとに何も残らない場合だけ**見出しとみなす。
+ */
+const HEADING_WORDS = ['月間', 'tournament', 'tournaments', 'schedule', 'スケジュール', 'トーナメント', '大会', '予定', '日程', 'monthly'];
+
+function isHeadingRow(name) {
+  const key = normalizeName(name);
+  if (!key) return false;
+  let rest = key;
+  for (const w of HEADING_WORDS) rest = rest.split(w).join(' ');
+  // 年号(2026)や記号だけが残るのも見出し扱い
+  rest = rest.replace(/[0-9]{2,4}/g, ' ').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+  return rest === '';
+}
+
+/**
+ * トーナメントである積極的な証拠(開始時刻/参加費/スタック/保証額)を持つか。
+ *
+ * 【もう「落とす」ためには使わない】上の経緯のとおり、証拠ゼロでも正当な大会はある。
+ * 現在の用途は【`lowConfidence`(⚠要確認)を付けるかの判断】。
+ * `buyin: 0` は「無料」という読み取れた値なので証拠として数える(フリーロールは実在する)。
+ */
+function tournamentEvidence(t) {
+  const has = (v) => v != null && String(v).trim() !== '';
   return {
-    id: `ig-${venueId}-${t.date}-${String(start).replace(':', '')}-${slugify(t.name)}`,
+    start: has(t && t.start),
+    buyin: has(t && t.buyin),
+    stack: has(t && t.stack),
+    guarantee: has(t && t.guarantee),
+  };
+}
+
+/**
+ * 名前に「金額そのもの」を表すトークンが含まれるか。
+ *
+ * 【意味の推測はしない】`1K` が参加費なのかバウンティ額なのかは判断しない。
+ * 「その数字は名前から来た可能性がある」という**観測だけ**を返す。
+ */
+const MONEY_TOKEN_IN_NAME = /(free|フリーロール|フリロ|無料|[0-9]+\s*k(?![a-z])|[0-9]+\s*円|[0-9]+\s*yen|¥\s*[0-9])/i;
+
+function nameContainsMoneyToken(name) {
+  return MONEY_TOKEN_IN_NAME.test(normalizeName(name));
+}
+
+/**
+ * トーナメントである証拠を持つか(= ⚠要確認 を付けずに済むか)。
+ *
+ * 【名前由来の可能性がある buyin は証拠に数えない】
+ * Visionは画像に金額が無くても `FREE ROLL`→0 / `1K MULTI`→1000 のように
+ * **大会名から参加費を推論して返すことがある**。値自体は妥当なことが多いが、
+ * これを証拠として数えると【⚠要確認バッジが消える】。すると
+ *   ・誤った参加費が公開される
+ *   ・かつ、それを疑えと伝える唯一の表示も消える
+ * が**重なる**。しかも画像に数字はあるので⑤(人の照合)でも一致して見え、見抜けない。
+ * ⑤を最後の関門にしてきたこの案件で、**⑤の外側に落ちる唯一の経路**だった。
+ *
+ * そこで「証拠が buyin だけ」かつ「名前に金額トークンがある」行は証拠なしとして扱い、
+ * ⚠を残す。**参加費の値そのものは消さない**(消す方が情報を失う)。
+ */
+function hasTournamentEvidence(t) {
+  const e = tournamentEvidence(t);
+  if (e.start || e.stack || e.guarantee) return true;
+  if (!e.buyin) return false;
+  return !nameContainsMoneyToken(t && t.name);
+}
+
+/**
+ * トーナメントではない【競技形式】か。
+ *
+ * 【なぜここは語で判定してよいか】ポーカーの競技形式は
+ * リングゲーム(=キャッシュゲーム)のように**名前が安定した有限の集合**で、
+ * かつ参加費が書かれていることがある。「休業を表す無限の言い回し」とは性質が違う。
+ */
+const NON_TOURNAMENT_FORMATS = ['リングゲーム', 'リング ゲーム', 'ring game', 'ringgame', 'キャッシュゲーム', 'cash game', 'cashgame'];
+
+function isNonTournamentFormat(name) {
+  const key = normalizeName(name);
+  if (!key) return false;
+  return NON_TOURNAMENT_FORMATS.some((w) => key.includes(w));
+}
+
+/**
+ * Visionが返したタグを、サイトが実際に使っている語彙に寄せる。
+ *
+ * 【なぜ必要か】2026-08-01 の dry-run で、Visionは `satellite`(12件) `freeroll`(4件)
+ * `deep stack` / `deepstack`(5件) `mystery・bounty`(2件) のように【英語小文字】で返した。
+ * サイト側の語彙は `サテライト`(200件) `フリーロール`(72) `ディープ`(32) `バウンティ`(20) で、
+ * そのまま入れると**タグ絞り込みが機能しない**(同じ意味のタグが2種類に割れる)。
+ *
+ * 【プロンプトで「日本語で」と書くだけにしないこと】このリポジトリの原則どおり、
+ * LLMの指示遵守を正しさの担保に使わない。プロンプトにも書くが、効いているのはこの変換。
+ *
+ * 【未知のタグは捨てる】通す設計にすると、`freezeout` `special` のような
+ * サイトに存在しない語がそのまま増え、タグ絞り込みの選択肢を汚す。
+ * 捨てても大会自体は残るので損失は小さい。
+ * **捨てた事実は取込み側が正規化ログ(summary.normalized)に記録する**
+ * (`droppedTags` を使う。この関数自体は notes を持たないので、記録は呼び出し側の責任)。
+ */
+const TAG_CANONICAL = new Map([
+  ['satellite', 'サテライト'],
+  ['サテライト', 'サテライト'],
+  ['freeroll', 'フリーロール'],
+  ['free roll', 'フリーロール'],
+  ['フリーロール', 'フリーロール'],
+  ['deepstack', 'ディープ'],
+  ['deep stack', 'ディープ'],
+  ['deep', 'ディープ'],
+  ['ディープ', 'ディープ'],
+  ['ディープスタック', 'ディープ'],
+  ['bounty', 'バウンティ'],
+  ['mystery bounty', 'バウンティ'],
+  ['mystery', 'バウンティ'],
+  ['バウンティ', 'バウンティ'],
+  ['ミステリーバウンティ', 'バウンティ'],
+  ['turbo', 'ターボ'],
+  ['ターボ', 'ターボ'],
+  ['plo', 'PLO'],
+  ['mix', 'ミックス'],
+  ['ミックス', 'ミックス'],
+  ['league', 'リーグ'],
+  ['リーグ', 'リーグ'],
+  ['special', '特別開催'],
+  ['特別開催', '特別開催'],
+  ['jopt', 'JOPT'],
+  ['wjpt', 'WJPT'],
+  ['fst', 'FST'],
+]);
+
+/** タグ1つを正規化する。未知なら null(=捨てる)。 */
+function canonicalTag(tag) {
+  if (tag == null) return null;
+  // 全角/半角・大文字小文字・区切り(・, /, -, 全角空白)の揺れを吸収してから引く。
+  const key = String(tag)
+    .normalize('NFKC')
+    .toLowerCase()
+    .replace(/[・/\-_]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!key) return null;
+  if (TAG_CANONICAL.has(key)) return TAG_CANONICAL.get(key);
+  // `mystery・bounty` のような複合語は、含まれる既知語のうち最も長いものに寄せる。
+  for (const [k, v] of [...TAG_CANONICAL].sort((a, b) => b[0].length - a[0].length)) {
+    if (key.includes(k)) return v;
+  }
+  return null;
+}
+
+/** タグ配列を正規化する(未知は捨て、重複は畳む)。 */
+function canonicalTags(tags) {
+  if (!Array.isArray(tags)) return [];
+  const out = [];
+  for (const t of tags) {
+    const c = canonicalTag(t);
+    if (c && !out.includes(c)) out.push(c);
+  }
+  return out;
+}
+
+/** サイトの語彙に無くて捨てられるタグを返す(記録用)。 */
+function droppedTags(tags) {
+  if (!Array.isArray(tags)) return [];
+  return tags.filter((t) => canonicalTag(t) === null && String(t == null ? '' : t).trim() !== '');
+}
+
+function toTournament(t, venueId) {
+  // 【★読み取れなかった開始時刻を '00:00' で埋めないこと★】
+  // '00:00' は「深夜0時開始」という【読み取れた値】であり、サイトはそのまま「00:00」と表示する
+  // (venue-schedule.js / index.html はどちらも `t.start || '—'`)。つまり
+  // 【プレイヤーが深夜0時に店へ行く】という実害に直結する。
+  // 既存618件に '00:00' は1件も無い一方、**184件が start:'' を使っており**、
+  // それは「—」と表示される。「読み取れなかった」の正しい表現は空文字の方。
+  // これは buyin で `0`(=無料という読み取れた値)を既定値にしないのと同じ規律。
+  const start = t.start == null ? '' : String(t.start);
+  // idの時刻部分。空のときは 'nostart' を置く(空文字だと `--` が並んで境界が読めなくなる)。
+  // 同じ日・同じ名前で時刻が読めない行が2つあれば id は衝突するが、それは
+  // 【区別できないものを区別できないと言っている】だけで正しい。duplicateIdProblem が拾う。
+  const startKey = start ? start.replace(':', '') : 'nostart';
+  const entry = {
+    id: `ig-${venueId}-${t.date}-${startKey}-${slugify(t.name)}`,
     venueId,
     name: String(t.name).trim(),
     date: t.date,
@@ -257,10 +510,16 @@ function toTournament(t, venueId) {
     guarantee: t.guarantee != null ? Number(t.guarantee) : null,
     reentry: t.reentry === 'late' ? 'late' : Boolean(t.reentry),
     prize: t.prize || null,
-    tags: Array.isArray(t.tags) ? t.tags : [],
+    tags: canonicalTags(t.tags),
     source: 'semi',
     verified: false,
   };
+  // 【証拠ゼロの行は捨てずに印を付ける】開始時刻・参加費・スタック・保証額がどれも読めない行は
+  // 「詳細未定の大会」か「語の判定から漏れた定休日」のどちらか。機械には区別できないので、
+  // サイトに【⚠ 要確認】を出す(既存の lowConfidence バッジ)。
+  // どちらの場合でも表示の意味が正しく、⑤(人の全件照合)が最後の関門になる。
+  if (!hasTournamentEvidence(t)) entry.lowConfidence = true;
+  return entry;
 }
 
 /**
@@ -582,6 +841,20 @@ async function runMonitor(opts, libs) {
         }
         let reason = extractedRowProblem(row);
         let kind = reason ? 'row' : null;
+        // 【トーナメントらしさの検査】extractedRowProblem は「data.js に入れてよい形か」を見るが、
+        // 「そもそも大会か」は見ない。定休日のマスや見出しはここで落とす。
+        if (!reason && isClosureRow(row.name)) {
+          reason = '定休日・休業のマス(大会名ではない)';
+          kind = 'not-a-tournament';
+        }
+        if (!reason && isHeadingRow(row.name)) {
+          reason = '画像の見出しを行として拾ったもの(大会の固有名ではない)';
+          kind = 'not-a-tournament';
+        }
+        if (!reason && isNonTournamentFormat(row.name)) {
+          reason = 'トーナメントではない競技形式(リングゲーム/キャッシュゲーム)';
+          kind = 'not-a-tournament';
+        }
         let entry = null;
         if (!reason) {
           entry = toTournament(row, store.venueId);
@@ -606,6 +879,15 @@ async function runMonitor(opts, libs) {
           summary.dropped.push(record);
           console.warn(formatDroppedRow(store, post, row, reason));
           continue;
+        }
+        // 【捨てたタグを記録する】canonicalTags は toTournament の中で走るので
+        // normalizeExtractedRow の notes 経路を通らない。ここで記録しないと
+        // 「捨てた事実はログに出る」が嘘になる(テレメトリについて事実でない記述を残さない)。
+        const lostTags = droppedTags(row.tags);
+        if (lostTags.length) {
+          const note = [{ field: 'tags', from: lostTags, to: null, reason: 'サイトの語彙に無いタグを捨てた' }];
+          summary.normalized.push({ venueId: store.venueId, permalink: post.permalink, notes: note, name: row.name });
+          console.warn(formatNormalizedRow(store, post, row, note));
         }
         usedIds.add(entry.id);
         extracted.push(entry);
@@ -877,8 +1159,21 @@ function checkRowAccounting(summary) {
 function reportAcceptedRows(summaries) {
   const withRows = summaries.filter((s) => s.addedRows.length > 0);
   const total = withRows.reduce((a, s) => a + s.addedRows.length, 0);
+  const noStart = withRows.reduce((a, s) => a + s.addedRows.filter((r) => !r.entry.start).length, 0);
   console.log('');
   console.log(`[monitor-instagram-apify] === 追加される行の明細(計${total}行) ===`);
+  if (noStart > 0) {
+    // 【声を大きくする】開始時刻はプレイヤーが最も必要とする値。読めた行が少ないなら
+    // 「店が時刻を書いていない」のではなく「Visionが時刻の列を読めていない」可能性が高い。
+    // 0件のときは出さない(ノイズにしない)。
+    const pct = Math.round((noStart / total) * 100);
+    console.log(
+      `::warning title=Instagram監視 - 開始時刻が読めない行::${total}行中${noStart}行(${pct}%)で開始時刻が読み取れていません。` +
+        'サイトには「—」と表示されます(00:00 とは表示しません)。' +
+        '割合が高い場合は、店が時刻を書いていないのではなく【Visionが時刻を読めていない】可能性が高いので、' +
+        '投稿画像を確認してください。'
+    );
+  }
   if (total === 0) {
     console.log('  (data.js に増える行はありません)');
   }
@@ -893,7 +1188,7 @@ function reportAcceptedRows(summaries) {
         ? ` / ★既存の手入力(id=${replacedManualIds.join(', ')})を置き換え`
         : '';
       console.log(
-        `[monitor-instagram-apify] 追加行: ${entry.venueId} / ${entry.date} / ${entry.start} / ${entry.name}` +
+        `[monitor-instagram-apify] 追加行: ${entry.venueId} / ${entry.date} / ${entry.start || '開始時刻不明'} / ${entry.name}` +
           ` / 参加費${num(entry.buyin)} / アドオン${num(entry.addon)} / スタック${num(entry.stack)}` +
           ` / GTD${num(entry.guarantee)} / 再入場${reentry} / 賞品${entry.prize == null ? '不明' : entry.prize}` +
           ` / タグ${tags} / ${permalink || '出所不明'}${replaced}`
@@ -1207,6 +1502,16 @@ module.exports = {
   formatDroppedRow,
   formatNormalizedRow,
   formatFilteredOutPost,
+  canonicalTag,
+  canonicalTags,
+  droppedTags,
+  nameContainsMoneyToken,
+  hasTournamentEvidence,
+  isClosureRow,
+  isHeadingRow,
+  normalizeName,
+  tournamentEvidence,
+  isNonTournamentFormat,
   captionSignals,
   emptyCaveat,
   pickNewPostsWithStats,
