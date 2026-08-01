@@ -2711,26 +2711,50 @@ test('★品質: 読み取れなかった開始時刻を 00:00 で埋めない(�
   assert.equal(monitor.toTournament({ date: '2026-08-05', start: '19:15', name: '大会', tags: [] }, 'v20').start, '19:15');
 });
 
-test('★品質: 定休日のマスは「語」ではなく「構造」で落とす(休み/CLOSED/×… に依存しない)', () => {
-  // 休業を表す言い方は無限にあるので語リストでは必ず漏れる。
-  // 代わりに【トーナメントである積極的な証拠】(開始時刻/参加費/スタック/保証額)を要求する。
-  for (const name of ['休み', 'お休み', '定休日', 'CLOSED', 'Closed', '×', '-', '🈳', '月間TOURNAMENT']) {
-    assert.equal(
-      monitor.looksLikeTournamentRow({ name, start: null, buyin: null, stack: null, guarantee: null }),
-      false,
-      `証拠が1つも無い行は大会として扱わない: ${name}`
-    );
+test('★品質: 証拠ゼロでも【正当な大会は捨てない】(v18の画像は大会名と日付だけ)', () => {
+  // 【最初の設計の誤り】「開始時刻・参加費・スタック・保証額が1つも無い行は大会ではない」
+  // という構造判定にしたが、実際の画像を見ると v20/v18 は大会名しか書いていない。
+  // つまり正当な大会も証拠ゼロで、定休日のマスとまったく同じ形をしている。
+  // あの判定は「大会か否か」ではなく「詳細が書かれているか否か」を見ていただけで、
+  // v18の30行がまるごと消えるところだった。
+  for (const name of ['FST SATELLITE', '華金', 'Cエントリートナメ', 'DEEP STACK', 'MYSTERY BOUNTY']) {
+    assert.equal(monitor.isClosureRow(name), false, `正当な大会を休業扱いにしない: ${name}`);
+    assert.equal(monitor.isHeadingRow(name), false, `正当な大会を見出し扱いにしない: ${name}`);
   }
-  // 証拠が1つでもあれば通す
-  assert.equal(monitor.looksLikeTournamentRow({ name: 'X', start: '19:00' }), true);
-  assert.equal(monitor.looksLikeTournamentRow({ name: 'X', stack: 30000 }), true);
-  assert.equal(monitor.looksLikeTournamentRow({ name: 'X', guarantee: 100000 }), true);
 });
 
-test('★品質: buyin:0(無料)は「証拠あり」として扱う(フリーロールを落とさない)', () => {
-  // 0 は「無料」という読み取れた値。null(読み取れなかった)と区別する。
-  assert.equal(monitor.looksLikeTournamentRow({ name: 'フリーロール', buyin: 0 }), true);
-  assert.equal(monitor.looksLikeTournamentRow({ name: 'フリーロール', buyin: null }), false);
+test('★品質: 定休日のマスは語で落とす(構造では分離できないため)', () => {
+  for (const name of ['休み', 'お休み', '定休日', '休業', 'CLOSED', 'Closed', 'close', '×', '✕', 'ー', '—', '']) {
+    assert.equal(monitor.isClosureRow(name), true, `落とすこと: ${JSON.stringify(name)}`);
+  }
+});
+
+test('★品質: 画像の見出しは「見出し語を除くと何も残らない」ことで判定する', () => {
+  // 部分一致にすると `FST TOURNAMENT` のような正当な名前まで落ちる。
+  for (const name of ['月間TOURNAMENT', '2026 TOURNAMENT SCHEDULE', 'トーナメント', 'スケジュール', '月間スケジュール']) {
+    assert.equal(monitor.isHeadingRow(name), true, `見出しとして落とすこと: ${name}`);
+  }
+  for (const name of ['FST TOURNAMENT', 'DEEP STACK トーナメント', '華金トーナメント']) {
+    assert.equal(monitor.isHeadingRow(name), false, `固有名がある行は落とさない: ${name}`);
+  }
+});
+
+test('★品質: 証拠ゼロの行には lowConfidence(⚠要確認)を付けて公開する', () => {
+  // 「詳細未定の大会」も「語の判定から漏れた定休日」も、機械には区別できない。
+  // どちらに対しても「要確認」の表示は意味が正しい。
+  const noEvidence = monitor.toTournament({ date: '2026-08-05', name: 'FST SATELLITE', tags: [] }, 'v18');
+  assert.equal(noEvidence.lowConfidence, true, '証拠ゼロの行は要確認として出す');
+  assert.equal(noEvidence.start, '', '捨てずに取り込む');
+  // 証拠が1つでもあれば印を付けない(ノイズにしない)
+  for (const t of [
+    { date: '2026-08-05', name: 'X', start: '19:00', tags: [] },
+    { date: '2026-08-05', name: 'X', buyin: 3000, tags: [] },
+    { date: '2026-08-05', name: 'フリーロール', buyin: 0, tags: [] },
+    { date: '2026-08-05', name: 'X', stack: 30000, tags: [] },
+    { date: '2026-08-05', name: 'X', guarantee: 100000, tags: [] },
+  ]) {
+    assert.equal(monitor.toTournament(t, 'v18').lowConfidence, undefined, `証拠があれば印は不要: ${JSON.stringify(t)}`);
+  }
 });
 
 test('品質: リングゲーム/キャッシュゲームは非トーナメントとして落とす', () => {
@@ -2769,6 +2793,7 @@ test('★品質: 取込み経路の全体で、休み・見出し・リングゲ
           { date: '2099-08-01', start: null, name: '休み', buyin: null, stack: null, tags: [] },
           { date: '2099-08-01', start: null, name: '月間TOURNAMENT', buyin: null, stack: null, tags: [] },
           { date: '2099-08-03', start: null, name: 'リングゲーム', buyin: 3000, tags: [] },
+          { date: '2099-08-04', start: null, name: 'FST SATELLITE', buyin: null, stack: null, tags: [] },
           { date: '2099-08-05', start: null, name: '時刻不明の大会', buyin: 3000, stack: 10000, tags: ['satellite'] },
           { date: '2099-08-06', start: '19:15', name: 'ちゃんと読めた大会', buyin: 2000, tags: ['mystery・bounty'] },
         ],
@@ -2776,10 +2801,18 @@ test('★品質: 取込み経路の全体で、休み・見出し・リングゲ
     ])
   );
   const names = result.arr.filter((t) => t.venueId === 'v40').map((t) => t.name);
-  assert.deepEqual(names.sort(), ['ちゃんと読めた大会', '時刻不明の大会'], '休み・見出し・リングゲームは入らない');
+  assert.deepEqual(
+    names.sort(),
+    ['FST SATELLITE', 'ちゃんと読めた大会', '時刻不明の大会'],
+    '休み・見出し・リングゲームは入らないが、証拠ゼロの正当な大会は残る'
+  );
   const reasons = result.summaries[0].dropped.map((d) => d.reason);
-  assert.equal(reasons.filter((r) => /大会と判断できない/.test(r)).length, 2, '休みと見出しの2件');
+  assert.equal(reasons.filter((r) => /定休日・休業のマス/.test(r)).length, 1);
+  assert.equal(reasons.filter((r) => /画像の見出し/.test(r)).length, 1);
   assert.equal(reasons.filter((r) => /トーナメントではない競技形式/.test(r)).length, 1);
+  // 証拠ゼロの行には⚠印が付く
+  assert.equal(result.arr.find((t) => t.name === 'FST SATELLITE').lowConfidence, true);
+  assert.equal(result.arr.find((t) => t.name === 'ちゃんと読めた大会').lowConfidence, undefined);
   // 残った行の中身
   const byName = Object.fromEntries(result.arr.filter((t) => t.venueId === 'v40').map((t) => [t.name, t]));
   assert.equal(byName['時刻不明の大会'].start, '', '00:00 で埋めない');

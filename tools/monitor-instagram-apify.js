@@ -244,22 +244,87 @@ function slugify(name) {
  * 変わらないが、データとしての意味が逆になる。
  */
 /**
- * 「この行はトーナメントか」を、**語彙に頼らず構造で**判定する。
+ * 「この行は大会ではない」ことを判定する。
  *
- * 【何が起きたか】2026-08-01 の dry-run で、v20 の8月分カレンダーから
- * **定休日のマス14件が「休み」という大会名で取り込まれた**(63行中22%)。
- * 店の定休日を「トーナメント」として掲載するのは、日程アグリゲーターとして
- * 最も出してはいけない誤情報。`月間TOURNAMENT`(画像の見出し)も同様に拾われていた。
+ * 【設計をやり直した経緯(2026-08-01)】
+ * 最初は「トーナメントである積極的な証拠(開始時刻/参加費/スタック/保証額)を1つも持たない行は
+ * 大会として扱わない」という【構造だけの判定】にした。語彙に依存しないので漏れない、と考えたが、
+ * **これは誤りだった**。実際の画像を確認したところ:
+ *   v20 8月分 … 月間カレンダーに【大会名のみ】。時刻の記載なし
+ *   v18 8月分 … 【大会名と日付のみ】。時刻・参加費とも記載なし
+ * つまり `FST SATELLITE` `華金` `DEEP STACK` のような【正当な大会】も証拠ゼロで、
+ * 定休日のマスとまったく同じ形をしている。構造判定は
+ * 「大会か否か」ではなく「詳細が書かれているか否か」を見ていただけで、
+ * **v18の30行がまるごと消える**ところだった。
  *
- * 【「休み」「CLOSED」の語リストで弾かない】休業を表す言い方は
- * 「休み」「お休み」「定休日」「CLOSED」「Closed」「-」「×」…と**無限にあり、必ず漏れる**。
- * 代わりに【トーナメントである積極的な証拠】を要求する:
- *   開始時刻 / 参加費 / スタック / 保証額 のうち **1つも無い行は、大会として扱わない**。
- * 定休日のマスにはこのどれも書かれていない(実測でも14件すべて start/buyin/stack が空)。
- * 見出しや飾り文字も同じく落ちる。**語彙に依存しないので、表記が変わっても効き続ける。**
+ * 【結論: 構造では分離できない】「休み」と「FST SATELLITE」を分けているのは
+ * 【名前の意味】だけ。したがってここは語で判定するしかなく、**語のリストは必ず漏れる**。
+ * そこで「漏れない判定」を目指すのをやめ、**漏れた場合の被害を抑える多層防御**にした:
+ *   1. ここ(語の判定)で、よくある表現を落とす
+ *   2. 証拠ゼロの行は捨てずに `lowConfidence: true` を付ける
+ *      → サイトに【⚠ 要確認】バッジが出る。漏れた定休日も、詳細未定の大会も、
+ *        どちらに対しても表示の意味が正しい
+ *   3. 公開前は⑤(人による全件照合)が最後の関門
+ */
+const CLOSURE_TERMS = [
+  '休み',
+  'お休み',
+  '定休日',
+  '休業',
+  '休館',
+  'closed',
+  'close',
+  'holiday',
+  'no game',
+  'nogame',
+  'off',
+];
+
+/** 正規化(全角→半角・小文字・区切りの揺れ吸収)。名前の判定はすべてこれを通す。 */
+function normalizeName(name) {
+  return String(name == null ? '' : name)
+    .normalize('NFKC')
+    .toLowerCase()
+    .replace(/[・/\-_]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * 定休日・休業のマスか。
+ * 記号だけ(`×` `✕` `-` `—` `ー`)や空に近い名前もここで落とす。
+ */
+function isClosureRow(name) {
+  const key = normalizeName(name);
+  if (!key) return true;
+  if (/^[×✕xx*ー—–\-~〜・.,、。\s]+$/u.test(key)) return true;
+  return CLOSURE_TERMS.some((w) => key.includes(w));
+}
+
+/**
+ * 画像の見出しを行として拾ったものか。
+ * `月間TOURNAMENT` のように【大会の固有性がなく、日程表そのものを指す語だけ】でできた名前。
+ * 部分一致にすると `FST TOURNAMENT` のような正当な名前まで落ちるので、
+ * **見出し語を取り除いたあとに何も残らない場合だけ**見出しとみなす。
+ */
+const HEADING_WORDS = ['月間', 'tournament', 'tournaments', 'schedule', 'スケジュール', 'トーナメント', '大会', '予定', '日程', 'monthly'];
+
+function isHeadingRow(name) {
+  const key = normalizeName(name);
+  if (!key) return false;
+  let rest = key;
+  for (const w of HEADING_WORDS) rest = rest.split(w).join(' ');
+  // 年号(2026)や記号だけが残るのも見出し扱い
+  rest = rest.replace(/[0-9]{2,4}/g, ' ').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+  return rest === '';
+}
+
+/**
+ * トーナメントである積極的な証拠(開始時刻/参加費/スタック/保証額)を持つか。
  *
- * 【`buyin: 0` は証拠として数える】0は「無料」という【読み取れた値】であり、
- * フリーロールは実在する大会。null(読み取れなかった)とは区別する。
+ * 【もう「落とす」ためには使わない】上の経緯のとおり、証拠ゼロでも正当な大会はある。
+ * 現在の用途は【`lowConfidence`(⚠要確認)を付けるかの判断】。
+ * `buyin: 0` は「無料」という読み取れた値なので証拠として数える(フリーロールは実在する)。
  */
 function tournamentEvidence(t) {
   const has = (v) => v != null && String(v).trim() !== '';
@@ -271,29 +336,22 @@ function tournamentEvidence(t) {
   };
 }
 
-function looksLikeTournamentRow(t) {
+function hasTournamentEvidence(t) {
   const e = tournamentEvidence(t);
   return e.start || e.buyin || e.stack || e.guarantee;
 }
 
 /**
- * トーナメントではない【競技形式】を除外する。
+ * トーナメントではない【競技形式】か。
  *
- * 【なぜここだけ語リストなのか】「休み」と違い、ポーカーの競技形式は
+ * 【なぜここは語で判定してよいか】ポーカーの競技形式は
  * リングゲーム(=キャッシュゲーム)のように**名前が安定した有限の集合**で、
- * かつ参加費やスタックが書かれていることがあるため上の構造判定をすり抜ける。
- * 「休業を表す無限の言い回し」を列挙するのとは性質が違うので、ここは語で判定してよい。
- * ただし**漏れる前提**で、⑤(人の照合)が最後の関門であることは変わらない。
+ * かつ参加費が書かれていることがある。「休業を表す無限の言い回し」とは性質が違う。
  */
 const NON_TOURNAMENT_FORMATS = ['リングゲーム', 'リング ゲーム', 'ring game', 'ringgame', 'キャッシュゲーム', 'cash game', 'cashgame'];
 
 function isNonTournamentFormat(name) {
-  const key = String(name || '')
-    .normalize('NFKC')
-    .toLowerCase()
-    .replace(/[・/\-_]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  const key = normalizeName(name);
   if (!key) return false;
   return NON_TOURNAMENT_FORMATS.some((w) => key.includes(w));
 }
@@ -386,7 +444,7 @@ function toTournament(t, venueId) {
   // 同じ日・同じ名前で時刻が読めない行が2つあれば id は衝突するが、それは
   // 【区別できないものを区別できないと言っている】だけで正しい。duplicateIdProblem が拾う。
   const startKey = start ? start.replace(':', '') : 'nostart';
-  return {
+  const entry = {
     id: `ig-${venueId}-${t.date}-${startKey}-${slugify(t.name)}`,
     venueId,
     name: String(t.name).trim(),
@@ -402,6 +460,12 @@ function toTournament(t, venueId) {
     source: 'semi',
     verified: false,
   };
+  // 【証拠ゼロの行は捨てずに印を付ける】開始時刻・参加費・スタック・保証額がどれも読めない行は
+  // 「詳細未定の大会」か「語の判定から漏れた定休日」のどちらか。機械には区別できないので、
+  // サイトに【⚠ 要確認】を出す(既存の lowConfidence バッジ)。
+  // どちらの場合でも表示の意味が正しく、⑤(人の全件照合)が最後の関門になる。
+  if (!hasTournamentEvidence(t)) entry.lowConfidence = true;
+  return entry;
 }
 
 /**
@@ -725,10 +789,12 @@ async function runMonitor(opts, libs) {
         let kind = reason ? 'row' : null;
         // 【トーナメントらしさの検査】extractedRowProblem は「data.js に入れてよい形か」を見るが、
         // 「そもそも大会か」は見ない。定休日のマスや見出しはここで落とす。
-        if (!reason && !looksLikeTournamentRow(row)) {
-          reason =
-            '開始時刻・参加費・スタック・保証額のいずれも無く、大会と判断できない' +
-            '(定休日のマスや画像の見出しを拾った可能性)';
+        if (!reason && isClosureRow(row.name)) {
+          reason = '定休日・休業のマス(大会名ではない)';
+          kind = 'not-a-tournament';
+        }
+        if (!reason && isHeadingRow(row.name)) {
+          reason = '画像の見出しを行として拾ったもの(大会の固有名ではない)';
           kind = 'not-a-tournament';
         }
         if (!reason && isNonTournamentFormat(row.name)) {
@@ -1375,7 +1441,10 @@ module.exports = {
   formatFilteredOutPost,
   canonicalTag,
   canonicalTags,
-  looksLikeTournamentRow,
+  hasTournamentEvidence,
+  isClosureRow,
+  isHeadingRow,
+  normalizeName,
   tournamentEvidence,
   isNonTournamentFormat,
   captionSignals,
