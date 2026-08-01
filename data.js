@@ -11868,6 +11868,24 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01KYY0XNH6ZFGM6J069Q34GSV3",
+    "venueId": "v19",
+    "name": "3000 Deep Stack",
+    "date": "2026-08-08",
+    "start": "16:10",
+    "buyin": 3000,
+    "addon": 2000,
+    "stack": 40000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ディープ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "wl-01KXJJTC1F64V904DRE2364EQY",
     "venueId": "v19",
     "name": "2000 Turbo",
@@ -11898,6 +11916,24 @@ const TOURNAMENTS = [
     "reentry": true,
     "prize": null,
     "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01KYY0XNH6B5EEMGFQ0XQJYSYQ",
+    "venueId": "v19",
+    "name": "3000 Deep Stack",
+    "date": "2026-08-15",
+    "start": "16:10",
+    "buyin": 3000,
+    "addon": 2000,
+    "stack": 40000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ディープ"
+    ],
     "source": "auto",
     "verified": false
   },
@@ -11936,6 +11972,24 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01KYY0XNH6AWZZF4PC85DNVTJJ",
+    "venueId": "v19",
+    "name": "3000 Deep Stack",
+    "date": "2026-08-22",
+    "start": "16:10",
+    "buyin": 3000,
+    "addon": 2000,
+    "stack": 40000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ディープ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "wl-01KXJJTC1FJFS6ZSQXQYC6AZS2",
     "venueId": "v19",
     "name": "2000 Turbo",
@@ -11966,6 +12020,24 @@ const TOURNAMENTS = [
     "reentry": true,
     "prize": null,
     "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01KYY0XNH6Y8AB70NQ0H3ED04V",
+    "venueId": "v19",
+    "name": "3000 Deep Stack",
+    "date": "2026-08-29",
+    "start": "16:10",
+    "buyin": 3000,
+    "addon": 2000,
+    "stack": 40000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ディープ"
+    ],
     "source": "auto",
     "verified": false
   }
