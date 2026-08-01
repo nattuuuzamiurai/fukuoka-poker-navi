@@ -410,7 +410,7 @@ test('runMonitor: Visionが同じ行を2回返しても、2件目をid重複と�
   assert.equal(result.anomalies.length, 0);
 });
 
-test('runMonitor: startが読めない同日・同名の2行(どちらも00:00になる)もid重複として破棄する', async () => {
+test('runMonitor: startが読めない同日・同名の2行(どちらも start:"" になる)もid重複として破棄する', async () => {
   const rows = [
     { date: '2099-09-12', name: 'マンデートナメ', buyin: 3000, tags: [] },
     { date: '2099-09-12', name: 'マンデートナメ', buyin: 5000, tags: [] },
@@ -420,7 +420,10 @@ test('runMonitor: startが読めない同日・同名の2行(どちらも00:00�
     fakeLibsFor(rows)
   );
   assert.equal(result.arr.length, 1);
-  assert.equal(result.arr[0].start, '00:00');
+  // 【'00:00' で埋めない】'00:00' は「深夜0時開始」という読み取れた値で、サイトはそう表示する。
+  // 読み取れなかったことを表せるのは空文字(表示は「—」)。既存618件のうち184件が同じ表現。
+  assert.equal(result.arr[0].start, '', "読み取れなかった開始時刻を '00:00' で埋めてはいけない");
+  assert.match(result.arr[0].id, /-nostart-/, 'idの時刻部分は nostart(空だと区切りが読めない)');
   assert.match(result.summaries[0].dropped[0].reason, /同じidの行が重複/);
 });
 
@@ -2694,4 +2697,150 @@ test('CLI: 投稿別の明細が対象投稿数と食い違ったら ::error:: �
   assert.equal(r.status, 0, 'ジョブは落とさない(注記で見せる)');
   assert.match(r.stdout, /::error title=Instagram監視 - 投稿別の明細が合わない::/);
   assert.match(r.stdout, /途中で記録されずに抜けた投稿があります/);
+});
+
+// ============================================================
+// 抽出品質(2026-08-01 dry-run #3 の照合で判明した4件)
+// ============================================================
+
+test('★品質: 読み取れなかった開始時刻を 00:00 で埋めない(深夜0時と表示される実害)', () => {
+  const e = monitor.toTournament({ date: '2026-08-05', name: '大会', buyin: 3000, tags: [] }, 'v20');
+  assert.equal(e.start, '', "'00:00' は「深夜0時開始」という読み取れた値。読み取れなかったことは空文字で表す");
+  assert.match(e.id, /-nostart-/);
+  // 読み取れているときはそのまま入る
+  assert.equal(monitor.toTournament({ date: '2026-08-05', start: '19:15', name: '大会', tags: [] }, 'v20').start, '19:15');
+});
+
+test('★品質: 定休日のマスは「語」ではなく「構造」で落とす(休み/CLOSED/×… に依存しない)', () => {
+  // 休業を表す言い方は無限にあるので語リストでは必ず漏れる。
+  // 代わりに【トーナメントである積極的な証拠】(開始時刻/参加費/スタック/保証額)を要求する。
+  for (const name of ['休み', 'お休み', '定休日', 'CLOSED', 'Closed', '×', '-', '🈳', '月間TOURNAMENT']) {
+    assert.equal(
+      monitor.looksLikeTournamentRow({ name, start: null, buyin: null, stack: null, guarantee: null }),
+      false,
+      `証拠が1つも無い行は大会として扱わない: ${name}`
+    );
+  }
+  // 証拠が1つでもあれば通す
+  assert.equal(monitor.looksLikeTournamentRow({ name: 'X', start: '19:00' }), true);
+  assert.equal(monitor.looksLikeTournamentRow({ name: 'X', stack: 30000 }), true);
+  assert.equal(monitor.looksLikeTournamentRow({ name: 'X', guarantee: 100000 }), true);
+});
+
+test('★品質: buyin:0(無料)は「証拠あり」として扱う(フリーロールを落とさない)', () => {
+  // 0 は「無料」という読み取れた値。null(読み取れなかった)と区別する。
+  assert.equal(monitor.looksLikeTournamentRow({ name: 'フリーロール', buyin: 0 }), true);
+  assert.equal(monitor.looksLikeTournamentRow({ name: 'フリーロール', buyin: null }), false);
+});
+
+test('品質: リングゲーム/キャッシュゲームは非トーナメントとして落とす', () => {
+  for (const n of ['リングゲーム', 'リング ゲーム', 'Ring Game', 'ringgame', 'キャッシュゲーム', 'CASH GAME']) {
+    assert.equal(monitor.isNonTournamentFormat(n), true, `落とすこと: ${n}`);
+  }
+  for (const n of ['デイリートナメ', 'マンデートナメ', 'サテライト', '']) {
+    assert.equal(monitor.isNonTournamentFormat(n), false, `落としてはいけない: ${n}`);
+  }
+});
+
+test('★品質: タグをサイトの語彙に寄せ、未知の語は捨てる', () => {
+  // 2026-08-01 の dry-run で実際に返ってきた値。
+  assert.deepEqual(monitor.canonicalTags(['satellite']), ['サテライト']);
+  assert.deepEqual(monitor.canonicalTags(['freeroll']), ['フリーロール']);
+  assert.deepEqual(monitor.canonicalTags(['deep stack']), ['ディープ']);
+  assert.deepEqual(monitor.canonicalTags(['deepstack']), ['ディープ'], '表記揺れも同じ語に寄せる');
+  assert.deepEqual(monitor.canonicalTags(['mystery・bounty']), ['バウンティ']);
+  // サイトに無い語は捨てる(タグ絞り込みの選択肢を汚さない)
+  assert.deepEqual(monitor.canonicalTags(['freezeout']), []);
+  // 大文字小文字・全角・重複
+  assert.deepEqual(monitor.canonicalTags(['DEEP STACK', 'deepstack', 'ＴＵＲＢＯ']), ['ディープ', 'ターボ']);
+  assert.deepEqual(monitor.canonicalTags(null), []);
+  assert.deepEqual(monitor.canonicalTags(['ターボ']), ['ターボ'], '既に日本語のものはそのまま');
+});
+
+test('★品質: 取込み経路の全体で、休み・見出し・リングゲームが落ち、正しい行だけが残る', async () => {
+  // dry-run #3 で実際に来た形を再現する。
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
+    fakeLibsForBehaviour([
+      {
+        permalink: 'https://www.instagram.com/p/AUG/',
+        postedAt: '2026-07-20T10:00:00.000Z',
+        rows: [
+          { date: '2099-08-01', start: null, name: '休み', buyin: null, stack: null, tags: [] },
+          { date: '2099-08-01', start: null, name: '月間TOURNAMENT', buyin: null, stack: null, tags: [] },
+          { date: '2099-08-03', start: null, name: 'リングゲーム', buyin: 3000, tags: [] },
+          { date: '2099-08-05', start: null, name: '時刻不明の大会', buyin: 3000, stack: 10000, tags: ['satellite'] },
+          { date: '2099-08-06', start: '19:15', name: 'ちゃんと読めた大会', buyin: 2000, tags: ['mystery・bounty'] },
+        ],
+      },
+    ])
+  );
+  const names = result.arr.filter((t) => t.venueId === 'v40').map((t) => t.name);
+  assert.deepEqual(names.sort(), ['ちゃんと読めた大会', '時刻不明の大会'], '休み・見出し・リングゲームは入らない');
+  const reasons = result.summaries[0].dropped.map((d) => d.reason);
+  assert.equal(reasons.filter((r) => /大会と判断できない/.test(r)).length, 2, '休みと見出しの2件');
+  assert.equal(reasons.filter((r) => /トーナメントではない競技形式/.test(r)).length, 1);
+  // 残った行の中身
+  const byName = Object.fromEntries(result.arr.filter((t) => t.venueId === 'v40').map((t) => [t.name, t]));
+  assert.equal(byName['時刻不明の大会'].start, '', '00:00 で埋めない');
+  assert.deepEqual(byName['時刻不明の大会'].tags, ['サテライト'], 'タグは日本語語彙に寄る');
+  assert.equal(byName['ちゃんと読めた大会'].start, '19:15');
+  assert.deepEqual(byName['ちゃんと読めた大会'].tags, ['バウンティ']);
+  // 行レベルの保存則は引き続き成り立つ(落とした行は破棄に数えられている)
+  assert.ok(monitor.checkRowAccounting(result.summaries[0]).ok);
+});
+
+test('★品質: 開始時刻が読めない行が多いと ::warning:: で知らせる', async () => {
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
+    fakeLibsForBehaviour([
+      {
+        permalink: 'https://www.instagram.com/p/NOSTART/',
+        postedAt: '2026-07-20T10:00:00.000Z',
+        rows: Array.from({ length: 4 }, (_, i) => ({
+          date: `2099-08-0${i + 1}`,
+          start: i === 0 ? '19:00' : null,
+          name: `大会${i}`,
+          buyin: 3000,
+          tags: [],
+        })),
+      },
+    ])
+  );
+  const lines = [];
+  const orig = console.log;
+  console.log = (...a) => lines.push(a.join(' '));
+  try {
+    monitor.reportAcceptedRows(result.summaries);
+  } finally {
+    console.log = orig;
+  }
+  const warn = lines.find((l) => l.startsWith('::warning'));
+  assert.ok(warn, '割合が高いときは警告を出すこと');
+  assert.match(warn, /4行中3行\(75%\)/);
+  assert.match(warn, /Visionが時刻を読めていない/);
+  // 明細では「開始時刻不明」と読める形にする(空欄だと⑤で読めない)
+  assert.ok(lines.some((l) => l.includes('追加行: ') && l.includes('開始時刻不明')));
+});
+
+test('品質: すべての行で開始時刻が読めていれば警告を出さない', async () => {
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
+    fakeLibsForBehaviour([
+      {
+        permalink: 'https://www.instagram.com/p/OK/',
+        postedAt: '2026-07-20T10:00:00.000Z',
+        rows: [{ date: '2099-08-01', start: '19:00', name: '大会', buyin: 3000, tags: [] }],
+      },
+    ])
+  );
+  const lines = [];
+  const orig = console.log;
+  console.log = (...a) => lines.push(a.join(' '));
+  try {
+    monitor.reportAcceptedRows(result.summaries);
+  } finally {
+    console.log = orig;
+  }
+  assert.ok(!lines.some((l) => l.startsWith('::warning')), '正常時にノイズを出さない');
 });

@@ -243,10 +243,151 @@ function slugify(name) {
  * 表示はどちらも「詳細は店舗SNSを確認」(index.html / tools/venue-schedule.js の vpBuyin)で
  * 変わらないが、データとしての意味が逆になる。
  */
-function toTournament(t, venueId) {
-  const start = t.start || '00:00';
+/**
+ * 「この行はトーナメントか」を、**語彙に頼らず構造で**判定する。
+ *
+ * 【何が起きたか】2026-08-01 の dry-run で、v20 の8月分カレンダーから
+ * **定休日のマス14件が「休み」という大会名で取り込まれた**(63行中22%)。
+ * 店の定休日を「トーナメント」として掲載するのは、日程アグリゲーターとして
+ * 最も出してはいけない誤情報。`月間TOURNAMENT`(画像の見出し)も同様に拾われていた。
+ *
+ * 【「休み」「CLOSED」の語リストで弾かない】休業を表す言い方は
+ * 「休み」「お休み」「定休日」「CLOSED」「Closed」「-」「×」…と**無限にあり、必ず漏れる**。
+ * 代わりに【トーナメントである積極的な証拠】を要求する:
+ *   開始時刻 / 参加費 / スタック / 保証額 のうち **1つも無い行は、大会として扱わない**。
+ * 定休日のマスにはこのどれも書かれていない(実測でも14件すべて start/buyin/stack が空)。
+ * 見出しや飾り文字も同じく落ちる。**語彙に依存しないので、表記が変わっても効き続ける。**
+ *
+ * 【`buyin: 0` は証拠として数える】0は「無料」という【読み取れた値】であり、
+ * フリーロールは実在する大会。null(読み取れなかった)とは区別する。
+ */
+function tournamentEvidence(t) {
+  const has = (v) => v != null && String(v).trim() !== '';
   return {
-    id: `ig-${venueId}-${t.date}-${String(start).replace(':', '')}-${slugify(t.name)}`,
+    start: has(t && t.start),
+    buyin: has(t && t.buyin),
+    stack: has(t && t.stack),
+    guarantee: has(t && t.guarantee),
+  };
+}
+
+function looksLikeTournamentRow(t) {
+  const e = tournamentEvidence(t);
+  return e.start || e.buyin || e.stack || e.guarantee;
+}
+
+/**
+ * トーナメントではない【競技形式】を除外する。
+ *
+ * 【なぜここだけ語リストなのか】「休み」と違い、ポーカーの競技形式は
+ * リングゲーム(=キャッシュゲーム)のように**名前が安定した有限の集合**で、
+ * かつ参加費やスタックが書かれていることがあるため上の構造判定をすり抜ける。
+ * 「休業を表す無限の言い回し」を列挙するのとは性質が違うので、ここは語で判定してよい。
+ * ただし**漏れる前提**で、⑤(人の照合)が最後の関門であることは変わらない。
+ */
+const NON_TOURNAMENT_FORMATS = ['リングゲーム', 'リング ゲーム', 'ring game', 'ringgame', 'キャッシュゲーム', 'cash game', 'cashgame'];
+
+function isNonTournamentFormat(name) {
+  const key = String(name || '')
+    .normalize('NFKC')
+    .toLowerCase()
+    .replace(/[・/\-_]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!key) return false;
+  return NON_TOURNAMENT_FORMATS.some((w) => key.includes(w));
+}
+
+/**
+ * Visionが返したタグを、サイトが実際に使っている語彙に寄せる。
+ *
+ * 【なぜ必要か】2026-08-01 の dry-run で、Visionは `satellite`(12件) `freeroll`(4件)
+ * `deep stack` / `deepstack`(5件) `mystery・bounty`(2件) のように【英語小文字】で返した。
+ * サイト側の語彙は `サテライト`(200件) `フリーロール`(72) `ディープ`(32) `バウンティ`(20) で、
+ * そのまま入れると**タグ絞り込みが機能しない**(同じ意味のタグが2種類に割れる)。
+ *
+ * 【プロンプトで「日本語で」と書くだけにしないこと】このリポジトリの原則どおり、
+ * LLMの指示遵守を正しさの担保に使わない。プロンプトにも書くが、効いているのはこの変換。
+ *
+ * 【未知のタグは捨てる】通す設計にすると、`freezeout` `special` のような
+ * サイトに存在しない語がそのまま増え、タグ絞り込みの選択肢を汚す。
+ * 捨てても大会自体は残るので損失は小さい(捨てた事実は正規化ログに出る)。
+ */
+const TAG_CANONICAL = new Map([
+  ['satellite', 'サテライト'],
+  ['サテライト', 'サテライト'],
+  ['freeroll', 'フリーロール'],
+  ['free roll', 'フリーロール'],
+  ['フリーロール', 'フリーロール'],
+  ['deepstack', 'ディープ'],
+  ['deep stack', 'ディープ'],
+  ['deep', 'ディープ'],
+  ['ディープ', 'ディープ'],
+  ['ディープスタック', 'ディープ'],
+  ['bounty', 'バウンティ'],
+  ['mystery bounty', 'バウンティ'],
+  ['mystery', 'バウンティ'],
+  ['バウンティ', 'バウンティ'],
+  ['ミステリーバウンティ', 'バウンティ'],
+  ['turbo', 'ターボ'],
+  ['ターボ', 'ターボ'],
+  ['plo', 'PLO'],
+  ['mix', 'ミックス'],
+  ['ミックス', 'ミックス'],
+  ['league', 'リーグ'],
+  ['リーグ', 'リーグ'],
+  ['special', '特別開催'],
+  ['特別開催', '特別開催'],
+  ['jopt', 'JOPT'],
+  ['wjpt', 'WJPT'],
+  ['fst', 'FST'],
+]);
+
+/** タグ1つを正規化する。未知なら null(=捨てる)。 */
+function canonicalTag(tag) {
+  if (tag == null) return null;
+  // 全角/半角・大文字小文字・区切り(・, /, -, 全角空白)の揺れを吸収してから引く。
+  const key = String(tag)
+    .normalize('NFKC')
+    .toLowerCase()
+    .replace(/[・/\-_]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!key) return null;
+  if (TAG_CANONICAL.has(key)) return TAG_CANONICAL.get(key);
+  // `mystery・bounty` のような複合語は、含まれる既知語のうち最も長いものに寄せる。
+  for (const [k, v] of [...TAG_CANONICAL].sort((a, b) => b[0].length - a[0].length)) {
+    if (key.includes(k)) return v;
+  }
+  return null;
+}
+
+/** タグ配列を正規化する(未知は捨て、重複は畳む)。 */
+function canonicalTags(tags) {
+  if (!Array.isArray(tags)) return [];
+  const out = [];
+  for (const t of tags) {
+    const c = canonicalTag(t);
+    if (c && !out.includes(c)) out.push(c);
+  }
+  return out;
+}
+
+function toTournament(t, venueId) {
+  // 【★読み取れなかった開始時刻を '00:00' で埋めないこと★】
+  // '00:00' は「深夜0時開始」という【読み取れた値】であり、サイトはそのまま「00:00」と表示する
+  // (venue-schedule.js / index.html はどちらも `t.start || '—'`)。つまり
+  // 【プレイヤーが深夜0時に店へ行く】という実害に直結する。
+  // 既存618件に '00:00' は1件も無い一方、**184件が start:'' を使っており**、
+  // それは「—」と表示される。「読み取れなかった」の正しい表現は空文字の方。
+  // これは buyin で `0`(=無料という読み取れた値)を既定値にしないのと同じ規律。
+  const start = t.start == null ? '' : String(t.start);
+  // idの時刻部分。空のときは 'nostart' を置く(空文字だと `--` が並んで境界が読めなくなる)。
+  // 同じ日・同じ名前で時刻が読めない行が2つあれば id は衝突するが、それは
+  // 【区別できないものを区別できないと言っている】だけで正しい。duplicateIdProblem が拾う。
+  const startKey = start ? start.replace(':', '') : 'nostart';
+  return {
+    id: `ig-${venueId}-${t.date}-${startKey}-${slugify(t.name)}`,
     venueId,
     name: String(t.name).trim(),
     date: t.date,
@@ -257,7 +398,7 @@ function toTournament(t, venueId) {
     guarantee: t.guarantee != null ? Number(t.guarantee) : null,
     reentry: t.reentry === 'late' ? 'late' : Boolean(t.reentry),
     prize: t.prize || null,
-    tags: Array.isArray(t.tags) ? t.tags : [],
+    tags: canonicalTags(t.tags),
     source: 'semi',
     verified: false,
   };
@@ -582,6 +723,18 @@ async function runMonitor(opts, libs) {
         }
         let reason = extractedRowProblem(row);
         let kind = reason ? 'row' : null;
+        // 【トーナメントらしさの検査】extractedRowProblem は「data.js に入れてよい形か」を見るが、
+        // 「そもそも大会か」は見ない。定休日のマスや見出しはここで落とす。
+        if (!reason && !looksLikeTournamentRow(row)) {
+          reason =
+            '開始時刻・参加費・スタック・保証額のいずれも無く、大会と判断できない' +
+            '(定休日のマスや画像の見出しを拾った可能性)';
+          kind = 'not-a-tournament';
+        }
+        if (!reason && isNonTournamentFormat(row.name)) {
+          reason = 'トーナメントではない競技形式(リングゲーム/キャッシュゲーム)';
+          kind = 'not-a-tournament';
+        }
         let entry = null;
         if (!reason) {
           entry = toTournament(row, store.venueId);
@@ -877,8 +1030,21 @@ function checkRowAccounting(summary) {
 function reportAcceptedRows(summaries) {
   const withRows = summaries.filter((s) => s.addedRows.length > 0);
   const total = withRows.reduce((a, s) => a + s.addedRows.length, 0);
+  const noStart = withRows.reduce((a, s) => a + s.addedRows.filter((r) => !r.entry.start).length, 0);
   console.log('');
   console.log(`[monitor-instagram-apify] === 追加される行の明細(計${total}行) ===`);
+  if (noStart > 0) {
+    // 【声を大きくする】開始時刻はプレイヤーが最も必要とする値。読めた行が少ないなら
+    // 「店が時刻を書いていない」のではなく「Visionが時刻の列を読めていない」可能性が高い。
+    // 0件のときは出さない(ノイズにしない)。
+    const pct = Math.round((noStart / total) * 100);
+    console.log(
+      `::warning title=Instagram監視 - 開始時刻が読めない行::${total}行中${noStart}行(${pct}%)で開始時刻が読み取れていません。` +
+        'サイトには「—」と表示されます(00:00 とは表示しません)。' +
+        '割合が高い場合は、店が時刻を書いていないのではなく【Visionが時刻を読めていない】可能性が高いので、' +
+        '投稿画像を確認してください。'
+    );
+  }
   if (total === 0) {
     console.log('  (data.js に増える行はありません)');
   }
@@ -893,7 +1059,7 @@ function reportAcceptedRows(summaries) {
         ? ` / ★既存の手入力(id=${replacedManualIds.join(', ')})を置き換え`
         : '';
       console.log(
-        `[monitor-instagram-apify] 追加行: ${entry.venueId} / ${entry.date} / ${entry.start} / ${entry.name}` +
+        `[monitor-instagram-apify] 追加行: ${entry.venueId} / ${entry.date} / ${entry.start || '開始時刻不明'} / ${entry.name}` +
           ` / 参加費${num(entry.buyin)} / アドオン${num(entry.addon)} / スタック${num(entry.stack)}` +
           ` / GTD${num(entry.guarantee)} / 再入場${reentry} / 賞品${entry.prize == null ? '不明' : entry.prize}` +
           ` / タグ${tags} / ${permalink || '出所不明'}${replaced}`
@@ -1207,6 +1373,11 @@ module.exports = {
   formatDroppedRow,
   formatNormalizedRow,
   formatFilteredOutPost,
+  canonicalTag,
+  canonicalTags,
+  looksLikeTournamentRow,
+  tournamentEvidence,
+  isNonTournamentFormat,
   captionSignals,
   emptyCaveat,
   pickNewPostsWithStats,
