@@ -2749,7 +2749,7 @@ test('★品質: 証拠ゼロの行には lowConfidence(⚠要確認)を付け�
   for (const t of [
     { date: '2026-08-05', name: 'X', start: '19:00', tags: [] },
     { date: '2026-08-05', name: 'X', buyin: 3000, tags: [] },
-    { date: '2026-08-05', name: 'フリーロール', buyin: 0, tags: [] },
+    { date: '2026-08-05', name: '感謝祭トナメ', buyin: 0, tags: [] },
     { date: '2026-08-05', name: 'X', stack: 30000, tags: [] },
     { date: '2026-08-05', name: 'X', guarantee: 100000, tags: [] },
   ]) {
@@ -2876,4 +2876,108 @@ test('品質: すべての行で開始時刻が読めていれば警告を出さ
     console.log = orig;
   }
   assert.ok(!lines.some((l) => l.startsWith('::warning')), '正常時にノイズを出さない');
+});
+
+// ============================================================
+// 部分一致による過剰破棄の防止 / 名前由来の参加費 / 捨てたタグの記録
+// ============================================================
+
+test('★品質: 休業判定を部分一致にしない(正当な大会を落とさない)', () => {
+  // `some((w) => key.includes(w))` にすると短い語(とくに 'off')が単語の内側で一致する。
+  // 【層1で捨てた行は層2に届かない】ので、⚠を付けて残す多層防御に到達しないまま
+  // 内容が完全に失われ、lastPostedAt は前進するので再試行もされない。
+  for (const name of [
+    'OFFICIAL TOURNAMENT',
+    'PLAYOFF',
+    'PLAY OFF',
+    'KICK OFF',
+    'TAKE OFF',
+    'OFF THE CHARTS',
+    '夏休みスペシャル',
+    '冬休みトナメ',
+    'GW休みなし営業記念',
+    'HOLIDAY SPECIAL',
+    'CLOSE THE DEAL',
+  ]) {
+    assert.equal(monitor.isClosureRow(name), false, `正当な大会を休業扱いにしてはいけない: ${name}`);
+  }
+});
+
+test('品質: 休業語だけでできた名前は引き続き落とす', () => {
+  for (const name of ['休み', 'お休み', '定休日', '休業', '休館', 'CLOSED', 'close', 'holiday', 'no game', 'off', '×', 'ー', '']) {
+    assert.equal(monitor.isClosureRow(name), true, `落とすこと: ${JSON.stringify(name)}`);
+  }
+});
+
+test('★品質: 名前由来かもしれない参加費は「証拠」に数えない(⚠を消させない)', () => {
+  // Visionは画像に金額が無くても FREE ROLL→0 / 1K MULTI→1000 と推論して返すことがある。
+  // これを証拠に数えると ⚠要確認 が消え、「誤った参加費の公開」と
+  // 「それを疑えと伝える唯一の表示の消失」が重なる。⑤でも画像に数字はあるので見抜けない。
+  for (const t of [
+    { name: '1K MULTI', buyin: 1000 },
+    { name: 'FREE ROLL', buyin: 0 },
+    { name: '大還元フリロ', buyin: 0 },
+    { name: '2K BOUNTY', buyin: 2000 },
+    { name: '3000円トナメ', buyin: 3000 },
+  ]) {
+    assert.equal(monitor.hasTournamentEvidence(t), false, `⚠を残すこと: ${t.name}`);
+  }
+  // 名前に金額トークンが無ければ、buyin は従来どおり証拠
+  assert.equal(monitor.hasTournamentEvidence({ name: 'デイリートナメ', buyin: 3000 }), true);
+  // buyin 以外の証拠があれば、名前に金額トークンがあっても証拠あり(名前由来を疑う必要がない)
+  assert.equal(monitor.hasTournamentEvidence({ name: '1K MULTI', buyin: 1000, start: '19:00' }), true);
+  assert.equal(monitor.hasTournamentEvidence({ name: '1K MULTI', buyin: 1000, stack: 20000 }), true);
+});
+
+test('★品質: 参加費の値そのものは消さない(⚠を残すだけ)', () => {
+  const e = monitor.toTournament({ date: '2026-08-05', name: '1K MULTI', buyin: 1000, tags: [] }, 'v20');
+  assert.equal(e.buyin, 1000, '値を消すと情報が失われる。消すのではなく⚠を残す');
+  assert.equal(e.lowConfidence, true);
+});
+
+test('★品質: 捨てたタグが正規化ログに記録される(コメントを事実にする)', async () => {
+  // canonicalTags は toTournament の中で走り normalizeExtractedRow の notes 経路を通らないので、
+  // 取込み側で明示的に記録しないと「捨てた事実はログに出る」が嘘になる。
+  assert.deepEqual(monitor.droppedTags(['satellite', 'freezeout', 'multi', 'ノーリミット']), [
+    'freezeout',
+    'multi',
+    'ノーリミット',
+  ]);
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
+    fakeLibsForBehaviour([
+      {
+        permalink: 'https://www.instagram.com/p/TAG/',
+        postedAt: '2026-07-20T10:00:00.000Z',
+        rows: [
+          {
+            date: '2099-08-05',
+            start: '19:00',
+            name: 'タグが混ざる大会',
+            buyin: 3000,
+            tags: ['satellite', 'freezeout', 'multi', 'ノーリミット'],
+          },
+        ],
+      },
+    ])
+  );
+  assert.deepEqual(result.arr.find((t) => t.venueId === 'v40').tags, ['サテライト']);
+  const note = result.summaries[0].normalized.find((n) => n.notes.some((x) => x.field === 'tags'));
+  assert.ok(note, '捨てたタグが正規化ログに残ること');
+  assert.deepEqual(note.notes[0].from, ['freezeout', 'multi', 'ノーリミット']);
+  assert.equal(result.summaries[0].normalizedCount, 1, '件数にも数えられること');
+});
+
+test('品質: 捨てるタグが無ければ正規化ログを汚さない', async () => {
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
+    fakeLibsForBehaviour([
+      {
+        permalink: 'https://www.instagram.com/p/OK/',
+        postedAt: '2026-07-20T10:00:00.000Z',
+        rows: [{ date: '2099-08-05', start: '19:00', name: '大会', buyin: 3000, tags: ['satellite'] }],
+      },
+    ])
+  );
+  assert.equal(result.summaries[0].normalizedCount, 0);
 });

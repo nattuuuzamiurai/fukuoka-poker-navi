@@ -298,7 +298,24 @@ function isClosureRow(name) {
   const key = normalizeName(name);
   if (!key) return true;
   if (/^[×✕xx*ー—–\-~〜・.,、。\s]+$/u.test(key)) return true;
-  return CLOSURE_TERMS.some((w) => key.includes(w));
+  // 【★部分一致にしないこと★】`some((w) => key.includes(w))` にすると、短い語が
+  // 単語の内側で一致して【正当な大会を落とす】。実測では
+  //   OFFICIAL TOURNAMENT / PLAYOFF / KICK OFF / TAKE OFF(← 'off')
+  //   夏休みスペシャル / 冬休みトナメ(← '休み')
+  //   HOLIDAY SPECIAL / CLOSE THE DEAL
+  // が破棄され、12件中10件が過剰破棄だった。対象6店は英語名を多用するので理論上の話ではない。
+  //
+  // しかも【層1で捨てた行は層2に届かない】— 「⚠を付けて残す」多層防御に到達しないまま、
+  // 内容が完全に失われ、lastPostedAt は前進するので再試行もされない。
+  //
+  // そこで isHeadingRow と同じ形にする: 休業語を取り除いて【何も残らない】ときだけ休業とみなす。
+  // 副作用として `本日休み` `お休みです` のような複合表現は漏れるが、
+  // 漏れた定休日は証拠ゼロなので lowConfidence(⚠要確認)が付き、層2が受け止める。
+  // 【非対称性】漏れ=⚠付きで公開(⑤で拾える) / 過剰破棄=完全に失われ再試行なし。
+  let rest = key;
+  for (const w of [...CLOSURE_TERMS].sort((a, b) => b.length - a.length)) rest = rest.split(w).join(' ');
+  rest = rest.replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+  return rest === '';
 }
 
 /**
@@ -336,9 +353,38 @@ function tournamentEvidence(t) {
   };
 }
 
+/**
+ * 名前に「金額そのもの」を表すトークンが含まれるか。
+ *
+ * 【意味の推測はしない】`1K` が参加費なのかバウンティ額なのかは判断しない。
+ * 「その数字は名前から来た可能性がある」という**観測だけ**を返す。
+ */
+const MONEY_TOKEN_IN_NAME = /(free|フリーロール|フリロ|無料|[0-9]+\s*k(?![a-z])|[0-9]+\s*円|[0-9]+\s*yen|¥\s*[0-9])/i;
+
+function nameContainsMoneyToken(name) {
+  return MONEY_TOKEN_IN_NAME.test(normalizeName(name));
+}
+
+/**
+ * トーナメントである証拠を持つか(= ⚠要確認 を付けずに済むか)。
+ *
+ * 【名前由来の可能性がある buyin は証拠に数えない】
+ * Visionは画像に金額が無くても `FREE ROLL`→0 / `1K MULTI`→1000 のように
+ * **大会名から参加費を推論して返すことがある**。値自体は妥当なことが多いが、
+ * これを証拠として数えると【⚠要確認バッジが消える】。すると
+ *   ・誤った参加費が公開される
+ *   ・かつ、それを疑えと伝える唯一の表示も消える
+ * が**重なる**。しかも画像に数字はあるので⑤(人の照合)でも一致して見え、見抜けない。
+ * ⑤を最後の関門にしてきたこの案件で、**⑤の外側に落ちる唯一の経路**だった。
+ *
+ * そこで「証拠が buyin だけ」かつ「名前に金額トークンがある」行は証拠なしとして扱い、
+ * ⚠を残す。**参加費の値そのものは消さない**(消す方が情報を失う)。
+ */
 function hasTournamentEvidence(t) {
   const e = tournamentEvidence(t);
-  return e.start || e.buyin || e.stack || e.guarantee;
+  if (e.start || e.stack || e.guarantee) return true;
+  if (!e.buyin) return false;
+  return !nameContainsMoneyToken(t && t.name);
 }
 
 /**
@@ -369,7 +415,9 @@ function isNonTournamentFormat(name) {
  *
  * 【未知のタグは捨てる】通す設計にすると、`freezeout` `special` のような
  * サイトに存在しない語がそのまま増え、タグ絞り込みの選択肢を汚す。
- * 捨てても大会自体は残るので損失は小さい(捨てた事実は正規化ログに出る)。
+ * 捨てても大会自体は残るので損失は小さい。
+ * **捨てた事実は取込み側が正規化ログ(summary.normalized)に記録する**
+ * (`droppedTags` を使う。この関数自体は notes を持たないので、記録は呼び出し側の責任)。
  */
 const TAG_CANONICAL = new Map([
   ['satellite', 'サテライト'],
@@ -429,6 +477,12 @@ function canonicalTags(tags) {
     if (c && !out.includes(c)) out.push(c);
   }
   return out;
+}
+
+/** サイトの語彙に無くて捨てられるタグを返す(記録用)。 */
+function droppedTags(tags) {
+  if (!Array.isArray(tags)) return [];
+  return tags.filter((t) => canonicalTag(t) === null && String(t == null ? '' : t).trim() !== '');
 }
 
 function toTournament(t, venueId) {
@@ -825,6 +879,15 @@ async function runMonitor(opts, libs) {
           summary.dropped.push(record);
           console.warn(formatDroppedRow(store, post, row, reason));
           continue;
+        }
+        // 【捨てたタグを記録する】canonicalTags は toTournament の中で走るので
+        // normalizeExtractedRow の notes 経路を通らない。ここで記録しないと
+        // 「捨てた事実はログに出る」が嘘になる(テレメトリについて事実でない記述を残さない)。
+        const lostTags = droppedTags(row.tags);
+        if (lostTags.length) {
+          const note = [{ field: 'tags', from: lostTags, to: null, reason: 'サイトの語彙に無いタグを捨てた' }];
+          summary.normalized.push({ venueId: store.venueId, permalink: post.permalink, notes: note, name: row.name });
+          console.warn(formatNormalizedRow(store, post, row, note));
         }
         usedIds.add(entry.id);
         extracted.push(entry);
@@ -1441,6 +1504,8 @@ module.exports = {
   formatFilteredOutPost,
   canonicalTag,
   canonicalTags,
+  droppedTags,
+  nameContainsMoneyToken,
   hasTournamentEvidence,
   isClosureRow,
   isHeadingRow,
