@@ -172,13 +172,15 @@ jobs:
     # 【ハングを何時間も垂れ流さないための上限】GitHub Actions の既定は360分で、
     # 何かが固まったときに6時間気づけない。実測では 6店 × 直近12投稿の初回バックログでも
     # 全体約10分(Vision呼び出し27回)、Vision の max_tokens を上げた後の見積りでも20〜40分。
-    # 60分あれば正常な実行が切られることはなく、異常なら1時間で赤くなる。
+    # 【2026-08-01に60→90分へ】Apifyの取得タイムアウトを60秒→180秒にし、リトライを1回
+    # 入れたため、最悪ケースが 6店 × 180秒 × 2回 = 36分 に増えた。Vision(20〜40分)と
+    # 合わせると60分では足りない可能性がある。正常時は従来どおり10〜25分で終わる。
     #
     # 【この上限はジョブ全体のもの】Apify取得・画像ダウンロード・Vision抽出に加え、
     # git pull --rebase / gen-venue-pages / gen-sitemap の再生成も同じジョブに乗る。
     # Vision 1回あたりの無音上限(tools/venue-schedule-vision.js の STREAM_IDLE_TIMEOUT_MS)
     # だけを見て全体の所要時間を推し量らないこと。
-    timeout-minutes: 60
+    timeout-minutes: 90
     steps:
       # 【このジョブが dry-run になる条件はこの1箇所だけで決まる】後続ステップは
       # steps.mode.outputs.dry_run を見るだけで、イベント種別も入力も自分では解釈しない。
@@ -288,12 +290,24 @@ jobs:
           # dry-run の判断材料はログだけなので、全店合計のブロックだけはジョブサマリにも出して
           # 「Actionsの画面を開けば分かる」状態にする(生ログを開かないと読めない、をやめる)。
           # tee でそのまま標準出力にも流すため、::error:: / ::warning:: の注記は従来どおり機能する。
+          # 【終了コード 2 = 一部の店の取得に失敗(書き込みは完了)】
+          # 0=全店成功 / 1=何も書いていない / 2=一部失敗。2 でもジョブは赤くするが、
+          # 成功した店のデータはコミットしたいので、後続ステップは走らせる必要がある。
+          # そこで一旦 rc を控え、コミット後に最終ステップで非ゼロ終了させる。
           set -o pipefail
+          rc=0
           if [ "$DRY_RUN" = "true" ]; then
-            node tools/monitor-instagram-apify.js --dry-run | tee /tmp/monitor-output.txt
+            node tools/monitor-instagram-apify.js --dry-run | tee /tmp/monitor-output.txt || rc=$?
           else
-            node tools/monitor-instagram-apify.js | tee /tmp/monitor-output.txt
+            node tools/monitor-instagram-apify.js | tee /tmp/monitor-output.txt || rc=$?
           fi
+
+          # rc=1(何も書いていない)はここで即座に落とす。rc=2 は書き込み済みなので後続へ進む。
+          if [ "$rc" = "1" ]; then
+            echo "::error title=Instagram監視 - 中止::data.js / 状態ファイルは書き換えていません。"
+            exit 1
+          fi
+          echo "$rc" > /tmp/monitor-rc.txt
 
           # 「=== 全店合計 ===」からその段落の終わり(空行)までを抜き出す。
           # 見つからない場合でもジョブは落とさない(集計の抜き出しは補助であって本質ではない)。
@@ -457,3 +471,15 @@ jobs:
             exit 0
           fi
           git push
+
+      # 【rc=2 の反映】一部の店の取得に失敗した回は、コミット・pushまで終わらせたうえで
+      # 最後にジョブを赤くする。ここより前で落とすと、成功した店のデータが残らない。
+      # `if: always()` にはしない — 前段が別の理由で失敗したときは、その失敗をそのまま見せる。
+      - name: 一部の店の取得に失敗していたらジョブを失敗にする
+        run: |
+          rc=$(cat /tmp/monitor-rc.txt 2>/dev/null || echo 0)
+          if [ "$rc" = "2" ]; then
+            echo "::error title=Instagram監視 - 一部の店を取得できませんでした::取得できた店のデータは反映済みです。失敗した店の確認済み投稿日時は前進していないので、次回の実行でやり直せます。上のログの「取得に失敗した店」を確認してください。"
+            exit 2
+          fi
+          echo "全店の取得に成功しました。"

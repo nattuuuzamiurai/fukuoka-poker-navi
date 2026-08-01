@@ -662,6 +662,8 @@ async function runMonitor(opts, libs) {
   const lostPosts = [];
   // Visionが0件を返した投稿。誤検知の可能性があるので ::warning:: で報告する。
   const emptyResults = [];
+  // 取得に失敗した店。ジョブは非ゼロ終了させるが、成功した店のデータは書き込む。
+  const storeFailures = [];
   // 今回の取込みで既に採用した id。id は venueId を含むので店を跨いだ衝突は起きないが、
   // 「同じ投稿が2回、同じ行を返す」「同じ日・同じ大会名で start が読めなかった2行」の衝突を拾う。
   const usedIds = new Set();
@@ -672,40 +674,44 @@ async function runMonitor(opts, libs) {
     // fetchStats には Apifyが返した生の件数と、必須フィールド欠落で捨てた件数が入る
     // (埋めない実装のときは undefined のままで、下で「捨てていない」として扱う)。
     const fetchStats = {};
-    const posts = await fetchLib.fetchInstagramPosts(store.handle, { stats: fetchStats });
+    // 【summary は fetch より前に作る】取得に失敗した店も1行ぶんの記録を残す必要があるため。
+    // 取込み系の数字(apifyRawCount など)は取得に成功してから埋める。
+    const summary = makeStoreSummary(store);
+    let posts;
+    try {
+      posts = await fetchLib.fetchInstagramPosts(store.handle, { stats: fetchStats });
+    } catch (e) {
+      // 【店舗単位で隔離する】1店の取得失敗で全店を止めない。
+      // 2026-08-01 の dry-run #4 では1店目のタイムアウトで残り5店が取得すらされなかった。
+      //
+      // 【★この店の lastPostedAt は絶対に前進させない★】nextState は state の浅いコピーなので、
+      // ここで触らずに continue すれば前回値がそのまま残る。前進させてしまうと
+      // 「取得に失敗しただけの投稿」が処理済みとして【永久に失われる】。
+      // Waitinglist取込み(import-waitinglist.js)にも同じ隔離が入っている(PR #22)が、
+      // あちらは状態ファイルを持たないので、この lastPostedAt の扱いだけが Instagram 固有。
+      // 実装は共通化していないので、片方を直しても自動では追従しない点に注意。
+      summary.fetchFailed = true;
+      summary.fetchError = e && e.message ? e.message : String(e);
+      summary.fetchElapsedMs = fetchStats.elapsedMs != null ? fetchStats.elapsedMs : null;
+      storeFailures.push({ store, error: summary.fetchError, elapsedMs: summary.fetchElapsedMs });
+      console.warn(
+        `[monitor-instagram-apify] ${store.label}(${store.venueId}): 取得失敗、この店はスキップ` +
+          `(確認済み投稿日時は前進させないので次回やり直せます): ${summary.fetchError}`
+      );
+      summaries.push(summary);
+      continue;
+    }
+    summary.fetchElapsedMs = fetchStats.elapsedMs != null ? fetchStats.elapsedMs : null;
 
     const picked = pickNewPostsWithStats(posts, prev && prev.lastPostedAt);
     const newPosts = picked.posts;
-    const summary = {
-      store,
-      // 取込みの最上流から数える。Apifyが返した生の件数が分からない実装では
-      // 「1件も捨てていない」とみなす(誤って残余を出さないため)。
-      apifyRawCount: typeof fetchStats.rawCount === 'number' ? fetchStats.rawCount : posts.length,
-      malformedCount: typeof fetchStats.malformed === 'number' ? fetchStats.malformed : 0,
-      invalidPostedAtCount: picked.invalidPostedAt,
-      alreadySeenCount: picked.alreadySeen,
-      newPostCount: newPosts.length,
-      scheduleLikeCount: 0,
-      filteredOutCount: 0,
-      extractedCount: 0,
-      droppedCount: 0,
-      dropped: [],
-      normalizedCount: 0,
-      normalized: [],
-      // 投稿レベルの内訳。scheduleLike の1投稿は必ずこのどれか1つに入る(下の保存則を参照)。
-      importedPostCount: 0,
-      repostedPostCount: 0,
-      unusablePostCount: 0,
-      visionFailedCount: 0,
-      imageFailedCount: 0,
-      emptyResultCount: 0,
-      // 行レベル。visionRowCount = Visionが返した行の総数。
-      visionRowCount: 0,
-      stats: null,
-      // 手順⑤(採用行の全件照合)のための明細。
-      addedRows: [], // { entry, permalink } — 実際に data.js へ増える行と、その出所の投稿
-      posts: [], // 投稿ごとの1行サマリ(抽出行数・日付レンジ・その投稿からの追加件数)
-    };
+    // 取込みの最上流から数える。Apifyが返した生の件数が分からない実装では
+    // 「1件も捨てていない」とみなす(誤って残余を出さないため)。
+    summary.apifyRawCount = typeof fetchStats.rawCount === 'number' ? fetchStats.rawCount : posts.length;
+    summary.malformedCount = typeof fetchStats.malformed === 'number' ? fetchStats.malformed : 0;
+    summary.invalidPostedAtCount = picked.invalidPostedAt;
+    summary.alreadySeenCount = picked.alreadySeen;
+    summary.newPostCount = newPosts.length;
 
     if (newPosts.length === 0) {
       summaries.push(summary);
@@ -1041,7 +1047,70 @@ async function runMonitor(opts, libs) {
     summaries.push(summary);
   }
 
-  return { arr, state: nextState, changed, summaries, anomalies, lostPosts, emptyResults };
+  return { arr, state: nextState, changed, summaries, anomalies, lostPosts, emptyResults, storeFailures, storeCount: stores.length };
+}
+
+/**
+ * 店1つぶんのサマリの初期値。
+ *
+ * 【fetch より前に作れること】が要件。取得に失敗した店も「対象だったのに観測できなかった」
+ * という1行を残さないと、店レベルの保存則が成り立たず「新着0件」と見分けが付かなくなる。
+ */
+function makeStoreSummary(store) {
+  return {
+    store,
+    // 取込みレベル(取得に成功してから埋める)
+    apifyRawCount: 0,
+    malformedCount: 0,
+    invalidPostedAtCount: 0,
+    alreadySeenCount: 0,
+    newPostCount: 0,
+    scheduleLikeCount: 0,
+    filteredOutCount: 0,
+    extractedCount: 0,
+    droppedCount: 0,
+    dropped: [],
+    normalizedCount: 0,
+    normalized: [],
+    // 投稿レベルの内訳。scheduleLike の1投稿は必ずこのどれか1つに入る。
+    importedPostCount: 0,
+    repostedPostCount: 0,
+    unusablePostCount: 0,
+    visionFailedCount: 0,
+    imageFailedCount: 0,
+    emptyResultCount: 0,
+    // 行レベル。visionRowCount = Visionが返した行の総数。
+    visionRowCount: 0,
+    stats: null,
+    // 取得そのものに失敗した店(この店は1件も観測できていない)。
+    fetchFailed: false,
+    fetchError: null,
+    fetchElapsedMs: null,
+    // 手順⑤(採用行の全件照合)のための明細。
+    addedRows: [],
+    posts: [],
+  };
+}
+
+/**
+ * 【店レベルの保存則】対象の店は、必ず「観測できた」か「取得に失敗した」かのどちらかに入る。
+ *
+ * 【なぜ要るか】店舗単位で隔離すると、失敗した店は取込み・投稿・行のどの保存則からも
+ * 「0件」として素通りする(何も観測していないので 0 = 0 で成立してしまう)。
+ * それ自体は正しいが、**「取得に失敗した店」と「新着が無かった店」が同じ0に見える**のは
+ * この案件が繰り返し潰してきた誤報の形そのもの。店の単位でも数え、必ず表に出す。
+ *
+ * @returns {{ ok: boolean, expected: number, observed: number, failed: number }}
+ */
+function checkStoreAccounting(summaries, storeCount) {
+  // 【★summaries.length と比べてはいけない★】observed を `summaries.length - failed` で
+  // 出して `observed + failed === summaries.length` を見ると【恒等式】になり、何も検査しない。
+  // R-1 で潰したのとまったく同じ罠(各項を残差で定義すると保存則が自明になる)。
+  // 比べる相手は【対象店舗の数】。こうすると「summaries.push を忘れた店」が残余として出る。
+  const failed = summaries.filter((s) => s.fetchFailed).length;
+  const observed = summaries.filter((s) => !s.fetchFailed).length;
+  const expected = typeof storeCount === 'number' ? storeCount : summaries.length;
+  return { ok: observed + failed === expected, expected, observed, failed, missing: expected - (observed + failed) };
 }
 
 /**
@@ -1225,19 +1294,61 @@ function emptyCaveat(count) {
 }
 
 /**
+ * 取得に失敗した店を ::error:: で報告する。
+ *
+ * 【ジョブは非ゼロ終了させる】これまでの「ジョブは緑のまま通す」判断は
+ * 「取り込めた他店のデータと状態の前進をリポジトリに残すため」だった。
+ * 取得失敗はそれとは性質が違い、**その店は今日1日ぶん丸ごと観測できていない**。
+ * 成功した店のデータは書き込んだうえで、Actions は赤くして人に見せる。
+ */
+function reportStoreFailures(storeFailures, summaries, storeCount) {
+  const acc = checkStoreAccounting(summaries, storeCount);
+  if (!acc.ok) {
+    console.log(
+      `::error title=Instagram監視 - 店の集計が合わない::対象${acc.expected}店に対し` +
+        `観測${acc.observed}店+失敗${acc.failed}店で合いません(バグ)。`
+    );
+  }
+  if (!storeFailures || storeFailures.length === 0) return;
+  console.log('');
+  console.log(
+    `::error title=Instagram監視 - 取得に失敗した店::${storeFailures.length}店の投稿を取得できませんでした` +
+      `(対象${acc.expected}店中)。**この店は今日1日ぶん丸ごと観測できていません**。` +
+      '確認済み投稿日時は前進させていないので、次回の実行でやり直せます。' +
+      '他店の取り込みは完了しています。'
+  );
+  for (const f of storeFailures) {
+    const sec = f.elapsedMs != null ? `${Math.round(f.elapsedMs / 1000)}秒` : '不明';
+    console.log(
+      `[monitor-instagram-apify] 取得失敗: 店=${f.store.label}(${f.store.venueId}) / @${f.store.handle}` +
+        ` / 所要=${sec} / 理由=${f.error}`
+    );
+  }
+}
+
+/**
  * 全店の合計を1ブロックで出す。
  *
  * 【dry-run でもカウンタを観測できるようにするため必要】dry-run は状態ファイルを書かないので、
  * lastExtraction に入れた永続カウンタはディスクに残らない。dry-run の判断材料は
  * このログだけなので、店ごとの内訳とは別に合計をここで出す。
  */
-function reportTotals(summaries) {
+function reportTotals(summaries, storeCount) {
   const sum = (f) => summaries.reduce((a, s) => a + f(s), 0);
   const lost = sum((s) => s.imageFailedCount + s.visionFailedCount + s.unusablePostCount);
   const intakeResidual = sum((s) => checkIntakeAccounting(s).missing);
   const postResidual = sum((s) => checkPostAccounting(s).missing);
   console.log('');
   console.log('[monitor-instagram-apify] === 全店合計 ===');
+  const stores = checkStoreAccounting(summaries, storeCount);
+  const elapsed = summaries.filter((s) => s.fetchElapsedMs != null).map((s) => s.fetchElapsedMs);
+  console.log(
+    `  対象 ${stores.expected}店 = 観測できた ${stores.observed}店 + 【取得失敗 ${stores.failed}店】` +
+      (elapsed.length
+        ? ` / Apify取得の所要: 最短${Math.round(Math.min(...elapsed) / 1000)}秒 ` +
+          `最長${Math.round(Math.max(...elapsed) / 1000)}秒(タイムアウトの調整はこの実測に基づいて行う)`
+        : '')
+  );
   console.log(
     `  Apify取得 ${sum((s) => s.apifyRawCount)}件 → 新着 ${sum((s) => s.newPostCount)}件 ` +
       `(形式不正 ${sum((s) => s.malformedCount)} / 投稿日時が読めない ${sum((s) => s.invalidPostedAtCount)} / ` +
@@ -1378,11 +1489,17 @@ async function main() {
     return;
   }
 
-  const { arr, state: nextState, changed, summaries, anomalies, lostPosts, emptyResults } = result;
+  const { arr, state: nextState, changed, summaries, anomalies, lostPosts, emptyResults, storeFailures, storeCount } = result;
 
   for (const s of summaries) {
     console.log('');
     console.log(`[${s.store.label} / ${s.store.venueId} / @${s.store.handle}]`);
+    if (s.fetchFailed) {
+      // 【「新着0件」と見分けが付く形にする】0が並ぶだけだと正常運転に見える。
+      console.log(`  ★取得失敗のためスキップしました: ${s.fetchError}`);
+      console.log('  確認済み投稿日時は前進していません(次回もう一度取得できます)。');
+      continue;
+    }
     // 【投稿の行き先を先に出す】以前は「1行も採用できなかった投稿 N件」しか出しておらず、
     // 全投稿がVision抽出に失敗しても「0件」=異常なしに読めてしまった。
     const lost = s.imageFailedCount + s.visionFailedCount + s.unusablePostCount;
@@ -1448,8 +1565,9 @@ async function main() {
     }
   }
 
+  reportStoreFailures(storeFailures, summaries, storeCount);
   reportAcceptedRows(summaries);
-  reportTotals(summaries);
+  reportTotals(summaries, storeCount);
   reportLostPosts(lostPosts);
   reportEmptyResults(emptyResults);
   reportAnomalies(anomalies);
@@ -1468,8 +1586,21 @@ async function main() {
   }
 
   console.log('');
+  // 【終了コードの使い分け】
+  //   0 … 全店を観測できた(正常)
+  //   1 … 何も書いていない(トークン未設定・状態ファイル破損・自己チェック失敗。fail() が使う)
+  //   2 … 一部の店の取得に失敗した。【成功した店ぶんは書き込み済み】で、失敗店の
+  //        確認済み投稿日時は前進していないので次回やり直せる。Actions は赤くする
+  // 2 を 1 と区別するのは、「何も書いていない」と「一部だけ書いた」では
+  // 人がとるべき次の行動が違うため(前者は再実行、後者は失敗店だけの確認)。
+  const PARTIAL_FAILURE = 2;
+  const partial = storeFailures.length > 0;
+
   if (DRY_RUN) {
     console.log('[monitor-instagram-apify] --dry-run のため data.js / 状態ファイルは書き換えません。');
+    // 【dry-run でも終了コードは同じにする】そうしないと dry-run が緑のまま通り、
+    // 本番で初めて赤くなる。dry-run は本番の予行なので挙動を揃える。
+    if (partial) process.exitCode = PARTIAL_FAILURE;
     return;
   }
 
@@ -1479,6 +1610,7 @@ async function main() {
       saveState(STATE_PATH, nextState);
       console.log('[monitor-instagram-apify] 確認済みの投稿日時のみ apify-monitor-state.json に記録しました。');
     }
+    if (partial) process.exitCode = PARTIAL_FAILURE;
     return;
   }
 
@@ -1486,6 +1618,15 @@ async function main() {
   saveState(STATE_PATH, nextState);
   console.log('[monitor-instagram-apify] data.js と apify-monitor-state.json を更新しました。');
   console.log('[monitor-instagram-apify] 忘れずに `node tools/gen-venue-pages.js .` を実行し、店舗静的ページを再生成してください。');
+  // 【書き込みの後に立てる】ここより前で throw すると成功店のデータが失われるため、
+  // 「書き込みは完了した / ただし一部の店は観測できていない」の順で伝える。
+  if (partial) {
+    console.log(
+      `[monitor-instagram-apify] ${storeFailures.length}店の取得に失敗したため、終了コード ${PARTIAL_FAILURE} で終わります` +
+        '(書き込みは完了しています)。'
+    );
+    process.exitCode = PARTIAL_FAILURE;
+  }
 }
 
 if (require.main === module) {
@@ -1516,6 +1657,7 @@ module.exports = {
   emptyCaveat,
   pickNewPostsWithStats,
   checkIntakeAccounting,
+  checkStoreAccounting,
   reportAnomalies,
   reportLostPosts,
   reportEmptyResults,

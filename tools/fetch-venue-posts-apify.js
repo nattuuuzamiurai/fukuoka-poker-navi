@@ -27,7 +27,30 @@
 const APIFY_API_BASE = 'https://api.apify.com/v2';
 const DEFAULT_ACTOR_ID = 'apify/instagram-post-scraper'; // 要確認: 運用開始前に実在するActor IDであることを確認すること
 const DEFAULT_RESULTS_LIMIT = 12; // 直近の投稿何件を見るか。多すぎるとpay-per-resultの課金が嵩む
-const REQUEST_TIMEOUT_MS = 60000;
+/**
+ * 1回のApify呼び出しのタイムアウト。
+ *
+ * 【60秒では足りなかった(2026-08-01 dry-run #4 で実測)】
+ * `run-sync-get-dataset-items` は【アクターの実行完了を待つ】エンドポイントで、
+ * Instagramのスクレイピングそのものにかかる時間を含む。dry-run #4 は1店目で
+ * きっかり60秒でタイムアウトし、残り5店は取得すらされなかった。
+ * dry-run #2/#3 が通っていたのは【境界ぎりぎりで運が良かった】だけ。
+ *
+ * 【この値の決め方】観測できているのは「60秒では足りないことがある」という1点だけなので、
+ * その3倍を取って180秒にした。**次の調整を勘に頼らずに済むよう、
+ * 呼び出しごとの所要時間を opts.stats.elapsedMs に記録する**(ログにも出る)。
+ * 実測が溜まったら、その分布に基づいて上げ下げすること。
+ */
+const REQUEST_TIMEOUT_MS = 180000;
+
+/**
+ * リトライ。【タイムアウトを伸ばすだけにしない】ため。
+ * 店舗単位の隔離を入れたので、1回の失敗はその店の1日ぶんの取得が丸ごと飛ぶことを意味する。
+ * 一時的な失敗(タイムアウト / 5xx / 429)なら1回だけやり直す。
+ * 4xx(トークン不正・Actor不在など)はやり直しても直らないので即座に諦める。
+ */
+const MAX_ATTEMPTS = 2;
+const RETRY_WAIT_MS = 5000;
 
 /**
  * Apifyのデータセット1件を { permalink, imageUrl, postedAt, caption } に正規化する。
@@ -64,7 +87,42 @@ function normalizeApifyItem(item) {
  * @returns {Promise<Array<{permalink:string, imageUrl:string, postedAt:string, caption:string}>>}
  *   失敗時は例外を投げる(呼び出し側で「data.jsを書き換えずに終了」の判断に使うため)。
  */
+function isRetriable(err) {
+  const m = String((err && err.message) || err);
+  if (/timeout|aborted|ETIMEDOUT|ECONNRESET|socket hang up|fetch failed/i.test(m)) return true;
+  const http = m.match(/HTTP (\d{3})/);
+  if (http) {
+    const code = Number(http[1]);
+    return code === 429 || code >= 500;
+  }
+  return false;
+}
+
 async function fetchInstagramPosts(handle, opts = {}) {
+  const startedAt = Date.now();
+  let lastErr;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      const posts = await fetchInstagramPostsOnce(handle, opts);
+      if (opts.stats && typeof opts.stats === 'object') {
+        opts.stats.elapsedMs = Date.now() - startedAt;
+        opts.stats.attempts = attempt;
+      }
+      return posts;
+    } catch (e) {
+      lastErr = e;
+      if (attempt === MAX_ATTEMPTS || !isRetriable(e)) break;
+      console.warn(
+        `[fetch-venue-posts-apify] ${handle}: 取得失敗 (${attempt}/${MAX_ATTEMPTS}) ${e.message} — ${RETRY_WAIT_MS / 1000}秒後に再試行`
+      );
+      await new Promise((r) => setTimeout(r, RETRY_WAIT_MS));
+    }
+  }
+  if (opts.stats && typeof opts.stats === 'object') opts.stats.elapsedMs = Date.now() - startedAt;
+  throw lastErr;
+}
+
+async function fetchInstagramPostsOnce(handle, opts = {}) {
   const token = opts.apifyApiToken || process.env.APIFY_API_TOKEN;
   if (!token) {
     throw new Error('APIFY_API_TOKEN が未設定です(Apify呼び出しに必須)。');
@@ -111,6 +169,9 @@ async function fetchInstagramPosts(handle, opts = {}) {
 
 module.exports = {
   fetchInstagramPosts,
+  isRetriable,
+  REQUEST_TIMEOUT_MS,
+  MAX_ATTEMPTS,
   normalizeApifyItem,
   DEFAULT_ACTOR_ID,
   DEFAULT_RESULTS_LIMIT,

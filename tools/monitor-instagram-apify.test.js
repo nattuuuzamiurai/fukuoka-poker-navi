@@ -792,24 +792,103 @@ test('runMonitor: 新着はあるがスケジュール告知らしくない投�
   assert.equal(result.state.v40.lastPostedAt, '2026-07-20T10:00:00.000Z');
 });
 
-test('runMonitor: Apify呼び出しが失敗した店舗があると例外を投げる(呼び出し側はdata.jsを書き換えない設計)', async () => {
+test('★隔離: 1店の取得が失敗しても例外を投げず、その店だけスキップして他店は処理を続ける', async () => {
+  // 2026-08-01 の dry-run #4 では1店目のタイムアウトで残り5店が取得すらされなかった。
   const before = [
     { id: 'v40-existing', venueId: 'v40', name: '既存', date: '2099-01-01', start: '19:00', buyin: 0, addon: null, stack: 0, guarantee: null, reentry: false, prize: null, tags: [], source: 'semi', verified: false },
   ];
   const fakeFetchLib = {
-    async fetchInstagramPosts() {
-      throw new Error('Apify呼び出しに失敗: HTTP 500');
+    async fetchInstagramPosts(handle) {
+      if (handle === 'triple_orio') throw new Error('Apify呼び出しに失敗: HTTP 500');
+      if (handle !== 'king2485queen') return [];
+      return [
+        { permalink: 'https://www.instagram.com/p/OK/', imageUrl: 'https://example.com/OK.jpg', postedAt: '2026-07-20T10:00:00.000Z', caption: '8月のスケジュール' },
+      ];
     },
   };
-  await assert.rejects(
-    () =>
-      monitor.runMonitor(
-        { stores: [monitor.STORES[0]], before, today: '2026-07-31', state: {} },
-        { fetchLib: fakeFetchLib, visionLib: {}, mergeLib, downloadImage: async () => Buffer.from('x') }
-      ),
-    /Apify呼び出しに失敗/
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0], monitor.STORES[1]], before, today: '2026-07-31', state: {} },
+    {
+      fetchLib: fakeFetchLib,
+      // 名前は固有名にすること(`大会` だけだと isHeadingRow が見出しとして正しく落とす)
+      visionLib: { async extractTournaments() { return [{ date: '2099-09-12', start: '19:00', name: 'マンデートナメ', buyin: 3000, tags: [] }]; } },
+      mergeLib,
+      downloadImage: async (url) => Buffer.from(url),
+    }
   );
+  // 失敗した店
+  const failed = result.summaries.find((x) => x.store.venueId === 'v40');
+  assert.equal(failed.fetchFailed, true);
+  assert.match(failed.fetchError, /HTTP 500/);
+  assert.equal(result.storeFailures.length, 1);
+  assert.equal(result.storeFailures[0].store.venueId, 'v40');
+  // 【最重要】失敗した店の確認済み投稿日時は前進しない = 次回やり直せる
+  assert.equal(result.state.v40, undefined, '失敗した店の状態を作ってはいけない');
+  // 成功した店は普通に処理される
+  const ok = result.summaries.find((x) => x.store.venueId === 'v20');
+  assert.equal(ok.fetchFailed, false);
+  assert.equal(ok.importedPostCount, 1);
+  assert.ok(result.state.v20.lastPostedAt, '成功した店の状態は前進する');
+  assert.ok(result.arr.some((t) => t.venueId === 'v20'), '成功した店のデータは取り込まれる');
 });
+
+test('★隔離: 失敗した店の lastPostedAt は前回値のまま(取得失敗で投稿を失わない)', async () => {
+  const prevState = {
+    v40: { handle: 'triple_orio', lastPostedAt: '2026-07-01T00:00:00.000Z', lastPermalink: 'https://www.instagram.com/p/OLD/' },
+  };
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: prevState },
+    {
+      fetchLib: { async fetchInstagramPosts() { throw new Error('The operation was aborted due to timeout'); } },
+      visionLib: {},
+      mergeLib,
+      downloadImage: async () => Buffer.from('x'),
+    }
+  );
+  assert.deepEqual(result.state.v40, prevState.v40, '前回値がそのまま残ること(1バイトも変えない)');
+  assert.equal(result.changed, false, 'data.js も変えない');
+});
+
+test('★隔離: 店レベルの保存則 — 対象店 = 観測できた店 + 取得に失敗した店', () => {
+  // 失敗した店は取込み・投稿・行のどの保存則からも「0件」で素通りする(何も観測していないので
+  // 0=0 で成立する)。それ自体は正しいが、「取得失敗」と「新着0件」が同じ0に見えるのは
+  // この案件が繰り返し潰してきた誤報の形。店の単位でも数えて必ず表に出す。
+  const acc = monitor.checkStoreAccounting([{ fetchFailed: false }, { fetchFailed: true }, { fetchFailed: false }], 3);
+  assert.equal(acc.ok, true);
+  assert.equal(acc.expected, 3);
+  assert.equal(acc.observed, 2);
+  assert.equal(acc.failed, 1);
+});
+
+test('★隔離(検知側): 店の記録が抜けたら ok=false になる(恒等式になっていないこと)', () => {
+  // 【R-1 と同じ罠】observed を `summaries.length - failed` で出すと
+  // `observed + failed === summaries.length` は【常に成立】し、何も検査しない。
+  // 比べる相手を【対象店舗の数】にすることで、summaries.push を忘れた店が残余として出る。
+  const acc = monitor.checkStoreAccounting([{ fetchFailed: false }, { fetchFailed: true }], 6);
+  assert.equal(acc.ok, false, '6店が対象なのに2店ぶんしか記録が無ければ偽になること');
+  assert.equal(acc.missing, 4);
+  // 全店ぶん揃っていれば真
+  assert.equal(monitor.checkStoreAccounting([{ fetchFailed: false }, { fetchFailed: true }], 2).ok, true);
+});
+
+test('★隔離: 取得に失敗した店でも、他の3つの保存則は破れない(0件として整合する)', async () => {
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
+    {
+      fetchLib: { async fetchInstagramPosts() { throw new Error('timeout'); } },
+      visionLib: {},
+      mergeLib,
+      downloadImage: async () => Buffer.from('x'),
+    }
+  );
+  const s = result.summaries[0];
+  assert.ok(monitor.checkIntakeAccounting(s).ok, '取込みの保存則は 0=0 で成立する');
+  assert.ok(monitor.checkPostAccounting(s).ok);
+  assert.ok(monitor.checkRowAccounting(s).ok);
+  // だが「観測できていない」ことは店レベルで必ず記録されている
+  assert.equal(monitor.checkStoreAccounting(result.summaries, 1).failed, 1);
+});
+
 
 // ---------- CLIとして(子プロセスで)実行する結合テスト ----------
 
@@ -2980,4 +3059,114 @@ test('品質: 捨てるタグが無ければ正規化ログを汚さない', asy
     ])
   );
   assert.equal(result.summaries[0].normalizedCount, 0);
+});
+
+test('★隔離: CLI — 1店の取得失敗で終了コード2、他店は取り込み、失敗店の状態は前進しない', () => {
+  const root = makeTempRepoRoot();
+  fs.writeFileSync(
+    path.join(root, 'apify-monitor-state.json'),
+    `${JSON.stringify({ v40: { handle: 'triple_orio', lastPostedAt: '2026-07-01T00:00:00.000Z' } }, null, 2)}\n`
+  );
+  fs.writeFileSync(
+    path.join(root, 'tools', 'fetch-venue-posts-apify.js'),
+    `exports.fetchInstagramPosts = async (handle) => {
+       if (handle === 'triple_orio') throw new Error('The operation was aborted due to timeout');
+       if (handle !== 'king2485queen') return [];
+       return [{ permalink: 'https://www.instagram.com/p/OK/', imageUrl: 'https://example.com/OK.jpg', postedAt: '2026-07-20T10:00:00.000Z', caption: '8月のスケジュール' }];
+     };\n`
+  );
+  fs.writeFileSync(
+    path.join(root, 'tools', 'venue-schedule-vision.js'),
+    "exports.extractTournaments = async () => [{ date: '2099-09-12', start: '19:00', name: 'マンデートナメ', buyin: 3000, tags: [] }];\n"
+  );
+  fs.writeFileSync(
+    path.join(root, 'stub-fetch.js'),
+    'globalThis.fetch = async (url) => ({ status: 200, arrayBuffer: async () => new TextEncoder().encode(String(url)).buffer });\n'
+  );
+  try {
+    const r = spawnSync('node', ['--require', './stub-fetch.js', 'tools/monitor-instagram-apify.js'], {
+      cwd: root,
+      env: { ...process.env, APIFY_API_TOKEN: 'dummy', ANTHROPIC_API_KEY: 'dummy' },
+      encoding: 'utf8',
+    });
+    assert.equal(r.status, 2, `一部失敗は終了コード2(0でも1でもない): ${r.stderr}`);
+    assert.match(r.stdout, /::error title=Instagram監視 - 取得に失敗した店::/);
+    assert.match(r.stdout, /★取得失敗のためスキップしました/, '「新着0件」と見分けが付く形で出ること');
+    assert.match(r.stdout, /取得失敗 1店/, '合計にも出ること');
+    // 成功した店のデータは書き込まれている
+    assert.match(fs.readFileSync(path.join(root, 'data.js'), 'utf8'), /マンデートナメ/);
+    // 【最重要】失敗した店の確認済み投稿日時は前進していない
+    const state = JSON.parse(fs.readFileSync(path.join(root, 'apify-monitor-state.json'), 'utf8'));
+    assert.equal(state.v40.lastPostedAt, '2026-07-01T00:00:00.000Z', '失敗店の状態を進めてはいけない');
+    assert.ok(state.v20.lastPostedAt, '成功店の状態は進む');
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('★隔離: CLI — dry-run でも同じ挙動(失敗店をスキップして他店は処理、終了コード2)', () => {
+  const root = makeTempRepoRoot();
+  fs.writeFileSync(
+    path.join(root, 'tools', 'fetch-venue-posts-apify.js'),
+    `exports.fetchInstagramPosts = async (handle) => {
+       if (handle === 'triple_orio') throw new Error('timeout');
+       if (handle !== 'king2485queen') return [];
+       return [{ permalink: 'https://www.instagram.com/p/OK/', imageUrl: 'https://example.com/OK.jpg', postedAt: '2026-07-20T10:00:00.000Z', caption: '8月のスケジュール' }];
+     };\n`
+  );
+  fs.writeFileSync(
+    path.join(root, 'tools', 'venue-schedule-vision.js'),
+    "exports.extractTournaments = async () => [{ date: '2099-09-12', start: '19:00', name: 'マンデートナメ', buyin: 3000, tags: [] }];\n"
+  );
+  fs.writeFileSync(
+    path.join(root, 'stub-fetch.js'),
+    'globalThis.fetch = async (url) => ({ status: 200, arrayBuffer: async () => new TextEncoder().encode(String(url)).buffer });\n'
+  );
+  const beforeData = fs.readFileSync(path.join(root, 'data.js'), 'utf8');
+  const beforeState = fs.readFileSync(path.join(root, 'apify-monitor-state.json'), 'utf8');
+  try {
+    const r = spawnSync('node', ['--require', './stub-fetch.js', 'tools/monitor-instagram-apify.js', '--dry-run'], {
+      cwd: root,
+      env: { ...process.env, APIFY_API_TOKEN: 'dummy', ANTHROPIC_API_KEY: 'dummy' },
+      encoding: 'utf8',
+    });
+    // dry-run でも終了コードを揃える(揃えないと dry-run が緑で通り本番で初めて赤くなる)
+    assert.equal(r.status, 2);
+    // 【他店の処理は続く】dry-run が全店を1回で観測できないと、較正のたびに何度も回すことになる
+    assert.match(r.stdout, /追加行: v20 /, '失敗店をスキップして他店の明細まで出ること');
+    assert.match(r.stdout, /対象 6店 = 観測できた 5店 \+ 【取得失敗 1店】/);
+    // 書き込みは一切していない
+    assert.equal(fs.readFileSync(path.join(root, 'data.js'), 'utf8'), beforeData);
+    assert.equal(fs.readFileSync(path.join(root, 'apify-monitor-state.json'), 'utf8'), beforeState);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('★隔離(検知側): 店の内訳が対象数と合わなければ ok=false になる', () => {
+  // 【C-2 と同じ教訓】健全な入力で true になることしか見ていないと、
+  // `ok: true` に潰す変異が生き残る。偽になる方向も固定する。
+  const broken = { fetchFailed: false };
+  const acc = monitor.checkStoreAccounting([broken, broken], 2);
+  assert.equal(acc.ok, true, '健全な入力では true');
+  // 検査そのものが「常に true」になっていないことを、内訳の値で確かめる
+  assert.equal(monitor.checkStoreAccounting([{ fetchFailed: true }], 1).failed, 1);
+  assert.equal(monitor.checkStoreAccounting([{ fetchFailed: true }], 1).observed, 0);
+  assert.equal(monitor.checkStoreAccounting([], 0).expected, 0);
+});
+
+test('★隔離(検知側): CLI — 店の集計が合わなくなったら ::error:: が出る', () => {
+  const r = runCliWithMutation((root) => {
+    // 失敗した店の summary を summaries に入れ忘れる変異(=店の数が合わなくなる)
+    const p = path.join(root, 'tools', 'monitor-instagram-apify.js');
+    const src = fs.readFileSync(p, 'utf8');
+    // 新着0件の店の summary を入れ忘れる = 対象6店に対し記録が足りなくなる
+    const out = src.replace(
+      '    if (newPosts.length === 0) {\n      summaries.push(summary);\n      continue;',
+      '    if (newPosts.length === 0) {\n      continue;'
+    );
+    assert.notEqual(out, src, '変異の当て先が見つからない(テストの前提が古い)');
+    fs.writeFileSync(p, out);
+  });
+  assert.match(r.stdout, /::error title=Instagram監視 - 店の集計が合わない::/);
 });
