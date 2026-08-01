@@ -170,3 +170,71 @@ test('fetchInstagramPosts: 1件も捨てなかった場合は malformed が 0 �
     }
   );
 });
+
+// ============================================================
+// タイムアウトとリトライ(2026-08-01 dry-run #4 の失敗を受けて)
+// ============================================================
+
+test('★タイムアウト: 60秒に戻さない(dry-run #4 は1店目でちょうど60秒で落ちた)', () => {
+  const { REQUEST_TIMEOUT_MS, MAX_ATTEMPTS } = require('./fetch-venue-posts-apify');
+  // run-sync-get-dataset-items は【アクターの実行完了を待つ】ので、
+  // Instagramのスクレイピング時間そのものを含む。60秒では足りないことが実測で分かっている。
+  assert.ok(REQUEST_TIMEOUT_MS >= 120000, `短すぎる(${REQUEST_TIMEOUT_MS}ms)。60秒で落ちた実績がある`);
+  // 長すぎるとワークフローの timeout-minutes を超える。6店 × 2回 × これ が上限。
+  assert.ok(REQUEST_TIMEOUT_MS <= 300000, `長すぎる(${REQUEST_TIMEOUT_MS}ms)。ジョブ全体の予算を超える`);
+  assert.ok(MAX_ATTEMPTS >= 2, 'リトライ無しだと一時的な失敗でその店の1日ぶんが飛ぶ');
+  assert.ok(MAX_ATTEMPTS <= 3, '多すぎるとジョブ全体の最悪時間が伸びる');
+  // 6店 × MAX_ATTEMPTS × タイムアウト が 90分(ワークフローの上限)に収まること
+  const worstMin = (6 * MAX_ATTEMPTS * REQUEST_TIMEOUT_MS) / 60000;
+  assert.ok(worstMin <= 60, `Apifyだけで最悪${worstMin}分。Visionのぶんが載らない`);
+});
+
+test('★リトライ: 一時的な失敗(タイムアウト/5xx/429)は1回やり直す', async () => {
+  const { fetchInstagramPosts } = require('./fetch-venue-posts-apify');
+  let calls = 0;
+  await withMockedFetch(
+    async () => {
+      calls += 1;
+      if (calls === 1) throw new Error('The operation was aborted due to timeout');
+      return {
+        status: 200,
+        json: async () => [
+          { url: 'https://www.instagram.com/p/A/', displayUrl: 'https://example.com/a.jpg', timestamp: '2026-07-20T10:00:00.000Z' },
+        ],
+      };
+    },
+    async () => {
+      const stats = {};
+      const posts = await fetchInstagramPosts('someone', { apifyApiToken: 'dummy', stats });
+      assert.equal(posts.length, 1, 'やり直して成功すること');
+      assert.equal(calls, 2, '1回だけやり直すこと');
+      assert.equal(stats.attempts, 2, '何回目で成功したかを記録すること');
+      assert.ok(stats.elapsedMs >= 0, '所要時間を記録すること(次のタイムアウト調整の材料)');
+    }
+  );
+});
+
+test('★リトライ: 直らない失敗(4xx)はやり直さない', async () => {
+  const { fetchInstagramPosts } = require('./fetch-venue-posts-apify');
+  let calls = 0;
+  await withMockedFetch(
+    async () => {
+      calls += 1;
+      return { status: 401, text: async () => 'unauthorized' };
+    },
+    async () => {
+      await assert.rejects(() => fetchInstagramPosts('someone', { apifyApiToken: 'bad' }), /HTTP 401/);
+      assert.equal(calls, 1, 'トークン不正はやり直しても直らないので1回で諦めること');
+    }
+  );
+});
+
+test('リトライの判定: 一時的な失敗と恒久的な失敗を取り違えない', () => {
+  const { isRetriable } = require('./fetch-venue-posts-apify');
+  for (const m of ['The operation was aborted due to timeout', 'Apify呼び出しに失敗: HTTP 503', 'Apify呼び出しに失敗: HTTP 429', 'fetch failed', 'socket hang up']) {
+    assert.equal(isRetriable(new Error(m)), true, `やり直すこと: ${m}`);
+  }
+  for (const m of ['Apify呼び出しに失敗: HTTP 401', 'Apify呼び出しに失敗: HTTP 404', 'Apifyのレスポンス形式が想定外です(配列ではありません)。', 'APIFY_API_TOKEN が未設定です(Apify呼び出しに必須)。']) {
+    assert.equal(isRetriable(new Error(m)), false, `やり直さないこと: ${m}`);
+  }
+});
