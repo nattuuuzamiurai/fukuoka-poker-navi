@@ -687,7 +687,9 @@ async function runMonitor(opts, libs) {
       // 【★この店の lastPostedAt は絶対に前進させない★】nextState は state の浅いコピーなので、
       // ここで触らずに continue すれば前回値がそのまま残る。前進させてしまうと
       // 「取得に失敗しただけの投稿」が処理済みとして【永久に失われる】。
-      // Waitinglist取込みにはこの危険が無い(状態ファイルを持たないため)。Instagram固有。
+      // Waitinglist取込み(import-waitinglist.js)にも同じ隔離が入っている(PR #22)が、
+      // あちらは状態ファイルを持たないので、この lastPostedAt の扱いだけが Instagram 固有。
+      // 実装は共通化していないので、片方を直しても自動では追従しない点に注意。
       summary.fetchFailed = true;
       summary.fetchError = e && e.message ? e.message : String(e);
       summary.fetchElapsedMs = fetchStats.elapsedMs != null ? fetchStats.elapsedMs : null;
