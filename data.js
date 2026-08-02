@@ -11256,6 +11256,24 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01KZ1HHFME2DPV8BDAT01AYCGM",
+    "venueId": "v3",
+    "name": "m FUSION Turbo",
+    "date": "2026-08-19",
+    "start": "21:00",
+    "buyin": 2500,
+    "addon": null,
+    "stack": 25000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "wl-01KY554GQXFGT8KMP3R6WKWNHG",
     "venueId": "v3",
     "name": "VS m FURIN",
