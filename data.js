@@ -11152,6 +11152,40 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01KZ3BGQ0QRQJ7E427KTKC7W9G",
+    "venueId": "v3",
+    "name": "m NIPPON SERIES KICK OFF",
+    "date": "2026-08-10",
+    "start": "17:30",
+    "buyin": 4000,
+    "addon": null,
+    "stack": 50000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01KZ3RBFHKRCPBAR1HG19FVTMQ",
+    "venueId": "v3",
+    "name": "ｍ Hyper Deep Turbo",
+    "date": "2026-08-10",
+    "start": "21:00",
+    "buyin": 2500,
+    "addon": null,
+    "stack": 100000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "wl-01KYMDWSRCENGKWGQ05NV43Q50",
     "venueId": "v3",
     "name": "m SUPER STACK",
@@ -11188,6 +11222,24 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01KZ386K7TMGAH1E0XKMGP6C5B",
+    "venueId": "v3",
+    "name": "m FUSION Turbo",
+    "date": "2026-08-11",
+    "start": "21:00",
+    "buyin": 2500,
+    "addon": null,
+    "stack": 25000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "wl-01KXSJK2CHHQVVZ7MVWVB9DBS3",
     "venueId": "v3",
     "name": "【3.5K 飲み放題！】m Booze up",
@@ -11200,6 +11252,24 @@ const TOURNAMENTS = [
     "reentry": true,
     "prize": null,
     "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01KZ3R63PV02GKVS7NBPE9R3MZ",
+    "venueId": "v3",
+    "name": "m MAD shuffle Turbo",
+    "date": "2026-08-12",
+    "start": "21:00",
+    "buyin": 2000,
+    "addon": 1000,
+    "stack": 25000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
     "source": "auto",
     "verified": false
   },
@@ -11222,6 +11292,24 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01KZ3QTBZKBCXHY87QF0J69BM5",
+    "venueId": "v3",
+    "name": "m Super Hold'em Turbo",
+    "date": "2026-08-13",
+    "start": "21:00",
+    "buyin": 2500,
+    "addon": 1000,
+    "stack": 25000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "wl-01KYME4PCTP8RDWVZ046JPVQE1",
     "venueId": "v3",
     "name": "VS m HANNA",
@@ -11236,6 +11324,110 @@ const TOURNAMENTS = [
     "tags": [
       "特別開催"
     ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01KZ3R2A4YZ1W94TSB1CF1WQQB",
+    "venueId": "v3",
+    "name": "m Bounty Turbo",
+    "date": "2026-08-14",
+    "start": "21:00",
+    "buyin": 2500,
+    "addon": 1000,
+    "stack": 25000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01KZ3QVC7VRNV0M0VAJR4SZHK2",
+    "venueId": "v3",
+    "name": "m Monster Stack",
+    "date": "2026-08-15",
+    "start": "13:10",
+    "buyin": 4000,
+    "addon": null,
+    "stack": 60000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ディープ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01KZ3R4S1TVD2XBH6GPBHS8B3S",
+    "venueId": "v3",
+    "name": "m VAULT",
+    "date": "2026-08-15",
+    "start": "17:10",
+    "buyin": 4000,
+    "addon": null,
+    "stack": 40000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01KZ3REMGDBX12W2G0SJYJ24YP",
+    "venueId": "v3",
+    "name": "m FUSION Turbo",
+    "date": "2026-08-15",
+    "start": "21:00",
+    "buyin": 2500,
+    "addon": null,
+    "stack": 25000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01KZ3R0WS5EHR5CVP2KJXD5PCE",
+    "venueId": "v3",
+    "name": "m LIVE LEAGUE ~WEEKEND~",
+    "date": "2026-08-16",
+    "start": "13:10",
+    "buyin": 4000,
+    "addon": null,
+    "stack": 60000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ディープ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01KZ3R7YN4KYERJXZ4D88C851J",
+    "venueId": "v3",
+    "name": "m FT Bounty",
+    "date": "2026-08-16",
+    "start": "18:00",
+    "buyin": 4000,
+    "addon": null,
+    "stack": 40000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
     "source": "auto",
     "verified": false
   },
