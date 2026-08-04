@@ -5003,6 +5003,17 @@ test('★形状比較: 採用より強い投稿が後ろに居たら印を付け
   assert.match(line, /採用=異なる日付5・広がり28日/);
   assert.match(line, /窓内の最大=異なる日付20・広がり30日\(採用より【古い位置】/);
   assert.match(line, /★採用は窓内で最もカレンダーらしい投稿ではない\(#13 の署名\)/);
+
+  // 【★この1行だけで2枚の画像に到達できること★】印が付くのは異常時で、そのとき担当が
+  // することは「採用した投稿」と「窓内の最大」を見比べることしかない。片方しか無いと
+  // 同じ店の別の行を探しに行くことになり、1行に集約した意味が薄れる。
+  assert.match(line, /採用=異なる日付5・広がり28日\(p\/SERIES\/\)/, '採用側の permalink がこの行に無い');
+  assert.ok(line.includes('p/REAL/'), '窓内の最大の permalink がこの行に無い');
+  assert.equal(
+    (line.match(/p\/[A-Z]+\//g) || []).length,
+    2,
+    'この1行に2つの投稿URLが揃っていること(どちらかが欠けると別の行を探すことになる)'
+  );
 });
 
 test('★形状比較: 後ろの本物が【偽陰性】でも効く(分類を経由しないこと)', () => {
@@ -5151,6 +5162,16 @@ test('★CLI(探索): 採用より強い投稿が後ろに居たら ::warning:: 
   // 形の比較は効く
   assert.match(r.stdout, /形状比較: .*採用=異なる日付5・広がり27日/);
   assert.match(r.stdout, /★採用は窓内で最もカレンダーらしい投稿ではない\(#13 の署名\)/);
+  // 【★1行要約だけで2枚の画像に到達できること(実出力で確かめる)★】
+  const shapeLine = r.stdout.split('\n').find((l) => l.includes('形状比較: '));
+  assert.ok(shapeLine, '形状比較の1行要約が出ていない');
+  assert.ok(shapeLine.includes('/p/SERIES/'), `採用側のURLが1行要約に無い: ${shapeLine}`);
+  assert.ok(shapeLine.includes('/p/REAL/'), `窓内の最大のURLが1行要約に無い: ${shapeLine}`);
+  assert.equal(
+    (shapeLine.match(/https:\/\/www\.instagram\.com\/p\/[A-Z]+\//g) || []).length,
+    2,
+    `1行要約に2つの投稿URLが揃っていない(別の行を探させることになる): ${shapeLine}`
+  );
   assert.match(r.stdout, /::warning title=Instagram監視 - 採用が最もカレンダーらしい投稿ではない::/);
   assert.match(r.stdout, /★採用が窓内で最もカレンダーらしくない店 1店/);
 });

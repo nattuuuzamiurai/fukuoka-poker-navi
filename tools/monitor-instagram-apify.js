@@ -1857,6 +1857,12 @@ function shapeComparison(verdicts, adoptedIndex) {
  *
  * 【1行にする理由】生ログ(投稿ごとの判定行)を人が突き合わせる形にすると、
  * cron 後には誰もやらない。判断に要る3つ(採用の形 / 窓内の最大 / その位置)を1行に載せる。
+ *
+ * 【★採用側の permalink も必ずこの行に載せること(2026-08-05・品質管理部の指摘)★】
+ * 印が付くのは異常時で、そのとき担当がすることは【2枚の画像を見比べる】ことしかない。
+ * 片方のURLしか無いと、同じ店のブロックの別の行(「本番ならここで採用して打ち切っていた投稿」)を
+ * 探しに行くことになり、**1行に集約した意味が薄れる**。
+ * ★この行だけで2枚に到達できることをテストで固定してある(URLを1つに減らす変異で落ちる)。
  */
 function formatProbeShapeComparison(store, m) {
   const head = `[monitor-instagram-apify] 形状比較: 店=${store.label}(${store.venueId})`;
@@ -1875,7 +1881,9 @@ function formatProbeShapeComparison(store, m) {
   if (!m.adopted) {
     return `${head} / 採用=なし(当月以降のカレンダーが無い) / ${strongest}`;
   }
-  const adopted = `採用=異なる日付${m.adopted.distinctDates}・広がり${m.adopted.spanDays}日`;
+  const adopted =
+    `採用=異なる日付${m.adopted.distinctDates}・広がり${m.adopted.spanDays}日` +
+    `(${m.adopted.permalink})`;
   const mark = m.adoptedIsStrongest
     ? '採用が窓内で最もカレンダーらしい投稿'
     : '★採用は窓内で最もカレンダーらしい投稿ではない(#13 の署名)';
