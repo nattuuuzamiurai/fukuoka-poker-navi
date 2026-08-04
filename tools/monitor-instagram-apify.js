@@ -30,6 +30,12 @@
  * 使い方:
  *   node tools/monitor-instagram-apify.js               … data.js / 状態ファイルを更新する
  *   node tools/monitor-instagram-apify.js --dry-run     … どちらも書き換えず、検知結果だけ表示する
+ *   node tools/monitor-instagram-apify.js --probe       … 【探索専用】打ち切らずに全投稿を判定し、数えるだけ
+ *                                                         (採用もマージもしない。README リスク台帳 #13 の測定用)
+ *
+ *   ★知らない引数を渡したときは【何もせずに exit 1】する。`--dry-run` の打ち間違い
+ *     (`--dryrun` `--dry_run` `--prob`)がそのまま【本番実行】になる経路を塞ぐため。
+ *     この経路の本番実行は不可逆で、拾えなかった投稿は自動経路から永久に失われる。
  *
  * 必要な環境変数:
  *   APIFY_API_TOKEN     … Apify呼び出しに必須(tools/fetch-venue-posts-apify.js参照)
@@ -136,7 +142,32 @@ const STORES = [
 // 【キーワードによる事前の絞り込みは廃止した(2026-08-04)】理由は calendarShape のコメント参照。
 // 取り込むかどうかは【画像を読んだ結果の構造】だけで決める。キャプションは一切参照しない。
 
-const DRY_RUN = process.argv.includes('--dry-run');
+// ============================================================
+// 実行モード — 引数は【知っているものだけ】受け付ける
+// ============================================================
+// 【★知らない引数を黙って無視しないこと★】無視すると `--dryrun` `--dry_run` `--prob` のような
+// 打ち間違いが【本番実行】になる。この経路の本番実行は不可逆(lastPostedAt が前進し、
+// その回で拾えなかった投稿は自動経路から永久に失われる)なので、
+// 「dry-run / 探索のつもりが本番だった」を構造的に塞ぐ。
+// 判定は main() の【いちばん最初】で行い、1バイトも書かずに exit 1 する。
+const ARGV = process.argv.slice(2);
+const KNOWN_FLAGS = ['--dry-run', '--probe'];
+const UNKNOWN_ARGS = ARGV.filter((a) => !KNOWN_FLAGS.includes(a));
+
+// 【探索専用モード(--probe)】走査を打ち切らずに【全投稿】を判定し、数えるだけのモード。
+// 採用もマージもせず、data.js も状態ファイルも書かない(= lastPostedAt を前進させないので
+// バックログを1件も消費しない)。目的は README リスク台帳 #13 の測定 —
+// 「採用したカレンダーより新しい位置に、カレンダー判定を満たす投稿が何件あるか」。
+//
+// 【★--dry-run に相乗りさせず、別のフラグにしてある理由★】
+//   --dry-run は「本番と【同じ判断】をするが書かない」予行。--probe は
+//   【本番とは違う判断(打ち切らない)】をする測定。同じフラグにすると
+//   「予行が通ったから本番も同じはず」という dry-run の意味そのものが壊れる。
+//   逆向きの事故(探索のつもりで本番)は、上の「知らない引数は受け付けない」で塞いである。
+const PROBE = ARGV.includes('--probe');
+// --probe は必ず dry-run を含む(書き込みの分岐に入らせない)。
+// これに加えて main() では書き込み関数そのものを取り上げてある(forbidWrite)。
+const DRY_RUN = ARGV.includes('--dry-run') || PROBE;
 const REQUEST_TIMEOUT_MS = 20000;
 
 function fail(msg) {
@@ -154,26 +185,90 @@ function todayJst() {
 /**
  * 確認済み投稿日時の状態ファイルを読む。
  *
- * 【★壊れていたら落ちる = 人が直すまで永久に止まる★】(README リスク台帳 #19・実測で確認)
- *   ここで throw すると呼び出し側が fail() → exit(1) し、状態ファイルは書き換わらない。
- *   つまり翌朝も同じ壊れたファイルを読んで同じ理由で落ちる。
- *   ★このファイルは【bot 自身が毎日書いてコミットする】ので、`git pull --rebase` の衝突や
- *     部分書き込みで壊れうる。机上の話ではない。
- *   ★同じツールのもう一方の状態ファイル(instagram-write-state.json)は逆の判断をしている —
- *     machine-write-state.js の readState は「ここで落とすと状態ファイル1つで日次の取込みが
- *     永久に止まる」として例外を投げず空で続行する。**判断が逆になった理由は残っていない。**
- *   縮退させる(空として続行する)には「確認済み投稿日時を失うと全投稿を新着として拾い直す」
- *   ことの是非を決める必要があるため、今回は挙動を変えずに性質だけ記録してある。
+ * 【★壊れていても落とさない(2026-08-05・リスク台帳 #19 の解消)★】
+ *   以前はここで throw し、呼び出し側が fail() → exit(1) していた。書き込みは起きないので
+ *   翌朝も同じ壊れたファイルを読んで同じ理由で落ちる = 人が直すまで永久に止まる。
+ *
+ *   【判断の根拠は「もう一方の状態ファイルに揃える」ではない。この状態が持つ性質そのもの】
+ *     ・記録が【無い/空】= その店の取得窓の投稿がすべて「新着」になる。つまり空として
+ *       続行して起きるのは【もう一度読み直す】ことだけで、【取りこぼし】は構造的に起きない。
+ *       取りこぼすのは lastPostedAt が【進みすぎた】ときで、空はその真逆側である
+ *     ・続行すればその実行の最後に正しい内容で書き直され、コミットされる = 【自分で直る】
+ *   落とす側の利益は「壊れた記録のまま走らせない」ことだが、空でも安全側(読み直す側)に
+ *   倒れる以上その利益は無い。一方で落とす側の損失(毎朝止まる)は確実に発生する。
+ *
+ * 【★ただし「黙って続ける」にはしない — 続行にも代償がある★】
+ *   ・その店の取得窓ぶん(実測で1店あたり直近12投稿)を Vision に渡し直す = 費用と時間
+ *   ・`checkedPosts` / `lastExtraction` の履歴が失われる(git履歴には残る)
+ *   ・【人が admin.html で消した行が復活しうる】同じカレンダーを読み直すため。
+ *     「行を消す = その枠を機械に引き渡す」という現行の規則(リスク台帳 #15)の下では
+ *     復活自体は規則どおりの動作だが、平常は「既読なので読み直さない」ことで結果的に
+ *     起きていない。記録を失うとその偶然の保護が外れる
+ *   そこで呼び出し側が ::error:: で必ず人に見せる(`reportBrokenState`)。
+ *
+ * 【もう一方の状態ファイル(instagram-write-state.json)とは、同じ結論でも理由が違う】
+ *   あちらが落とさないのは「記録が無い = 人のもの」が既定値で、空でも【人の行が守られる側】に
+ *   倒れるから(machine-write-state.js のヘッダ)。こちらは「空 = 全部を読み直す」側に倒れるから。
+ *   **どちらも「空にしたときにどちらへ倒れるか」で決めており、揃えたのではない。**
+ *   ★もし将来「記録が空だと取りこぼす」形の状態ファイルを足すなら、この理由は効かない。
+ *     そのときは落とす/落とさないをもう一度その性質から決めること。
+ *
+ * 【中身がオブジェクトでない場合も broken として報告する】以前は静かに `{}` に潰していたが、
+ *   「読めたが形が違う」は壊れているのと同じで、黙って続けると誰も気づけない。
+ *
+ * @returns {{ state: object, missing: boolean, broken: boolean, reason: string|null }}
  */
 function loadState(statePath) {
-  if (!fs.existsSync(statePath)) return {};
+  if (!fs.existsSync(statePath)) return { state: {}, missing: true, broken: false, reason: null };
+  let raw;
+  try {
+    raw = fs.readFileSync(statePath, 'utf8');
+  } catch (e) {
+    return { state: {}, missing: false, broken: true, reason: `ファイルを読み込めません: ${e.message}` };
+  }
   let parsed;
   try {
-    parsed = JSON.parse(fs.readFileSync(statePath, 'utf8'));
+    parsed = JSON.parse(raw);
   } catch (e) {
-    throw new Error(`${statePath} の読み込みに失敗しました: ${e.message}`);
+    return { state: {}, missing: false, broken: true, reason: `JSONとして解釈できません: ${e.message}` };
   }
-  return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    return {
+      state: {},
+      missing: false,
+      broken: true,
+      reason: `中身がオブジェクトではありません(${Array.isArray(parsed) ? '配列' : String(parsed === null ? 'null' : typeof parsed)})`,
+    };
+  }
+  return { state: parsed, missing: false, broken: false, reason: null };
+}
+
+/**
+ * 確認済み投稿日時の記録が読めなかったことを ::error:: で報告する。
+ *
+ * 【★ジョブを非ゼロ終了させてはいけない(ここが肝)★】
+ *   このステップを失敗させると後続のコミット・pushが走らず、【直った状態ファイルが
+ *   リポジトリに残らない】。壊れたファイルが main にある場合、翌朝も同じものを読むので
+ *   「落として止める」のとまったく同じ永久ループに戻る。直すには最後まで走り切る必要がある。
+ *   そのため報告は ::error:: 注記だけで行い、終了コードは変えない
+ *   (`reportLostPosts` と同じ扱い。GitHub のワークフローコマンドは stdout に出すこと)。
+ */
+function reportBrokenState(statePath, reason, opts) {
+  const dryRun = Boolean(opts && opts.dryRun);
+  const name = path.basename(statePath);
+  console.log('');
+  console.log(
+    `::error title=Instagram監視 - 確認済み投稿日時の記録が読めません::` +
+      `${name} を読めませんでした(${reason})。` +
+      '【ジョブは止めません】記録が空のときと同じ扱いで続行します。' +
+      '空は「取りこぼす」側ではなく【もう一度読み直す】側に倒れるので、日程が失われることはありません。' +
+      'ただし取得窓の投稿を Vision に渡し直すため費用と時間がかかり、' +
+      '【人が admin.html で消した行が復活することがあります】(同じカレンダーを読み直すため)。' +
+      (dryRun
+        ? 'このモードでは何も書かないので、ファイルは壊れたままです。'
+        : 'この実行の最後に正しい内容で書き直すので、次回からは元に戻ります。') +
+      `壊れる前の内容は git 履歴で確認できます: \`git log -p -- ${name}\``
+  );
 }
 
 function saveState(statePath, state) {
@@ -691,12 +786,18 @@ async function downloadImage(url) {
  * 状態も進まないため翌日も同じ所で落ちる)。捨てた行は summaries[].dropped に、
  * 「1件も採用できなかった投稿」は anomalies に入れて呼び出し側へ返す。
  *
- * @param {{ stores: Array, before: Array, today: string, state: object }} opts
+ * 【探索専用モード(opts.probe)】走査を打ち切らず、取得できた投稿を【全部】判定する。
+ * 採用もマージもせず、返す state は渡された state と【ビット単位で同じ】(= lastPostedAt を
+ * 前進させないのでバックログを1件も消費しない)。測定の目的と読み方は reportProbe を参照。
+ *
+ * @param {{ stores: Array, before: Array, today: string, state: object, probe?: boolean }} opts
  * @param {{ fetchLib: object, visionLib: object, mergeLib: object, downloadImage: Function }} libs
  * @returns {Promise<{ arr: Array, state: object, changed: boolean, summaries: Array, anomalies: Array }>}
  */
 async function runMonitor(opts, libs) {
   const { stores, before, today, state } = opts;
+  // 【探索専用モード】打ち切らずに全投稿を判定し、採用も状態の前進も一切しない。
+  const probe = Boolean(opts.probe);
   // 機械が最後に書いた値の控え(id → エントリ)。無ければ空 = 全行が人のものとして扱われ、
   // この経路は【新しい枠に足すことしかしない】。安全側に倒れる既定値。
   const writeRecords = opts.writeRecords || {};
@@ -753,8 +854,19 @@ async function runMonitor(opts, libs) {
     }
     summary.fetchElapsedMs = fetchStats.elapsedMs != null ? fetchStats.elapsedMs : null;
 
-    const picked = pickNewPostsWithStats(posts, prev && prev.lastPostedAt);
+    // 【探索モードでは「既読」で絞らない】測定したいのは「取得窓の中で、採用したカレンダーの
+    // 前後にどんな形の投稿が並んでいるか」なので、既に確認済みの投稿も判定の対象に含める。
+    // ★ここで lastPostedAt を渡さないので `alreadySeen` は 0 になるが、これは残差ではなく
+    //   【既読を理由に落とした投稿が1件も無い】という事実である(選別そのものを行っていない)。
+    //   「本番なら既読として飛ばしていた件数」は別に probeReExaminedCount として数える。
+    const picked = pickNewPostsWithStats(posts, probe ? null : prev && prev.lastPostedAt);
     const newPosts = picked.posts;
+    if (probe) {
+      const lastMs = prev && prev.lastPostedAt ? Date.parse(prev.lastPostedAt) : NaN;
+      summary.probeReExaminedCount = Number.isNaN(lastMs)
+        ? 0
+        : newPosts.filter((p) => Date.parse(p.postedAt) <= lastMs).length;
+    }
     // 取込みの最上流から数える。Apifyが返した生の件数が分からない実装では
     // 「1件も捨てていない」とみなす(誤って残余を出さないため)。
     summary.apifyRawCount = typeof fetchStats.rawCount === 'number' ? fetchStats.rawCount : posts.length;
@@ -823,6 +935,11 @@ async function runMonitor(opts, libs) {
     let examinedCount = 0; // 【Vision呼び出し地点で独立に加算する】残差で出さない
     let cacheHitCount = 0;
     let stoppedAtIndex = newestFirst.length; // 打ち切り位置(未確認の投稿を正の述語で数えるため)
+    // 【探索モード専用】走査の並び(新しい順)の【位置】つきで、投稿1件ごとの判定を残す。
+    // #13 が問うているのは「どんな形の投稿が、本物のどちら側に何件並んでいるか」なので、
+    // 件数だけでなく位置が要る。判定は文面ではなく kind で持つ(文言を直すと壊れる形にしない)。
+    const probeVerdicts = [];
+    let probeCalendarPosts = 0; // 当月以降のカレンダーだが、探索なので採用しなかった投稿
 
     for (let i = 0; i < newestFirst.length; i++) {
       const post = newestFirst[i];
@@ -838,11 +955,29 @@ async function runMonitor(opts, libs) {
         outcome: '不明',
       };
       postDetails.push(detail);
+      // 探索モードでは、この投稿がどう判定されたかを位置つきで必ず1件記録する。
+      const recordProbe = (kind, shape) => {
+        if (!probe) return;
+        probeVerdicts[i] = {
+          index: i,
+          permalink: post.permalink,
+          postedAt: post.postedAt,
+          kind,
+          dominantMonth: shape ? shape.dominantMonth : null,
+          distinctDates: shape ? shape.distinctDates : 0,
+          spanDays: shape ? shape.spanDays : 0,
+        };
+      };
 
       // 【一度判定した投稿は二度と Vision に渡さない】
       // キーワード判定を廃止したぶん、初回は window 全体を舐めることになる。
       // 判定結果を状態ファイルに残せば、以降の費用は【本当に新しい投稿の数】に比例する。
-      const cached = checkedPosts[post.permalink];
+      //
+      // 【★探索モードはキャッシュを使わない★】測定に必要なのは判定の結果(calendar か否か)
+      // だけでなく【支配月・異なる日付・広がり】の3つの数値で、キャッシュはそれを持っていない。
+      // 使うと「前回 not-calendar だった投稿」の形が測れず、標本に穴が空く。
+      // そのぶん Vision の呼び出しは取得窓の全件になる(費用は探索を回す人が引き受ける)。
+      const cached = probe ? null : checkedPosts[post.permalink];
       if (cached && cached !== 'calendar') {
         cacheHitCount += 1;
         detail.outcome = `判定済み(${cached})`;
@@ -855,6 +990,7 @@ async function runMonitor(opts, libs) {
       } catch (e) {
         // 【判定できていないのでキャッシュしない】次回やり直せるようにする。
         imageFailedPosts += 1;
+        recordProbe('image-failed', null);
         detail.outcome = '画像DL失敗';
         lostPosts.push({ store, permalink: post.permalink, postedAt: post.postedAt, kind: 'image-failed', detail: e.message });
         console.warn(
@@ -870,6 +1006,7 @@ async function runMonitor(opts, libs) {
       } catch (e) {
         // 【判定できていないのでキャッシュしない】
         visionFailedPosts += 1;
+        recordProbe('vision-failed', null);
         detail.outcome = 'Vision抽出失敗';
         lostPosts.push({ store, permalink: post.permalink, postedAt: post.postedAt, kind: 'vision-failed', detail: e.message });
         console.warn(
@@ -891,6 +1028,7 @@ async function runMonitor(opts, libs) {
       if (rows.length === 0) {
         emptyResultPosts += 1;
         notAdoptedRows += rows.length; // 0件だが、行の保存則の形を全経路でそろえておく
+        recordProbe('empty', shape);
         detail.outcome = 'Vision抽出0件';
         checkedPosts[post.permalink] = 'empty';
         emptyResults.push({ store, permalink: post.permalink, postedAt: post.postedAt });
@@ -901,6 +1039,7 @@ async function runMonitor(opts, libs) {
       if (!shape.isCalendar) {
         notCalendarPosts += 1;
         notAdoptedRows += rows.length;
+        recordProbe('not-calendar', shape);
         detail.outcome = 'カレンダーでない';
         checkedPosts[post.permalink] = 'not-calendar';
         console.log(formatCalendarVerdict(store, post, shape, 'カレンダーではない(対象外)'));
@@ -911,10 +1050,31 @@ async function runMonitor(opts, libs) {
         // 過去月のカレンダー。採用はしないが【走査は続ける】(上のコメント参照)。
         pastCalendarPosts += 1;
         notAdoptedRows += rows.length;
+        recordProbe('calendar-past', shape);
         detail.outcome = `過去月のカレンダー(${shape.dominantMonth})`;
         checkedPosts[post.permalink] = 'past-calendar';
         if (!latestPastCalendar) latestPastCalendar = { month: shape.dominantMonth, permalink: post.permalink };
         console.log(formatCalendarVerdict(store, post, shape, `過去月のカレンダー(${shape.dominantMonth})なので採用しない`));
+        continue;
+      }
+
+      // 【探索モードはここで打ち切らない】当月以降のカレンダーだと記録して、走査を続ける。
+      // 採用もマージもしないので data.js は1バイトも動かない(採用の判断は本番と同じ位置で
+      // 記録だけしてある = 「本番ならここで打ち切っていた」が後から分かる)。
+      if (probe) {
+        probeCalendarPosts += 1;
+        notAdoptedRows += rows.length;
+        recordProbe('calendar-current', shape);
+        const first = !probeVerdicts.some((v, j) => v && j < i && v.kind === 'calendar-current');
+        detail.outcome = `当月以降のカレンダー(${shape.dominantMonth}・探索なので採用しない)`;
+        console.log(
+          formatCalendarVerdict(
+            store,
+            post,
+            shape,
+            `当月以降のカレンダー(${shape.dominantMonth})${first ? ' ★本番ならここで採用して打ち切っていた' : ''} — 探索モードなので採用しない`
+          )
+        );
         continue;
       }
 
@@ -945,9 +1105,20 @@ async function runMonitor(opts, libs) {
     summary.unexaminedPostCount = unexamined.length;
     summary.examinedPostCount = examinedCount;
     summary.cacheHitCount = cacheHitCount;
+    summary.probeCalendarPostCount = probeCalendarPosts;
+    // 【探索モードの判定一覧】位置(新しい順)ごとに1件。穴が開いていたら測定が壊れているので、
+    // `filter(Boolean)` で詰めずにそのまま渡す(checkProbeAccounting が残余として表に出す)。
+    summary.probeVerdicts = probe ? probeVerdicts : null;
+    // 【探索モードでは「採用した」と言わない】見つけたのは事実なので記録するが、
+    // 実際に採用したのは本番モードだけ。呼び出し側はこの区別を表示に反映する。
     summary.currentMonthCalendar = accepted
       ? { month: accepted.shape.dominantMonth, permalink: accepted.post.permalink }
-      : null;
+      : probe
+        ? (() => {
+            const first = probeVerdicts.find((v) => v && v.kind === 'calendar-current');
+            return first ? { month: first.dominantMonth, permalink: first.permalink } : null;
+          })()
+        : null;
     summary.latestPastCalendar = latestPastCalendar;
     summary.checkedPosts = checkedPosts;
 
@@ -1110,6 +1281,24 @@ async function runMonitor(opts, libs) {
     summary.emptyResultCount = emptyResultPosts;
     summary.visionRowCount = visionRows;
     summary.notAdoptedRowCount = notAdoptedRows;
+
+    // ============================================================
+    // 【★探索モードは状態を1バイトも動かさない★】
+    // ============================================================
+    // ここから下(確認済み投稿日時の前進・判定キャッシュ・lastExtraction・マージ)は
+    // 【探索では一切行わない】。理由は2つ:
+    //   1. lastPostedAt を進めるとバックログを消費する。探索は「測るだけ」なので消費してはいけない
+    //   2. 判定キャッシュを書くと、次の本番実行が探索の判定を再利用してしまう。
+    //      探索は【本番とは違う判断(打ち切らない)】をしているので、その結果を本番に持ち込まない
+    // 呼び出し側の dry-run 分岐(状態ファイルを書かない)と合わせて二重に効かせてある。
+    // この関数が返す state は、渡された state と【ビット単位で同じ】であること(テストで固定)。
+    if (probe) {
+      // 【投稿別の明細はここでも必ず埋める】埋め忘れると呼び出し側の M-4 検査
+      // (明細の行数 === 対象投稿数)が毎回 ::error:: を出す = 空振りの赤になる。
+      summary.posts = postDetails;
+      summaries.push(summary);
+      continue;
+    }
 
     // 新着の確認記録は、Vision抽出の成否に関わらずこの店で確認できた最新投稿まで進める
     // (同じ投稿を毎回「新着」として拾い直し続けないため)。
@@ -1311,6 +1500,15 @@ function makeStoreSummary(store) {
     unexaminedPostCount: 0,
     cacheHitCount: 0,
     examinedPostCount: 0,
+    // 【探索モード(--probe)専用】当月以降のカレンダーだと判定したが、採用しなかった投稿。
+    // 本番では走査がそこで打ち切られて `importedPostCount` 側に入るので【常に0】。
+    // 0のまま動かない項をわざわざ保存則に入れてあるのは、探索モードで投稿が
+    // どのバケツにも入らなくなる(=測定が静かに壊れる)ことを防ぐため。
+    probeCalendarPostCount: 0,
+    // 本番なら「既読」として飛ばしていた投稿を、探索では何件やり直したか。
+    probeReExaminedCount: 0,
+    // 位置(新しい順)ごとの判定一覧。探索モードでだけ配列になる。
+    probeVerdicts: null,
     // 当月カレンダーの有無(店ごとに「あり/なし」を出すための材料)
     currentMonthCalendar: null,
     latestPastCalendar: null,
@@ -1397,6 +1595,8 @@ function checkIntakeAccounting(summary) {
 function checkPostAccounting(summary) {
   const actual =
     summary.importedPostCount +
+    // 探索モードで「当月以降のカレンダーだが採用しない」と判断した投稿(本番では常に0)。
+    summary.probeCalendarPostCount +
     summary.notCalendarPostCount +
     summary.pastCalendarPostCount +
     summary.unexaminedPostCount +
@@ -1457,6 +1657,180 @@ function checkRowAccounting(summary) {
     protected: protectedRows,
     residual: summary.visionRowCount - accounted,
   };
+}
+
+// ============================================================
+// 探索専用モード(--probe)の測定 — リスク台帳 #13
+// ============================================================
+/**
+ * 【この測定が答える問い】
+ *   「採用したカレンダーより【新しい位置】にある投稿のうち、カレンダー判定を満たすものは何件か」
+ *
+ * 【なぜ「偽陽性が何件あるか」ではないのか(レビュー部の指定)】
+ *   偽陽性かどうかは、正解(その店の本物の当月カレンダー)を知らないと判定できず、
+ *   正解は画像の中にしか無い。機械が数えられるのは【形】と【位置】だけである。
+ *   #13 の危険は「本物より新しい位置に、形だけカレンダーに見える投稿が居ること」なので、
+ *   数えるべきは **その位置にその形の投稿が何件あるか**。
+ *   ここが 0 なら、少なくとも今の取得窓では【追い越せる位置に候補が存在しない】と言える。
+ *
+ * 【★この数は「偽陽性が起きない」ことの証明ではない★】
+ *   ・0 でも、それは【この run の取得窓での観測】にすぎない(将来の投稿には何も言えない)
+ *   ・採用した1枚そのものが偽陽性である可能性は、この数では否定できない。
+ *     そちらは `behindCurrentMonth`(採用より【古い位置】にある当月以降のカレンダー)を見る —
+ *     本番の走査は打ち切りでそこに到達しないので、【この数は探索でしか観測できない】
+ *   ・画像DL失敗 / Vision抽出失敗 / Vision 0件 の投稿は【形が確定していない】。
+ *     `aheadUndetermined` / `aheadEmpty` が 0 でない限り、`aheadCalendars` の 0 は
+ *     「候補が無い」ではなく「見えた範囲に候補が無い」である。必ず併記すること
+ *
+ * 【aheadCurrentMonth が構造的に 0 になることについて】
+ *   採用位置は「新しい順で最初の当月以降のカレンダー」なので、それより新しい位置に
+ *   当月以降のカレンダーは定義上存在しない。**0 と分かっていても出す** —
+ *   0 でない値が出たらこの前提(=採用位置の決め方)が壊れているという意味になるため。
+ */
+function probeMetrics(summary) {
+  const verdicts = Array.isArray(summary.probeVerdicts) ? summary.probeVerdicts : [];
+  const adoptedIndex = verdicts.findIndex((v) => v && v.kind === 'calendar-current');
+  const ahead = adoptedIndex < 0 ? [] : verdicts.slice(0, adoptedIndex);
+  const behind = adoptedIndex < 0 ? [] : verdicts.slice(adoptedIndex + 1);
+  // 【残差で数えない】どの群も「その kind であること」を正の述語で数える。
+  // 引き算で出すと、kind が増えたときに黙って別の群へ吸い込まれる。
+  const count = (list, kind) => list.filter((v) => v && v.kind === kind).length;
+  const calendars = (list) => list.filter((v) => v && (v.kind === 'calendar-current' || v.kind === 'calendar-past'));
+  return {
+    total: verdicts.length,
+    adoptedIndex,
+    adopted: adoptedIndex < 0 ? null : verdicts[adoptedIndex],
+    aheadTotal: ahead.length,
+    // ★レビュー部が指定した数字。位置=採用より新しい / 形=カレンダー判定を満たす
+    aheadCalendars: calendars(ahead).length,
+    aheadCurrentMonth: count(ahead, 'calendar-current'),
+    aheadPastMonth: count(ahead, 'calendar-past'),
+    aheadNotCalendar: count(ahead, 'not-calendar'),
+    aheadEmpty: count(ahead, 'empty'),
+    aheadUndetermined: count(ahead, 'image-failed') + count(ahead, 'vision-failed'),
+    behindTotal: behind.length,
+    // 本番の走査は打ち切りでここへ到達しない = 探索でしか見えない数
+    behindCurrentMonth: count(behind, 'calendar-current'),
+    behindPastMonth: count(behind, 'calendar-past'),
+    behindNotCalendar: count(behind, 'not-calendar'),
+    behindEmpty: count(behind, 'empty'),
+    behindUndetermined: count(behind, 'image-failed') + count(behind, 'vision-failed'),
+    // 採用が1枚も無かった店(=当月以降のカレンダーが取得窓に存在しない)でも
+    // 形の分布は測りたいので、全体の内訳も返す。
+    allCalendars: calendars(verdicts).length,
+  };
+}
+
+/**
+ * 【探索の保存則】判定した1投稿は、採用位置の前か後ろかに分かれ、そこで必ず1つの kind に入る。
+ *
+ * これが破れる = 判定一覧に穴が空いている(recordProbe を呼ばない経路が増えた)か、
+ * 未知の kind が増えたということ。どちらも「測定結果が静かに小さく出る」形の壊れ方なので、
+ * 件数を読む前にここで止める。★残差ではなく、正の述語で数えた各群の合計と比べる。
+ */
+function checkProbeAccounting(m) {
+  const aheadSum =
+    m.aheadCurrentMonth + m.aheadPastMonth + m.aheadNotCalendar + m.aheadEmpty + m.aheadUndetermined;
+  const behindSum =
+    m.behindCurrentMonth + m.behindPastMonth + m.behindNotCalendar + m.behindEmpty + m.behindUndetermined;
+  // 採用が無い店は ahead/behind とも0件なので、比べる相手は「採用の有無で決まる期待値」。
+  const expectedTotal = m.adoptedIndex < 0 ? 0 : m.aheadTotal + m.behindTotal + 1;
+  return {
+    ok: aheadSum === m.aheadTotal && behindSum === m.behindTotal,
+    aheadSum,
+    aheadTotal: m.aheadTotal,
+    behindSum,
+    behindTotal: m.behindTotal,
+    expectedTotal,
+    residual: m.aheadTotal - aheadSum + (m.behindTotal - behindSum),
+  };
+}
+
+/**
+ * 探索モードの結果を報告する。
+ * 【この関数は data.js にも状態ファイルにも触らない】— 表示だけを行う。
+ */
+function reportProbe(summaries) {
+  console.log('');
+  console.log('[monitor-instagram-apify] === 探索(--probe)の結果: リスク台帳 #13 の測定 ===');
+  console.log('  この実行では【何も採用していません】。data.js も状態ファイルも書き換えていません。');
+  console.log('  数えているのは「本物を追い越せる位置に、カレンダーの形をした投稿が何件あるか」です。');
+  let totalAheadCalendars = 0;
+  let totalBehindCurrent = 0;
+  let totalAheadUndetermined = 0;
+  for (const s of summaries) {
+    if (s.fetchFailed) {
+      console.log(`[monitor-instagram-apify] 探索: ${s.store.label}(${s.store.venueId}) … 取得失敗のため測定できていません`);
+      continue;
+    }
+    if (!Array.isArray(s.probeVerdicts)) continue;
+    const m = probeMetrics(s);
+    const acc = checkProbeAccounting(m);
+    console.log('');
+    console.log(`[monitor-instagram-apify] 探索: ${s.store.label}(${s.store.venueId}) / 判定した投稿 ${m.total}件`);
+    if (s.probeReExaminedCount > 0) {
+      console.log(`  うち ${s.probeReExaminedCount}件は、本番なら「既読」として飛ばしていた投稿です(探索では判定し直しています)。`);
+    }
+    if (!acc.ok) {
+      console.log(
+        `::error title=Instagram監視 - 探索の集計が合わない::${s.store.label}(${s.store.venueId}): ` +
+          `採用より新しい${acc.aheadTotal}件に対し内訳の合計が${acc.aheadSum}件、` +
+          `古い${acc.behindTotal}件に対し${acc.behindSum}件です。判定一覧に穴があります(バグ)。`
+      );
+    }
+    if (!m.adopted) {
+      console.log(
+        `  本番なら採用していた投稿: ありません(取得窓に当月以降のカレンダーが無い)。` +
+          `カレンダーの形をした投稿は全体で ${m.allCalendars}件です。`
+      );
+      continue;
+    }
+    console.log(
+      `  本番ならここで採用して打ち切っていた投稿: ${m.adopted.permalink}` +
+        `(支配月=${m.adopted.dominantMonth} / 異なる日付=${m.adopted.distinctDates} / 広がり=${m.adopted.spanDays}日` +
+        ` / 新しい順で${m.adoptedIndex + 1}件目)`
+    );
+    console.log(
+      `  ★採用より【新しい位置】にあり、カレンダー判定を満たす投稿: ${m.aheadCalendars}件` +
+        `(支配月が当月以降 ${m.aheadCurrentMonth}件 / 過去月 ${m.aheadPastMonth}件)` +
+        ` ← 形だけなら追い越せた投稿の数(月の判定だけが止めている)`
+    );
+    // 【★この0を「安全」と読ませない★】採用位置は「新しい順で最初の当月以降のカレンダー」
+    // なので、それより新しい位置に当月以降のカレンダーは【定義上存在しない】。
+    // つまり上の行は #13 の「採用した1枚自身が偽陽性」という形を検出できない。
+    // その形は必ず下の【古い位置】の行に現れるので、両方を並べて出す。
+    console.log(
+      '    ※上の「支配月が当月以降」は採用位置の決め方から常に0になります。' +
+        '【採用した1枚そのものが偽陽性】かどうかは、この数では分かりません(下の行を見てください)。'
+    );
+    console.log(
+      `    同じ位置のその他: カレンダーでない ${m.aheadNotCalendar}件 / Vision抽出0件 ${m.aheadEmpty}件 / ` +
+        `形が確定していない ${m.aheadUndetermined}件(画像DL・Vision失敗)` +
+        `${m.aheadUndetermined + m.aheadEmpty > 0 ? ' ← この件数がある限り、上の数は「見えた範囲での候補数」です' : ''}`
+    );
+    console.log(
+      `  採用より【古い位置】にある当月以降のカレンダー: ${m.behindCurrentMonth}件` +
+        ` ← 本番の走査は打ち切りでここに到達しません(採用した1枚が偽陽性なら、本物はこの中に居ます)`
+    );
+    console.log(
+      `    同じ位置のその他: 過去月のカレンダー ${m.behindPastMonth}件 / カレンダーでない ${m.behindNotCalendar}件 / ` +
+        `Vision抽出0件 ${m.behindEmpty}件 / 形が確定していない ${m.behindUndetermined}件`
+    );
+    totalAheadCalendars += m.aheadCalendars;
+    totalBehindCurrent += m.behindCurrentMonth;
+    totalAheadUndetermined += m.aheadUndetermined + m.aheadEmpty;
+  }
+  console.log('');
+  console.log(
+    `[monitor-instagram-apify] 探索の合計: 本物を追い越せる位置のカレンダー ${totalAheadCalendars}件 / ` +
+      `打ち切りの後ろに隠れた当月以降のカレンダー ${totalBehindCurrent}件 / ` +
+      `追い越せる位置で形が確定しなかった投稿 ${totalAheadUndetermined}件`
+  );
+  console.log(
+    '  【読み方】1つ目が0でも「偽陽性は起きない」ではありません。この取得窓での観測であり、' +
+      '3つ目が0でない限り「見えた範囲で0」です。2つ目が0でなければ、採用した1枚が本物かどうかを' +
+      '人が画像で確かめてください(機械には正解がありません)。'
+  );
 }
 
 /**
@@ -1724,6 +2098,10 @@ function reportTotals(summaries, storeCount) {
   // 「投稿側は常に合っている」と誤読される)。
   console.log(
     `  投稿の行き先: 取り込めた ${sum((s) => s.importedPostCount)}件 / ` +
+      // 探索モードでだけ動く項。本番では常に0なので、0のときは出さない。
+      (sum((s) => s.probeCalendarPostCount) > 0
+        ? `当月以降のカレンダー(探索・採用せず) ${sum((s) => s.probeCalendarPostCount)}件 / `
+        : '') +
       `カレンダーでない ${sum((s) => s.notCalendarPostCount)}件 / ` +
       `過去月のカレンダー ${sum((s) => s.pastCalendarPostCount)}件 / ` +
       `判定済み ${sum((s) => s.cacheHitCount)}件 / 未確認 ${sum((s) => s.unexaminedPostCount)}件 / ` +
@@ -1752,16 +2130,22 @@ function reportTotals(summaries, storeCount) {
  * 72投稿すべてがVision抽出に失敗しながら注記は1件も出ず、サマリは「1行も採用できなかった
  * 投稿 0件」と表示していた(集計から漏れているのではなく、積極的に「異常なし」と誤報していた)。
  */
-function reportLostPosts(lostPosts) {
+function reportLostPosts(lostPosts, opts) {
   if (!lostPosts || lostPosts.length === 0) return;
+  const probe = Boolean(opts && opts.probe);
   const byKind = (k) => lostPosts.filter((p) => p.kind === k).length;
   console.log('');
   console.log(
     `::error title=Instagram監視 - 内容が失われた投稿::` +
       `${lostPosts.length}件の投稿を処理できませんでした` +
       `(画像ダウンロード失敗 ${byKind('image-failed')}件 / Vision抽出失敗 ${byKind('vision-failed')}件)。` +
-      'これらの投稿の内容はサイトに一切入らず、確認済み投稿日時が進むため【再試行されません】。' +
-      'ジョブは継続しています(取り込めた他の投稿は反映済み)。人の確認が必要です。'
+      // 【探索モードでは「失われた」も「再試行されない」も事実に反する】確認済み投稿日時を
+      // 前進させないので、次の実行で同じ投稿をもう一度処理できる。文面を分ける。
+      (probe
+        ? '探索モードなので確認済み投稿日時は前進しておらず、次の実行でやり直せます。' +
+          'ただし【この探索の測定からは抜けています】(形が確定していない投稿として数えます)。'
+        : 'これらの投稿の内容はサイトに一切入らず、確認済み投稿日時が進むため【再試行されません】。' +
+          'ジョブは継続しています(取り込めた他の投稿は反映済み)。人の確認が必要です。')
   );
   for (const p of lostPosts) {
     const label = p.kind === 'image-failed' ? '画像ダウンロード失敗' : 'Vision抽出失敗';
@@ -1826,9 +2210,41 @@ function reportAnomalies(anomalies) {
   );
 }
 
+/**
+ * 探索モードで書き込み関数が呼ばれたら、書かずに落とす【構造的な安全弁】。
+ *
+ * 【なぜ「dry-run と同じ経路で return するから大丈夫」で済ませないか】
+ *   その保証は「return が書き込みより前にある」という【並び】だけに依存していて、
+ *   1行の移動で静かに消える。書き込みの手段そのものを取り上げておけば、
+ *   仮に到達しても【書かずに落ちる】= 事故が事故として見える。
+ */
+function forbidWrite(what) {
+  return () => {
+    throw new Error(
+      `探索モード(--probe)では ${what} を書き換えません。この関数に到達したこと自体が退行です。`
+    );
+  };
+}
+
 async function main() {
+  // 【★引数の検査は何よりも先に★】知らない引数を無視すると、`--dry-run` の打ち間違いが
+  // そのまま【本番実行】になる(この経路の本番は不可逆)。1バイトも書かずにここで止める。
+  if (UNKNOWN_ARGS.length > 0) {
+    fail(
+      `知らない引数です: ${UNKNOWN_ARGS.map((a) => JSON.stringify(a)).join(', ')}。` +
+        `使えるのは ${KNOWN_FLAGS.join(' / ')} だけです。` +
+        '(打ち間違いをそのまま本番実行にしないため、ここで止めています)'
+    );
+    return;
+  }
+
   const today = todayJst();
-  console.log(`[monitor-instagram-apify] 基準日(JST): ${today}${DRY_RUN ? ' / DRY-RUN' : ''}`);
+  const modeLabel = PROBE
+    ? ' / PROBE(探索専用: 打ち切らずに全投稿を判定・採用なし・書き込みなし)'
+    : DRY_RUN
+      ? ' / DRY-RUN'
+      : '';
+  console.log(`[monitor-instagram-apify] 基準日(JST): ${today}${modeLabel}`);
 
   if (!process.env.APIFY_API_TOKEN) {
     fail('APIFY_API_TOKEN が未設定です。Apify呼び出しをスキップし、data.js / 状態ファイルは書き換えません。');
@@ -1839,18 +2255,20 @@ async function main() {
   const mergeLib = require('./tournament-merge');
   const guardLib = require('./schedule-write-guard');
 
+  // 【探索モードでは書き込みの手段そのものを取り上げる】(forbidWrite のコメント参照)
+  const writeDataJs = PROBE ? forbidWrite('data.js') : mergeLib.writeDataJs;
+  const persistMonitorState = PROBE ? forbidWrite(path.basename(STATE_PATH)) : saveState;
+  const persistWriteState = PROBE ? forbidWrite(path.basename(WRITE_STATE_PATH)) : machineState.writeState;
+
   const file = mergeLib.readDataJs(DATA_JS);
   const before = file.arr;
   // 最終自己チェックの左辺。before は arr と要素オブジェクトを共有するので、ここで一度だけ
   // 深く写しておく(理由は下の checkNothingElseChanged 呼び出し箇所のコメント)。
   const beforeSnapshot = JSON.parse(JSON.stringify(before));
-  let state;
-  try {
-    state = loadState(STATE_PATH);
-  } catch (e) {
-    fail(e.message);
-    return;
-  }
+  // 【確認済み投稿日時の記録が読めなくても止めない】理由と代償は loadState のヘッダ参照。
+  const loaded = loadState(STATE_PATH);
+  const state = loaded.state;
+  if (loaded.broken) reportBrokenState(STATE_PATH, loaded.reason, { dryRun: DRY_RUN });
 
   // 機械が最後に書いた値の控え。読めない/壊れているときは【空として続行する】—
   // ここで落とすと状態ファイル1つでこの経路が永久に止まる。空でも人の行は守られる側に倒れる。
@@ -1867,7 +2285,7 @@ async function main() {
   let result;
   try {
     result = await runMonitor(
-      { stores: STORES, before, today, state, writeRecords: writeState.entries },
+      { stores: STORES, before, today, state, writeRecords: writeState.entries, probe: PROBE },
       { fetchLib, visionLib, mergeLib, downloadImage }
     );
   } catch (e) {
@@ -1938,7 +2356,11 @@ async function main() {
     // 「新着が無かった0件」と「カレンダーを見つけられなかった0件」は意味が違う。
     // 月初に店がまだ出していないのは正常なので【赤にはしない】が、要約には必ず出す。
     if (s.currentMonthCalendar) {
-      console.log(`  当月カレンダー: あり (${s.currentMonthCalendar.month} / ${s.currentMonthCalendar.permalink})`);
+      console.log(
+        `  当月カレンダー: あり (${s.currentMonthCalendar.month} / ${s.currentMonthCalendar.permalink})` +
+          // 【探索では「あり」と「採用した」を同じ文にしない】見つけたのは事実だが採用はしていない。
+          (PROBE ? ' ※探索モードなので採用していません(本番ならここで打ち切っていた投稿)' : '')
+      );
     } else if (s.newPostCount === 0) {
       // 【「新着が無かった」と「カレンダーが見つからなかった」を同じ文言にしない】
       // 新着0件の店は今回1枚も判定していない。「なし」と書くと
@@ -1954,7 +2376,9 @@ async function main() {
     console.log(
       `  走査: Vision実行 ${s.examinedPostCount}件 / 判定済みで再実行せず ${s.cacheHitCount}件 / ` +
         `カレンダーでない ${s.notCalendarPostCount}件 / 過去月のカレンダー ${s.pastCalendarPostCount}件 / ` +
-        `未確認(採用後に打ち切り) ${s.unexaminedPostCount}件`
+        `未確認(採用後に打ち切り) ${s.unexaminedPostCount}件` +
+        // 探索でしか動かない項なので、0のときは出さない(本番のログに常時0を並べない)。
+        (s.probeCalendarPostCount > 0 ? ` / 当月以降のカレンダー(探索・採用せず) ${s.probeCalendarPostCount}件` : '')
     );
     const post = checkPostAccounting(s);
     if (!post.ok) {
@@ -1993,9 +2417,10 @@ async function main() {
   reportStoreFailures(storeFailures, summaries, storeCount);
   reportAcceptedRows(summaries);
   reportTotals(summaries, storeCount);
-  reportLostPosts(lostPosts);
+  reportLostPosts(lostPosts, { probe: PROBE });
   reportEmptyResults(emptyResults);
   reportAnomalies(anomalies);
+  if (PROBE) reportProbe(summaries);
 
   // 対象外店舗・過去日が変化していないことの最終自己チェック(店舗ごとのassertOnlyTargetChangedに加えた二重チェック)。
   // 【★左辺はマージ前のディープコピー★】before と arr は past の要素オブジェクトを共有しているので、
@@ -2020,7 +2445,9 @@ async function main() {
   console.log('');
   // 【終了コードの使い分け】
   //   0 … 全店を観測できた(正常)
-  //   1 … 何も書いていない(トークン未設定・状態ファイル破損・自己チェック失敗。fail() が使う)
+  //   1 … 何も書いていない(知らない引数・トークン未設定・自己チェック失敗。fail() が使う)
+  //        ★確認済み投稿日時の記録が壊れていても【1にはしない】(記録なしとして続行し、
+  //          この実行の最後に書き直す)。理由は reportBrokenState のコメント。
   //   2 … 一部の店の取得に失敗した。【成功した店ぶんは書き込み済み】で、失敗店の
   //        確認済み投稿日時は前進していないので次回やり直せる。Actions は赤くする
   // 2 を 1 と区別するのは、「何も書いていない」と「一部だけ書いた」では
@@ -2039,7 +2466,11 @@ async function main() {
   });
 
   if (DRY_RUN) {
-    console.log('[monitor-instagram-apify] --dry-run のため data.js / 状態ファイルは書き換えません。');
+    console.log(
+      PROBE
+        ? '[monitor-instagram-apify] --probe のため data.js / 状態ファイルは書き換えません(確認済み投稿日時も前進していません)。'
+        : '[monitor-instagram-apify] --dry-run のため data.js / 状態ファイルは書き換えません。'
+    );
     // 【dry-run でも終了コードは同じにする】そうしないと dry-run が緑のまま通り、
     // 本番で初めて赤くなる。dry-run は本番の予行なので挙動を揃える。
     if (partial) process.exitCode = PARTIAL_FAILURE;
@@ -2048,21 +2479,28 @@ async function main() {
 
   if (!changed) {
     console.log('[monitor-instagram-apify] スケジュール告知の新着は無かったため data.js は書き換えません。');
-    if (JSON.stringify(nextState) !== JSON.stringify(state)) {
-      saveState(STATE_PATH, nextState);
-      console.log('[monitor-instagram-apify] 確認済みの投稿日時のみ apify-monitor-state.json に記録しました。');
+    // 【★壊れていた記録は、新着が無い日でも必ず書き直す★】差分だけを見て保存すると、
+    // 全店で新着0件の日は nextState が(空の)state と一致し、【壊れたファイルが残り続ける】。
+    // それでは「続行して自分で直る」という loadState の前提が成り立たない。
+    if (loaded.broken || JSON.stringify(nextState) !== JSON.stringify(state)) {
+      persistMonitorState(STATE_PATH, nextState);
+      console.log(
+        loaded.broken
+          ? `[monitor-instagram-apify] 読めなかった ${path.basename(STATE_PATH)} を書き直しました(記録${Object.keys(nextState).length}店ぶん)。`
+          : '[monitor-instagram-apify] 確認済みの投稿日時のみ apify-monitor-state.json に記録しました。'
+      );
     }
     // 控えは data.js の差分と無関係に整合させる(過去日の刈り込みだけの日もある)。
-    if (machineState.writeState(WRITE_STATE_PATH, nextWriteEntries, { writtenBy: 'tools/monitor-instagram-apify.js' })) {
+    if (persistWriteState(WRITE_STATE_PATH, nextWriteEntries, { writtenBy: 'tools/monitor-instagram-apify.js' })) {
       console.log(`[monitor-instagram-apify] ${path.basename(WRITE_STATE_PATH)} を更新しました。`);
     }
     if (partial) process.exitCode = PARTIAL_FAILURE;
     return;
   }
 
-  mergeLib.writeDataJs(DATA_JS, file, arr);
-  saveState(STATE_PATH, nextState);
-  machineState.writeState(WRITE_STATE_PATH, nextWriteEntries, { writtenBy: 'tools/monitor-instagram-apify.js' });
+  writeDataJs(DATA_JS, file, arr);
+  persistMonitorState(STATE_PATH, nextState);
+  persistWriteState(WRITE_STATE_PATH, nextWriteEntries, { writtenBy: 'tools/monitor-instagram-apify.js' });
   console.log(
     `[monitor-instagram-apify] data.js / apify-monitor-state.json / ${path.basename(WRITE_STATE_PATH)} を更新しました。`
   );
@@ -2119,8 +2557,13 @@ module.exports = {
   reportAcceptedRows,
   checkPostAccounting,
   checkRowAccounting,
+  probeMetrics,
+  checkProbeAccounting,
+  reportProbe,
+  forbidWrite,
   runMonitor,
   loadState,
+  reportBrokenState,
   saveState,
   todayJst,
 };
