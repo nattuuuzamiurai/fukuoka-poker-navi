@@ -151,6 +151,20 @@ function todayJst() {
   return `${j.getUTCFullYear()}-${pad2(j.getUTCMonth() + 1)}-${pad2(j.getUTCDate())}`;
 }
 
+/**
+ * 確認済み投稿日時の状態ファイルを読む。
+ *
+ * 【★壊れていたら落ちる = 人が直すまで永久に止まる★】(README リスク台帳 #19・実測で確認)
+ *   ここで throw すると呼び出し側が fail() → exit(1) し、状態ファイルは書き換わらない。
+ *   つまり翌朝も同じ壊れたファイルを読んで同じ理由で落ちる。
+ *   ★このファイルは【bot 自身が毎日書いてコミットする】ので、`git pull --rebase` の衝突や
+ *     部分書き込みで壊れうる。机上の話ではない。
+ *   ★同じツールのもう一方の状態ファイル(instagram-write-state.json)は逆の判断をしている —
+ *     machine-write-state.js の readState は「ここで落とすと状態ファイル1つで日次の取込みが
+ *     永久に止まる」として例外を投げず空で続行する。**判断が逆になった理由は残っていない。**
+ *   縮退させる(空として続行する)には「確認済み投稿日時を失うと全投稿を新着として拾い直す」
+ *   ことの是非を決める必要があるため、今回は挙動を変えずに性質だけ記録してある。
+ */
 function loadState(statePath) {
   if (!fs.existsSync(statePath)) return {};
   let parsed;
@@ -1125,6 +1139,13 @@ async function runMonitor(opts, libs) {
         // ★seed は渡さない。この経路が書くのは source:'semi' で、人が admin.html で
         //   入れた行と同じ source。seed を足すと手入力572件が機械のものに化ける。
       });
+      // 【★この2本は店単位の隔離を受けない★】(README リスク台帳 #20・実測で確認)
+      //   上の Apify取得失敗は try/catch で店ごとにスキップされるが、この2本は catch の外にある。
+      //   2店目で鳴ると例外が runMonitor の外まで飛び、呼び出し側が fail() → exit(1) するので、
+      //   【1店目までの取込みごと捨てられる】。「1店の障害で全店を止めない」という
+      //   このツールの柱は、取得失敗にしか掛かっていない。
+      //   ★それでよい面もある(自分のバグを検出したのだから書き進めない方が正しい)が、
+      //     非対称が文書化されていなかったので記録した。挙動は変えていない。
       mergeLib.assertOnlyTargetChanged(beforeSnapshot, next, store.venueId, today);
       // 人の行・人が直した項目が1つも壊れていないことの突き合わせ。
       // ★stats を一切参照しない(集計を潰す変異が入っても独立に生き残る)。
