@@ -3254,19 +3254,37 @@ test('★空振り: 判定は理由の文面ではなく kind で行う(文言�
   assert.equal(result.summaries[0].notATournamentPostCount, 1);
 });
 
+/**
+ * 「開始時刻が読めなかった行が noStartCount / total」という採用結果を組み立てる。
+ * total=100 で呼べば noStartCount がそのまま割合(%)になる。
+ */
+const mk = (noStartCount, total) => [
+  {
+    addedRows: Array.from({ length: total }, (_, i) => ({
+      entry: { venueId: 'v40', date: '2099-08-01', start: i < noStartCount ? '' : '19:00', name: `大会${i}`, buyin: 1, tags: [] },
+      permalink: 'p',
+      replacedManualIds: [],
+    })),
+    posts: [],
+  },
+];
+
+/** 実物の reportAcceptedRows を呼び、::warning:: が出たかどうかだけを返す。 */
+function warnsAt(noStartCount, total) {
+  const lines = [];
+  const orig = console.log;
+  console.log = (...a) => lines.push(a.join(' '));
+  try {
+    monitor.reportAcceptedRows(mk(noStartCount, total));
+  } finally {
+    console.log = orig;
+  }
+  return lines.some((l) => l.startsWith('::warning'));
+}
+
 test('★警告: 平常から大きく外れたときだけ ::warning:: を出す', () => {
   const lines = [];
   const orig = console.log;
-  const mk = (noStartCount, total) => [
-    {
-      addedRows: Array.from({ length: total }, (_, i) => ({
-        entry: { venueId: 'v40', date: '2099-08-01', start: i < noStartCount ? '' : '19:00', name: `大会${i}`, buyin: 1, tags: [] },
-        permalink: 'p',
-        replacedManualIds: [],
-      })),
-      posts: [],
-    },
-  ];
   // 平常(95%付近)→ 警告なし
   console.log = (...a) => lines.push(a.join(' '));
   try {
@@ -3293,6 +3311,10 @@ test('★警告: 平常から大きく外れたときだけ ::warning:: を出�
   // 「上がったならVisionが読めなくなった可能性」は EXPECTED(95)+TOL(25) では pct>120 が要り、
   // 割合の定義域 [0,100] では起こりえない。出ない警告を「出る」と書くのは
   // 【システムが事実でないことを述べている】状態で、この案件で最も避けたい形。
+  // 【この否定形の検査は弱い】言い換え(例:「なお上振れも警告で拾えます」の追記)は素通りする。
+  // それでも残しているのは、下の「上振れ側では実装が一度も発火しない」を実物で押さえたことで、
+  // 【文面が実装より広い主張をしている】状態は実装側から検出できるようになったため。
+  // 正の側(/下振れ/ /対象外/)との併用と合わせ、歯止めとしてはここまでとする。
   assert.doesNotMatch(
     w,
     /上がったならVisionが読めなくなった/,
@@ -3302,18 +3324,24 @@ test('★警告: 平常から大きく外れたときだけ ::warning:: を出�
   assert.match(w, /対象外/, '上振れ(Visionの劣化)はこの警告の対象外だと明示すること');
 });
 
-test('★警告: 上振れ分岐は定数上そもそも到達不能(文面と実装のずれを固定する)', () => {
-  // 「下振れ専用」という警告文・READMEの記述は、平常値が上限100%に近いことに依存している。
-  // EXPECTED + TOLERANCE >= 100 である限り、上振れの発火に必要な pct は定義域の外にある。
-  // ここが崩れる定数変更(平常値を大きく下げる等)をしたときは、
-  // 【文面の方も引き直す】必要があるので、このテストで気づけるようにしておく。
+test('★警告: 上振れ側は実装が一度も発火しない(文面と実装のずれを固定する)', () => {
+  // 【★判定式をテスト側に書き写さないこと】以前ここは
+  //   const fires = (pct) => Math.abs(pct - EXPECTED) > TOLERANCE;
+  // というテスト内の再実装を走査していた。これは定数を検査しているだけで
+  // 【実装を一度も呼んでいない】ため、実装の条件に `|| pct > EXPECTED + 2` を足す変異
+  // (= 警告文とREADMEの「上振れは対象外」が再び嘘になる)が生き残った。
+  // 再発を防ぐために足した検査が、その再発を防げていなかった。実物を呼ぶこと。
+  //
+  // total=100 なので noStartCount がそのまま割合(%)になる。
+  for (let pct = monitor.EXPECTED_NO_START_PCT; pct <= 100; pct += 1) {
+    assert.equal(warnsAt(pct, 100), false, `pct=${pct} は上振れ側なので発火しない(天井効果)`);
+  }
+  // 下振れ側は従来どおり発火する(上のループが「常に false」で通る抜け殻でないことの担保)。
+  assert.equal(warnsAt(0, 100), true, '下振れ側では発火すること(検査そのものが死んでいないこと)');
+  // 定数を変えて上振れ側を発火可能にしたときは、警告文とREADMEの「下振れ専用」も書き直すこと
+  // (上のループでも落ちるが、こちらの方が理由が明示的に出る)。
   assert.ok(
     monitor.EXPECTED_NO_START_PCT + monitor.NO_START_PCT_TOLERANCE >= 100,
     '上振れが発火しうる定数にするなら、警告文とREADMEの「下振れ専用」を書き直すこと'
   );
-  // 定義域の全域を走査しても、上振れ側では1つも発火しない
-  const fires = (pct) => Math.abs(pct - monitor.EXPECTED_NO_START_PCT) > monitor.NO_START_PCT_TOLERANCE;
-  for (let pct = monitor.EXPECTED_NO_START_PCT; pct <= 100; pct += 1) {
-    assert.equal(fires(pct), false, `pct=${pct} は上振れ側なので発火しない(天井効果)`);
-  }
 });
