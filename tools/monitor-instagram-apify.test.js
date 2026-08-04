@@ -696,6 +696,8 @@ test('runMonitor: 店が同じ画像を再投稿しても異常(::error::)にな
     added: FILLER_COUNT + 2,
     updated: 0,
     unchanged: 0,
+    protectedRows: 0,
+    protectedFields: 0,
   });
   // 投稿レベル・行レベルの保存則がどちらも成り立っていること
   assert.ok(monitor.checkPostAccounting(summary).ok, `投稿の内訳が合わない: ${JSON.stringify(monitor.checkPostAccounting(summary))}`);
@@ -899,6 +901,8 @@ test('runMonitor: 抽出品質(採用/破棄/不採用投稿の件数)を状態�
     added: FILLER_COUNT + 1,
     updated: 0,
     unchanged: 0,
+    protectedRows: 0,
+    protectedFields: 0,
   });
 
   // 新着そのものが無かった回は前回値を持ち越す
@@ -1081,7 +1085,14 @@ const TOOLS_DIR = __dirname;
 function makeTempRepoRoot() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'monitor-instagram-apify-cli-'));
   fs.mkdirSync(path.join(root, 'tools'));
-  for (const f of ['monitor-instagram-apify.js', 'tournament-merge.js', 'venue-schedule-vision.js', 'validate-data.js']) {
+  for (const f of [
+    'monitor-instagram-apify.js',
+    'tournament-merge.js',
+    'venue-schedule-vision.js',
+    'validate-data.js',
+    // 「機械が最後に書いた値」の控えと所有判定。tournament-merge.js が require するので必須。
+    'machine-write-state.js',
+  ]) {
     fs.copyFileSync(path.join(TOOLS_DIR, f), path.join(root, 'tools', f));
   }
   const tournaments = [
@@ -1674,13 +1685,18 @@ test('保存則(行): 全行が過去日で追加0でも、内訳から「正常
   assert.equal(result.arr.length, 0);
 });
 
-test('保存則(行): 2回目の取込みは「更新」に入る(この経路では「変更なし」は出ない)', async () => {
-  // 【dry-runの数字を読むときに必要な知識】この監視は取り込んだ行に source:'semi' を付ける
-  // (PR #16の「auto → semi」変更)。一方 mergeStore が「変更なし」を出せるのは既存が
-  // source:'auto' のときだけで、'semi' は【手入力扱い】になるため、同じ内容を再取込みしても
-  // unchanged ではなく updated(かつ replacedManual)として数えられる。
-  // つまりこのパイプラインでは "変更なし" は基本的に0のままになる。
+test('保存則(行): 2回目の取込みは、変わった行だけが「更新」に入る', async () => {
+  // 【★数え方が変わった(2026-08-04)。dry-runの数字を読むときに必要】
+  // 以前は「source:'semi' は手入力扱い」だったため、内容が1文字も変わっていない行まで
+  // すべて updated に入り、「変更なし」は構造的に0のままだった。
+  // いまは【控えと突き合わせて同じidの行を素直に比べる】ので、
+  // 内容が同じ行は unchanged、変わった行だけが updated になる。数字の意味が正確になった。
   // 保存則(残余0)はどちらに数えられても成り立つので、ここで固定するのは残余0の方。
+  //
+  // 【★controls を渡すこと(2026-08-04)】この経路が自分の行を更新できるのは
+  // 【機械が最後に書いた値の控え】がある場合だけ。本番では main() が
+  // instagram-write-state.json から読んで渡す。テストでも同じように前回の written を渡す。
+  // 渡さない場合の挙動は次のテストで固定してある(=人の行として守られる)。
   const rows = [
     { date: '2099-09-12', start: '19:00', name: '大会A', buyin: 3000, tags: [] },
     { date: '2099-09-13', start: '19:00', name: '大会B', buyin: 3000, tags: [] },
@@ -1695,7 +1711,13 @@ test('保存則(行): 2回目の取込みは「更新」に入る(この経路�
 
   // 同じ内容 + 1件だけ金額が変わったものを、別の投稿として再取込み
   const second = await monitor.runMonitor(
-    { stores: [monitor.STORES[0]], before: first.arr, today: '2026-07-31', state: {} },
+    {
+      stores: [monitor.STORES[0]],
+      before: first.arr,
+      today: '2026-07-31',
+      state: {},
+      writeRecords: first.written, // 前回の実行が控えた「機械が書いた値」
+    },
     fakeLibsForBehaviour([
       {
         permalink: 'https://www.instagram.com/p/B/',
@@ -1706,12 +1728,55 @@ test('保存則(行): 2回目の取込みは「更新」に入る(この経路�
   );
   const row = monitor.checkRowAccounting(second.summaries[0]);
   assert.equal(row.rows, FILLER_COUNT + 2);
-  assert.equal(row.added, 0, '既存と同じスロットなので追加ではない');
-  assert.equal(row.updated, FILLER_COUNT + 2, "source:'semi' は手入力扱いなので、同一内容の行も「更新」に入る");
-  assert.equal(row.unchanged, 0, 'この経路では「変更なし」は出ない(上のコメント参照)');
+  assert.equal(row.added, 0, '既存と同じidなので追加ではない');
+  assert.equal(row.updated, 1, '★内容が変わった1行(大会Bの参加費)だけが「更新」に入ること');
+  assert.equal(row.unchanged, FILLER_COUNT + 1, '内容が同じ行は「変更なし」に入ること');
+  assert.equal(row.protected, 0, '自分が書いた行なので守る対象ではない');
   assert.equal(row.residual, 0, '数え方がどちらでも、残余は0でなければならない');
   assert.ok(row.ok);
-  assert.equal(second.summaries[0].stats.replacedManual.length, FILLER_COUNT + 2, '既存が置き換え対象として数えられる');
+  const changed = second.arr.find((t) => t.name === '大会B');
+  assert.equal(changed.buyin, 5000, '★控えがある行はちゃんと新しい値に更新されること(取込みが止まらない)');
+});
+
+test('★保存則(行): 控えが無い行(=人の行)と同じ枠に来た行は「守って見送り」に入り、残余は出ない', async () => {
+  // 【この案件の本体】dry-run #5 では、人が入力した39件がここで機械の読み取りに置き換わった。
+  // いまは書かずに見送る。★見送りは「その場で +1」しており、
+  // `Visionが返した行 - 書いた数` のような残差ではないので、この保存則は恒等式にならない。
+  const rows = [
+    { date: '2099-09-12', start: '19:00', name: '大会A', buyin: 3000, tags: [] },
+    { date: '2099-09-13', start: '19:00', name: '大会B', buyin: 3000, tags: [] },
+  ];
+  const first = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
+    fakeLibsForBehaviour([
+      { permalink: 'https://www.instagram.com/p/A/', postedAt: '2026-07-20T10:00:00.000Z', rows: asCalendar(rows, '2099-09') },
+    ])
+  );
+  const before = JSON.parse(JSON.stringify(first.arr));
+
+  // 控えを【渡さない】= 状態ファイルを失った / これらの行を人が入れた、と同じ状況。
+  const second = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: first.arr, today: '2026-07-31', state: {} },
+    fakeLibsForBehaviour([
+      {
+        permalink: 'https://www.instagram.com/p/B/',
+        postedAt: '2026-07-21T10:00:00.000Z',
+        rows: asCalendar([{ ...rows[0] }, { ...rows[1], buyin: 5000 }], '2099-09'),
+      },
+    ])
+  );
+  const row = monitor.checkRowAccounting(second.summaries[0]);
+  assert.equal(row.protected, FILLER_COUNT + 2, '全行が「守って見送り」に入ること');
+  assert.equal(row.updated, 0);
+  assert.equal(row.added, 0);
+  assert.equal(row.residual, 0, '★残余が出ないこと(見送りが保存則の項として数えられている)');
+  assert.ok(row.ok);
+  assert.deepEqual(second.arr, before, '既存の行は1バイトも変わらないこと');
+  assert.equal(
+    second.summaries[0].protectedRows.length,
+    FILLER_COUNT + 2,
+    '明細に「何を書かなかったか」が残ること'
+  );
 });
 
 // ============================================================
@@ -2910,11 +2975,28 @@ test('★漏洩走査: CLIの全出力(stdout/stderr/状態ファイル/data.js)
     ]) {
       assert.match(all, re, `${label}の経路を通っていない(走査が空振りになる)`);
     }
+    // 【★コミットされる出力面は1つ残らず走査すること】走査対象から漏れたファイルは
+    // そこだけ素通りする。この案件は public リポジトリなので、書き出し先を1つ増やしたら
+    // 必ずここにも足す(「入るのは data.js に載る値だけ」という主張ではなく、検査で担保する)。
+    const readIfExists = (f) => {
+      try {
+        return fs.readFileSync(path.join(root, f), 'utf8');
+      } catch (e) {
+        return '';
+      }
+    };
+    const writeStateJson = readIfExists('instagram-write-state.json');
+    assert.ok(
+      writeStateJson.length > 0,
+      '機械が書いた値の控えが生成されていること(空だと走査が空振りになる)'
+    );
     assertNoCaptionLeak({
       stdout: r.stdout,
       stderr: r.stderr,
       'apify-monitor-state.json': fs.readFileSync(path.join(root, 'apify-monitor-state.json'), 'utf8'),
       'data.js': fs.readFileSync(path.join(root, 'data.js'), 'utf8'),
+      // 2026-08-04 に増えた出力面。人が直した値を守るための「機械が最後に書いた値」の控え。
+      'instagram-write-state.json': writeStateJson,
     });
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
@@ -3248,11 +3330,16 @@ test('明細: 読み取れた 0 と「読み取れなかった」を混同しな
   assert.match(row, /スタック0 /);
 });
 
-// ---------- M-1: 既存の手入力を置き換えた行に印を付ける ----------
+// ---------- M-1: 人の行を守って書かなかった行を明細に出す ----------
+//
+// 【★2026-08-04に意味が反転した】以前ここには
+// 「人の入力を置き換えた行に `★既存の手入力(id=…)を置き換え` と印を付ける」テストがあった。
+// いまは置き換えないので、その印は永久に発火しない = 鳴らない警報になるため削除した。
+// 守りたかったこと(⑤が「これは新規ではない」と分かる)は、
+// 【書かなかった行と、その理由になった人の行を並べて出す】形で引き継いでいる。
 
-test('明細: 既存の手入力と同じ枠を置き換えた行には★印と置き換え先のidが出る', async () => {
-  // 手入力は別idなので「idが増えた=新規」に見えるが、実際には人の入力を上書きしている。
-  // 監視6店には手入力が71件残っているので現実に起こりうる。
+test('★明細: 人の行と同じ枠に来た行は書かれず、人の値と読み取った値が並べて出る', async () => {
+  // 監視6店には未来日の手入力が82件ある。dry-run #5 ではこの経路で39件が置き換わった。
   const manual = {
     id: 'kq0804',
     venueId: 'v40',
@@ -3268,6 +3355,7 @@ test('明細: 既存の手入力と同じ枠を置き換えた行には★印と
     tags: [],
     source: 'manual',
     verified: true,
+    lowConfidence: true, // ⚠ 要確認。置き換えると【誰も確認していないのに印が外れる】
   };
   const result = await monitor.runMonitor(
     { stores: [monitor.STORES[0]], before: [manual], today: '2026-07-31', state: {} },
@@ -3280,19 +3368,42 @@ test('明細: 既存の手入力と同じ枠を置き換えた行には★印と
     ])
   );
   const s = result.summaries[0];
-  const over = s.addedRows.find((r) => r.entry.name === 'Visionが読んだ大会');
-  assert.ok(over, '置き換えた行が明細に載ること');
-  assert.deepEqual(over.replacedManualIds, ['kq0804'], '置き換え先の既存idが分かること');
-  const row = findAddedRowLine(captureAcceptedRowLines(result.summaries), 'Visionが読んだ大会');
-  assert.match(row, /★既存の手入力\(id=kq0804\)を置き換え/);
-  // 【明細とサマリの「意味の違い」】明細=実際に増える行 / stats.added=mergeStoreの分類。
-  // 手入力の置き換えは added ではなく updated に入るので、両者は一致しない。
-  assert.equal(s.stats.added, FILLER_COUNT, '置き換えた1行以外(埋め行)は普通に追加される');
-  assert.equal(s.stats.updated, 1);
-  assert.equal(s.stats.replacedManual.length, 1);
+  assert.deepEqual(
+    result.arr.find((t) => t.id === 'kq0804'),
+    manual,
+    '人の行が1バイトも変わらないこと(⚠ 要確認 も残ること)'
+  );
+  assert.ok(
+    !s.addedRows.some((r) => r.entry.name === 'Visionが読んだ大会'),
+    '書かないので「追加行」には出ないこと'
+  );
+  assert.equal(s.protectedRows.length, 1, '見送った行が明細に載ること');
+  assert.equal(s.protectedRows[0].existing[0].id, 'kq0804', '理由になった人の行が分かること');
+  assert.equal(s.protectedRows[0].permalink, 'https://www.instagram.com/p/OVER/', '出所の投稿が分かること');
+  assert.equal(s.stats.added, FILLER_COUNT, '枠が空いている埋め行は普通に追加される(取込みは止まらない)');
+  assert.equal(s.stats.updated, 0, '置き換えは起きないので「更新」にも入らない');
+  assert.equal(s.stats.protected, 1);
+
+  // ログに【人の値と読み取った値の両方】が出ること(ずれ自体が⑤の確認対象になる)。
+  const lines = [];
+  const orig = console.log;
+  console.log = (...a) => lines.push(a.join(' '));
+  try {
+    monitor.reportAcceptedRows(result.summaries);
+  } finally {
+    console.log = orig;
+  }
+  const skipped = lines.find((l) => l.includes('見送り: ') && l.includes('Visionが読んだ大会'));
+  assert.ok(skipped, '読み取った値がログに出ること');
+  assert.ok(
+    lines.some((l) => l.includes('残した人の行: 人が入力した大会') && l.includes('参加費5000')),
+    '人の値も並べて出ること'
+  );
+  // 【投稿別の「追加0」に理由が付くこと】これが無いと⑤が追加0を説明できない。
+  assert.equal(result.summaries[0].posts.find((p) => p.permalink.includes('OVER')).protectedCount, 1);
 });
 
-test('明細: 手入力の置き換えが無い通常の追加には★印を出さない', async () => {
+test('明細: 人の行を守っていない通常の追加には★印を出さない', async () => {
   const result = await monitor.runMonitor(
     { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
     fakeLibsForBehaviour([

@@ -108,10 +108,18 @@ const path = require('path');
 // normalizeExtractedRow は検査の前段(直せる逸脱を直す)、extractedRowProblem は1行だけの検査、
 // duplicateIdProblem は行を跨ぐ検査(id重複)。
 const { normalizeExtractedRow, extractedRowProblem, duplicateIdProblem } = require('./validate-data');
+// 「機械が最後に書いた値」の控えと、そこから導く所有の判定。
+const machineState = require('./machine-write-state');
 
 const REPO_ROOT = path.join(__dirname, '..');
 const DATA_JS = path.join(REPO_ROOT, 'data.js');
 const STATE_PATH = path.join(REPO_ROOT, 'apify-monitor-state.json');
+// 機械が最後に書いた値の控え。これといまの data.js を突き合わせて「人が直したか」を判定する。
+// ★書き手ごとにファイルを分けてある(Waitinglist取込みは 06:23、こちらは 07:10 に走るので、
+//   同じJSONを両方が触ると `git pull --rebase` が衝突してジョブが落ちる)。
+// ★apify-monitor-state.json に相乗りさせないのは、あちらが「投稿をどこまで見たか」の状態で
+//   意味が違うため。1ファイルに2つの関心を入れると、片方の都合でもう片方が壊れる。
+const WRITE_STATE_PATH = path.join(REPO_ROOT, 'instagram-write-state.json');
 
 // ============================================================
 // 対象店舗 — 公式サイトAPIが無く、Instagramでのみ日程告知される6店舗
@@ -675,6 +683,9 @@ async function downloadImage(url) {
  */
 async function runMonitor(opts, libs) {
   const { stores, before, today, state } = opts;
+  // 機械が最後に書いた値の控え(id → エントリ)。無ければ空 = 全行が人のものとして扱われ、
+  // この経路は【新しい枠に足すことしかしない】。安全側に倒れる既定値。
+  const writeRecords = opts.writeRecords || {};
   const { fetchLib, visionLib, mergeLib, downloadImage: download } = libs;
 
   let arr = before;
@@ -690,6 +701,8 @@ async function runMonitor(opts, libs) {
   // 今回の取込みで既に採用した id。id は venueId を含むので店を跨いだ衝突は起きないが、
   // 「同じ投稿が2回、同じ行を返す」「同じ日・同じ大会名で start が読めなかった2行」の衝突を拾う。
   const usedIds = new Set();
+  // 今回この経路が書いた【人の値を戻す前の】候補行(id → エントリ)。状態ファイルに控える。
+  const writtenAll = {};
   let changed = false;
 
   for (const store of stores) {
@@ -807,6 +820,7 @@ async function runMonitor(opts, libs) {
         dateMin: null,
         dateMax: null,
         addedCount: 0,
+        protectedCount: 0,
         outcome: '不明',
       };
       postDetails.push(detail);
@@ -910,6 +924,7 @@ async function runMonitor(opts, libs) {
         dateMin: null,
         dateMax: null,
         addedCount: 0,
+        protectedCount: 0,
         outcome: '未確認(採用後に打ち切り)',
       });
     }
@@ -1102,27 +1117,38 @@ async function runMonitor(opts, libs) {
       // 共有モジュール(import-venue-image.js / Waitinglist取込みとの関係)に触らずに済み、
       // かつ「追加」の定義がマージの実装ではなく観測結果になる。
       const beforeIds = new Set(arr.map((t) => t.id));
-      const { next, stats } = mergeLib.mergeStore(arr, store.venueId, extracted, today);
-      mergeLib.assertOnlyTargetChanged(arr, next, store.venueId, today);
+      // ★突き合わせの左辺はマージ前のディープコピー。arr と next が同じ要素オブジェクトを
+      //   共有していると、in-place で書き換えるバグが両辺に同じように映って素通りする。
+      const beforeSnapshot = JSON.parse(JSON.stringify(arr));
+      const { next, stats, written } = mergeLib.mergeStore(arr, store.venueId, extracted, today, {
+        records: writeRecords,
+        // ★seed は渡さない。この経路が書くのは source:'semi' で、人が admin.html で
+        //   入れた行と同じ source。seed を足すと手入力572件が機械のものに化ける。
+      });
+      mergeLib.assertOnlyTargetChanged(beforeSnapshot, next, store.venueId, today);
+      // 人の行・人が直した項目が1つも壊れていないことの突き合わせ。
+      // ★stats を一切参照しない(集計を潰す変異が入っても独立に生き残る)。
+      mergeLib.assertHumanEditsPreserved(beforeSnapshot, next, { records: writeRecords });
       arr = next;
       changed = true;
       summary.stats = stats;
-      // 【M-1】同じ (date,start) の既存手入力を置き換えた行に印を付ける。
-      // 手入力は別idなので「idが増えた=新規」に見えるが、実際には人の入力を上書きしている。
-      // ⑤の照合では「これは新規ではなく人の入力を置き換えた」と分かる方が重要
-      // (「人の手入力が次回実行で消える」問題の可視化にもなる)。
-      const replacedBySlot = new Map();
-      for (const t of stats.replacedManual) {
-        const k = `${t.date} ${t.start}`;
-        if (!replacedBySlot.has(k)) replacedBySlot.set(k, []);
-        replacedBySlot.get(k).push(t.id);
-      }
+      Object.assign(writtenAll, written);
+      // 【M-1】人の行を守って書かなかった行を、その理由になった人の行ごと明細に出す。
+      // 【★2026-08-04に意味が反転した】以前ここは「人の入力を置き換えた行」に
+      // `★既存の手入力(id=…)を置き換え` と印を付けていた。いまは置き換えないので
+      // その印は永久に発火しない = 鳴らない警報になるため削除した。
+      // 代わりに【書かなかった行】を出す。⑤にとってはこちらの方が情報量が多い —
+      // 人の値と機械の読み値がずれているなら、そのずれ自体が確認対象になる。
+      summary.protectedRows = stats.protectedRows.map(({ incoming, existing }) => ({
+        incoming,
+        existing,
+        permalink: sourceByEntryId.get(incoming.id) || null,
+      }));
       summary.addedRows = next
         .filter((t) => t.venueId === store.venueId && !beforeIds.has(t.id))
         .map((entry) => ({
           entry,
           permalink: sourceByEntryId.get(entry.id) || null,
-          replacedManualIds: replacedBySlot.get(`${entry.date} ${entry.start}`) || [],
         }))
         // 【M-2】投稿ごとにまとめる。data.js は日付順なので、そのままだと同じ投稿の行が
         // ばらばらに並ぶ。⑤は「投稿を1回開いて、その投稿の行をまとめて確認 → 次の投稿」
@@ -1136,6 +1162,13 @@ async function runMonitor(opts, libs) {
       for (const row of summary.addedRows) {
         const d = postDetails.find((x) => x.permalink === row.permalink);
         if (d) d.addedCount += 1;
+      }
+      // 【投稿別の「追加0」に理由を与える】人の行を守って見送った行を投稿ごとに数える。
+      // これが無いと ⑤ は「抽出28行なのに追加0」を日付レンジでしか説明できず、
+      // 「人の行を守ったから0」なのか「別の経路で消えたのか」を区別できない。
+      for (const row of summary.protectedRows) {
+        const d = postDetails.find((x) => x.permalink === row.permalink);
+        if (d) d.protectedCount += 1;
       }
     }
     summary.posts = postDetails;
@@ -1192,6 +1225,10 @@ async function runMonitor(opts, libs) {
         added: summary.stats ? summary.stats.added : 0,
         updated: summary.stats ? summary.stats.updated : 0,
         unchanged: summary.stats ? summary.stats.unchanged : 0,
+        // 【人の行を守って書かなかった行数】runログは既定90日で消えるので、
+        // 「なぜ追加が少ないのか」を後から git履歴で追えるようにここに残す。
+        protectedRows: summary.stats ? summary.stats.protected : 0,
+        protectedFields: summary.stats ? summary.stats.fieldsProtected : 0,
       };
     } else if (prev && prev.lastExtraction) {
       nextState[store.venueId].lastExtraction = prev.lastExtraction;
@@ -1200,7 +1237,18 @@ async function runMonitor(opts, libs) {
     summaries.push(summary);
   }
 
-  return { arr, state: nextState, changed, summaries, anomalies, lostPosts, emptyResults, storeFailures, storeCount: stores.length };
+  return {
+    arr,
+    state: nextState,
+    written: writtenAll,
+    changed,
+    summaries,
+    anomalies,
+    lostPosts,
+    emptyResults,
+    storeFailures,
+    storeCount: stores.length,
+  };
 }
 
 /**
@@ -1256,6 +1304,9 @@ function makeStoreSummary(store) {
     fetchElapsedMs: null,
     // 手順⑤(採用行の全件照合)のための明細。
     addedRows: [],
+    // 【★バケツを1つ増やしたら初期値も必ず足すこと】足し忘れると checkRowAccounting の
+    //   合計が NaN になり、`NaN === visionRowCount` は常に偽なので毎回誤報する。
+    protectedRows: [],
     posts: [],
   };
 }
@@ -1347,7 +1398,7 @@ function checkPostAccounting(summary) {
 /**
  * 【行レベルの保存則】Visionが返した1行は、必ずどれか1つの結末に落ちる。
  *
- *   Visionが返した行 = 不採用の投稿の行 + 破棄 + 過去日 + 追加 + 更新 + 変更なし
+ *   Visionが返した行 = 不採用の投稿の行 + 破棄 + 過去日 + 追加 + 更新 + 変更なし + 人の行を守って見送り
  *
  * 2026-07-31 の dry-run では「久留米: 抽出20 / 破棄0 / 追加0」のように、
  * 抽出した行がどこへ消えたのか誰も説明できない数字が並んでいた(正常に全部過去日だったのか、
@@ -1358,13 +1409,21 @@ function checkPostAccounting(summary) {
  * これに当たるため、数えないと【正常な実行で毎回この保存則が破れて誤報になる】。
  * なお notAdopted は不採用と判断したその場で加算する(残差ではない)ので、この式は恒等式にならない。
  *
+ * 【protected を足した理由(2026-08-04)】人が入力した行と同じ枠に来た行は
+ * 【書かずに見送る】ようになった(人の行を機械が置き換えないため)。以前はこれが
+ * `updated` に入っていたので式は成り立っていたが、見送りは更新ではないので項を分ける。
+ * ★これも「書かないと決めたその場で +1」する。`rawFuture.length - 書いた数` にすると
+ *   保存則が恒等式になり、別の理由で行が消えてもこの項に吸い込まれて表に出なくなる。
+ *
  * @returns {{ ok: boolean, rows: number, notAdopted: number, dropped: number, pastDated: number,
- *             added: number, updated: number, unchanged: number, residual: number }}
+ *             added: number, updated: number, unchanged: number, protected: number, residual: number }}
  */
 function checkRowAccounting(summary) {
-  const s = summary.stats || { pastDated: 0, added: 0, updated: 0, unchanged: 0 };
+  const s = summary.stats || { pastDated: 0, added: 0, updated: 0, unchanged: 0, protected: 0 };
   const notAdopted = summary.notAdoptedRowCount || 0;
-  const accounted = notAdopted + summary.droppedCount + s.pastDated + s.added + s.updated + s.unchanged;
+  const protectedRows = s.protected || 0;
+  const accounted =
+    notAdopted + summary.droppedCount + s.pastDated + s.added + s.updated + s.unchanged + protectedRows;
   return {
     ok: accounted === summary.visionRowCount,
     rows: summary.visionRowCount,
@@ -1374,6 +1433,7 @@ function checkRowAccounting(summary) {
     added: s.added,
     updated: s.updated,
     unchanged: s.unchanged,
+    protected: protectedRows,
     residual: summary.visionRowCount - accounted,
   };
 }
@@ -1483,15 +1543,12 @@ function reportAcceptedRows(summaries) {
     console.log('  (data.js に増える行はありません)');
   }
   for (const s of withRows) {
-    for (const { entry, permalink, replacedManualIds } of s.addedRows) {
+    for (const { entry, permalink } of s.addedRows) {
       // 【data.js に書かれるとおりの値を出す】読み取れなかった項目は `不明`。
       // 0 は「無料」という読み取れた値なので `不明` と区別する。
       const num = (v) => (v == null ? '不明' : String(v));
       const reentry = entry.reentry === 'late' ? 'レイトのみ' : entry.reentry ? 'あり' : 'なし';
       const tags = entry.tags && entry.tags.length ? entry.tags.join('・') : 'なし';
-      const replaced = replacedManualIds.length
-        ? ` / ★既存の手入力(id=${replacedManualIds.join(', ')})を置き換え`
-        : '';
       // ⚠ が付いた行はこの明細でも分かるようにする(⑤が「どの行の参加費を見ればいいか」を
       // 一覧から拾えるようにするため。サイトのバッジと同じ意味)。
       const lowConf = entry.lowConfidence ? ' / ★⚠要確認(参加費が大会名から推測された疑い)' : '';
@@ -1499,9 +1556,40 @@ function reportAcceptedRows(summaries) {
         `[monitor-instagram-apify] 追加行: ${entry.venueId} / ${entry.date} / ${entry.start || '開始時刻不明'} / ${entry.name}` +
           ` / 参加費${num(entry.buyin)} / アドオン${num(entry.addon)} / スタック${num(entry.stack)}` +
           ` / GTD${num(entry.guarantee)} / 再入場${reentry} / 賞品${entry.prize == null ? '不明' : entry.prize}` +
-          ` / タグ${tags} / ${permalink || '出所不明'}${replaced}${lowConf}`
+          ` / タグ${tags} / ${permalink || '出所不明'}${lowConf}`
       );
     }
+  }
+
+  // 【人の行を守って書かなかった行】の明細。
+  //
+  // 【::error:: / ::warning:: にはしない】人が入力した行がある限り毎回同じ件数が出る性質の
+  // ものなので、警告チャネルに載せると常時点灯になり、本物の異常が読めなくなる。
+  // 事実として明細に出し、⑤が見る。
+  //
+  // 【人の値と読み取った値を必ず並べて出す】⑤にとってはここがいちばん情報量が多い —
+  // 両者がずれているなら、そのずれ自体が「店が日程を変えた」「人の入力が古い」の合図になる。
+  // 【キャプションは1文字も出さない】出すのは data.js に載る値と permalink だけ。
+  const protectedAll = summaries.flatMap((s) => s.protectedRows || []);
+  if (protectedAll.length) {
+    console.log('');
+    console.log(`[monitor-instagram-apify] === 人の行を守り、読み取った行を書きませんでした(計${protectedAll.length}行) ===`);
+    console.log('  同じ日時に人が入力した行があるため、そちらを正として残しています(⚠ 要確認 の印もそのまま)。');
+    for (const { incoming, existing, permalink } of protectedAll) {
+      const num = (v) => (v == null ? '不明' : String(v));
+      console.log(
+        `[monitor-instagram-apify] 見送り: ${incoming.venueId} / ${incoming.date} / ` +
+          `${incoming.start || '開始時刻不明'} / 読み取った値: ${incoming.name}` +
+          ` / 参加費${num(incoming.buyin)} / スタック${num(incoming.stack)} / ${permalink || '出所不明'}`
+      );
+      for (const e of existing) {
+        console.log(
+          `    残した人の行: ${e.name} / 参加費${num(e.buyin)} / スタック${num(e.stack)}` +
+            ` / GTD${num(e.guarantee)} (${e.id}, source=${e.source})`
+        );
+      }
+    }
+    console.log('  ※ 読み取った側を採用したい行は、admin.html でその人の行を消してください(削除 = 機械への引き渡し)。');
   }
 
   // 投稿ごとの1行サマリ。「抽出28行なのに追加0」が、過去日ばかりの月間表を読んだ結果なのかを
@@ -1513,7 +1601,9 @@ function reportAcceptedRows(summaries) {
     const range = p.dateMin ? `${p.dateMin}〜${p.dateMax}` : '日付なし';
     console.log(
       `[monitor-instagram-apify] 投稿別: ${p.venueId} / ${p.permalink} / 抽出${p.rowCount}行` +
-        ` / 日付レンジ ${range} / 追加${p.addedCount} / ${p.outcome}`
+        // 【「追加0」の理由に「人の行を守った」を足す】これが無いと、⑤は追加0を
+        // 日付レンジでしか説明できず、「守ったから0」と「別の経路で消えた」を区別できない。
+        ` / 日付レンジ ${range} / 追加${p.addedCount} / 人の行を守って見送り${p.protectedCount} / ${p.outcome}`
     );
   }
 }
@@ -1737,15 +1827,41 @@ async function main() {
     return;
   }
 
+  // 機械が最後に書いた値の控え。読めない/壊れているときは【空として続行する】—
+  // ここで落とすと状態ファイル1つでこの経路が永久に止まる。空でも人の行は守られる側に倒れる。
+  const writeState = machineState.readState(WRITE_STATE_PATH);
+  if (writeState.broken) {
+    console.warn(
+      `[monitor-instagram-apify] ⚠ ${path.basename(WRITE_STATE_PATH)} を読めませんでした(壊れている?)。` +
+        '控えなしで続行します。人の行は守られますが、【この経路が前回書いた行は更新できません】(新しい枠に足すだけになります)。'
+    );
+  } else if (!writeState.missing) {
+    console.log(`[monitor-instagram-apify] 機械が書いた値の控え: ${Object.keys(writeState.entries).length}件`);
+  }
+
   let result;
   try {
-    result = await runMonitor({ stores: STORES, before, today, state }, { fetchLib, visionLib, mergeLib, downloadImage });
+    result = await runMonitor(
+      { stores: STORES, before, today, state, writeRecords: writeState.entries },
+      { fetchLib, visionLib, mergeLib, downloadImage }
+    );
   } catch (e) {
     fail(e && e.message ? e.message : String(e));
     return;
   }
 
-  const { arr, state: nextState, changed, summaries, anomalies, lostPosts, emptyResults, storeFailures, storeCount } = result;
+  const {
+    arr,
+    state: nextState,
+    written,
+    changed,
+    summaries,
+    anomalies,
+    lostPosts,
+    emptyResults,
+    storeFailures,
+    storeCount,
+  } = result;
 
   for (const s of summaries) {
     console.log('');
@@ -1828,7 +1944,7 @@ async function main() {
     console.log(
       `  行の行き先: Vision抽出 ${row.rows}行 = 追加 ${row.added} + 更新 ${row.updated} + ` +
         `変更なし ${row.unchanged} + 過去日 ${row.pastDated} + 破棄 ${row.dropped} + ` +
-        `不採用の投稿の行 ${row.notAdopted}` +
+        `不採用の投稿の行 ${row.notAdopted} + 人の行を守って見送り ${row.protected}` +
         `${row.ok ? '' : ` ← 残余 ${row.residual}行`}`
     );
     if (!row.ok) {
@@ -1842,7 +1958,8 @@ async function main() {
     if (s.stats) {
       console.log(
         `  既存側の変化: 削除(投稿から消滅) ${s.stats.removed}件 / ` +
-          `手入力の置き換え ${s.stats.replacedManual.length}件 / ` +
+          `人の行を守って見送り ${s.stats.protected}件 / ` +
+          `人が直した項目を残した ${s.stats.fieldsProtected}項目 / ` +
           `投稿未掲載の手入力 ${s.stats.keptManual.length}件`
       );
     }
@@ -1879,6 +1996,16 @@ async function main() {
   const PARTIAL_FAILURE = 2;
   const partial = storeFailures.length > 0;
 
+  // 次の控え。今回この経路が触った店の記録は入れ替え、触っていない店の記録は残す。
+  // 過去日と data.js から消えた行は刈る(控える意味が無く、放っておくと際限なく膨らむ)。
+  // ★控えるのは【人の値を戻す前】の機械の候補行(runMonitor が written で返す)。
+  //   戻した後を控えると、翌日は控えといまの値が一致して食い違いが消え、人の修正が上書きされる。
+  const nextWriteEntries = machineState.buildNextEntries(writeState.entries, written, {
+    today,
+    replacedVenueIds: summaries.filter((s) => s.stats).map((s) => s.store.venueId),
+    liveIds: new Set(arr.map((t) => t.id)),
+  });
+
   if (DRY_RUN) {
     console.log('[monitor-instagram-apify] --dry-run のため data.js / 状態ファイルは書き換えません。');
     // 【dry-run でも終了コードは同じにする】そうしないと dry-run が緑のまま通り、
@@ -1893,13 +2020,20 @@ async function main() {
       saveState(STATE_PATH, nextState);
       console.log('[monitor-instagram-apify] 確認済みの投稿日時のみ apify-monitor-state.json に記録しました。');
     }
+    // 控えは data.js の差分と無関係に整合させる(過去日の刈り込みだけの日もある)。
+    if (machineState.writeState(WRITE_STATE_PATH, nextWriteEntries, { writtenBy: 'tools/monitor-instagram-apify.js' })) {
+      console.log(`[monitor-instagram-apify] ${path.basename(WRITE_STATE_PATH)} を更新しました。`);
+    }
     if (partial) process.exitCode = PARTIAL_FAILURE;
     return;
   }
 
   mergeLib.writeDataJs(DATA_JS, file, arr);
   saveState(STATE_PATH, nextState);
-  console.log('[monitor-instagram-apify] data.js と apify-monitor-state.json を更新しました。');
+  machineState.writeState(WRITE_STATE_PATH, nextWriteEntries, { writtenBy: 'tools/monitor-instagram-apify.js' });
+  console.log(
+    `[monitor-instagram-apify] data.js / apify-monitor-state.json / ${path.basename(WRITE_STATE_PATH)} を更新しました。`
+  );
   console.log('[monitor-instagram-apify] 忘れずに `node tools/gen-venue-pages.js .` を実行し、店舗静的ページを再生成してください。');
   // 【書き込みの後に立てる】ここより前で throw すると成功店のデータが失われるため、
   // 「書き込みは完了した / ただし一部の店は観測できていない」の順で伝える。

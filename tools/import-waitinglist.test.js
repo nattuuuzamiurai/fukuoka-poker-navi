@@ -116,12 +116,27 @@ function scriptWithFixtureStores(injectBeforeSelfCheck) {
   return replaced;
 }
 
-/** 一時リポジトリを作り、スクリプトを1回動かして結果を返す。 */
-function run(scenario, args = [], injectBeforeSelfCheck = null) {
+/**
+ * 一時リポジトリを作り、スクリプトを1回動かして結果を返す。
+ *
+ * @param {object} [opts]
+ *   opts.dataJs      … data.js の中身(省略時は上の既定fixture)
+ *   opts.writeState  … waitinglist-write-state.json の entries(省略時はファイル自体を置かない)
+ */
+function run(scenario, args = [], injectBeforeSelfCheck = null, opts = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'wl-import-'));
   fs.mkdirSync(path.join(dir, 'tools'));
   fs.writeFileSync(path.join(dir, 'tools', 'import-waitinglist.js'), scriptWithFixtureStores(injectBeforeSelfCheck));
-  fs.writeFileSync(path.join(dir, 'data.js'), dataJsSource());
+  // 「機械が最後に書いた値」の控えと所有判定。スクリプトが require するので一緒に置く。
+  fs.copyFileSync(path.join(__dirname, 'machine-write-state.js'), path.join(dir, 'tools', 'machine-write-state.js'));
+  const src = opts.dataJs || dataJsSource();
+  fs.writeFileSync(path.join(dir, 'data.js'), src);
+  if (opts.writeState) {
+    fs.writeFileSync(
+      path.join(dir, 'waitinglist-write-state.json'),
+      JSON.stringify({ version: 1, writtenBy: 'test', entries: opts.writeState }, null, 2) + '\n'
+    );
+  }
   const stub = path.join(dir, 'stub.js');
   fs.writeFileSync(stub, stubSource());
 
@@ -132,12 +147,19 @@ function run(scenario, args = [], injectBeforeSelfCheck = null) {
 
   const after = fs.readFileSync(path.join(dir, 'data.js'), 'utf8');
   const m = after.match(/const TOURNAMENTS = ([\s\S]*?);\n$/);
+  let stateAfter = null;
+  try {
+    stateAfter = JSON.parse(fs.readFileSync(path.join(dir, 'waitinglist-write-state.json'), 'utf8'));
+  } catch (e) {
+    /* 未生成 */
+  }
   return {
     code: res.status,
     stdout: res.stdout || '',
     stderr: res.stderr || '',
     tournaments: m ? JSON.parse(m[1]) : null,
-    before: JSON.parse(dataJsSource().match(/const TOURNAMENTS = ([\s\S]*?);\n$/)[1]),
+    before: JSON.parse(src.match(/const TOURNAMENTS = ([\s\S]*?);\n$/)[1]),
+    state: stateAfter,
     dir,
   };
 }
@@ -238,5 +260,189 @@ test('全店失敗なら終了コード1で data.js を書き換えない', () =
 test('--dry-run は書き込まない（一部失敗でも終了コード2は返す）', () => {
   const r = run('v19-empty', ['--dry-run']);
   assert.equal(r.code, 2);
+  assert.deepEqual(r.tournaments, r.before);
+});
+
+// ============================================================
+// 6. 人が入力した値を機械が壊さないこと
+// ============================================================
+//
+// 【この機能は平常時なにもしないので、片方向だけ固定すると壊れていても気づけない】
+// 「守る」テストだけを置くと、**何もかも守る実装(= 自動取込が完全に死ぬ)が全部通る**。
+// そこで守る/守らないの両方向を CLI レベルで固定する。
+//   守る側 : 6-1(人の行)/ 6-3(人が直した項目)/ 6-5(翌日も守られる)/ 6-6(検査が止める)
+//   守らない側: 6-2(seed で auto 行は更新される)/ 6-3後半(触っていない項目は更新される)
+
+/** スタブが返す i 番目の枠。スタブと同じ式で出す(ズレると枠が一致せず検査が空振りする)。 */
+function apiSlot(i) {
+  const day = new Date(Date.now() + (i + 2) * 86400e3).toISOString().slice(0, 10);
+  return { date: day, start: '19:00' }; // startAt は 10:00Z = JST 19:00(同日)
+}
+
+/** スタブの応答をそのまま data.js の形にしたもの(= 機械が書くはずの値)。 */
+function apiRow(i, over = {}) {
+  const { date, start } = apiSlot(i);
+  return {
+    id: `wl-4018492-${i}`,
+    venueId: 'v3',
+    name: 'テスト大会',
+    date,
+    start,
+    buyin: 3000,
+    addon: null,
+    stack: 20000,
+    guarantee: null,
+    reentry: false,
+    prize: null,
+    tags: [],
+    source: 'auto',
+    verified: false,
+    ...over,
+  };
+}
+
+function dataJsWith(rows) {
+  return `const TOURNAMENTS = ${JSON.stringify(rows, null, 2)};\n`;
+}
+
+const v3Rows = (list) => list.filter((t) => t.venueId === 'v3');
+
+test('6-1: 手入力の行は、同じ枠にAPIの行が来ても置き換えられない', () => {
+  // 人が admin.html で入れた行(手書きid・source:semi・⚠ 要確認つき)を、APIの1件目と同じ枠に置く。
+  const hand = {
+    id: 'cc0804n',
+    venueId: 'v3',
+    name: '深夜トナメ',
+    ...apiSlot(0),
+    buyin: 5000,
+    addon: null,
+    stack: 0,
+    guarantee: 30000,
+    reentry: false,
+    prize: null,
+    tags: [],
+    source: 'semi',
+    verified: false,
+    lowConfidence: true,
+  };
+  const r = run('none', [], null, { dataJs: dataJsWith([hand]) });
+  assert.equal(r.code, 0);
+
+  const after = r.tournaments.find((t) => t.id === 'cc0804n');
+  assert.deepEqual(after, hand, '手入力の行が1バイトも変わっていないこと(⚠ 要確認も残ること)');
+  assert.ok(!r.tournaments.some((t) => t.id === 'wl-4018492-0'), '同じ枠のAPIの行は書かれないこと');
+  assert.equal(v3Rows(r.tournaments).length, 3, '枠が空いている2件は普通に入ること(自動化は止まらない)');
+  assert.match(r.stdout, /人の行を守り、APIの行を書きませんでした 1件/);
+  assert.match(r.stdout, /APIの読み値: テスト大会/, '機械の読み値も並べて出すこと(ずれ自体が確認対象)');
+});
+
+test('6-2: 控えが無くても wl- + source:auto の行は更新される(seed。自動取込が凍結しない)', () => {
+  // 控え(waitinglist-write-state.json)を置かない = 状態ファイル導入前の状態。
+  const stale = apiRow(0, { name: '古い名前', buyin: 9999 });
+  const r = run('none', [], null, { dataJs: dataJsWith([stale]) });
+  assert.equal(r.code, 0);
+
+  const after = r.tournaments.find((t) => t.id === 'wl-4018492-0');
+  assert.equal(after.name, 'テスト大会', '★機械の行はAPIの値で更新されること');
+  assert.equal(after.buyin, 3000);
+  assert.ok(r.state.entries['wl-4018492-0'], '控えが取り直されること');
+});
+
+test('6-3: 人が直した項目だけが残り、触っていない項目はAPIで更新される', () => {
+  // 控え = 昨日 機械が書いた値(参加費 2500)。data.js は大会名だけが人の手で変わっている。
+  // 今日のAPIは参加費 3000 を返す。
+  const record = apiRow(0, { buyin: 2500 });
+  const current = apiRow(0, { buyin: 2500, name: '人が直した名前' });
+  const r = run('none', [], null, {
+    dataJs: dataJsWith([current]),
+    writeState: { 'wl-4018492-0': record },
+  });
+  assert.equal(r.code, 0);
+
+  const after = r.tournaments.find((t) => t.id === 'wl-4018492-0');
+  assert.equal(after.name, '人が直した名前', '人が直した大会名は守られること');
+  assert.equal(after.buyin, 3000, '★触っていない参加費はAPIの値で更新されること(自動化が止まらない)');
+  assert.match(r.stdout, /人が直した項目を残しました 1項目 \/ 1行/);
+  assert.match(r.stdout, /wl-4018492-0\): name/);
+});
+
+test('6-4: 控えるのは【人の値を戻す前】の機械の値(戻した後を控えると保護が1日で切れる)', () => {
+  const record = apiRow(0, { buyin: 2500 });
+  const current = apiRow(0, { buyin: 2500, name: '人が直した名前' });
+  const r = run('none', [], null, {
+    dataJs: dataJsWith([current]),
+    writeState: { 'wl-4018492-0': record },
+  });
+  assert.equal(
+    r.state.entries['wl-4018492-0'].name,
+    'テスト大会',
+    '控えには機械の値(テスト大会)が入ること。人の値を控えると翌日「食い違いなし」になって上書きされる'
+  );
+});
+
+test('6-5: 翌日の実行でも人の修正は残る(2日ぶんを実際に回す)', () => {
+  const record = apiRow(0, { buyin: 2500 });
+  const day1 = run('none', [], null, {
+    dataJs: dataJsWith([apiRow(0, { buyin: 2500, name: '人が直した名前' })]),
+    writeState: { 'wl-4018492-0': record },
+  });
+  assert.equal(day1.code, 0);
+
+  // 1日目の出力(data.js と控え)をそのまま2日目の入力にする。
+  const day2 = run('none', [], null, {
+    dataJs: dataJsWith(day1.tournaments),
+    writeState: day1.state.entries,
+  });
+  assert.equal(day2.code, 0);
+  const after = day2.tournaments.find((t) => t.id === 'wl-4018492-0');
+  assert.equal(after.name, '人が直した名前', '★2日目でも人が直した大会名が残っていること');
+});
+
+test('6-6: 人の行を壊すバグが入ったら、突き合わせが書き込みを止める', () => {
+  const hand = {
+    id: 'cc0804n',
+    venueId: 'v3',
+    name: '深夜トナメ',
+    ...apiSlot(0),
+    buyin: 5000,
+    addon: null,
+    stack: 0,
+    guarantee: null,
+    reentry: false,
+    prize: null,
+    tags: [],
+    source: 'semi',
+    verified: false,
+  };
+  // 自己チェックの直前で人の行を書き換える(= マージがどう数えていようと関係なく壊す)。
+  const r = run(
+    'none',
+    [],
+    "arr = arr.map((t) => (t.id === 'cc0804n' ? { ...t, name: '機械が上書きした' } : t));",
+    { dataJs: dataJsWith([hand]) }
+  );
+  assert.equal(r.code, 1, '書き込みを止めること');
+  assert.match(r.stderr, /機械のものでない行が書き換えられています/);
+  assert.deepEqual(r.tournaments, r.before, 'data.js は1バイトも書き換えないこと');
+});
+
+test('6-6: 人が直した項目を戻すバグが入ったら、突き合わせが書き込みを止める', () => {
+  const record = apiRow(0, { buyin: 2500 });
+  const current = apiRow(0, { buyin: 2500, name: '人が直した名前' });
+  const r = run(
+    'none',
+    [],
+    "arr = arr.map((t) => (t.id === 'wl-4018492-0' ? { ...t, name: 'テスト大会' } : t));",
+    { dataJs: dataJsWith([current]), writeState: { 'wl-4018492-0': record } }
+  );
+  assert.equal(r.code, 1);
+  assert.match(r.stderr, /人が直した項目が書き換えられています/);
+  assert.match(r.stderr, /項目=name/);
+});
+
+test('6-7: --dry-run は控えも書かない', () => {
+  const r = run('none', ['--dry-run'], null, { dataJs: dataJsWith([apiRow(0, { name: '古い名前' })]) });
+  assert.equal(r.code, 0);
+  assert.equal(r.state, null, 'waitinglist-write-state.json を作らないこと');
   assert.deepEqual(r.tournaments, r.before);
 });

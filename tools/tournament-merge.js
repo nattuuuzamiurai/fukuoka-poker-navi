@@ -32,21 +32,47 @@
  *
  * 【この店(venueId)以外・過去日には一切触れない】(PR #11と同じ upsert規則)
  *   1. 過去日(JST基準の今日より前)のエントリは一切触らない
- *   2. 対象店舗の source==='auto' の今日以降のエントリは毎回作り直す
- *      (取得結果1回=その時点でのその月の告知の全件、という前提のソース向け。
- *      「作り直す」対象は source==='auto' のエントリだけで、'semi'/'manual' の
- *      エントリは次の3.のとおりスロット一致時のみ置き換える)
+ *   2. 【機械が所有する】source==='auto' の今日以降のエントリは毎回作り直す
+ *      (取得結果1回=その時点でのその月の告知の全件、という前提のソース向け)。
  *      ただし人手情報(guarantee/prize/pinnedTags/人手タグ)は引き継ぐ
- *   3. 手入力(semi/manual)のうち対象店舗の取得結果に同じ(date,start)があるものは
- *      そちらに置き換える。このときも手入力側のGTD・人手タグは引き継ぐ
- *   4. 手入力のうち対応が無いものは残す(件数と内訳を呼び出し側に返す)
+ *   3. 【機械が所有する行の、人が直した項目】はその項目だけ人の値を残す
+ *      (下記【所有】。項目単位なので、大会名を直しても開始時刻の更新は止まらない)
+ *   4. 【機械が所有しない行】= 人が作った行・人が直した行には一切触らない。
+ *      同じ(date,start)に取得結果が来ても【機械の行を書かない】(件数と内訳を返す)
+ *   5. 取得結果に対応が無い既存の行は残す(件数と内訳を呼び出し側に返す)
  *      (`source: 'semi'` で登録するツール(店舗画像の取込み等)を再実行した場合、
  *      前回取り込んだ分もこの規則にしたがう。日程が大きく変わった月を再取込みする際に
  *      古いエントリが残ることがあるので、その場合は admin.html 側で手動整理すること)
- *   5. 対象店舗以外・`VENUES` 等の他の定数には一切触らない
+ *   6. 対象店舗以外・`VENUES` 等の他の定数には一切触らない
+ *
+ * 【★4 は 2026-08-04 に変えた。それ以前は「同じ枠なら手入力を置き換える」だった】
+ *   旧規則の実測(dry-run #5)では、人が入れた39件が Vision の読み取り結果に置き換わった。
+ *   置き換えは値の交換ではなく【情報量の低下】である:
+ *     v21 の未来日28件は開始時刻23件(82%)・参加費22件(79%)を持つのに対し、
+ *     同じ実行の Vision は開始時刻4.5% / 参加費13.6%。
+ *   さらに手入力の39件はすべて `lowConfidence: true`(サイト表示は ⚠ 要確認)で、
+ *   置き換えると【誰も確認していないのに ⚠ が外れる】= 未検証の「確認済み」という主張になる。
+ *
+ * 【★旧規則にあった「引き継げないGTDは引き継がない」判断について — 消えたのではなく包含された】
+ *   旧実装は「同じ枠に取得結果が複数あるとき、名前が一致しない手入力の GTD/賞品は
+ *   引き継がず stats.ambiguous で数える」という分岐を持っていた。その根拠は
+ *   【どちらの大会のものか特定できないなら、誤情報を出すより欠落させる方が軽い】。
+ *   この判断は否定されていない。新規則はより強い形でそれを包含する —
+ *   引き継ぎを見送るのではなく【機械の行そのものを書かない】ので、
+ *   誤って配られる余地が構造的に無くなった。したがって旧分岐は到達不能になり、
+ *   到達不能なカウンタは「鳴らない警報」なので削除した。
+ *   ★ここを読んだ人が「同じ枠なら機械を優先すればいい」と戻さないこと。
+ *     欠落 > 誤情報 という優先順位は生きている。
+ *
+ * 【所有(ownership) — tools/machine-write-state.js】
+ *   `data.js` の1行を見ただけでは、機械が書いたままなのか人が直したのかは分からない。
+ *   そこで機械が書いた値そのものを控えておき、いまの値と1項目ずつ突き合わせる。
+ *   一致 → 誰も触っていない(機械が更新してよい) / 食い違い → 人が直した(触らない)。
+ *   控えが無い行は【人のもの】が既定値。詳しい理由と縮退の挙動は同ファイルのヘッダ参照。
  */
 
 const fs = require('fs');
+const state = require('./machine-write-state');
 
 const BLOCK_PREFIX = 'const TOURNAMENTS = ';
 
@@ -87,6 +113,10 @@ const AUTO_OWNED_TAGS = ['ターボ', 'ディープ', 'PLO', 'ミックス'];
 /**
  * 新エントリに、既存エントリが持っていた「取得結果では供給できない情報」を引き継ぐ。
  * PR #11 の carryOver と同じロジック。
+ *
+ * 【渡す prevs は【機械が所有する同じidの既存】1件だけ】(2026-08-04)。
+ * 以前は「同じ枠の手入力」も渡していたが、いまは人の行の枠に機械の行を書かないので
+ * 渡す相手が存在しない。人の行の GTD/タグは【その行がそのまま残る】ことで守られる。
  */
 function carryOver(next, prevs) {
   let guarantee = null;
@@ -111,29 +141,44 @@ function carryOver(next, prevs) {
 /**
  * 1店舗ぶんのマージ。既存配列を破壊せず、新しい配列と統計を返す。
  * `scraped` は対象店舗の venueId が付いた Tournament 相当のオブジェクトの配列(日付昇順である必要はない)。
+ *
+ * @param {object} [opts]
+ *   opts.records … 機械が最後に書いた値(id → エントリ)。省略すると【全行が人のもの】になり、
+ *                  機械は新しい枠に足すことしかしない。★これが安全側の既定値。
+ *   opts.seed    … 状態ファイル導入前の行の引き継ぎ規則 { source:'auto', idPrefix:'wl-' }。
+ *                  `source: 'semi'` を渡すと例外になる(手入力と同じ source のため)。
+ * @returns {{ next: Array, stats: object, written: object }}
+ *   written … 今回機械が書いた【人の値を戻す前の候補行】(id → エントリ)。
+ *             ★状態ファイルにはこれを控える。戻した後の行を控えると、翌日は
+ *             「控え == いまの値」になって食い違いが消え、人の修正が翌々日に上書きされる。
  */
-function mergeStore(all, venueId, scraped, today) {
+function mergeStore(all, venueId, scraped, today, opts = {}) {
   const slotOf = (t) => `${t.date} ${t.start}`;
+  const records = opts.records || {};
+  const seed = state.assertSeedSpec(opts.seed || null);
+  const recordOf = (t) => (Object.prototype.hasOwnProperty.call(records, t.id) ? records[t.id] : null);
 
   const existing = all.filter((t) => t.venueId === venueId);
   const past = existing.filter((t) => t.date < today);
   const future = existing.filter((t) => !(t.date < today));
 
   const rawFuture = scraped.filter((t) => t.date >= today).sort(byDateStart);
-  const apiSlots = new Set(rawFuture.map(slotOf));
-  const apiById = new Map(rawFuture.map((t) => [t.id, t]));
 
-  const existingAutoById = new Map(future.filter((t) => t.source === 'auto').map((t) => [t.id, t]));
-  const manualsBySlot = new Map();
+  // 既存の未来行の所有をここで1回だけ判定する(以降はこの結果だけを見る)。
+  const own = new Map();
+  for (const t of future) own.set(t.id, state.ownership(t, recordOf(t), seed));
+  const existingById = new Map(future.map((t) => [t.id, t]));
+
+  // 【人のもの】を枠で引けるようにする。機械の行はこの枠に入れない。
+  // ★ source では分けない。Instagram監視・画像取込みが書く行も `source: 'semi'` で、
+  //   人が admin.html で入れた行と source が同じだからである。分けるのは【控えの有無】。
+  const humanBySlot = new Map();
   for (const t of future) {
-    if (t.source === 'auto') continue;
+    if (own.get(t.id).owned) continue;
     const k = slotOf(t);
-    if (!manualsBySlot.has(k)) manualsBySlot.set(k, []);
-    manualsBySlot.get(k).push(t);
+    if (!humanBySlot.has(k)) humanBySlot.set(k, []);
+    humanBySlot.get(k).push(t);
   }
-
-  const apiCountBySlot = new Map();
-  for (const t of rawFuture) apiCountBySlot.set(slotOf(t), (apiCountBySlot.get(slotOf(t)) || 0) + 1);
 
   // pastDated = 渡された行のうち【実際に過去日だった】数。
   // 【この1つが無いと行レベルの突き合わせができない】呼び出し側は「Visionが何行返して、
@@ -157,60 +202,101 @@ function mergeStore(all, venueId, scraped, today) {
     pastDated: scraped.filter((t) => t.date < today).length,
     removed: 0,
     carried: 0,
-    ambiguous: 0,
+    // 【★残差で作らないこと★】protected は「書かないと決めたその場で +1」する。
+    // `rawFuture.length - 書いた数` にすると保存則が恒等式になり、
+    // 未来日の行が別の理由で黙って消えてもこの項に吸い込まれて表に出なくなる。
+    protected: 0,
+    protectedRows: [], // { incoming, existing[] } … 機械が書かなかった行と、その理由になった人の行
+    fieldsProtected: 0,
+    protectedFields: [], // { entry, fields[] } … 人が直した項目を残した行
+    removedHumanEdited: [], // 人が直した行が供給元から消えたので削除したもの(可視化のため)
     keptManual: [],
-    replacedManual: [],
   };
 
   const future$ = [];
+  const written = {}; // id → 機械の候補値(人の値を戻す【前】)。状態ファイルに控える値
+  const blockedIds = new Set(); // 機械の行を止めた人の行の id
+  const protectedIncomingIds = new Set(); // 書かなかった機械の行の id
+
   for (const raw of rawFuture) {
-    const prevAuto = existingAutoById.get(raw.id) || null;
-    const prevManuals = manualsBySlot.get(slotOf(raw)) || [];
+    const prev = existingById.get(raw.id) || null;
+    const o = prev ? own.get(prev.id) : null;
 
-    const usableManuals =
-      apiCountBySlot.get(slotOf(raw)) === 1 ? prevManuals : prevManuals.filter((m) => m.name === raw.name);
-    if (prevManuals.length && usableManuals.length < prevManuals.length) stats.ambiguous++;
+    // (1) 同じidの既存が【人のもの】= 控えが無い。行ごと守る。
+    if (prev && !o.owned) {
+      stats.protected += 1;
+      stats.protectedRows.push({ incoming: raw, existing: [prev] });
+      blockedIds.add(prev.id);
+      protectedIncomingIds.add(raw.id);
+      continue;
+    }
 
-    const entry = carryOver(raw, [prevAuto, ...usableManuals]);
+    // (2) 別idの人の行が同じ枠(date,start)を占めている。機械の行を書かない。
+    //     ★項目単位で守れないのは、id が違う行同士は項目を対応づける根拠が無いため
+    //     (「この人の行のこの項目」と「この機械の行のこの項目」を結べない)。
+    const blockers = (humanBySlot.get(slotOf(raw)) || []).filter((t) => t.id !== raw.id);
+    if (blockers.length) {
+      stats.protected += 1;
+      stats.protectedRows.push({ incoming: raw, existing: blockers });
+      for (const b of blockers) blockedIds.add(b.id);
+      protectedIncomingIds.add(raw.id);
+      continue;
+    }
+
+    // (3) 通常経路。機械の候補を作り、人が直した項目【だけ】を戻す。
+    const prevOwned = prev && o.owned ? prev : null;
+    const machineValue = carryOver(raw, [prevOwned]);
+    written[raw.id] = machineValue;
+    if (!sameEntry(machineValue, raw)) stats.carried++;
+
+    const fields = prevOwned ? o.humanFields : [];
+    if (fields.length) {
+      stats.fieldsProtected += fields.length;
+      stats.protectedFields.push({ entry: prevOwned, fields });
+    }
+    const entry = state.preserveHumanFields(machineValue, prevOwned, fields);
     future$.push(entry);
-    if (!sameEntry(entry, raw)) stats.carried++;
 
-    if (prevAuto) {
-      if (sameEntry(prevAuto, entry)) stats.unchanged++;
+    if (prev) {
+      if (sameEntry(prev, entry)) stats.unchanged++;
       else stats.updated++;
-    } else if (prevManuals.length) {
-      stats.updated++;
     } else {
       stats.added++;
     }
   }
 
-  const keptManual = [];
+  const writtenIds = new Set(future$.map((e) => e.id));
+  const kept = [];
   for (const t of future) {
-    if (t.source === 'auto') {
-      if (!apiById.has(t.id)) stats.removed++;
+    if (writtenIds.has(t.id)) continue; // 作り直した行(future$ 側に入っている)
+    const o = own.get(t.id);
+    // 機械が所有する source:'auto' の行は「取得結果=その時点の全件」が前提なので、
+    // 取得結果に無い = 供給元から消えた とみなして削除する(従来どおり)。
+    // ★ただし今回【書かなかった】行は消しもしない。書かないと決めた行に手を出さないのは
+    //   保護の規則そのもので、ここだけ例外にすると「守ったのに消える」ことになる。
+    if (t.source === 'auto' && o.owned && !protectedIncomingIds.has(t.id)) {
+      stats.removed++;
+      if (o.humanFields.length) stats.removedHumanEdited.push({ entry: t, fields: o.humanFields });
       continue;
     }
-    if (apiSlots.has(slotOf(t))) {
-      stats.replacedManual.push(t);
-    } else {
-      keptManual.push(t);
-      stats.keptManual.push(t);
-    }
+    kept.push(t);
+    // keptManual は従来どおり「取得結果に対応が無くて残った人の行」。
+    // 枠を守って機械を止めた行はこちらには入れない(protectedRows で別に数えている。二重計上を防ぐ)。
+    if (!o.owned && !blockedIds.has(t.id)) stats.keptManual.push(t);
   }
 
   // past は書き込み前の自己チェック(assertOnlyTargetChanged)で「内容・順序が完全に一致すること」を
   // 求めているため、ここでソートしてはいけない(実データは日付順ではなく大会名グループ順等で並んでいる
   // ことがあり、ソートすると内容が1件も変わっていなくても順序変化を「過去日が変化した」と誤検知して
   // 書き込みを拒否してしまう。既存の並び順をそのまま保持する)。
-  const block = [...past, ...[...keptManual, ...future$].sort(byDateStart)];
+  const block = [...past, ...[...kept, ...future$].sort(byDateStart)];
 
   const firstIdx = all.findIndex((t) => t.venueId === venueId);
   const rest = all.filter((t) => t.venueId !== venueId);
   const insertAt = firstIdx < 0 ? rest.length : all.slice(0, firstIdx).filter((t) => t.venueId !== venueId).length;
   const next = [...rest.slice(0, insertAt), ...block, ...rest.slice(insertAt)];
 
-  return { next, stats };
+  return { next, stats, written };
 }
 
 /**
@@ -228,6 +314,31 @@ function assertOnlyTargetChanged(before, after, venueId, today) {
   }
 }
 
+/**
+ * 書き込み直前の突き合わせ。人の行・人が直した項目が1つも壊れていないことを確認する。
+ * 違反していれば例外を投げる(=呼び出し側は data.js を書き換えずに中止すること)。
+ *
+ * 【★これは「保存則」ではなく突き合わせである】マージが数えたカウンタを一切参照せず、
+ *   マージ前のディープコピー(before)と、マージ後の配列(after)と、控え(records)だけで判定する。
+ *   したがって stats を潰す変異(`protected` を数えない・`ok: true` に固定する等)が入っても
+ *   この検査は独立に生き残る。カウンタで検算する形にしてはいけない —
+ *   同じ材料から導いた値どうしを比べると恒等式になり、何も検査しないものになる。
+ *
+ * 【before には必ずマージ前のディープコピーを渡すこと】before と after が同じ要素オブジェクトを
+ *   共有していると、エントリを in-place で書き換えるバグが両辺に同じように映って素通りする。
+ */
+function assertHumanEditsPreserved(before, after, opts = {}) {
+  const records = opts.records || {};
+  const seed = state.assertSeedSpec(opts.seed || null);
+  const recordOf = (t) => (Object.prototype.hasOwnProperty.call(records, t.id) ? records[t.id] : null);
+  const isOwned = (t) => state.ownership(t, recordOf(t), seed).owned;
+
+  const rowProblem = state.findUnownedRowChange(before, after, isOwned);
+  if (rowProblem) throw new Error(`${rowProblem}(バグ)。書き込みを中止します。`);
+  const fieldProblem = state.findHumanFieldChange(before, after, recordOf);
+  if (fieldProblem) throw new Error(`${fieldProblem}(バグ)。書き込みを中止します。`);
+}
+
 module.exports = {
   readDataJs,
   writeDataJs,
@@ -237,4 +348,5 @@ module.exports = {
   carryOver,
   mergeStore,
   assertOnlyTargetChanged,
+  assertHumanEditsPreserved,
 };
