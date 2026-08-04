@@ -921,6 +921,16 @@ async function main() {
 // 終了コードは main() の戻り値で決める(0 = 全店成功 / EXIT_PARTIAL = 一部失敗・成功分は書込済 /
 // 1 = 何も書いていない致命的な失敗)。呼び出し側のワークフローは EXIT_PARTIAL を
 // 「コミットは進めるが最後にジョブを失敗させる」として扱う。
+//
+// ★★【このファイルを require してはいけない】★★
+//   main() は `require.main === module` のガード無しでここから無条件に走る
+//   (monitor-instagram-apify.js / import-venue-image.js にはガードがある)。
+//   したがって `node -e "require('./tools/import-waitinglist')"` のような呼び方をすると、
+//   【本物の data.js と本物のAPIに対して本番の取込みがそのまま走る】。実際に一度事故になった。
+//   - 構文だけ見たいなら `node --check tools/import-waitinglist.js`
+//   - 挙動を見たいなら tools/import-waitinglist.test.js と同じ方式
+//     (一時ディレクトリにコピーし、fetch を差し替えて spawn する)
+//   この構造そのものは未修正。README リスク台帳 #21 に起票してある。
 main()
   .then((code) => { process.exitCode = code || 0; })
   .catch((e) => fail(e && e.stack ? e.stack : String(e)));
