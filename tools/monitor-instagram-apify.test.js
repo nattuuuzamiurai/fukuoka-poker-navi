@@ -73,13 +73,6 @@ test('pickNewPosts: postedAtが読み取れない投稿は無視する', () => {
   );
 });
 
-test('looksLikeSchedulePost: キーワードを含む/含まないキャプションを判定する', () => {
-  assert.equal(monitor.looksLikeSchedulePost('9月のスケジュールです🔥'), true);
-  assert.equal(monitor.looksLikeSchedulePost('今日も盛り上がりました!ありがとうございました'), false);
-  assert.equal(monitor.looksLikeSchedulePost(''), false);
-  assert.equal(monitor.looksLikeSchedulePost(undefined), false);
-});
-
 // ---------- runMonitor(中核ロジック。依存注入・ファイルI/Oなし) ----------
 
 function addDaysJst(dateStr, days) {
@@ -89,6 +82,79 @@ function addDaysJst(dateStr, days) {
   const pad2 = (n) => String(n).padStart(2, '0');
   return `${dt.getUTCFullYear()}-${pad2(dt.getUTCMonth() + 1)}-${pad2(dt.getUTCDate())}`;
 }
+
+// ============================================================
+// カレンダー形状の fixture ヘルパ(2026-08-04 のスコープ変更に伴う移行)
+// ============================================================
+// 【なぜ必要になったか】取込みの対象が「その店の最新月のカレンダー1枚」に絞られ、
+// 判定はキャプションの語ではなく【Visionが読んだ結果の構造】で行うようになった:
+//   支配月(最も日付が多い月)の異なる日付が MIN_CALENDAR_DATES 以上
+//   かつ 日付の広がりが MIN_CALENDAR_SPAN_DAYS 日以上
+// 旧 fixture は「1投稿 = 1〜2行」の形なので、そのままでは全部「カレンダーでない」と
+// 判定され、行レベルの検査(破棄・正規化・id重複・タグ…)に1件も到達しない。
+// つまり 53件の失敗は fixture が現実(=カレンダー)の形をしていないことによるもので、
+// **閾値を下げて fixture に合わせるのは逆向き**。fixture の方をカレンダーの形にする。
+//
+// 【埋め行の性質】テストの主張を汚さないことが条件:
+//   - 破棄されない・正規化されない(droppedCount / normalizedCount の期待値を変えない)
+//   - lowConfidence が付かない(buyin を証拠として持つ)
+//   - 名前で判別できる(realRows で「テストが主張したい行」だけを取り出せる)
+//   - テスト行と日付がぶつからない日に置く(同日内の並び順の主張を壊さない)
+// この4つが本当に成り立っていることは、下の「★ヘルパ自体の健全性」テストで固定する。
+const FILLER_DAYS = [19, 22, 25, 28, 30]; // 異なる日付5・広がり11日 = 判定条件をちょうど満たす
+const FILLER_PREFIX = 'カレンダー埋め';
+const FILLER_COUNT = FILLER_DAYS.length;
+
+/** `month` = 'YYYY-MM'。カレンダー判定を満たすためだけの行を返す。 */
+function fillerRows(month) {
+  return FILLER_DAYS.map((d) => ({
+    date: `${month}-${String(d).padStart(2, '0')}`,
+    start: '19:00',
+    name: `${FILLER_PREFIX}${d}`,
+    buyin: 3000,
+    tags: [],
+  }));
+}
+
+/** テストが主張したい行に、カレンダー判定を満たすための埋め行を足して1投稿ぶんの行にする。 */
+function asCalendar(rows, month) {
+  return [...rows, ...fillerRows(month)];
+}
+
+const isFiller = (t) => typeof (t && t.name) === 'string' && t.name.startsWith(FILLER_PREFIX);
+/** 埋め行を除いた「テストが主張したい行」だけを取り出す。 */
+const realRows = (list) => list.filter((t) => !isFiller(t));
+
+test('★ヘルパ自体の健全性: 埋め行は1件も破棄・正規化されず、⚠も付かない(テストの主張を汚さない)', async () => {
+  // 【このテストが要る理由】埋め行が黙って破棄されるようになると、
+  // 下の各テストは realRows() で埋め行を除いて見ているため【気づかないまま緑になる】。
+  // 埋め行の前提条件はここで正面から固定する。
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
+    fakeLibsFor(fillerRows('2099-09'))
+  );
+  const s = result.summaries[0];
+  assert.equal(s.droppedCount, 0, '埋め行が破棄されている(下のテストの前提が崩れる)');
+  assert.equal(s.normalizedCount, 0, '埋め行が正規化されている(normalizedCount の期待値が狂う)');
+  assert.equal(s.extractedCount, FILLER_COUNT);
+  assert.equal(result.arr.length, FILLER_COUNT);
+  for (const t of result.arr) {
+    assert.ok(isFiller(t), `埋め行の判別に失敗している: ${t.name}`);
+    assert.equal(t.lowConfidence, undefined, '埋め行に⚠が付くと lowConfidence の主張が汚れる');
+  }
+  // 埋め行だけでカレンダー判定を満たすこと(テスト行が0行でも成立する = 主張を足し算にしない)
+  assert.equal(s.importedPostCount, 1, '埋め行だけでカレンダーとして採用されること');
+  assert.equal(s.notCalendarPostCount, 0);
+});
+
+test('★ヘルパ自体の健全性: 埋め行を抜くとカレンダー判定を満たさない(埋め行が効いていること)', () => {
+  const shape = monitor.calendarShape(fillerRows('2099-09'));
+  assert.equal(shape.isCalendar, true);
+  assert.equal(shape.distinctDates, FILLER_COUNT);
+  assert.equal(shape.dominantMonth, '2099-09');
+  // 1行減らすと満たさなくなる = 閾値ぴったりに置いてあり、緩められたら下のテストが動く
+  assert.equal(monitor.calendarShape(fillerRows('2099-09').slice(1)).isCalendar, false);
+});
 
 test('runMonitor: 実データ(v40等)を使った統合テストで、新着スケジュール投稿だけを反映し他店舗・過去日は一切変化しない', async () => {
   const REAL_DATA_JS = path.join(__dirname, '..', 'data.js');
@@ -117,7 +183,12 @@ test('runMonitor: 実データ(v40等)を使った統合テストで、新着ス
     };
     const fakeVisionLib = {
       async extractTournaments() {
-        return [{ date: futureDate, start: '19:00', name: 'Apify統合テスト大会', buyin: 3000, tags: [] }];
+        // 【カレンダー1枚ぶんの行を返す】1行だけだと「カレンダーではない」と判定され、
+        // 取込みそのものが起きない(このテストが見たい隔離の性質を確認できない)。
+        return asCalendar(
+          [{ date: futureDate, start: '19:00', name: 'Apify統合テスト大会', buyin: 3000, tags: [] }],
+          futureDate.slice(0, 7)
+        );
       },
     };
     const fakeDownloadImage = async () => Buffer.from('fake-image-bytes');
@@ -166,21 +237,27 @@ test('runMonitor: 実データ(v40等)を使った統合テストで、新着ス
 });
 
 // 回帰テスト(2026-07-31): 品質管理部がPR #16で発見した致命的バグの再発防止。
-// pokerbar_iris等は「1投稿1イベント」形式で運用されており、1回の取得結果が今後の全日程を
-// 含むとは限らない。`source: 'auto'`のままだと、tools/tournament-merge.jsのmergeStoreが
+// `source: 'auto'`のままだと、tools/tournament-merge.jsのmergeStoreが
 // 「対象店舗のautoエントリは毎回全部作り直す(取得結果に無いものは消す)」規則を適用するため、
-// 1回目のマージで追加した未来日エントリが、2回目のマージ(別投稿・別イベントの検知)で
-// 消えてしまう。`source: 'semi'`に修正したことで、対応する(date,start)が無いものは残る規則が
+// 1回目のマージで追加した未来日エントリが、2回目のマージ(別投稿の検知)で消えてしまう。
+// `source: 'semi'`に修正したことで、対応する(date,start)が無いものは残る規則が
 // 適用され、この消失が起きないことを確認する。
-test('runMonitor: 1投稿1イベント形式で2回連続の新着投稿があっても、1回目に追加した未来日エントリが2回目のマージ後も残っている(回帰テスト)', async () => {
+//
+// 【2026-08-04 の書き換え】以前は「1投稿1イベント形式の店」を題材にしていたが、
+// 取込み対象が【月間カレンダー1枚】に絞られたため、1投稿1イベントの投稿はそもそも
+// カレンダーと判定されず取り込まれない = その題材では消失が起こりようがなくなった。
+// 一方で【消失の危険は無くなっていない】: 店が翌月のカレンダーを出すと、2回目の取込みは
+// 前月ぶんの行を1件も含まない。'auto' に戻せば前月の行はここで全部消える。
+// 題材を「月をまたいだ2枚のカレンダー」に置き換えて、同じ回帰を見る。
+test('runMonitor: 翌月のカレンダーを取り込んでも、前回のカレンダーで追加した未来日エントリが消えない(回帰テスト)', async () => {
   const store = monitor.STORES.find((s) => s.handle === 'pokerbar_iris');
   assert.ok(store, 'pokerbar_iris がSTORESに存在すること(テストの前提)');
 
   const today = '2026-07-31';
   const dateA = '2026-08-10';
-  const dateB = '2026-08-17';
+  const dateB = '2026-09-17';
 
-  // 1回目: イベントAのみを含む投稿を検知
+  // 1回目: 8月のカレンダーを検知
   const fetchLibRun1 = {
     async fetchInstagramPosts(handle) {
       if (handle !== store.handle) return [];
@@ -189,14 +266,14 @@ test('runMonitor: 1投稿1イベント形式で2回連続の新着投稿があ�
           permalink: 'https://www.instagram.com/p/EVENTA/',
           imageUrl: 'https://example.com/a.jpg',
           postedAt: '2026-07-25T10:00:00.000Z',
-          caption: '8/10 スケジュールのお知らせ',
+          caption: '8月のスケジュール',
         },
       ];
     },
   };
   const visionLibRun1 = {
     async extractTournaments() {
-      return [{ date: dateA, start: '19:00', name: 'イベントA', buyin: 3000, tags: [] }];
+      return asCalendar([{ date: dateA, start: '19:00', name: 'イベントA', buyin: 3000, tags: [] }], '2026-08');
     },
   };
 
@@ -210,7 +287,7 @@ test('runMonitor: 1投稿1イベント形式で2回連続の新着投稿があ�
   assert.equal(addedA.source, 'semi');
   assert.equal(addedA.date, dateA);
 
-  // 2回目: イベントAとは別の投稿でイベントBのみを検知(1投稿1イベント形式なのでイベントAは含まない)
+  // 2回目: 別の投稿で【9月の】カレンダーを検知(8月ぶんの行は1件も含まれない)
   const fetchLibRun2 = {
     async fetchInstagramPosts(handle) {
       if (handle !== store.handle) return [];
@@ -219,14 +296,14 @@ test('runMonitor: 1投稿1イベント形式で2回連続の新着投稿があ�
           permalink: 'https://www.instagram.com/p/EVENTB/',
           imageUrl: 'https://example.com/b.jpg',
           postedAt: '2026-07-28T10:00:00.000Z',
-          caption: '8/17 日程決まりました!',
+          caption: '9月のスケジュール',
         },
       ];
     },
   };
   const visionLibRun2 = {
     async extractTournaments() {
-      return [{ date: dateB, start: '19:00', name: 'イベントB', buyin: 3000, tags: [] }];
+      return asCalendar([{ date: dateB, start: '19:00', name: 'イベントB', buyin: 3000, tags: [] }], '2026-09');
     },
   };
 
@@ -241,6 +318,12 @@ test('runMonitor: 1投稿1イベント形式で2回連続の新着投稿があ�
   assert.equal(stillA.date, dateA);
   assert.ok(addedB, '2回目でイベントBが追加されていること');
   assert.equal(addedB.date, dateB);
+  // 8月の埋め行(=前月のカレンダーの残り)も1件残らず消えていないこと
+  assert.equal(
+    run2.arr.filter((t) => isFiller(t) && t.date.startsWith('2026-08')).length,
+    FILLER_COUNT,
+    '前月のカレンダーの行が翌月の取込みで消えている(source が auto に戻ると起きる)'
+  );
 });
 
 // ---------- 抽出時バリデーション(層2。2026-07-31追加 / Issue #18) ----------
@@ -273,15 +356,15 @@ test('runMonitor: Visionが返した不正な日付の行だけを捨て、正�
   ];
   const result = await monitor.runMonitor(
     { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
-    fakeLibsFor(rows)
+    fakeLibsFor(asCalendar(rows, '2099-01'))
   );
 
-  const names = result.arr.map((t) => t.name).sort();
+  const names = realRows(result.arr).map((t) => t.name).sort();
   assert.deepEqual(names, ['正しい大会1', '正しい大会2'], '正しい行だけが取り込まれること');
   assert.equal(result.changed, true);
 
   const summary = result.summaries[0];
-  assert.equal(summary.extractedCount, 2);
+  assert.equal(summary.extractedCount, FILLER_COUNT + 2);
   assert.equal(summary.droppedCount, 4);
   // 捨てた行から「どの店・どの投稿・どんな値だったか」が分かること
   for (const d of summary.dropped) {
@@ -308,19 +391,28 @@ test('runMonitor: 日付以外(name欠落・オブジェクトでない)の不�
   ];
   const result = await monitor.runMonitor(
     { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
-    fakeLibsFor(rows)
+    fakeLibsFor(asCalendar(rows, '2099-01'))
   );
-  assert.equal(result.arr.length, 1);
+  assert.equal(realRows(result.arr).length, 1);
   assert.equal(result.summaries[0].droppedCount, 4);
   assert.match(result.summaries[0].dropped[0].reason, /name が空/);
   assert.match(result.summaries[0].dropped[2].reason, /オブジェクトではない/);
 });
 
 test('runMonitor: 投稿から1行も採用できなければ異常(anomalies)として記録するが、例外は投げず状態は前進する', async () => {
-  const rows = [
-    { date: '9/5', start: '19:00', name: '全部不正1' },
-    { date: '9/6', start: '19:00', name: '全部不正2' },
-  ];
+  // 【日付が全部壊れた投稿では再現できなくなった(2026-08-04)】
+  // 日付が YYYY-MM-DD でない行はカレンダー判定の材料にならないので、
+  // 「全行の日付が壊れている投稿」は【カレンダーではない】として画像の段階で対象外になり、
+  // 行の検査そのものに到達しない(=異常ではなく「対象外」)。
+  // ここで見たいのは「カレンダーとして採用した投稿から1行も取り込めなかったとき」なので、
+  // 日付は正しく(=カレンダーとして採用され)、行としては全部捨てられる形にする。
+  const rows = FILLER_DAYS.map((d) => ({
+    date: `2099-01-${d}`,
+    start: '19:00',
+    name: '   ', // 大会名が読み取れない = 行としては採用できない
+    buyin: 3000,
+    tags: [],
+  }));
   const result = await monitor.runMonitor(
     { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
     fakeLibsFor(rows, { permalink: 'https://www.instagram.com/p/ALLBAD/' })
@@ -331,8 +423,8 @@ test('runMonitor: 投稿から1行も採用できなければ異常(anomalies)�
   assert.equal(result.anomalies.length, 1);
   assert.equal(result.anomalies[0].store.venueId, 'v40');
   assert.equal(result.anomalies[0].permalink, 'https://www.instagram.com/p/ALLBAD/');
-  assert.equal(result.anomalies[0].rowCount, 2);
-  assert.match(result.anomalies[0].reasons.join(''), /YYYY-MM-DD/);
+  assert.equal(result.anomalies[0].rowCount, rows.length);
+  assert.match(result.anomalies[0].reasons.join(''), /name が空/);
   // 異常でも状態は進める(進めないと翌日も同じ投稿で同じ結果になり、永久に前へ進まない)
   assert.equal(result.state.v40.lastPostedAt, '2026-07-20T10:00:00.000Z');
 });
@@ -356,11 +448,20 @@ test('runMonitor: 1店で不正が出ても、残りの店の取込みは完了�
   };
   // どの店の画像かはダウンロード結果のバイト列で見分ける(実際のVisionは画像しか受け取らないため)
   const downloadImage = async (url) => Buffer.from(url);
+  // 【不正な店は「カレンダーだが全行が捨てられる」形にする】日付が壊れた行だけを返すと
+  // カレンダー判定に到達せず「対象外」になり、取込みの不正として扱われなくなるため。
+  const brokenRows = FILLER_DAYS.map((d) => ({
+    date: `2099-09-${d}`,
+    start: '25:00', // 範囲外の時刻 = 行として採用できない
+    name: '時刻が範囲外の大会',
+    buyin: 3000,
+    tags: [],
+  }));
   const visionLib = {
     async extractTournaments(buffer) {
       const handle = String(buffer).replace('https://example.com/', '').replace('.jpg', '');
-      if (handle === BROKEN) return [{ date: '2099-9-5', start: '19:00', name: '不正な日付の大会', buyin: 3000, tags: [] }];
-      return [{ date: '2099-09-05', start: '19:00', name: `${handle}の大会`, buyin: 3000, tags: [] }];
+      if (handle === BROKEN) return brokenRows;
+      return asCalendar([{ date: '2099-09-05', start: '19:00', name: `${handle}の大会`, buyin: 3000, tags: [] }], '2099-09');
     },
   };
 
@@ -370,8 +471,8 @@ test('runMonitor: 1店で不正が出ても、残りの店の取込みは完了�
   );
 
   assert.equal(result.changed, true);
-  assert.equal(result.arr.length, okVenueIds.length, '不正だった1店を除く全店ぶんが取り込まれていること');
-  const importedVenues = result.arr.map((t) => t.venueId).sort();
+  assert.equal(realRows(result.arr).length, okVenueIds.length, '不正だった1店を除く全店ぶんが取り込まれていること');
+  const importedVenues = realRows(result.arr).map((t) => t.venueId).sort();
   assert.deepEqual(importedVenues, okVenueIds.slice().sort());
   assert.equal(result.arr.some((t) => t.venueId === brokenVenueId), false);
 
@@ -385,7 +486,7 @@ test('runMonitor: 1店で不正が出ても、残りの店の取込みは完了�
   assert.equal(result.anomalies.length, 1);
   assert.equal(result.anomalies[0].store.venueId, brokenVenueId);
   const brokenSummary = result.summaries.find((s) => s.store.venueId === brokenVenueId);
-  assert.equal(brokenSummary.droppedCount, 1);
+  assert.equal(brokenSummary.droppedCount, brokenRows.length);
   assert.equal(brokenSummary.extractedCount, 0);
 });
 
@@ -397,10 +498,10 @@ test('runMonitor: Visionが同じ行を2回返しても、2件目をid重複と�
   const row = { date: '2099-09-12', start: '19:00', name: 'NLH Tournament', buyin: 3000, tags: [] };
   const result = await monitor.runMonitor(
     { stores: [monitor.STORES[2]], before: [], today: '2026-07-31', state: {} }, // v18
-    fakeLibsFor([row, { ...row }])
+    fakeLibsFor(asCalendar([row, { ...row }], '2099-09'))
   );
 
-  assert.equal(result.arr.length, 1, '採用されるのは1件だけ');
+  assert.equal(realRows(result.arr).length, 1, '採用されるのは1件だけ');
   assert.equal(result.summaries[0].droppedCount, 1);
   assert.match(result.summaries[0].dropped[0].reason, /同じidの行が重複/);
   // id が重複していない = コミット前ゲート(層1)が通る状態
@@ -417,13 +518,14 @@ test('runMonitor: startが読めない同日・同名の2行(どちらも start:
   ];
   const result = await monitor.runMonitor(
     { stores: [monitor.STORES[2]], before: [], today: '2026-07-31', state: {} },
-    fakeLibsFor(rows)
+    fakeLibsFor(asCalendar(rows, '2099-09'))
   );
-  assert.equal(result.arr.length, 1);
+  const kept = realRows(result.arr);
+  assert.equal(kept.length, 1);
   // 【'00:00' で埋めない】'00:00' は「深夜0時開始」という読み取れた値で、サイトはそう表示する。
   // 読み取れなかったことを表せるのは空文字(表示は「—」)。既存618件のうち184件が同じ表現。
-  assert.equal(result.arr[0].start, '', "読み取れなかった開始時刻を '00:00' で埋めてはいけない");
-  assert.match(result.arr[0].id, /-nostart-/, 'idの時刻部分は nostart(空だと区切りが読めない)');
+  assert.equal(kept[0].start, '', "読み取れなかった開始時刻を '00:00' で埋めてはいけない");
+  assert.match(kept[0].id, /-nostart-/, 'idの時刻部分は nostart(空だと区切りが読めない)');
   assert.match(result.summaries[0].dropped[0].reason, /同じidの行が重複/);
 });
 
@@ -448,20 +550,53 @@ test('runMonitor: 既存data.jsに同じidで別日時のエントリがあれ�
   };
   const result = await monitor.runMonitor(
     { stores: [monitor.STORES[2]], before: [existing], today: '2026-07-31', state: {} },
-    fakeLibsFor([{ date: '2099-09-12', start: '19:00', name: 'NLH Tournament', buyin: 3000, tags: [] }])
+    fakeLibsFor(asCalendar([{ date: '2099-09-12', start: '19:00', name: 'NLH Tournament', buyin: 3000, tags: [] }], '2099-09'))
   );
-  assert.equal(result.changed, false);
-  assert.deepEqual(result.arr, [existing]);
   assert.match(result.summaries[0].dropped[0].reason, /既存エントリと id が衝突/);
   assert.equal(result.summaries[0].dropped[0].kind, 'existing-slot-conflict');
-  // 内容がどこにも入らないままなので、これは本物の異常(再投稿とは別物)
+  assert.equal(result.summaries[0].droppedCount, 1, '衝突した1行だけが捨てられること');
+  // 【衝突した行以外は巻き添えにしない】カレンダー1枚のうち1行が衝突しても、
+  // 残りの行は取り込まれ、既存エントリは1バイトも変わらない。
+  assert.deepEqual(
+    result.arr.filter((t) => !isFiller(t)),
+    [existing],
+    '衝突した行は入らず、既存エントリはそのまま残ること'
+  );
+  assert.equal(result.arr.filter(isFiller).length, FILLER_COUNT, '衝突していない行は普通に取り込まれること');
+  // 1件でも採用できているので、投稿としては「取り込めた」= 異常ではない
+  assert.equal(result.anomalies.length, 0);
+  assert.equal(result.summaries[0].importedPostCount, 1);
+});
+
+test('runMonitor: 全行が人の日時訂正と衝突した投稿は、異常ではなく別のバケツに数える(PR #32)', async () => {
   // 【2026-08-01変更】この kind は「人が admin.html で日時を訂正した」ときにしか発生しない
   // (id が日時から作られるため)。人の訂正は正しく守られているのに、その投稿が
   // Apifyの取得窓に残る限り毎日赤くなる = 確実な空振りの赤。異常から外した。
+  //
+  // 【カレンダー化に伴う書き換え(2026-08-04)】1行だけの投稿はカレンダーと判定されず
+  // 行の検査に到達しないので、カレンダー1枚の【全行】が人の訂正と衝突する形にした。
+  // 既存側は「同じ id・違うスロット」= 人が admin.html で日時だけ直した状態を再現する。
+  const rows = fillerRows('2099-09');
+  const humanEdited = rows.map((r, i) => ({
+    ...monitor.toTournament(r, 'v18'),
+    date: `2099-09-0${i + 1}`, // 人が日付を直した = idと(date,start)がズレる
+    start: '20:00',
+    source: 'manual',
+    verified: true,
+  }));
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[2]], before: humanEdited, today: '2026-07-31', state: {} },
+    fakeLibsFor(rows)
+  );
+  assert.equal(result.summaries[0].droppedCount, rows.length, '全行が衝突すること(テストの前提)');
+  for (const d of result.summaries[0].dropped) assert.equal(d.kind, 'existing-slot-conflict');
   assert.equal(result.anomalies.length, 0, '人の日時訂正による衝突は異常にしない(空振りの赤を作らない)');
   assert.equal(result.summaries[0].humanEditedPostCount, 1, '別のバケツとして数える');
   assert.equal(result.summaries[0].unusablePostCount, 0);
   assert.ok(monitor.checkPostAccounting(result.summaries[0]).ok, '保存則は保たれること');
+  // 人の訂正は1バイトも変わっていない
+  assert.deepEqual(result.arr, humanEdited);
+  assert.equal(result.changed, false);
 });
 
 // ---------- 再投稿の偽警告(2026-07-31 / PR #19のフォローアップ) ----------
@@ -493,7 +628,11 @@ function fakeLibsForPosts(posts) {
   };
 }
 
-test('runMonitor: 店が同じ画像を再投稿しても異常(::error::)にはせず、ログには「取込み済み」として残す', async () => {
+test('runMonitor: 店が同じ画像を再投稿しても異常(::error::)にならず、二重取り込みも起きない', async () => {
+  // 【防ぎ方が変わった(2026-08-04)】以前は2件目の投稿の全行が「id重複」で捨てられ、
+  // その投稿を「再投稿」と分類することで偽の ::error:: を避けていた。
+  // 今は【1店につき最新のカレンダー1枚しか取り込まない】ので、そもそも2枚目に触らない。
+  // 守りたい性質(偽の赤を出さない / 内容を二重に入れない / 内容を失わない)は変わっていない。
   const rows = [
     { date: '2099-09-12', start: '19:00', name: 'マンデートナメ', buyin: 3000, tags: [] },
     { date: '2099-09-13', start: '20:00', name: 'チューズデー', buyin: 3000, tags: [] },
@@ -501,35 +640,40 @@ test('runMonitor: 店が同じ画像を再投稿しても異常(::error::)には
   const result = await monitor.runMonitor(
     { stores: [monitor.STORES[2]], before: [], today: '2026-07-31', state: {} },
     fakeLibsForPosts([
-      { permalink: 'https://www.instagram.com/p/FIRST/', postedAt: '2026-07-20T10:00:00.000Z', rows },
+      { permalink: 'https://www.instagram.com/p/FIRST/', postedAt: '2026-07-20T10:00:00.000Z', rows: asCalendar(rows, '2099-09') },
       // 同じ画像の再投稿(よくある)。抽出結果も当然同じになる
-      { permalink: 'https://www.instagram.com/p/REPOST/', postedAt: '2026-07-21T10:00:00.000Z', rows: rows.map((r) => ({ ...r })) },
+      {
+        permalink: 'https://www.instagram.com/p/REPOST/',
+        postedAt: '2026-07-21T10:00:00.000Z',
+        rows: asCalendar(rows.map((r) => ({ ...r })), '2099-09'),
+      },
     ])
   );
 
-  assert.equal(result.arr.length, 2, '1件目の投稿ぶんが取り込まれていること');
+  assert.equal(realRows(result.arr).length, 2, '同じ行が2回入っていないこと');
+  assert.equal(result.arr.length, FILLER_COUNT + 2);
   assert.equal(result.anomalies.length, 0, '再投稿は異常ではない(何も失われていない)');
   const summary = result.summaries[0];
-  assert.equal(summary.repostedPostCount, 1);
+  assert.equal(summary.importedPostCount, 1, '取り込むのは最新の1枚だけ');
+  assert.equal(summary.unexaminedPostCount, 1, '古い方は「未確認(採用後に打ち切り)」として数えられること');
   assert.equal(summary.unusablePostCount, 0);
-  // 捨てた事実自体はログ用の記録に残る(「既に取込み済み」と分かる形で)
-  assert.equal(summary.droppedCount, 2);
-  for (const d of summary.dropped) {
-    assert.equal(d.kind, 'duplicate-in-run');
-    assert.match(d.reason, /既に取込み済み/);
-    assert.equal(d.permalink, 'https://www.instagram.com/p/REPOST/');
-  }
-  // 状態ファイルからも「破棄されたのは再投稿ぶんである」ことが読めること。
+  assert.equal(summary.droppedCount, 0, '2枚目に触らないので、id重複の破棄そのものが発生しない');
+  assert.equal(
+    summary.currentMonthCalendar.permalink,
+    'https://www.instagram.com/p/REPOST/',
+    '採用するのは【新しい方】(古い方を採ると訂正版を取り逃がす)'
+  );
+  // 状態ファイルからも「1枚だけ見て打ち切った」ことが読めること。
   // 【deepEqual のままにしてある】このオブジェクトはコミットされてgit履歴に残る記録なので、
   // 形を変えるときは意図的に気づけた方がよい(勝手にフィールドが増減しないことの固定)。
   assert.deepEqual(result.state.v18.lastExtraction, {
     checkedAt: '2026-07-31',
     posts: 2,
-    kept: 2,
-    dropped: 2,
+    kept: FILLER_COUNT + 2,
+    dropped: 0,
     normalized: 0,
     unusablePosts: 0,
-    reposts: 1,
+    reposts: 0,
     notATournamentPosts: 0,
     humanEditedPosts: 0,
     apifyRaw: 2,
@@ -542,9 +686,14 @@ test('runMonitor: 店が同じ画像を再投稿しても異常(::error::)には
     visionFailed: 0,
     imageFailed: 0,
     emptyResult: 0,
-    visionRows: 4,
+    notCalendar: 0,
+    pastCalendar: 0,
+    unexamined: 1,
+    cacheHit: 0,
+    visionRows: FILLER_COUNT + 2,
+    notAdoptedRows: 0,
     pastDated: 0,
-    added: 2,
+    added: FILLER_COUNT + 2,
     updated: 0,
     unchanged: 0,
   });
@@ -553,28 +702,31 @@ test('runMonitor: 店が同じ画像を再投稿しても異常(::error::)には
   assert.ok(monitor.checkRowAccounting(summary).ok, `行の内訳が合わない: ${JSON.stringify(monitor.checkRowAccounting(summary))}`);
 });
 
-test('runMonitor: 再投稿でも、id重複以外の理由が1件でも混じれば異常として報告する', async () => {
-  const rows = [
-    { date: '2099-09-12', start: '19:00', name: 'マンデートナメ', buyin: 3000, tags: [] },
-    { date: '2099-09-13', start: '20:00', name: 'チューズデー', buyin: 3000, tags: [] },
-  ];
+test('★runMonitor: 「再投稿」の分類は打ち切りにより到達しなくなった(免除が誤って広がらないこと)', async () => {
+  // 【元のテストが見ていたもの】「全行がid重複なら異常にしない」という免除を広げすぎると、
+  // 本当に失われた行が異常として報告されなくなる。これは実際に潰した誤報の形だった。
+  //
+  // 【今の構造】1回の実行で1店から取り込むのは最新のカレンダー1枚だけ。
+  // id重複(duplicate-in-run)は同じ1枚の中でしか起きず、重複した行の【1件目は必ず採用される】
+  // ので「全行がid重複」は成立しない = repostedPostCount は構造的に0のまま。
+  // 免除が広がると、この 0 が動く。ここが落ちたら「免除の条件」か「打ち切り」のどちらかが
+  // 変わったということなので、どちらの意味で変えたのかを確認すること。
+  const dupRows = FILLER_DAYS.flatMap((d) => {
+    const row = { date: `2099-09-${d}`, start: '19:00', name: `マンデートナメ${d}日目`, buyin: 3000, tags: [] };
+    return [row, { ...row }]; // Visionが同じ行を2回返す(1枚の画像の中での重複)
+  });
   const result = await monitor.runMonitor(
     { stores: [monitor.STORES[2]], before: [], today: '2026-07-31', state: {} },
-    fakeLibsForPosts([
-      { permalink: 'https://www.instagram.com/p/FIRST/', postedAt: '2026-07-20T10:00:00.000Z', rows },
-      {
-        permalink: 'https://www.instagram.com/p/MIXED/',
-        postedAt: '2026-07-21T10:00:00.000Z',
-        // 1行は取込み済みの再掲だが、もう1行は日付が壊れていて【失われる】
-        rows: [{ ...rows[0] }, { date: '2099-9-14', start: '19:00', name: '日付不正', buyin: 3000, tags: [] }],
-      },
-    ])
+    fakeLibsForPosts([{ permalink: 'https://www.instagram.com/p/DUP/', postedAt: '2026-07-20T10:00:00.000Z', rows: dupRows }])
   );
-
-  assert.equal(result.anomalies.length, 1, '本物の異常は従来どおり報告されること');
-  assert.equal(result.anomalies[0].permalink, 'https://www.instagram.com/p/MIXED/');
-  assert.equal(result.summaries[0].repostedPostCount, 0);
-  assert.equal(result.summaries[0].unusablePostCount, 1);
+  const s = result.summaries[0];
+  assert.equal(s.repostedPostCount, 0, '「再投稿」は到達しない分類になっている');
+  assert.equal(s.importedPostCount, 1, '1件目が採用されるので、投稿としては「取り込めた」');
+  assert.equal(s.droppedCount, FILLER_DAYS.length, '2件目はid重複として捨てられ、その事実は記録される');
+  for (const d of s.dropped) assert.equal(d.kind, 'duplicate-in-run');
+  assert.equal(result.anomalies.length, 0, '1件でも採用できていれば異常ではない');
+  assert.ok(monitor.checkPostAccounting(s).ok);
+  assert.ok(monitor.checkRowAccounting(s).ok);
 });
 
 test('runMonitor: 開始時刻が読み取れない形の行は破棄する(範囲外・書式違い)', async () => {
@@ -587,9 +739,9 @@ test('runMonitor: 開始時刻が読み取れない形の行は破棄する(範�
   ];
   const result = await monitor.runMonitor(
     { stores: [monitor.STORES[2]], before: [], today: '2026-07-31', state: {} },
-    fakeLibsFor(rows)
+    fakeLibsFor(asCalendar(rows, '2099-09'))
   );
-  assert.equal(result.arr.length, 1);
+  assert.equal(realRows(result.arr).length, 1);
   assert.equal(result.summaries[0].droppedCount, 4);
   for (const reason of result.summaries[0].dropped.map((d) => d.reason)) {
     assert.match(reason, /開始時刻が HH:MM/);
@@ -611,12 +763,12 @@ test('runMonitor: 書式が揺れた開始時刻(ゼロ埋め漏れ・全角コ�
   ];
   const result = await monitor.runMonitor(
     { stores: [monitor.STORES[2]], before: [], today: '2026-07-31', state: {} },
-    fakeLibsFor(rows)
+    fakeLibsFor(asCalendar(rows, '2099-09'))
   );
 
-  assert.equal(result.arr.length, 5, '1件も破棄されないこと');
+  assert.equal(realRows(result.arr).length, 5, '1件も破棄されないこと');
   assert.equal(result.summaries[0].droppedCount, 0);
-  assert.equal(result.summaries[0].normalizedCount, 5);
+  assert.equal(result.summaries[0].normalizedCount, 5, '正規化されるのはテスト対象の5行だけ(埋め行は正規化されない)');
 
   const byName = Object.fromEntries(result.arr.map((t) => [t.name, t]));
   assert.equal(byName['モーニング'].start, '09:00');
@@ -631,9 +783,10 @@ test('runMonitor: 書式が揺れた開始時刻(ゼロ埋め漏れ・全角コ�
   assert.ok(byName['ナイト'].id.includes('-1900-'), byName['ナイト'].id);
   assert.ok(byName['ランチ'].id.includes('-1200-'), byName['ランチ'].id);
   // 全角数字がそのまま id に入っていないこと(id は半角の数字だけで組み立て直される)
-  for (const t of result.arr) assert.match(t.id, /^ig-v18-2099-09-12-\d{4}-/, t.id);
+  for (const t of realRows(result.arr)) assert.match(t.id, /^ig-v18-2099-09-12-\d{4}-/, t.id);
 
   // 同日内は start の文字列比較で並ぶ。正規化前だと '19:00' < '7:30' < '9:00' となり順序が壊れる
+  // (埋め行は別の日に置いてあるので、この並びには入ってこない)
   const sameDay = result.arr.filter((t) => t.date === '2099-09-12').map((t) => t.name);
   assert.deepEqual(
     sameDay,
@@ -655,12 +808,12 @@ test('runMonitor: 読み取れない金額は【その項目だけ】nullにし�
   ];
   const result = await monitor.runMonitor(
     { stores: [monitor.STORES[2]], before: [], today: '2026-07-31', state: {} },
-    fakeLibsFor(rows)
+    fakeLibsFor(asCalendar(rows, '2099-09'))
   );
 
-  assert.equal(result.arr.length, 4, '金額が読めなくても大会そのものは残ること');
+  assert.equal(realRows(result.arr).length, 4, '金額が読めなくても大会そのものは残ること');
   assert.equal(result.summaries[0].droppedCount, 0);
-  assert.equal(result.summaries[0].normalizedCount, 4);
+  assert.equal(result.summaries[0].normalizedCount, 4, '正規化されるのはテスト対象の4行だけ');
 
   const byName = Object.fromEntries(result.arr.map((t) => [t.name, t]));
   assert.equal(byName['カンマ金額'].buyin, null);
@@ -713,12 +866,12 @@ test('runMonitor: 抽出品質(採用/破棄/不採用投稿の件数)を状態�
   ];
   const result = await monitor.runMonitor(
     { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
-    fakeLibsFor(rows)
+    fakeLibsFor(asCalendar(rows, '2099-09'))
   );
   assert.deepEqual(result.state.v40.lastExtraction, {
     checkedAt: '2026-07-31',
     posts: 1,
-    kept: 1,
+    kept: FILLER_COUNT + 1,
     dropped: 1,
     normalized: 0,
     unusablePosts: 0,
@@ -735,14 +888,20 @@ test('runMonitor: 抽出品質(採用/破棄/不採用投稿の件数)を状態�
     visionFailed: 0,
     imageFailed: 0,
     emptyResult: 0,
-    visionRows: 2,
+    // 【走査フェーズの行き先】これが無いと「新着N件・取込み0件」の理由が git履歴に残らない
+    notCalendar: 0,
+    pastCalendar: 0,
+    unexamined: 0,
+    cacheHit: 0,
+    visionRows: FILLER_COUNT + 2,
+    notAdoptedRows: 0,
     pastDated: 0,
-    added: 1,
+    added: FILLER_COUNT + 1,
     updated: 0,
     unchanged: 0,
   });
 
-  // Vision抽出を行わなかった回(スケジュール告知らしき投稿が無い)は前回値を持ち越す
+  // 新着そのものが無かった回は前回値を持ち越す
   //(毎回変わる値を足して無意味な日次差分を増やさないため)
   const next = await monitor.runMonitor(
     { stores: [monitor.STORES[0]], before: result.arr, today: '2026-08-01', state: result.state },
@@ -768,7 +927,11 @@ test('formatDroppedRow: 店・投稿・実際の値・理由がすべて1行に�
   assert.match(line, /YYYY-MM-DD/);
 });
 
-test('runMonitor: 新着はあるがスケジュール告知らしくない投稿はVision抽出せず、data.jsは変化しない(状態のみ進む)', async () => {
+test('runMonitor: カレンダーではない投稿(単発の告知など)は取り込まず、data.jsは変化しない(状態のみ進む)', async () => {
+  // 【判定の場所が変わった(2026-08-04)】以前はキャプションのキーワードで画像を見る前に落として
+  // いたが、キャプションが空の投稿には構造的に届かなかった(v40は12投稿すべてがこれで、
+  // Vision に1度も渡っていなかった)。今は【画像を読んでから、読めた結果の構造で】判定する。
+  // つまり Vision は呼ばれる。呼ばれたうえで「カレンダーではない」として取り込まないことを見る。
   const before = [
     { id: 'v40-existing', venueId: 'v40', name: '既存', date: '2099-01-01', start: '19:00', buyin: 0, addon: null, stack: 0, guarantee: null, reentry: false, prize: null, tags: [], source: 'semi', verified: false },
   ];
@@ -784,22 +947,29 @@ test('runMonitor: 新着はあるがスケジュール告知らしくない投�
       ];
     },
   };
-  let visionCalled = false;
+  let visionCalled = 0;
   const fakeVisionLib = {
     async extractTournaments() {
-      visionCalled = true;
-      return [];
+      visionCalled += 1;
+      // 単発の大会告知。日付は正しいが1〜2日ぶんしかない = カレンダーではない
+      return [
+        { date: '2099-01-10', start: '19:00', name: '単発の特別トナメ', buyin: 3000, tags: [] },
+        { date: '2099-01-11', start: '19:00', name: '単発の特別トナメDay2', buyin: 3000, tags: [] },
+      ];
     },
   };
   const result = await monitor.runMonitor(
     { stores: [monitor.STORES[0]], before, today: '2026-07-31', state: {} },
     { fetchLib: fakeFetchLib, visionLib: fakeVisionLib, mergeLib, downloadImage: async () => Buffer.from('x') }
   );
-  assert.equal(visionCalled, false, 'スケジュール告知らしくない投稿はVisionに渡さない');
+  assert.equal(visionCalled, 1, '画像は読む(キャプションで事前に落とさない)');
+  assert.equal(result.summaries[0].notCalendarPostCount, 1, 'カレンダーでない投稿として数えられること');
   assert.equal(result.changed, false);
-  assert.deepEqual(result.arr, before);
+  assert.deepEqual(result.arr, before, 'カレンダーでない投稿の行を1件も取り込まないこと');
   // 状態は「確認済み」まで進む(同じ投稿を毎回新着扱いし続けないため)
   assert.equal(result.state.v40.lastPostedAt, '2026-07-20T10:00:00.000Z');
+  // 判定結果はキャッシュされ、次回この投稿を再びVisionに渡さない
+  assert.equal(result.state.v40.checkedPosts['https://www.instagram.com/p/NOSCHED/'], 'not-calendar');
 });
 
 test('★隔離: 1店の取得が失敗しても例外を投げず、その店だけスキップして他店は処理を続ける', async () => {
@@ -821,7 +991,11 @@ test('★隔離: 1店の取得が失敗しても例外を投げず、その店�
     {
       fetchLib: fakeFetchLib,
       // 名前は固有名にすること(`大会` だけだと isHeadingRow が見出しとして正しく落とす)
-      visionLib: { async extractTournaments() { return [{ date: '2099-09-12', start: '19:00', name: 'マンデートナメ', buyin: 3000, tags: [] }]; } },
+      visionLib: {
+        async extractTournaments() {
+          return asCalendar([{ date: '2099-09-12', start: '19:00', name: 'マンデートナメ', buyin: 3000, tags: [] }], '2099-09');
+        },
+      },
       mergeLib,
       downloadImage: async (url) => Buffer.from(url),
     }
@@ -922,6 +1096,26 @@ function makeTempRepoRoot() {
   return root;
 }
 
+/**
+ * CLIテスト用の Vision スタブ(常にカレンダー1枚を返す)のソースを作る。
+ * 【1行だけ返すスタブは使えない】カレンダーと判定されず、取込みの経路を1本も通らないため。
+ */
+function calendarVisionStubSource(name, month = '2099-09') {
+  const rows = asCalendar([{ date: `${month}-12`, start: '19:00', name, buyin: 3000, tags: [] }], month);
+  return `exports.extractTournaments = async () => (${JSON.stringify(rows)});\n`;
+}
+
+/** カレンダーだが全行が捨てられる(=投稿まるごと不採用になる)スタブ用の行。 */
+function unusableCalendarRows(namePrefix, month = '2099-09') {
+  return FILLER_DAYS.map((d) => ({
+    date: `${month}-${String(d).padStart(2, '0')}`,
+    start: '25:00', // 範囲外の時刻 → 行としては採用できない
+    name: `${namePrefix}${d}`,
+    buyin: 1000,
+    tags: [],
+  }));
+}
+
 function runCli(root, envOverrides = {}) {
   const env = { ...process.env, ...envOverrides };
   return execFileSync('node', ['tools/monitor-instagram-apify.js'], {
@@ -978,16 +1172,23 @@ test('CLI: 1店で不正な日付が返っても、正常終了して他店ぶ�
       return [];
     };\n`
   );
+  // v18 = カレンダーだが全行が捨てられる(1行も採用できない投稿)
+  // v40 = カレンダーの中に1行だけ日付書式が壊れた行が混ざる
   fs.writeFileSync(
     path.join(root, 'tools', 'venue-schedule-vision.js'),
-    `exports.extractTournaments = async (buf) => {
-      if (String(buf).includes('pokerbar_iris')) {
-        return [{ date: '2099-2-3', start: '19:00', name: 'IRIS不正日付', buyin: 1000, tags: [] }];
-      }
-      return [
-        { date: '2099-01-01', start: '19:00', name: '取り込まれる大会', buyin: 1000, tags: [] },
-        { date: '9/5', start: '20:00', name: '捨てられる大会', buyin: 1000, tags: [] },
-      ];
+    `const IRIS = ${JSON.stringify(unusableCalendarRows('IRIS不正行', '2099-01'))};
+     const ORIO = ${JSON.stringify(
+       asCalendar(
+         [
+           { date: '2099-01-01', start: '19:00', name: '取り込まれる大会', buyin: 1000, tags: [] },
+           { date: '9/5', start: '20:00', name: '捨てられる大会', buyin: 1000, tags: [] },
+         ],
+         '2099-01'
+       )
+     )};
+     exports.extractTournaments = async (buf) => {
+      if (String(buf).includes('pokerbar_iris')) return IRIS;
+      return ORIO;
     };\n`
   );
   // 画像ダウンロードは実ネットワークに出さない(どの店かはURLで判別できるようにする)
@@ -1007,9 +1208,9 @@ test('CLI: 1店で不正な日付が返っても、正常終了して他店ぶ�
     const dataJs = fs.readFileSync(path.join(root, 'data.js'), 'utf8');
     assert.match(dataJs, /取り込まれる大会/);
     assert.equal(/捨てられる大会/.test(dataJs), false);
-    assert.equal(/IRIS不正日付/.test(dataJs), false);
+    assert.equal(/IRIS不正行/.test(dataJs), false);
     assert.equal(/"9\/5"/.test(dataJs), false);
-    assert.equal(/2099-2-3/.test(dataJs), false);
+    assert.equal(/25:00/.test(dataJs), false, '範囲外の開始時刻を書き込んではいけない');
 
     // 状態ファイルは投稿があった2店ぶんとも前進している(不正が出た v18 も含む)
     const state = JSON.parse(fs.readFileSync(path.join(root, 'apify-monitor-state.json'), 'utf8'));
@@ -1062,20 +1263,22 @@ test('CLI: 逸脱した値(9:00 / 7:30 / 19:00全角 / 3,500 / 5000円)を含む
   );
   fs.writeFileSync(
     path.join(root, 'tools', 'venue-schedule-vision.js'),
-    `exports.extractTournaments = async (buf) => {
-      if (String(buf).includes('badtime')) {
-        return [
-          { date: '2099-01-05', start: '25:00', name: '時が範囲外', buyin: 1000, tags: [] },
-          { date: '2099-01-05', start: '19:70', name: '分が範囲外', buyin: 1000, tags: [] },
-        ];
-      }
+    `const BADTIME = ${JSON.stringify(unusableCalendarRows('範囲外の時刻', '2099-01'))};
+     const ORIO = ${JSON.stringify(
+       asCalendar(
+         [
+           { date: '2099-01-05', start: '9:00', name: 'Morning', buyin: '3,500', tags: [] },
+           { date: '2099-01-05', start: '7:30', name: 'EarlyBird', buyin: '5000円', tags: [] },
+           { date: '2099-01-05', start: '19：00', name: 'Night', buyin: 3000, tags: [] },
+           { date: '2099-01-05', start: '１２：００', name: 'Lunch', buyin: 3000, tags: [] },
+         ],
+         '2099-01'
+       )
+     )};
+     exports.extractTournaments = async (buf) => {
+      if (String(buf).includes('badtime')) return BADTIME;
       // FIRST と REPOST は同じ画像なので同じ抽出結果になる
-      return [
-        { date: '2099-01-05', start: '9:00', name: 'Morning', buyin: '3,500', tags: [] },
-        { date: '2099-01-05', start: '7:30', name: 'EarlyBird', buyin: '5000円', tags: [] },
-        { date: '2099-01-05', start: '19：00', name: 'Night', buyin: 3000, tags: [] },
-        { date: '2099-01-05', start: '１２：００', name: 'Lunch', buyin: 3000, tags: [] },
-      ];
+      return ORIO;
     };\n`
   );
   const globalFetchStub =
@@ -1091,7 +1294,7 @@ test('CLI: 逸脱した値(9:00 / 7:30 / 19:00全角 / 3,500 / 5000円)を含む
     assert.equal(r.status, 0, `正常終了すること(stderr: ${r.stderr})`);
 
     const { arr } = mergeLib.readDataJs(path.join(root, 'data.js'));
-    const imported = arr.filter((t) => t.venueId === 'v40');
+    const imported = arr.filter((t) => t.venueId === 'v40' && t.date === '2099-01-05');
     assert.equal(imported.length, 4, '逸脱した値を含む4行がすべて取り込まれていること');
 
     const byName = Object.fromEntries(imported.map((t) => [t.name, t]));
@@ -1118,10 +1321,10 @@ test('CLI: 逸脱した値(9:00 / 7:30 / 19:00全角 / 3,500 / 5000円)を含む
     assert.match(r.stderr, /"3,500" → null/);
     assert.match(r.stderr, /"5000円" → null/);
 
-    // 再投稿は異常ではない。ログには「取込み済み」と分かる形で残る
-    assert.match(r.stdout, /再投稿と判断しました/);
+    // 再投稿は異常ではない。【新しい方だけを採用し、古い方には触らない】
+    assert.match(r.stdout, /★採用/);
     assert.match(r.stdout, /https:\/\/www\.instagram\.com\/p\/REPOST\//);
-    assert.match(r.stderr, /既に取込み済み/);
+    assert.equal(/https:\/\/www\.instagram\.com\/p\/FIRST\/.*★採用/.test(r.stdout), false, '古い方を採用してはいけない');
 
     // 本物の異常(範囲外の時刻で1行も採用できなかった v18)だけが ::error:: として上がる
     assert.match(r.stdout, /::error title=/);
@@ -1129,18 +1332,63 @@ test('CLI: 逸脱した値(9:00 / 7:30 / 19:00全角 / 3,500 / 5000円)を含む
     assert.match(r.stdout, /投稿まるごと不採用: 店=Poker Bar IRIS\(v18\)/);
     assert.equal(/投稿まるごと不採用: 店=TripleBarrel/.test(r.stdout), false, '再投稿を不採用として報告しないこと');
 
-    // 状態ファイルから「破棄されたのは再投稿ぶん」であることが読める
+    // 状態ファイルから「2枚あったが1枚だけ見て打ち切った」ことが読める
     const state = JSON.parse(fs.readFileSync(path.join(root, 'apify-monitor-state.json'), 'utf8'));
-    assert.equal(state.v40.lastExtraction.reposts, 1);
+    assert.equal(state.v40.lastExtraction.newPosts, 2);
+    assert.equal(state.v40.lastExtraction.importedPosts, 1);
+    assert.equal(state.v40.lastExtraction.unexamined, 1, '古い方は未確認として記録されること');
+    assert.equal(state.v40.lastExtraction.reposts, 0);
     assert.equal(state.v40.lastExtraction.unusablePosts, 0);
-    // 正規化は「行」単位で数える(破棄した抽出行と同じ単位)。4行 × 2投稿(再投稿ぶんを含む)
-    assert.equal(state.v40.lastExtraction.normalized, 8);
+    // 正規化は「行」単位で数える(破棄した抽出行と同じ単位)。採用した1投稿の4行ぶん
+    assert.equal(state.v40.lastExtraction.normalized, 4);
     assert.equal(state.v18.lastExtraction.unusablePosts, 1);
 
     // 書き込んだ data.js はコミット前ゲート(層1)も通る形(件数の下限だけは別途除外)
     const validate = spawnSync('node', [path.join(TOOLS_DIR, 'validate-data.js'), root], { encoding: 'utf8' });
     assert.equal(/日付が YYYY-MM-DD/.test(validate.stderr), false, validate.stderr);
     assert.equal(/id が重複/.test(validate.stderr), false, validate.stderr);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('★CLI: 「新着が無かった店」と「カレンダーが見つからなかった店」を同じ0にしない', () => {
+  // 【この案件が繰り返し潰してきた誤報の形】0が並ぶだけで正常運転に見えるのが最も危ない。
+  // 新着0件の店は【1枚も判定していない】ので、「カレンダーなし」と書いてはいけない。
+  // 混ぜると「6店中5店でカレンダーが見つからない = 判定が厳しすぎる」と誤読し、
+  // 閾値を根拠なく緩める判断につながる(実際に緩めると単発告知まで取り込む)。
+  const root = makeTempRepoRoot();
+  fs.writeFileSync(
+    path.join(root, 'tools', 'fetch-venue-posts-apify.js'),
+    `exports.fetchInstagramPosts = async (handle) => {
+       if (handle !== 'triple_orio') return []; // 他5店は新着なし
+       return [{ permalink: 'https://www.instagram.com/p/X/', imageUrl: 'https://example.com/x.jpg', postedAt: '2026-07-20T10:00:00.000Z', caption: '' }];
+     };\n`
+  );
+  fs.writeFileSync(
+    path.join(root, 'tools', 'venue-schedule-vision.js'),
+    "exports.extractTournaments = async () => ([{ date: '2099-09-12', start: '19:00', name: '単発トナメ', buyin: 3000, tags: [] }]);\n"
+  );
+  fs.writeFileSync(
+    path.join(root, 'stub-fetch.js'),
+    'globalThis.fetch = async (url) => ({ status: 200, arrayBuffer: async () => new TextEncoder().encode(String(url)).buffer });\n'
+  );
+  try {
+    const r = spawnSync('node', ['--require', './stub-fetch.js', 'tools/monitor-instagram-apify.js', '--dry-run'], {
+      cwd: root,
+      env: { ...process.env, APIFY_API_TOKEN: 'dummy', ANTHROPIC_API_KEY: 'dummy' },
+      encoding: 'utf8',
+    });
+    assert.equal(r.status, 0, r.stderr);
+    // 新着があってカレンダーが無かった店(1店)
+    assert.match(r.stdout, /当月カレンダー: なし \(取得できた投稿の中にカレンダーが見つかりませんでした\)/);
+    // 新着が無かった店(残り5店)は「なし」ではなく「未判定」と出る
+    assert.equal(
+      (r.stdout.match(/当月カレンダー: 今回は判定していません\(新着なし\)/g) || []).length,
+      monitor.STORES.length - 1
+    );
+    // 合計でも3つを分けて出す
+    assert.match(r.stdout, new RegExp(`当月カレンダー: あり 0店 / なし 1店 / 新着なしで未判定 ${monitor.STORES.length - 1}店`));
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
@@ -1216,39 +1464,74 @@ function fakeLibsForBehaviour(posts) {
   };
 }
 
-test('保存則(投稿): 6通りの結末が同時に起きても、すべての投稿がちょうど1つに数えられる', async () => {
-  const ok = (d, n) => ({ date: d, start: '19:00', name: n, buyin: 3000, tags: [] });
-  const dup = ok('2099-09-12', 'マンデートナメ');
+test('保存則(投稿): 8通りの結末が同時に起きても、すべての投稿がちょうど1つに数えられる', async () => {
+  // 【結末の種類が増えた(2026-08-04)】走査フェーズの導入で「カレンダーでない」
+  // 「過去月のカレンダー」「判定済み(キャッシュ)」「未確認(採用後に打ち切り)」が加わり、
+  // 「再投稿」は到達しなくなった。保存則の意味は変わらない —
+  // 【新着の1投稿は必ずどれか1つに数えられる】。9本目の経路が生まれたらここが落ちる。
   const result = await monitor.runMonitor(
-    { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
-    fakeLibsForBehaviour([
-      // 1. 取り込めた
-      { permalink: 'https://www.instagram.com/p/OK/', postedAt: '2026-07-20T10:00:00.000Z', rows: [dup] },
-      // 2. 再投稿(全行が取込み済み)
-      { permalink: 'https://www.instagram.com/p/REPOST/', postedAt: '2026-07-21T10:00:00.000Z', rows: [{ ...dup }] },
-      // 3. 全行不採用(日付不正)
-      {
-        permalink: 'https://www.instagram.com/p/BAD/',
-        postedAt: '2026-07-22T10:00:00.000Z',
-        rows: [{ date: '2099-9-14', start: '19:00', name: '日付不正', buyin: 3000, tags: [] }],
+    {
+      stores: [monitor.STORES[0]],
+      before: [],
+      today: '2026-07-31',
+      state: {
+        v40: {
+          handle: 'triple_orio',
+          lastPostedAt: '2026-07-18T00:00:00.000Z',
+          // 前回すでに「カレンダーでない」と判定済みの投稿(二度とVisionに渡さない)
+          checkedPosts: { 'https://www.instagram.com/p/CACHED/': 'not-calendar' },
+        },
       },
-      // 4. Vision抽出失敗
-      { permalink: 'https://www.instagram.com/p/VF/', postedAt: '2026-07-23T10:00:00.000Z', visionThrows: 'max_tokensで打ち切られました' },
-      // 5. 画像ダウンロード失敗
-      { permalink: 'https://www.instagram.com/p/IF/', postedAt: '2026-07-24T10:00:00.000Z', downloadThrows: 'HTTP 404' },
-      // 6. Visionが0件
-      { permalink: 'https://www.instagram.com/p/EMPTY/', postedAt: '2026-07-25T10:00:00.000Z', rows: [] },
+    },
+    fakeLibsForBehaviour([
+      // 【走査は新しい順】採用した投稿より古いものは見に行かない = 未確認
+      { permalink: 'https://www.instagram.com/p/UNEXAMINED/', postedAt: '2026-07-19T10:00:00.000Z', rows: [] },
+      // 1. 取り込めた(当月以降のカレンダー。ここで打ち切る)
+      { permalink: 'https://www.instagram.com/p/OK/', postedAt: '2026-07-20T10:00:00.000Z', rows: fillerRows('2099-09') },
+      // 2. 過去月のカレンダー(採用しないが走査は続ける)
+      { permalink: 'https://www.instagram.com/p/PAST/', postedAt: '2026-07-21T10:00:00.000Z', rows: fillerRows('2026-05') },
+      // 3. カレンダーでない(日付が少なく広がりも無い)
+      {
+        permalink: 'https://www.instagram.com/p/NOTCAL/',
+        postedAt: '2026-07-22T10:00:00.000Z',
+        rows: [{ date: '2099-09-12', start: '19:00', name: '単発トナメ', buyin: 3000, tags: [] }],
+      },
+      // 4. Visionが0件
+      { permalink: 'https://www.instagram.com/p/EMPTY/', postedAt: '2026-07-23T10:00:00.000Z', rows: [] },
+      // 5. 判定済み(キャッシュ)= Visionに渡さない
+      { permalink: 'https://www.instagram.com/p/CACHED/', postedAt: '2026-07-24T10:00:00.000Z', rows: fillerRows('2099-09') },
+      // 6. Vision抽出失敗
+      { permalink: 'https://www.instagram.com/p/VF/', postedAt: '2026-07-25T10:00:00.000Z', visionThrows: 'max_tokensで打ち切られました' },
+      // 7. 画像ダウンロード失敗
+      { permalink: 'https://www.instagram.com/p/IF/', postedAt: '2026-07-26T10:00:00.000Z', downloadThrows: 'HTTP 404' },
     ])
   );
 
   const s = result.summaries[0];
-  assert.equal(s.scheduleLikeCount, 6);
+  assert.equal(s.scheduleLikeCount, 8);
   assert.equal(s.importedPostCount, 1);
-  assert.equal(s.repostedPostCount, 1);
-  assert.equal(s.unusablePostCount, 1);
+  assert.equal(s.pastCalendarPostCount, 1);
+  assert.equal(s.notCalendarPostCount, 1);
+  assert.equal(s.emptyResultCount, 1);
+  assert.equal(s.cacheHitCount, 1);
   assert.equal(s.visionFailedCount, 1);
   assert.equal(s.imageFailedCount, 1);
-  assert.equal(s.emptyResultCount, 1);
+  assert.equal(s.unexaminedPostCount, 1);
+  // 【件数と明細を同じ場所から数える】未確認を「総数 − 確認済み」のような残差で出すと、
+  // 数え漏らした投稿がこの項に吸い込まれて保存則が恒等式になる(この案件で4回踏んだ罠)。
+  // 実際に「未確認」と記録された明細の行数と一致することを、件数とは別に見る。
+  assert.equal(
+    s.posts.filter((p) => p.outcome === '未確認(採用後に打ち切り)').length,
+    s.unexaminedPostCount,
+    '未確認の件数と、明細に「未確認」と出ている行数が食い違ってはいけない'
+  );
+  assert.equal(s.repostedPostCount, 0, '「再投稿」は打ち切りにより到達しない分類');
+  assert.equal(s.unusablePostCount, 0);
+  // 【キャッシュに当たった投稿と画像DLに失敗した投稿はVisionに渡っていない】
+  assert.equal(s.examinedPostCount, 5, 'Visionを呼んだのは OK/PAST/NOTCAL/EMPTY/VF の5件だけ');
+  // 採用したのは【新しい順に走査して最初に見つかった当月以降のカレンダー】
+  assert.equal(s.currentMonthCalendar.permalink, 'https://www.instagram.com/p/OK/');
+  assert.equal(s.latestPastCalendar.month, '2026-05', '過去月のカレンダーは記録だけして走査を続ける');
 
   const acc = monitor.checkPostAccounting(s);
   assert.ok(acc.ok, `投稿の保存則が破れている: ${JSON.stringify(acc)}`);
@@ -1342,18 +1625,21 @@ test('保存則(行): 抽出 = 追加 + 更新 + 変更なし + 過去日 + 破�
       {
         permalink: 'https://www.instagram.com/p/MIX/',
         postedAt: '2026-07-20T10:00:00.000Z',
-        rows: [
-          { date: '2099-09-12', start: '19:00', name: '未来の大会', buyin: 3000, tags: [] }, // 追加
-          { date: '2020-01-01', start: '19:00', name: '過去の大会', buyin: 3000, tags: [] }, // 過去日
-          { date: '2099-9-14', start: '19:00', name: '日付不正', buyin: 3000, tags: [] }, // 破棄
-        ],
+        rows: asCalendar(
+          [
+            { date: '2099-09-12', start: '19:00', name: '未来の大会', buyin: 3000, tags: [] }, // 追加
+            { date: '2020-01-01', start: '19:00', name: '過去の大会', buyin: 3000, tags: [] }, // 過去日
+            { date: '2099-9-14', start: '19:00', name: '日付不正', buyin: 3000, tags: [] }, // 破棄
+          ],
+          '2099-09'
+        ),
       },
     ])
   );
   const s = result.summaries[0];
   const row = monitor.checkRowAccounting(s);
-  assert.equal(row.rows, 3, 'Visionが返した行の総数');
-  assert.equal(row.added, 1);
+  assert.equal(row.rows, FILLER_COUNT + 3, 'Visionが返した行の総数');
+  assert.equal(row.added, FILLER_COUNT + 1);
   assert.equal(row.pastDated, 1, '過去日はマージ前に落ちるが、数えられていること');
   assert.equal(row.dropped, 1);
   assert.equal(row.residual, 0, `説明の付かない残余があってはいけない: ${JSON.stringify(row)}`);
@@ -1401,9 +1687,11 @@ test('保存則(行): 2回目の取込みは「更新」に入る(この経路�
   ];
   const first = await monitor.runMonitor(
     { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
-    fakeLibsForBehaviour([{ permalink: 'https://www.instagram.com/p/A/', postedAt: '2026-07-20T10:00:00.000Z', rows }])
+    fakeLibsForBehaviour([
+      { permalink: 'https://www.instagram.com/p/A/', postedAt: '2026-07-20T10:00:00.000Z', rows: asCalendar(rows, '2099-09') },
+    ])
   );
-  assert.equal(monitor.checkRowAccounting(first.summaries[0]).added, 2);
+  assert.equal(monitor.checkRowAccounting(first.summaries[0]).added, FILLER_COUNT + 2);
 
   // 同じ内容 + 1件だけ金額が変わったものを、別の投稿として再取込み
   const second = await monitor.runMonitor(
@@ -1412,132 +1700,220 @@ test('保存則(行): 2回目の取込みは「更新」に入る(この経路�
       {
         permalink: 'https://www.instagram.com/p/B/',
         postedAt: '2026-07-21T10:00:00.000Z',
-        rows: [{ ...rows[0] }, { ...rows[1], buyin: 5000 }],
+        rows: asCalendar([{ ...rows[0] }, { ...rows[1], buyin: 5000 }], '2099-09'),
       },
     ])
   );
   const row = monitor.checkRowAccounting(second.summaries[0]);
-  assert.equal(row.rows, 2);
+  assert.equal(row.rows, FILLER_COUNT + 2);
   assert.equal(row.added, 0, '既存と同じスロットなので追加ではない');
-  assert.equal(row.updated, 2, "source:'semi' は手入力扱いなので、同一内容の行も「更新」に入る");
+  assert.equal(row.updated, FILLER_COUNT + 2, "source:'semi' は手入力扱いなので、同一内容の行も「更新」に入る");
   assert.equal(row.unchanged, 0, 'この経路では「変更なし」は出ない(上のコメント参照)');
   assert.equal(row.residual, 0, '数え方がどちらでも、残余は0でなければならない');
   assert.ok(row.ok);
-  assert.equal(second.summaries[0].stats.replacedManual.length, 2, '既存2件が置き換え対象として数えられる');
+  assert.equal(second.summaries[0].stats.replacedManual.length, FILLER_COUNT + 2, '既存が置き換え対象として数えられる');
 });
 
 // ============================================================
-// キーワード判定で落ちた投稿(画像を1度も見ずに捨てる4本目の経路)
+// カレンダー判定で対象外にした投稿(画像は読むが取り込まない経路)
 // ============================================================
+// 【4本目の経路の置き換え(2026-08-04)】以前ここには「キーワードに当たらない投稿を
+// 画像を1度も見ずに捨てる」経路があった。キャプションが空の投稿には構造的に届かず、
+// v40は12投稿すべてがこの経路で消えていた(Vision に一度も渡っていなかった)ため廃止した。
+// 今は画像を読んだうえで【読めた結果の構造】で対象外にする。
+// 「静かに捨てない」という要求は変わらないので、件数とログはこの経路でも必ず出す。
 
-test('キーワード不一致: 落とした投稿の件数とキャプションが分かる形で出る', async () => {
+test('カレンダー判定: 対象外にした投稿は件数に数えられ、判定に使った数値がログに出る', async () => {
+  const lines = [];
+  const orig = console.log;
+  console.log = (...a) => lines.push(a.join(' '));
+  let result;
+  try {
+    result = await monitor.runMonitor(
+      { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
+      fakeLibsForBehaviour([
+        // 【古い方をカレンダーにする】走査は新しい順で、当月以降のカレンダーを見つけたら
+        // 打ち切るので、カレンダーを新しい方に置くと対象外の投稿が「未確認」になり判定されない。
+        { permalink: 'https://www.instagram.com/p/CAL/', postedAt: '2026-07-20T10:00:00.000Z', rows: fillerRows('2099-09') },
+        {
+          permalink: 'https://www.instagram.com/p/NOTCAL/',
+          postedAt: '2026-07-21T10:00:00.000Z',
+          rows: [
+            { date: '2099-09-12', start: '19:00', name: '単発トナメDay1', buyin: 3000, tags: [] },
+            { date: '2099-09-13', start: '19:00', name: '単発トナメDay2', buyin: 3000, tags: [] },
+          ],
+        },
+      ])
+    );
+  } finally {
+    console.log = orig;
+  }
+  const s = result.summaries[0];
+  assert.equal(s.newPostCount, 2);
+  assert.equal(s.scheduleLikeCount, 2, 'キャプションで事前に絞らないので、新着はすべて判定の対象になる');
+  assert.equal(s.filteredOutCount, 0, '画像を見ずに捨てる経路はもう無い');
+  assert.equal(s.notCalendarPostCount, 1, '対象外にした件数が数えられていること');
+  assert.equal(s.importedPostCount, 1);
+
+  const verdict = lines.find((l) => l.includes('/NOTCAL/'));
+  assert.ok(verdict, '対象外にした投稿が1行としてログに出ること(出ないと閾値を実測で直せない)');
+  assert.match(verdict, /異なる日付=2/, '判定に使った値がそのまま読めること');
+  assert.match(verdict, /広がり=1日/);
+  assert.match(verdict, /カレンダーではない/);
+});
+
+test('★キャッシュ: 判定できた投稿だけを記録し、画像DL失敗・Vision抽出失敗は載せない', async () => {
+  // 【失敗をキャッシュすると永久に固定される】キャッシュは「二度とVisionに渡さない」ための
+  // 記録なので、失敗した投稿を載せると【次回以降やり直す機会が永久に失われる】。
+  // 失敗は一時的な原因(タイムアウト・max_tokens・画像URLの期限切れ)であることが多く、
+  // やり直せば取れることが多い。ここが落ちたら、キャッシュに何を載せるかが変わったということ。
   const result = await monitor.runMonitor(
     { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
     fakeLibsForBehaviour([
-      { permalink: 'https://www.instagram.com/p/EN/', postedAt: '2026-07-20T10:00:00.000Z', caption: 'AUGUST SCHEDULE', rows: [] },
-      { permalink: 'https://www.instagram.com/p/JP/', postedAt: '2026-07-21T10:00:00.000Z', caption: '8月のスケジュールです', rows: [] },
+      { permalink: 'https://www.instagram.com/p/VF/', postedAt: '2026-07-20T10:00:00.000Z', visionThrows: '打ち切り' },
+      { permalink: 'https://www.instagram.com/p/IF/', postedAt: '2026-07-21T10:00:00.000Z', downloadThrows: 'HTTP 404' },
+      {
+        permalink: 'https://www.instagram.com/p/NOTCAL/',
+        postedAt: '2026-07-22T10:00:00.000Z',
+        rows: [{ date: '2099-09-12', start: '19:00', name: '単発トナメ', buyin: 3000, tags: [] }],
+      },
     ])
   );
-  const s = result.summaries[0];
-  // 英語表記はキーワード(全て日本語)に1語も当たらないため対象外になる
-  assert.equal(s.newPostCount, 2);
-  assert.equal(s.scheduleLikeCount, 1);
-  assert.equal(s.filteredOutCount, 1, '落とした件数が数えられていること');
-  assert.equal(s.newPostCount, s.scheduleLikeCount + s.filteredOutCount);
+  const cached = result.state.v40.checkedPosts;
+  assert.deepEqual(Object.keys(cached), ['https://www.instagram.com/p/NOTCAL/'], '判定できた投稿だけが載ること');
+  assert.equal(cached['https://www.instagram.com/p/VF/'], undefined, 'Vision抽出失敗を載せると永久に再試行されない');
+  assert.equal(cached['https://www.instagram.com/p/IF/'], undefined, '画像DL失敗を載せると永久に再試行されない');
 });
 
-test('formatFilteredOutPost: 店・投稿URL・投稿日時が1行に出る', () => {
-  const line = monitor.formatFilteredOutPost(
+test('★キャッシュ: Vision抽出0件は「判定できた」側に入れている(現状の固定・要判断)', async () => {
+  // 【この扱いには緊張がある】Vision が0件を返すのは
+  //   (a) 日程を含まない投稿だった(正常) と (b) 日程表なのに読めなかった(消失)
+  // のどちらでも起こり、機械には区別できない(emptyCaveat がまさにそう言っている)。
+  // それをキャッシュする = (b) のとき【二度と読み直さない】ということ。
+  // 一方で、キャッシュしなければ (a) の投稿を毎回 Vision に渡し続けて費用が減らない。
+  //
+  // 現状は「キャッシュする」を選んでいる。ここではその選択を明示的に固定するだけで、
+  // 正しさを主張していない。変えるときは「0件を毎回読み直す費用」と
+  // 「読めなかった日程表を取り逃がす確率」を比べて、意図して変えること。
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
+    fakeLibsForBehaviour([{ permalink: 'https://www.instagram.com/p/EMPTY/', postedAt: '2026-07-20T10:00:00.000Z', rows: [] }])
+  );
+  assert.equal(result.state.v40.checkedPosts['https://www.instagram.com/p/EMPTY/'], 'empty');
+});
+
+test('★キャッシュ: 判定済みの投稿はVisionに渡さない(費用が新着の数に比例する)', async () => {
+  let visionCalls = 0;
+  const libs = fakeLibsForBehaviour([
+    {
+      permalink: 'https://www.instagram.com/p/SEEN/',
+      postedAt: '2026-07-20T10:00:00.000Z',
+      rows: [{ date: '2099-09-12', start: '19:00', name: '単発トナメ', buyin: 3000, tags: [] }],
+    },
+  ]);
+  const counting = {
+    ...libs,
+    visionLib: {
+      async extractTournaments(...args) {
+        visionCalls += 1;
+        return libs.visionLib.extractTournaments(...args);
+      },
+    },
+  };
+  const state = {
+    v40: {
+      handle: 'triple_orio',
+      lastPostedAt: '2026-07-19T00:00:00.000Z',
+      checkedPosts: { 'https://www.instagram.com/p/SEEN/': 'not-calendar' },
+    },
+  };
+  const result = await monitor.runMonitor({ stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state }, counting);
+  assert.equal(visionCalls, 0, '判定済みの投稿を再びVisionに渡してはいけない');
+  assert.equal(result.summaries[0].cacheHitCount, 1);
+  assert.equal(result.summaries[0].examinedPostCount, 0);
+  // 前回の判定結果は次の状態にも引き継がれる(1回で消えない)
+  assert.equal(result.state.v40.checkedPosts['https://www.instagram.com/p/SEEN/'], 'not-calendar');
+});
+
+test('formatCalendarVerdict: 判定に使った数値と投稿URLが1行に出る(キャプション本文は出さない)', () => {
+  const line = monitor.formatCalendarVerdict(
     { venueId: 'v40', label: 'TripleBarrel 折尾店' },
     {
       permalink: 'https://www.instagram.com/p/ABC/',
       postedAt: '2026-07-20T10:00:00.000Z',
-      caption: 'AUGUST SCHEDULE 8/1〜 19:30スタート',
-    }
+      caption: '優勝は山田太郎さんでした!連絡先 090-1234-5678',
+    },
+    { dominantMonth: '2026-08', distinctDates: 28, spanDays: 30 },
+    '★採用(2026-08のカレンダー)'
   );
-  assert.match(line, /TripleBarrel 折尾店/);
-  assert.match(line, /v40/);
-  assert.match(line, /https:\/\/www\.instagram\.com\/p\/ABC\//, '投稿を特定できること(本文の代わりにこれで確認する)');
-  assert.match(line, /2026-07-20T10:00:00\.000Z/);
+  assert.match(line, /TripleBarrel 折尾店\(v40\)/);
+  assert.match(line, /https:\/\/www\.instagram\.com\/p\/ABC\//);
+  assert.match(line, /支配月=2026-08/);
+  assert.match(line, /異なる日付=28/);
+  assert.match(line, /広がり=30日/);
+  // 【公開ログなのでキャプション本文は出さない】この経路は【全投稿】が通るため、
+  // 旧経路(キーワード不一致で落ちた投稿だけ)より更に広く本文を集めてしまう。
+  // 【断片まで走査する】部分的な漏洩(冒頭N字だけ出す等)を取り逃がさないため、
+  // 廃止した formatFilteredOutPost のテストが持っていた2文字断片の走査をここに引き継ぐ。
+  const caption = '優勝は山田太郎さんでした!連絡先 090-1234-5678';
+  const chars = [...caption];
+  let checked = 0;
+  for (let i = 0; i + 2 <= chars.length; i++) {
+    const gram = chars.slice(i, i + 2).join('');
+    if (/^\s*$/.test(gram)) continue;
+    checked += 1;
+    assert.ok(!line.includes(gram), `キャプションの断片が漏れている: ${JSON.stringify(gram)}`);
+  }
+  assert.ok(checked >= 20, `走査した断片が少なすぎる(${checked}通り)`);
   assert.doesNotMatch(line, /\n/, '改行を潰してログが崩れないようにすること');
 });
 
-test('★formatFilteredOutPost: キャプション本文を1文字も出さない(公開ログのため)', () => {
-  // 【この経路は収集が偏っている】ログに残るのは「キーワードに当たらなかった投稿」=
-  // 日程告知【以外】で、優勝者名・お礼・連絡先が入りやすい側。リポジトリは public で
-  // Actionsログは誰でも読める。permalink があれば全文は投稿を開けば読めるので、
-  // 本文の複製は人にできることを増やさないまま公開の複製だけを作る。
-  // 将来また本文を出すコードが入ったらこのテストが落ちる。
-  const caption = '優勝は山田太郎さんでした!おめでとうございます。お問い合わせは 090-1234-5678 まで';
-  const line = monitor.formatFilteredOutPost(
-    { venueId: 'v40', label: '店' },
-    { permalink: 'https://www.instagram.com/p/ABC/', postedAt: 't', caption }
-  );
-  for (const secret of ['山田', '太郎', '優勝', 'おめでとう', '090', '1234', '5678', 'お問い合わせ']) {
-    assert.ok(!line.includes(secret), `キャプション本文が漏れている: ${secret}`);
-  }
-  // 本文の断片(2文字以上の連続)が1つも含まれないことも機械的に確認する
-  const chars = [...caption];
-  for (let i = 0; i + 2 <= chars.length; i++) {
-    const gram = chars.slice(i, i + 2).join('');
-    if (/^[\s]*$/.test(gram)) continue;
-    assert.ok(!line.includes(gram), `キャプションの断片が漏れている: ${JSON.stringify(gram)}`);
-  }
+test('★キャプションは実装のどこからも参照されない(公開ログへの複製経路を構造的に無くす)', () => {
+  // 【関数単位のテストだけでは足りない】formatCalendarVerdict が本文を出さないことを
+  // 確かめても、【別の行が出す】変更は素通りする(実際、過去の走査で
+  // 「Vision 0件のログ行に本文を出す」変異だけが生き残った)。
+  // キーワード判定の廃止でキャプションを読む理由が無くなったので、
+  // 【そもそも参照が1つも無い】ことをソースに対して直接固定する。
+  // ここが落ちたら、キャプションを読むコードが復活したということ。
+  // 本当に必要なら、公開ログに何が出るかを上のような断片走査つきで必ず確認すること。
+  const src = fs.readFileSync(path.join(__dirname, 'monitor-instagram-apify.js'), 'utf8');
+  const code = src
+    .replace(/\/\*[\s\S]*?\*\//g, '') // ブロックコメントを除く(経緯の説明で語そのものは出てくる)
+    .replace(/\/\/.*$/gm, '');
+  assert.doesNotMatch(code, /\bcaption\b/, 'キャプションを参照するコードが復活している');
 });
 
-test('formatFilteredOutPost: 本文の代わりに機械的な信号(文字数・日付/時刻らしき表記)を出す', () => {
-  const withBoth = monitor.formatFilteredOutPost(
-    { venueId: 'v40', label: '店' },
-    { permalink: 'p', postedAt: 't', caption: '8/1から 19:30スタートです' }
+test('calendarShape: 支配月・異なる日付・広がりを、閾値の境界で正しく判定する', () => {
+  const rows = (dates) => dates.map((d) => ({ date: d, start: '19:00', name: 'x' }));
+  // 【境界】異なる日付がちょうど MIN_CALENDAR_DATES、広がりがちょうど MIN_CALENDAR_SPAN_DAYS
+  const justEnough = rows(['2026-08-01', '2026-08-02', '2026-08-03', '2026-08-04', '2026-08-11']);
+  assert.equal(monitor.calendarShape(justEnough).distinctDates, monitor.MIN_CALENDAR_DATES);
+  assert.equal(monitor.calendarShape(justEnough).spanDays, monitor.MIN_CALENDAR_SPAN_DAYS);
+  assert.equal(monitor.calendarShape(justEnough).isCalendar, true);
+  // 日付が1つ足りない
+  assert.equal(monitor.calendarShape(rows(['2026-08-01', '2026-08-02', '2026-08-03', '2026-08-11'])).isCalendar, false);
+  // 広がりが1日足りない(日付の数は足りている)
+  assert.equal(
+    monitor.calendarShape(rows(['2026-08-01', '2026-08-02', '2026-08-03', '2026-08-04', '2026-08-10'])).isCalendar,
+    false
   );
-  assert.match(withBoth, /キャプション\d+字/);
-  assert.match(withBoth, /日付らしき表記=あり/);
-  assert.match(withBoth, /時刻らしき表記=あり/);
-
-  const neither = monitor.formatFilteredOutPost(
-    { venueId: 'v40', label: '店' },
-    { permalink: 'p', postedAt: 't', caption: '本日も営業しております' }
-  );
-  assert.match(neither, /日付らしき表記=なし/);
-  assert.match(neither, /時刻らしき表記=なし/);
+  // 同じ日が何行あっても「異なる日付」は増えない(1日に大会が並ぶ告知をカレンダーにしない)
+  assert.equal(monitor.calendarShape(rows(Array(30).fill('2026-08-01'))).distinctDates, 1);
+  assert.equal(monitor.calendarShape(rows(Array(30).fill('2026-08-01'))).isCalendar, false);
+  // 書式が正しくない日付は判定の材料にしない
+  assert.equal(monitor.calendarShape(rows(['2026-8-1', '2026-8-2', '2026-8-3', '2026-8-4', '2026-8-15'])).isCalendar, false);
+  assert.deepEqual(monitor.calendarShape([]), { dominantMonth: null, distinctDates: 0, spanDays: 0, isCalendar: false });
 });
 
-test('★formatFilteredOutPost: キャプションが無い投稿はそれと分かる(キーワード方式では永久に拾えない)', () => {
-  // 画像だけの日程投稿は、キャプションが空である限りキーワード方式では構造的に拾えない。
-  // これが分かるだけで「キーワードを増やしても解決しない」と原因が確定する。
-  const none = monitor.formatFilteredOutPost({ venueId: 'v40', label: '店' }, { permalink: 'p', postedAt: 't' });
-  assert.match(none, /キャプションなし\(0字\)/);
-  const empty = monitor.formatFilteredOutPost(
-    { venueId: 'v40', label: '店' },
-    { permalink: 'p', postedAt: 't', caption: '' }
-  );
-  assert.match(empty, /キャプションなし\(0字\)/);
-});
-
-test('captionSignals: 全角の数字・コロンでも日付/時刻らしき表記を拾う', () => {
-  assert.deepEqual(monitor.captionSignals(''), { chars: 0, isBlank: true, hasDateLike: false, hasTimeLike: false });
-  assert.equal(monitor.captionSignals('８月のお知らせ').hasDateLike, true, '全角の月表記');
-  assert.equal(monitor.captionSignals('１９：３０開始').hasTimeLike, true, '全角の時刻表記');
-  assert.equal(monitor.captionSignals('19時スタート').hasTimeLike, true);
-  assert.equal(monitor.captionSignals('8/1開催').hasDateLike, true);
-  assert.equal(monitor.captionSignals('ありがとうございました').hasDateLike, false);
-  assert.equal(monitor.captionSignals('🎰🃏').chars, 2, '絵文字はコードポイントで数える');
-});
-
-test('キーワード不一致: レビュー部が挙げた表記はすべて現状のキーワードから漏れる(実測の固定)', () => {
-  // 【このテストは「漏れている」ことを固定するもの】キーワードを増やすかどうかは
-  // 次のdry-runで実際のキャプションを見てから決める。想像で先回りしない。
-  // ここが落ちたらキーワードを増やした証拠なので、そのとき期待値を更新すること。
-  for (const caption of ['AUGUST SCHEDULE', '8月のトナメ表です', '8月分アップしました', '＼8月のイベント／', '🎰🃏', '']) {
-    assert.equal(
-      monitor.looksLikeSchedulePost(caption),
-      false,
-      `${JSON.stringify(caption)} がキーワードに当たるようになっている(期待値の更新が必要)`
-    );
-  }
-  // 現状当たるもの(この判定自体が壊れていないことの確認)
-  assert.equal(monitor.looksLikeSchedulePost('8月のスケジュールです'), true);
-  assert.equal(monitor.looksLikeSchedulePost('今月の日程はこちら'), true);
+test('calendarShape: 月をまたぐカレンダーでも支配月が1つに決まる(実在する形)', () => {
+  // dry-run #5 で実在した形: v18 の 2026-05-31〜07-03 / v34 の 2026-03-02〜04-04。
+  // 端が数日はみ出すだけなので、支配月(日付が最も多い月)は真ん中の月になる。
+  const june = Array.from({ length: 20 }, (_, i) => ({ date: `2026-06-${String(i + 1).padStart(2, '0')}` }));
+  const rows = [{ date: '2026-05-31' }, ...june, { date: '2026-07-01' }, { date: '2026-07-03' }];
+  const shape = monitor.calendarShape(rows);
+  assert.equal(shape.dominantMonth, '2026-06');
+  assert.equal(shape.distinctDates, 20, '支配月の日付だけを数えること(はみ出したぶんを混ぜない)');
+  assert.equal(shape.isCalendar, true);
 });
 
 // ============================================================
@@ -1548,13 +1924,125 @@ test('キーワード不一致: レビュー部が挙げた表記はすべて現
 // 「7本目の経路が生まれたら落ちる」という主張の根拠が fixture 頼みになる。
 // 壊れた入力に対して【偽になること】と、その結果【::error:: が実際に出ること】を固定する。
 
-test('検知(投稿): 内訳の合計が対象数に足りなければ ok=false になり、不足分を報告する', () => {
-  const broken = {
-    scheduleLikeCount: 6,
-    importedPostCount: 1,
-    repostedPostCount: 1,
+/** 投稿レベルの内訳(全バケツ0)。テストでは動かしたいバケツだけ上書きする。 */
+function emptyPostBuckets() {
+  return {
+    scheduleLikeCount: 0,
+    importedPostCount: 0,
+    repostedPostCount: 0,
     notATournamentPostCount: 0,
     humanEditedPostCount: 0,
+    unusablePostCount: 0,
+    visionFailedCount: 0,
+    imageFailedCount: 0,
+    emptyResultCount: 0,
+    notCalendarPostCount: 0,
+    pastCalendarPostCount: 0,
+    unexaminedPostCount: 0,
+    cacheHitCount: 0,
+  };
+}
+
+// ---------- producer(実装が作る summary)と checker の接続 ----------
+// 【なぜこの2本が要るか(2026-08-04)】
+// 上の検知テストはどれも【テストが手で組み立てた summary】を checker に渡している。
+// そのため「実装が summary に項を入れ忘れた」種類のバグは、検知テストが全部緑のまま通る。
+// 実際そうなった: 走査フェーズのカウンタを summary に写し忘れ、合計が NaN になり
+// 【全店・毎回「投稿の集計が合わない」と誤報する】状態でPRが渡ってきた。
+// しかもそのとき同時に fixture 起因の失敗が53件あったため、
+// 【fixtureが古いだけの失敗】と【実装のバグ】が見分けられなかった。
+// ここは fixture を1件も使わない。落ちたら原因は実装以外にありえない。
+
+test('★保存則: 実装が作った summary をそのまま checker に通す(fixtureを使わない)', async () => {
+  // 新着0件の店 = summary は makeStoreSummary の初期値そのまま。
+  // Vision も画像DLも1度も呼ばれないので、抽出結果の fixture という概念が存在しない。
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
+    {
+      fetchLib: { async fetchInstagramPosts() { return []; } },
+      visionLib: { async extractTournaments() { throw new Error('呼ばれてはいけない'); } },
+      mergeLib,
+      downloadImage: async () => { throw new Error('呼ばれてはいけない'); },
+    }
+  );
+  const s = result.summaries[0];
+  for (const [name, acc] of [
+    ['投稿', monitor.checkPostAccounting(s)],
+    ['行', monitor.checkRowAccounting(s)],
+    ['取込み', monitor.checkIntakeAccounting(s)],
+  ]) {
+    // 【NaN を名指しで捕まえる】summary に項が1つでも欠けると合計が NaN になる。
+    // NaN === 期待値 は常に偽なので「集計が合わない」と毎回誤報するが、
+    // ok を見るだけだと「合わないこと自体が正しい検知」と読めてしまい区別が付かない。
+    const actual = name === '行' ? acc.rows - acc.residual : acc.actual;
+    assert.ok(
+      Number.isFinite(actual),
+      `${name}レベルの内訳の合計が数値になっていない(summary に項の入れ忘れがある): ${JSON.stringify(acc)}`
+    );
+    assert.ok(acc.ok, `何も観測していない店では 0 = 0 で成立するはず: ${JSON.stringify(acc)}`);
+  }
+  assert.equal(monitor.checkPostAccounting(s).actual, 0);
+});
+
+/**
+ * checker が実際に読む summary の項名を Proxy で観測して集める。
+ * 【手で書き写さない理由】書き写した一覧は、実装にバケツが増えたとき黙って古くなる。
+ * それが上のバグの起き方そのものなので、一覧は実装に聞く。
+ */
+function fieldsReadBy(check) {
+  const read = new Set();
+  check(
+    new Proxy(
+      {},
+      {
+        get(_, k) {
+          if (typeof k !== 'string') return undefined;
+          read.add(k);
+          return 0;
+        },
+      }
+    )
+  );
+  return read;
+}
+
+test('★保存則(投稿): checker が読む項が、実装の summary とテスト側の初期値の両方に揃っている', async () => {
+  const buckets = [...fieldsReadBy(monitor.checkPostAccounting)].filter((k) => k !== 'scheduleLikeCount');
+  assert.ok(buckets.length >= 10, `バケツが少なすぎる(観測できていない可能性): ${buckets.join(',')}`);
+
+  // (a) 実装が作る summary に全部あり、すべて有限の数値であること
+  //     = makeStoreSummary の初期化漏れ(バグ①)をここで名指しできる
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
+    {
+      fetchLib: { async fetchInstagramPosts() { return []; } },
+      visionLib: {},
+      mergeLib,
+      downloadImage: async () => Buffer.from(''),
+    }
+  );
+  const s = result.summaries[0];
+  for (const f of buckets) {
+    assert.equal(typeof s[f], 'number', `実装の summary に ${f} が無い(makeStoreSummary の初期化漏れ)`);
+    assert.ok(Number.isFinite(s[f]), `${f} が数値になっていない`);
+  }
+
+  // (b) テスト側の手書き初期値とキー集合が完全に一致すること
+  //     = 実装にバケツが増えたのに emptyPostBuckets() を更新し忘れる二重管理のずれを防ぐ
+  const literal = Object.keys(emptyPostBuckets()).filter((k) => k !== 'scheduleLikeCount');
+  assert.deepEqual(
+    literal.slice().sort(),
+    buckets.slice().sort(),
+    'emptyPostBuckets() と checkPostAccounting が見ているバケツがずれている(どちらかを合わせること)'
+  );
+});
+
+test('検知(投稿): 内訳の合計が対象数に足りなければ ok=false になり、不足分を報告する', () => {
+  const broken = {
+    ...emptyPostBuckets(),
+    scheduleLikeCount: 6,
+    importedPostCount: 1,
+    notCalendarPostCount: 1,
     unusablePostCount: 1,
     visionFailedCount: 0, // ← 本来1件あるべきものが数えられていない
     imageFailedCount: 0, // ← 同上
@@ -1567,17 +2055,22 @@ test('検知(投稿): 内訳の合計が対象数に足りなければ ok=false 
   assert.equal(acc.missing, 2, '不足している件数が分かること');
 });
 
+test('★検知(投稿): バケツを1つ足し忘れたら(undefined のまま)ok=false になる', () => {
+  // 【実際に踏んだバグ(2026-08-04)】走査フェーズのカウンタを summary に写し忘れると、
+  // 内訳の合計が NaN になる。NaN === expected は常に false なので検査は【偽】を返す =
+  // 安全側に倒れる。ここを「undefined は0とみなす」に緩めると、
+  // 数え忘れたバケツぶんの投稿が静かに消えても保存則が成立してしまう。
+  const missingBucket = { ...emptyPostBuckets(), scheduleLikeCount: 1, importedPostCount: 1 };
+  delete missingBucket.notCalendarPostCount;
+  assert.equal(monitor.checkPostAccounting(missingBucket).ok, false, 'バケツの数え忘れを見逃してはいけない');
+});
+
 test('検知(投稿): 内訳が多すぎる(二重計上)場合も ok=false になる', () => {
   const doubled = {
+    ...emptyPostBuckets(),
     scheduleLikeCount: 1,
     importedPostCount: 1,
-    notATournamentPostCount: 0,
-    humanEditedPostCount: 0,
-    repostedPostCount: 1, // ← 同じ投稿を2つのバケツに入れてしまった
-    unusablePostCount: 0,
-    visionFailedCount: 0,
-    imageFailedCount: 0,
-    emptyResultCount: 0,
+    notCalendarPostCount: 1, // ← 同じ投稿を2つのバケツに入れてしまった
   };
   const acc = monitor.checkPostAccounting(doubled);
   assert.equal(acc.ok, false, '二重計上も検知すること');
@@ -1586,15 +2079,13 @@ test('検知(投稿): 内訳が多すぎる(二重計上)場合も ok=false に�
 
 test('検知(投稿): 健全な入力では ok=true(検知側が常に false を返す実装になっていないこと)', () => {
   const sound = {
-    scheduleLikeCount: 3,
+    ...emptyPostBuckets(),
+    scheduleLikeCount: 5,
     importedPostCount: 1,
-    repostedPostCount: 1,
-    notATournamentPostCount: 0,
-    humanEditedPostCount: 0,
     unusablePostCount: 1,
-    visionFailedCount: 0,
-    imageFailedCount: 0,
-    emptyResultCount: 0,
+    notCalendarPostCount: 1,
+    pastCalendarPostCount: 1,
+    unexaminedPostCount: 1,
   };
   assert.equal(monitor.checkPostAccounting(sound).ok, true);
   assert.equal(monitor.checkPostAccounting(sound).missing, 0);
@@ -1669,11 +2160,18 @@ function runCliWithMutation(mutate) {
        ];
      };\n`
   );
+  // A = カレンダー(未来の行 + 過去日の行を1件)/ B = カレンダーではない単発の告知。
+  // 【Bを新しい方に置くこと】走査は新しい順で、当月以降のカレンダーを見つけたら打ち切るので、
+  // 新しい方をカレンダーにすると A が「未確認」になり、取込みの経路を1本も通らなくなる。
   fs.writeFileSync(
     path.join(root, 'tools', 'venue-schedule-vision.js'),
-    `exports.extractTournaments = async (buf) => {
-       if (String(buf).includes('A.jpg')) return [{ date: '2099-09-12', start: '19:00', name: '未来', buyin: 3000, tags: [] }];
-       return [{ date: '2020-01-01', start: '19:00', name: '過去', buyin: 3000, tags: [] }];
+    `const CAL = ${JSON.stringify([
+      ...fillerRows('2099-09'),
+      { date: '2020-01-01', start: '19:00', name: '過去のトナメ', buyin: 3000, tags: [] },
+    ])};
+     exports.extractTournaments = async (buf) => {
+       if (String(buf).includes('A.jpg')) return CAL;
+       return [{ date: '2099-09-12', start: '19:00', name: '単発トナメ', buyin: 3000, tags: [] }];
      };\n`
   );
   fs.writeFileSync(
@@ -1692,10 +2190,11 @@ function runCliWithMutation(mutate) {
 
 test('CLI: 投稿がどのバケツにも入らなくなったら ::error::(投稿の集計が合わない)が stdout に出る', () => {
   const r = runCliWithMutation((root) => {
-    // 「7本目の静かな経路」を注入する: 1行だけ返した投稿を黙ってスキップする
+    // 「静かな経路」を注入する: カレンダーとして採用した投稿を、取込み直前で黙ってスキップする。
+    // どのバケツにも入らないので、投稿の内訳の合計が対象数に届かなくなる。
     const p = path.join(root, 'tools', 'monitor-instagram-apify.js');
     const src = fs.readFileSync(p, 'utf8');
-    const mutated = src.replace('      let keptFromPost = 0;', '      if (rows.length === 1) continue;\n      let keptFromPost = 0;');
+    const mutated = src.replace('      let keptFromPost = 0;', '      if (rows.length > 0) continue;\n      let keptFromPost = 0;');
     assert.notEqual(mutated, src, '変異の当て先が見つからない(テストの前提が古い)');
     fs.writeFileSync(p, mutated);
   });
@@ -1734,7 +2233,9 @@ test('CLI: 健全な実行では集計が合わない注記は出ない(誤検�
   assert.match(r.stdout, /残余なし/, '合計行に「残余なし」が出ること');
 });
 
-test('CLI: キーワード不一致の投稿は、本文を出さずに投稿URLと信号でログに出る', () => {
+test('CLI: 対象外にした投稿は、本文を出さずに投稿URLと判定値でログに出る', () => {
+  // 【この経路は全投稿が通る】旧経路(キーワード不一致)よりも更に広くキャプションを
+  // 集めてしまう場所なので、本文を出さないことをCLIの実出力で確かめる。
   const root = makeTempRepoRoot();
   fs.writeFileSync(
     path.join(root, 'tools', 'fetch-venue-posts-apify.js'),
@@ -1743,7 +2244,13 @@ test('CLI: キーワード不一致の投稿は、本文を出さずに投稿URL
        return [{ permalink: 'https://www.instagram.com/p/EN/', imageUrl: 'https://example.com/EN.jpg', postedAt: '2026-07-20T10:00:00.000Z', caption: 'AUGUST SCHEDULE 8/1-8/31' }];
      };\n`
   );
-  fs.writeFileSync(path.join(root, 'tools', 'venue-schedule-vision.js'), 'exports.extractTournaments = async () => [];\n');
+  fs.writeFileSync(
+    path.join(root, 'tools', 'venue-schedule-vision.js'),
+    `exports.extractTournaments = async () => ([
+       { date: '2099-09-12', start: '19:00', name: '単発トナメDay1', buyin: 3000, tags: [] },
+       { date: '2099-09-13', start: '19:00', name: '単発トナメDay2', buyin: 3000, tags: [] }
+     ]);\n`
+  );
   fs.writeFileSync(
     path.join(root, 'stub-fetch.js'),
     'globalThis.fetch = async (url) => ({ status: 200, arrayBuffer: async () => new TextEncoder().encode(String(url)).buffer });\n'
@@ -1755,11 +2262,13 @@ test('CLI: キーワード不一致の投稿は、本文を出さずに投稿URL
       encoding: 'utf8',
     });
     assert.equal(r.status, 0);
-    assert.match(r.stdout, /キーワード不一致で対象外/, 'このログが無いと次のdry-runで何も測れない');
+    assert.match(r.stdout, /投稿判定: /, 'このログが無いと閾値を実測で直せない');
     assert.match(r.stdout, /https:\/\/www\.instagram\.com\/p\/EN\//, 'どの投稿かが分かること(内容はここから辿る)');
-    assert.match(r.stdout, /キャプション\d+字/, '本文の代わりに機械的な信号が出ること');
+    assert.match(r.stdout, /異なる日付=2 \/ 広がり=1日/, '判定に使った値がそのまま読めること');
+    assert.match(r.stdout, /カレンダーではない\(対象外\)/);
     assert.doesNotMatch(r.stdout, /AUGUST SCHEDULE/, '公開ログにキャプション本文を出してはいけない');
-    assert.match(r.stdout, /キーワード不一致で対象外 1件/, '件数もサマリに出ること');
+    assert.match(r.stdout, /カレンダーでない 1件/, '件数もサマリに出ること');
+    assert.match(r.stdout, /当月カレンダー: なし/, '0件を静かに返さないこと');
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
@@ -1772,7 +2281,7 @@ test('CLI: キーワード不一致の投稿は、本文を出さずに投稿URL
 // 捨てられた投稿は、キーワード不一致よりも更に見えにくい。保存則の左辺を
 // 「Apifyが返した件数」まで遡らせて塞ぐ。
 
-test('取込み: Apifyが返した件数から、形式不正・日時不正・既読・キーワード不一致・対象まで数が合う', async () => {
+test('取込み: Apifyが返した件数から、形式不正・日時不正・既読・判定対象まで数が合う', async () => {
   const fetchLib = {
     async fetchInstagramPosts(handle, opts) {
       // Apifyは5件返したが、2件は必須フィールド欠落で正規化に失敗した、という状況
@@ -1802,8 +2311,11 @@ test('取込み: Apifyが返した件数から、形式不正・日時不正・�
   assert.equal(s.invalidPostedAtCount, 1, '投稿日時が読めず捨てた件数');
   assert.equal(s.alreadySeenCount, 0);
   assert.equal(s.newPostCount, 2);
-  assert.equal(s.filteredOutCount, 1, 'AUGUST SCHEDULE はキーワードに当たらない');
-  assert.equal(s.scheduleLikeCount, 1);
+  // 【キャプションによる事前の絞り込みは廃止した(2026-08-04)】新着はすべて画像で判定する。
+  // filteredOut は「Vision に届く前に捨てた投稿」の枠として残してあるが、現在は常に0。
+  // ここが0でなくなったら、また画像を見ずに捨てる経路が増えたということ。
+  assert.equal(s.filteredOutCount, 0);
+  assert.equal(s.scheduleLikeCount, 2, '英語キャプションの投稿も判定の対象になる');
 
   const intake = monitor.checkIntakeAccounting(s);
   assert.ok(intake.ok, `取込みの保存則が破れている: ${JSON.stringify(intake)}`);
@@ -1877,12 +2389,12 @@ test('pickNewPostsWithStats: 落とした理由ごとに件数を返す', () => 
 });
 
 // ============================================================
-// M-2: キーワード不一致で全部落ちた店でも lastExtraction を残す
+// M-2: カレンダーが1枚も見つからなかった店でも lastExtraction を残す
 // ============================================================
 
-test('永続化: 新着はあるが対象0件(折尾のケース)でも lastExtraction が書かれる', async () => {
-  // 【このカウンタが最も必要な場面】新着12件→対象0件。ここで書かれないと
-  // 「日程を投稿していない」のか「キーワードに当たらず全部素通り」なのかが
+test('永続化: 新着はあるがカレンダーが1枚も無かった店でも lastExtraction が書かれる', async () => {
+  // 【このカウンタが最も必要な場面】新着12件→取込み0件。ここで書かれないと
+  // 「日程を投稿していない」のか「投稿はあるがカレンダーと判定されなかった」のかが
   // git履歴のどこにも残らず、runログが消える90日後には何も分からなくなる。
   const posts = Array.from({ length: 3 }, (_, i) => ({
     permalink: `https://www.instagram.com/p/X${i}/`,
@@ -1894,19 +2406,31 @@ test('永続化: 新着はあるが対象0件(折尾のケース)でも lastExtr
     { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
     {
       fetchLib: { async fetchInstagramPosts(h, opts) { if (opts && opts.stats) { opts.stats.rawCount = 3; opts.stats.malformed = 0; } return posts; } },
-      visionLib: { async extractTournaments() { throw new Error('呼ばれてはいけない'); } },
+      // どれも単発の告知(カレンダーではない)
+      visionLib: {
+        async extractTournaments() {
+          return [{ date: '2099-09-12', start: '19:00', name: '単発トナメ', buyin: 3000, tags: [] }];
+        },
+      },
       mergeLib,
-      downloadImage: async () => { throw new Error('呼ばれてはいけない'); },
+      downloadImage: async () => Buffer.from('x'),
     }
   );
   const le = result.state.v40.lastExtraction;
-  assert.ok(le, '対象0件でも lastExtraction が書かれること');
+  assert.ok(le, '取込み0件でも lastExtraction が書かれること');
   assert.equal(le.newPosts, 3);
-  assert.equal(le.filteredOut, 3, 'キーワード不一致の件数がgit履歴に残ること');
-  assert.equal(le.posts, 0, 'Vision抽出の対象は0件');
+  assert.equal(le.posts, 3, '新着はすべて判定の対象になる');
+  assert.equal(le.notCalendar, 3, 'カレンダーでなかった件数がgit履歴に残ること');
+  assert.equal(le.kept, 0);
   assert.equal(le.apifyRaw, 3);
+  assert.equal(le.notAdoptedRows, 3, '読み取った行が「採用しなかった投稿の行」として説明が付くこと');
+  // 当月カレンダーが見つからなかったことも要約から読める
+  assert.equal(result.summaries[0].currentMonthCalendar, null);
+  assert.equal(result.summaries[0].latestPastCalendar, null);
   // 状態も前進している(=この投稿は二度と処理されない)ことが同時に読める
   assert.equal(result.state.v40.lastPostedAt, '2026-07-22T10:00:00.000Z');
+  // 判定結果はキャッシュされ、次回この3件はVisionに渡らない
+  assert.deepEqual(Object.values(result.state.v40.checkedPosts), ['not-calendar', 'not-calendar', 'not-calendar']);
 });
 
 test('永続化: 新着そのものが0件の店は、従来どおり前回値を持ち越す(無意味な日次差分を作らない)', async () => {
@@ -1985,7 +2509,7 @@ test('CLI: 取込みの上流で投稿が消えたら ::error::(取得件数の�
  * 取込み最上流(正規化)の段を実際には通っていなかった。
  * globalThis.fetch を差し替えて Apify のレスポンスだけを偽装する。
  */
-function runCliWithRealFetchLib({ apifyItems, state = {}, mutate = () => {} }) {
+function runCliWithRealFetchLib({ apifyItems, state = {}, mutate = () => {}, visionSource = null }) {
   const root = makeTempRepoRoot();
   fs.copyFileSync(
     path.join(TOOLS_DIR, 'fetch-venue-posts-apify.js'),
@@ -1994,7 +2518,7 @@ function runCliWithRealFetchLib({ apifyItems, state = {}, mutate = () => {} }) {
   fs.writeFileSync(path.join(root, 'apify-monitor-state.json'), `${JSON.stringify(state, null, 2)}\n`);
   fs.writeFileSync(
     path.join(root, 'tools', 'venue-schedule-vision.js'),
-    "exports.extractTournaments = async () => [{ date: '2099-09-12', start: '19:00', name: '大会', buyin: 3000, tags: [] }];\n"
+    visionSource || calendarVisionStubSource('マンデートナメ')
   );
   fs.writeFileSync(
     path.join(root, 'stub-fetch.js'),
@@ -2050,7 +2574,9 @@ test('R-1: 本物のfetch libを通した正常系では、取込みの内訳が
   });
   assert.equal(r.status, 0, r.stderr);
   assert.match(r.stdout, /Apify取得 4件 → 新着 2件 \(形式不正 2 \/ 投稿日時が読めない 0 \/ 既読 0\)/);
-  assert.match(r.stdout, /新着投稿 2件 → 対象 1件 \/ キーワード不一致で対象外 1件/);
+  // キャプションによる事前の絞り込みは無いので、新着=判定対象になる
+  assert.match(r.stdout, /新着投稿 2件 → 判定対象 2件/);
+  assert.doesNotMatch(r.stdout, /画像を見ずに対象外/, '画像を見ずに捨てる経路が復活していないこと');
   assert.doesNotMatch(r.stdout, /集計が合わない/);
 });
 
@@ -2115,7 +2641,11 @@ test('R-1: 新着判定に絞り込みを1段足すと「既読」に吸い込�
   assert.doesNotMatch(r.stdout, /既読 1/, '未読の投稿を「既読」として誤報してはいけない');
 });
 
-test('R-1: キーワード判定に絞り込みを1段足すと残余として表に出る', () => {
+test('R-1: 走査する投稿の一覧に絞り込みを1段足すと残余として表に出る', () => {
+  // 【キーワード判定は廃止したが、同じ罠は残っている(2026-08-04)】
+  // 以前は「キーワードで絞った後の件数」を残差で持っていたため、その段で消えた投稿が
+  // 隣の項に吸い込まれて表に出なかった。今は走査の一覧(newestFirst)がその位置にあたる。
+  // ここで1件黙って落とすと、どのバケツにも入らない投稿ができる = 投稿の保存則が破れる。
   const r = runCliWithRealFetchLib({
     apifyItems: [
       apifyItem('A', '2026-07-20T10:00:00.000Z', '8月のスケジュール'),
@@ -2125,29 +2655,37 @@ test('R-1: キーワード判定に絞り込みを1段足すと残余として�
       patchFile(
         root,
         'monitor-instagram-apify.js',
-        '    const scheduleLike = newPosts.filter((p) => looksLikeSchedulePost(p.caption));',
-        "    const scheduleLike = newPosts.filter((p) => looksLikeSchedulePost(p.caption)).filter((p) => !p.permalink.includes('DROPME'));"
+        '    const newestFirst = [...newPosts].reverse();',
+        "    const newestFirst = [...newPosts].reverse().filter((p) => !p.permalink.includes('DROPME'));"
       ),
   });
   assert.equal(r.status, 0, r.stderr);
-  assert.match(r.stdout, /::error title=Instagram監視 - 取得件数の集計が合わない::/);
+  assert.match(
+    r.stdout,
+    /::error title=Instagram監視 - 投稿の集計が合わない::/,
+    '走査から黙って外れた投稿が、どのバケツにも入らないまま素通りしている'
+  );
+  assert.match(r.stdout, /::error title=Instagram監視 - 投稿別の明細が合わない::/);
 });
 
-test('R-1: filteredOut の件数と、実際にログへ出るキャプション行の数が一致する', () => {
+test('R-1: 「カレンダーでない」の件数と、実際にログへ出る判定行の数が一致する', () => {
   // 【残差で持っていると壊れる不変条件】件数を引き算で出すと、
-  // 「件数だけ増えてログには出ない」という不一致が起こりうる。同じ述語で数えれば必ず一致する。
+  // 「件数だけ増えてログには出ない」という不一致が起こりうる。同じ場所で数えれば必ず一致する。
   const r = runCliWithRealFetchLib({
     apifyItems: [
       apifyItem('A', '2026-07-20T10:00:00.000Z', '8月のスケジュール'),
-      apifyItem('EN', '2026-07-21T10:00:00.000Z', 'AUGUST SCHEDULE'),
-      apifyItem('TNM', '2026-07-22T10:00:00.000Z', '8月のトナメ表です'),
-      apifyItem('EMOJI', '2026-07-23T10:00:00.000Z', '🎰🃏'),
+      apifyItem('B', '2026-07-21T10:00:00.000Z', 'AUGUST SCHEDULE'),
+      apifyItem('C', '2026-07-22T10:00:00.000Z', '8月のトナメ表です'),
+      apifyItem('D', '2026-07-23T10:00:00.000Z', '🎰🃏'),
     ],
+    // 4件とも単発の告知(カレンダーではない)。打ち切りが起きないので4件すべてが判定される
+    visionSource:
+      "exports.extractTournaments = async () => ([{ date: '2099-09-12', start: '19:00', name: '単発トナメ', buyin: 3000, tags: [] }]);\n",
   });
   assert.equal(r.status, 0, r.stderr);
-  const logged = (r.stdout.match(/キーワード不一致で対象外: /g) || []).length;
-  const reported = Number(r.stdout.match(/キーワード不一致で対象外 (\d+)件/)[1]);
-  assert.equal(logged, 3, '落とした3件すべてがログに出ること');
+  const logged = (r.stdout.match(/カレンダーではない\(対象外\)/g) || []).length;
+  const reported = Number(r.stdout.match(/カレンダーでない (\d+)件/)[1]);
+  assert.equal(logged, 4, '対象外にした4件すべてがログに出ること');
   assert.equal(reported, logged, `サマリの件数(${reported})とログの行数(${logged})が食い違っている`);
 });
 
@@ -2234,12 +2772,14 @@ test('CLI: Vision抽出0件が無い回には但し書きを出さない(ノイ�
 // ============================================================
 // 公開ログへのキャプション漏洩を「出力の全経路」に対して走査する
 // ============================================================
-// 【なぜ formatFilteredOutPost の戻り値だけでは足りないか】
-// 断片検査をその1関数にしか当てていないと、【別のログ行に本文を出す変異】が素通りする。
+// 【なぜ1つの関数の戻り値だけでは足りないか】
+// 断片検査を1関数にしか当てていないと、【別のログ行に本文を出す変異】が素通りする。
 // 実際、品質管理部の走査で「Vision 0件 のログ行に本文を出す」変異だけが生き残った。
 // しかも次の工程はまさに「Vision 0件 の全件目視」なので、
 // 「permalink だけだと確認が面倒だからキャプションも出そう」という変更が入りやすい場所。
 // そこで【CLIを実際に走らせ、stdout/stderr/状態ファイル/data.js のすべて】を走査する。
+// 【2026-08-04】キーワード判定の廃止で【全投稿】が判定ログを通るようになった =
+// 本文を出したときに公開される範囲は旧方式より広い。この走査の重要度は上がっている。
 
 /**
  * 走査用の「希少文字列」。日本語の一般的な2文字(「スケ」「日程」など)と偶然一致すると
@@ -2289,40 +2829,52 @@ test('★漏洩走査: CLIの全出力(stdout/stderr/状態ファイル/data.js)
   // 最も混入しやすい場所。ここでは以下の経路をすべて1回ずつ通してから走査する:
   //   取り込めた(追加行のログ)/ 破棄行 / 正規化行 / 全行不採用(異常)/
   //   Vision抽出失敗(失われた投稿)/ Vision抽出0件 / キーワード不一致 / 投稿別の内訳
+  // 【1店では全経路を通せなくなった(2026-08-04)】1回の実行で採用するカレンダーは
+  // 1店につき1枚なので、「取り込めた」と「全行不採用」は同じ店では両立しない。
+  // 2店に分けて、両方の経路を1回のCLI実行の中で通す。
+  // 【走査は新しい順・当月以降のカレンダーで打ち切り】なので、
+  // 採用させたい投稿(OK)は【いちばん古い】位置に置く。そうしないと他の投稿が未確認になり、
+  // 判定ログ・Vision失敗・0件の経路を通らないまま走査が終わってしまう。
   const root = makeTempRepoRoot();
-  const post = (slug, day, keyword) =>
-    `{ permalink: 'https://www.instagram.com/p/${slug}/', imageUrl: 'https://example.com/${slug}.jpg', postedAt: '2026-07-${day}T10:00:00.000Z', caption: ${JSON.stringify(leakCaption('KEYWORD')).replace('KEYWORD', '${keyword}')} }`;
   fs.writeFileSync(
     path.join(root, 'tools', 'fetch-venue-posts-apify.js'),
     `const cap = (kw) => ${JSON.stringify(leakCaption('__KW__'))}.replace('__KW__', kw);
+     const p = (slug, day, kw) => ({
+       permalink: 'https://www.instagram.com/p/' + slug + '/',
+       imageUrl: 'https://example.com/' + slug + '.jpg',
+       postedAt: '2026-07-' + day + 'T10:00:00.000Z',
+       caption: cap(kw),
+     });
      exports.fetchInstagramPosts = async (handle) => {
-       if (handle !== 'triple_orio') return [];
-       const p = (slug, day, kw) => ({
-         permalink: 'https://www.instagram.com/p/' + slug + '/',
-         imageUrl: 'https://example.com/' + slug + '.jpg',
-         postedAt: '2026-07-' + day + 'T10:00:00.000Z',
-         caption: cap(kw),
-       });
-       return [
-         p('OK', '20', 'スケジュール'),    // 採用あり + 破棄行 + 正規化行 が同時に出る
-         p('BAD', '21', 'スケジュール'),   // 全行不採用(異常)
-         p('VF', '22', 'スケジュール'),    // Vision抽出失敗(失われた投稿)
-         p('EMPTY', '23', 'スケジュール'), // Vision抽出0件
-         p('MISS', '24', 'AUGUST'),        // キーワード不一致(画像を見ずに破棄)
-       ];
+       if (handle === 'triple_orio') {
+         return [
+           p('OK', '20', 'スケジュール'),     // 採用あり + 破棄行 + 正規化行 が同時に出る
+           p('NOTCAL', '21', 'スケジュール'), // カレンダーでない(判定ログ)
+           p('VF', '22', 'スケジュール'),     // Vision抽出失敗(失われた投稿)
+           p('EMPTY', '23', 'スケジュール'),  // Vision抽出0件
+         ];
+       }
+       if (handle === 'king2485queen') {
+         return [p('BAD', '20', 'スケジュール')]; // 全行不採用(異常)
+       }
+       return [];
      };\n`
   );
   fs.writeFileSync(
     path.join(root, 'tools', 'venue-schedule-vision.js'),
-    `exports.extractTournaments = async (buf) => {
+    `const OK = ${JSON.stringify([
+      { date: '2099-09-12', start: '9:00', name: '採用される大会', buyin: 3000, stack: 10000, tags: [] }, // 正規化される(9:00→09:00)
+      { date: '2099-9-13', start: '19:00', name: '捨てられる大会', buyin: 3000, tags: [] }, // 破棄される
+      ...fillerRows('2099-09'),
+    ])};
+     const BAD = ${JSON.stringify(unusableCalendarRows('全部捨てられる大会', '2099-09'))};
+     exports.extractTournaments = async (buf) => {
        const s = String(buf);
        if (s.includes('VF')) throw new Error('Visionモデルの出力が max_tokens で打ち切られました。');
        if (s.includes('EMPTY')) return [];
-       if (s.includes('BAD')) return [{ date: '2099-9-14', start: '19:00', name: '日付不正', buyin: 3000, tags: [] }];
-       return [
-         { date: '2099-09-12', start: '9:00', name: '採用される大会', buyin: 3000, stack: 10000, tags: [] }, // 正規化される(9:00→09:00)
-         { date: '2099-9-13', start: '19:00', name: '捨てられる大会', buyin: 3000, tags: [] },              // 破棄される
-       ];
+       if (s.includes('BAD')) return BAD;
+       if (s.includes('NOTCAL')) return [{ date: '2099-09-12', start: '19:00', name: '単発トナメ', buyin: 3000, tags: [] }];
+       return OK;
      };\n`
   );
   fs.writeFileSync(
@@ -2340,7 +2892,8 @@ test('★漏洩走査: CLIの全出力(stdout/stderr/状態ファイル/data.js)
     // 【走査の前に、狙った経路を実際に通ったことを確かめる】通っていなければ走査は空振りになる。
     const all = r.stdout + r.stderr;
     for (const [label, re] of [
-      ['キーワード不一致', /キーワード不一致で対象外/],
+      ['カレンダー判定(全投稿が通る)', /投稿判定: /],
+      ['カレンダーでない', /カレンダーではない\(対象外\)/],
       ['Vision抽出0件', /Vision抽出0件 1件/],
       ['破棄行(formatDroppedRow)', /抽出結果を1件破棄しました/],
       ['正規化行(formatNormalizedRow)', /正規化/],
@@ -2362,39 +2915,21 @@ test('★漏洩走査: CLIの全出力(stdout/stderr/状態ファイル/data.js)
   }
 });
 
-test('captionSignals: 空白のみ・ゼロ幅スペースのみも「実質なし」と判定する', () => {
-  // trim() は全角スペースは落とすが【ゼロ幅スペースは落とさない】ので明示的に除いている。
-  for (const blank of ['', '   ', '\n\t ', '　　', '​​', '‍', '﻿', ' ​　']) {
-    assert.equal(captionSignalsIsBlank(blank), true, `空白扱いにならない: ${JSON.stringify(blank)}`);
-  }
-  for (const notBlank of ['8月', 'a', '　8　']) {
-    assert.equal(captionSignalsIsBlank(notBlank), false, `空白扱いにしてはいけない: ${JSON.stringify(notBlank)}`);
-  }
-});
-function captionSignalsIsBlank(s) {
-  return monitor.captionSignals(s).isBlank;
-}
-
-test('formatFilteredOutPost: 空白のみのキャプションは「実質なし」と出す(短いだけと誤読させない)', () => {
-  // 【誤読を防ぐのが目的】`キャプション3字` と出ると「短いだけだからキーワードを足せば拾えるかも」
-  // と読めてしまうが、実際には空文字と同じでキーワード方式では構造的に永久に拾えない。
-  for (const [caption, expected] of [
-    ['   ', /キャプション実質なし\(空白のみ3字\)/],
-    ['　　', /キャプション実質なし\(空白のみ2字\)/],
-    ['​​', /キャプション実質なし\(空白のみ2字\)/],
-    ['', /キャプションなし\(0字\)/],
-  ]) {
-    const line = monitor.formatFilteredOutPost({ venueId: 'v40', label: '店' }, { permalink: 'p', postedAt: 't', caption });
-    assert.match(line, expected, `入力 ${JSON.stringify(caption)}`);
-    assert.doesNotMatch(line, /日付らしき表記/, '実質なしのときに信号を並べても意味がない');
-  }
-});
-
 // ============================================================
 // 手順⑤(採用行の全件照合)のための明細
 // ============================================================
 // dry-run は data.js を書かないので、「実際に何が増えるのか」がどこにも残らない。
 // 件数だけでは1行ずつ元の投稿画像と突き合わせる照合作業ができない。
+
+/**
+ * 追加行の明細から【指定した大会の行】を取り出す。
+ * カレンダー1枚ぶんの行が並ぶので、先頭の行を取ると埋め行を見てしまうことがある。
+ */
+function findAddedRowLine(lines, name) {
+  const line = lines.find((l) => l.includes('追加行: ') && l.includes(name));
+  assert.ok(line, `明細に「${name}」の行が出ていない`);
+  return line;
+}
 
 test('明細: 追加される行が、出所の投稿URL付きで1行1件で出る', async () => {
   const result = await monitor.runMonitor(
@@ -2403,17 +2938,22 @@ test('明細: 追加される行が、出所の投稿URL付きで1行1件で出�
       {
         permalink: 'https://www.instagram.com/p/SRC/',
         postedAt: '2026-07-20T10:00:00.000Z',
-        rows: [
-          { date: '2099-09-12', start: '19:00', name: 'マンデートナメ', buyin: 3000, stack: 10000, tags: [] },
-          { date: '2020-01-01', start: '19:00', name: '過去の大会', buyin: 3000, tags: [] }, // 過去日 → 増えない
-        ],
+        rows: asCalendar(
+          [
+            { date: '2099-09-12', start: '19:00', name: 'マンデートナメ', buyin: 3000, stack: 10000, tags: [] },
+            { date: '2020-01-01', start: '19:00', name: '過去の大会', buyin: 3000, tags: [] }, // 過去日 → 増えない
+          ],
+          '2099-09'
+        ),
       },
     ])
   );
   const s = result.summaries[0];
-  assert.equal(s.addedRows.length, 1, '実際に増える行だけが明細に載ること(過去日は載らない)');
-  assert.equal(s.addedRows[0].entry.name, 'マンデートナメ');
-  assert.equal(s.addedRows[0].permalink, 'https://www.instagram.com/p/SRC/', '出所の投稿が分かること');
+  const added = s.addedRows.filter((r) => !isFiller(r.entry));
+  assert.equal(added.length, 1, '実際に増える行だけが明細に載ること(過去日は載らない)');
+  assert.equal(added[0].entry.name, 'マンデートナメ');
+  assert.equal(added[0].permalink, 'https://www.instagram.com/p/SRC/', '出所の投稿が分かること');
+  assert.equal(s.addedRows.length, FILLER_COUNT + 1, '採用した行はすべて明細に出る');
 
   const lines = [];
   const orig = console.log;
@@ -2423,8 +2963,7 @@ test('明細: 追加される行が、出所の投稿URL付きで1行1件で出�
   } finally {
     console.log = orig;
   }
-  const row = lines.find((l) => l.includes('追加行: '));
-  assert.ok(row, '追加行の明細が出ること');
+  const row = findAddedRowLine(lines, 'マンデートナメ');
   for (const part of ['v40', '2099-09-12', '19:00', 'マンデートナメ', '参加費3000', 'スタック10000', 'https://www.instagram.com/p/SRC/']) {
     assert.ok(row.includes(part), `照合に必要な項目が欠けている: ${part}`);
   }
@@ -2437,7 +2976,7 @@ test('明細: 金額が読めなかった行は「不明」と出す(0=無料と
       {
         permalink: 'https://www.instagram.com/p/A/',
         postedAt: '2026-07-20T10:00:00.000Z',
-        rows: [{ date: '2099-09-12', start: '19:00', name: '金額不明の大会', tags: [] }],
+        rows: asCalendar([{ date: '2099-09-12', start: '19:00', name: '金額不明の大会', tags: [] }], '2099-09'),
       },
     ])
   );
@@ -2449,84 +2988,118 @@ test('明細: 金額が読めなかった行は「不明」と出す(0=無料と
   } finally {
     console.log = orig;
   }
-  const row = lines.find((l) => l.includes('追加行: '));
+  const row = findAddedRowLine(lines, '金額不明の大会');
   assert.match(row, /参加費不明/);
   assert.match(row, /スタック不明/);
   assert.doesNotMatch(row, /参加費0/, '読めなかった値を0(=無料)として出してはいけない');
 });
 
 test('明細: 投稿別の内訳は【対象投稿と同じ件数】並び、どの結末になっても1行出る', async () => {
-  const dup = { date: '2099-09-12', start: '19:00', name: '大会A', buyin: 3000, tags: [] };
   const result = await monitor.runMonitor(
-    { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
+    {
+      stores: [monitor.STORES[0]],
+      before: [],
+      today: '2026-07-31',
+      state: {
+        v40: {
+          handle: 'triple_orio',
+          lastPostedAt: '2026-07-18T00:00:00.000Z',
+          checkedPosts: { 'https://www.instagram.com/p/CACHED/': 'not-calendar' },
+        },
+      },
+    },
     fakeLibsForBehaviour([
-      { permalink: 'https://www.instagram.com/p/OK/', postedAt: '2026-07-20T10:00:00.000Z', rows: [dup] },
-      { permalink: 'https://www.instagram.com/p/REPOST/', postedAt: '2026-07-21T10:00:00.000Z', rows: [{ ...dup }] },
-      { permalink: 'https://www.instagram.com/p/BAD/', postedAt: '2026-07-22T10:00:00.000Z', rows: [{ date: '2099-9-14', start: '19:00', name: 'X', buyin: 1, tags: [] }] },
-      { permalink: 'https://www.instagram.com/p/VF/', postedAt: '2026-07-23T10:00:00.000Z', visionThrows: '打ち切り' },
-      { permalink: 'https://www.instagram.com/p/IF/', postedAt: '2026-07-24T10:00:00.000Z', downloadThrows: 'HTTP 404' },
-      { permalink: 'https://www.instagram.com/p/EMPTY/', postedAt: '2026-07-25T10:00:00.000Z', rows: [] },
+      { permalink: 'https://www.instagram.com/p/UNEXAMINED/', postedAt: '2026-07-19T10:00:00.000Z', rows: [] },
+      { permalink: 'https://www.instagram.com/p/OK/', postedAt: '2026-07-20T10:00:00.000Z', rows: fillerRows('2099-09') },
+      { permalink: 'https://www.instagram.com/p/PAST/', postedAt: '2026-07-21T10:00:00.000Z', rows: fillerRows('2026-05') },
+      {
+        permalink: 'https://www.instagram.com/p/NOTCAL/',
+        postedAt: '2026-07-22T10:00:00.000Z',
+        rows: [{ date: '2099-09-12', start: '19:00', name: '単発トナメ', buyin: 3000, tags: [] }],
+      },
+      { permalink: 'https://www.instagram.com/p/EMPTY/', postedAt: '2026-07-23T10:00:00.000Z', rows: [] },
+      { permalink: 'https://www.instagram.com/p/CACHED/', postedAt: '2026-07-24T10:00:00.000Z', rows: fillerRows('2099-09') },
+      { permalink: 'https://www.instagram.com/p/VF/', postedAt: '2026-07-25T10:00:00.000Z', visionThrows: '打ち切り' },
+      { permalink: 'https://www.instagram.com/p/IF/', postedAt: '2026-07-26T10:00:00.000Z', downloadThrows: 'HTTP 404' },
     ])
   );
   const s = result.summaries[0];
   // 【保存則と同じ考え方】途中の continue で記録が抜けると件数が食い違う。
   assert.equal(s.posts.length, s.scheduleLikeCount, '対象投稿の数と明細の行数が一致すること');
-  assert.deepEqual(
-    s.posts.map((p) => p.outcome),
-    ['取り込めた', '再投稿', '全行不採用', 'Vision抽出失敗', '画像DL失敗', 'Vision抽出0件'],
-    'どの結末になったかが投稿ごとに分かること'
-  );
+  // 【並び順ではなく「どの投稿がどの結末か」を見る】走査は新しい順なので明細の並びも新しい順だが、
+  // それはこのテストの主張ではない。1投稿1行・結末が正しいことだけを固定する。
+  const byPermalink = Object.fromEntries(s.posts.map((p) => [p.permalink.replace(/^.*\/p\//, '').replace(/\/$/, ''), p.outcome]));
+  assert.deepEqual(byPermalink, {
+    OK: '取り込めた',
+    PAST: '過去月のカレンダー(2026-05)',
+    NOTCAL: 'カレンダーでない',
+    EMPTY: 'Vision抽出0件',
+    CACHED: '判定済み(not-calendar)',
+    VF: 'Vision抽出失敗',
+    IF: '画像DL失敗',
+    UNEXAMINED: '未確認(採用後に打ち切り)',
+  });
 });
 
 test('明細: 日付レンジはVisionが返した行から取る(「追加0」の理由を説明できること)', async () => {
-  // 久留米・黒崎の「抽出N行・追加0」が、過去日ばかりの月間表を読んだ結果なのかを検算するための情報。
+  // 久留米・黒崎の「抽出N行・追加0」が、過去の月間表を読んだ結果なのかを検算するための情報。
+  // 【新方式では「過去月のカレンダー」として採用しない】ので、追加0の理由はそこで説明が付く。
+  // 日付レンジはそれを人が検算するための材料なので、採用しなかった投稿にも必ず出す。
+  const rows = Array.from({ length: 11 }, (_, i) => ({
+    date: `2026-03-${String(i + 1).padStart(2, '0')}`,
+    start: '19:00',
+    name: `3月の大会${i}`,
+    buyin: 3000,
+    tags: [],
+  }));
   const result = await monitor.runMonitor(
     { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
-    fakeLibsForBehaviour([
-      {
-        permalink: 'https://www.instagram.com/p/MAR/',
-        postedAt: '2026-07-20T10:00:00.000Z',
-        rows: Array.from({ length: 10 }, (_, i) => ({
-          date: `2026-03-${String(i + 1).padStart(2, '0')}`,
-          start: '19:00',
-          name: `3月の大会${i}`,
-          buyin: 3000,
-          tags: [],
-        })),
-      },
-    ])
+    fakeLibsForBehaviour([{ permalink: 'https://www.instagram.com/p/MAR/', postedAt: '2026-07-20T10:00:00.000Z', rows }])
   );
-  const p = result.summaries[0].posts[0];
-  assert.equal(p.rowCount, 10);
+  const s = result.summaries[0];
+  const p = s.posts[0];
+  assert.equal(p.rowCount, 11);
   assert.equal(p.addedCount, 0);
   assert.equal(p.dateMin, '2026-03-01');
-  assert.equal(p.dateMax, '2026-03-10', '採用後ではなくVisionが返した行のレンジであること');
-  // 行レベルの保存則でも「全部過去日」と説明が付く
-  assert.equal(monitor.checkRowAccounting(result.summaries[0]).pastDated, 10);
+  assert.equal(p.dateMax, '2026-03-11', '採用後ではなくVisionが返した行のレンジであること');
+  assert.equal(p.outcome, '過去月のカレンダー(2026-03)');
+  // 「追加0」の理由が数字でも説明できること(行はすべて不採用の投稿の行に数えられている)
+  const row = monitor.checkRowAccounting(s);
+  assert.equal(row.rows, 11);
+  assert.equal(row.notAdopted, 11);
+  assert.equal(row.residual, 0, '説明の付かない残余があってはいけない');
+  assert.equal(s.latestPastCalendar.month, '2026-03', '最新のカレンダーが何月だったかが要約から読めること');
 });
 
-test('明細: 同じ店の複数投稿でも、追加行の出所がそれぞれ正しく紐づく', async () => {
+test('明細: 追加行の出所は採用した投稿を指し、走査しただけの投稿には追加が付かない', async () => {
+  // 【複数投稿から同時に取り込むことは無くなった(2026-08-04)】1回の実行で採用するのは
+  // 最新のカレンダー1枚だけ。それでも「どの投稿から来た行か」は⑤の照合に要るので、
+  // 採用した投稿と紐づいていること・走査しただけの投稿に追加が付かないことを固定する。
   const result = await monitor.runMonitor(
     { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
     fakeLibsForBehaviour([
+      { permalink: 'https://www.instagram.com/p/UNEXAMINED/', postedAt: '2026-07-19T10:00:00.000Z', rows: fillerRows('2099-09') },
       {
-        permalink: 'https://www.instagram.com/p/FIRST/',
+        permalink: 'https://www.instagram.com/p/SRC/',
         postedAt: '2026-07-20T10:00:00.000Z',
-        rows: [{ date: '2099-09-12', start: '19:00', name: '一番目', buyin: 3000, tags: [] }],
+        rows: asCalendar([{ date: '2099-09-12', start: '19:00', name: '採用される大会', buyin: 3000, tags: [] }], '2099-09'),
       },
       {
-        permalink: 'https://www.instagram.com/p/SECOND/',
+        permalink: 'https://www.instagram.com/p/NOTCAL/',
         postedAt: '2026-07-21T10:00:00.000Z',
-        rows: [{ date: '2099-09-13', start: '19:00', name: '二番目', buyin: 3000, tags: [] }],
+        rows: [{ date: '2099-09-13', start: '19:00', name: '単発トナメ', buyin: 3000, tags: [] }],
       },
     ])
   );
   const s = result.summaries[0];
-  const byName = Object.fromEntries(s.addedRows.map((r) => [r.entry.name, r.permalink]));
-  assert.equal(byName['一番目'], 'https://www.instagram.com/p/FIRST/');
-  assert.equal(byName['二番目'], 'https://www.instagram.com/p/SECOND/');
-  assert.equal(s.posts.find((p) => p.permalink.endsWith('/FIRST/')).addedCount, 1);
-  assert.equal(s.posts.find((p) => p.permalink.endsWith('/SECOND/')).addedCount, 1);
+  for (const r of s.addedRows) {
+    assert.equal(r.permalink, 'https://www.instagram.com/p/SRC/', `出所が採用した投稿を指していない: ${r.entry.name}`);
+  }
+  assert.equal(s.posts.find((p) => p.permalink.endsWith('/SRC/')).addedCount, FILLER_COUNT + 1);
+  assert.equal(s.posts.find((p) => p.permalink.endsWith('/NOTCAL/')).addedCount, 0);
+  assert.equal(s.posts.find((p) => p.permalink.endsWith('/UNEXAMINED/')).addedCount, 0);
+  // 単発告知の行が紛れ込んでいないこと
+  assert.equal(result.arr.some((t) => t.name === '単発トナメ'), false);
 });
 
 test('明細: 追加行の合計が、行レベルの内訳の「追加」と一致する', async () => {
@@ -2578,25 +3151,27 @@ test('明細: data.js に載る全項目(参加費/アドオン/スタック/GTD
       {
         permalink: 'https://www.instagram.com/p/FULL/',
         postedAt: '2026-07-20T10:00:00.000Z',
-        rows: [
-          {
-            date: '2099-09-12',
-            start: '19:00',
-            name: '全項目そろった大会',
-            buyin: 3000,
-            addon: 2000,
-            stack: 30000,
-            guarantee: 300000,
-            reentry: 'late',
-            prize: '1位 賞品あり',
-            tags: ['特別開催'],
-          },
-        ],
+        rows: asCalendar(
+          [
+            {
+              date: '2099-09-12',
+              start: '19:00',
+              name: '全項目そろった大会',
+              buyin: 3000,
+              addon: 2000,
+              stack: 30000,
+              guarantee: 300000,
+              reentry: 'late',
+              prize: '1位 賞品あり',
+              tags: ['特別開催'],
+            },
+          ],
+          '2099-09'
+        ),
       },
     ])
   );
-  const row = captureAcceptedRowLines(result.summaries).find((l) => l.includes('追加行: '));
-  assert.ok(row, '明細が出ること');
+  const row = findAddedRowLine(captureAcceptedRowLines(result.summaries), '全項目そろった大会');
   for (const part of ['参加費3000', 'アドオン2000', 'スタック30000', '再入場レイトのみ', 'タグ特別開催']) {
     assert.ok(row.includes(part), `照合に必要な項目が欠けている: ${part}`);
   }
@@ -2620,26 +3195,29 @@ test('★明細: GTD/賞品が data.js に載らない現状を、明細がそ�
       {
         permalink: 'https://www.instagram.com/p/GTD/',
         postedAt: '2026-07-20T10:00:00.000Z',
-        rows: [
-          {
-            date: '2099-09-12',
-            start: '19:00',
-            name: 'GTDつき大会',
-            buyin: 3000,
-            guarantee: 300000,
-            prize: '1位 賞品あり',
-            tags: [],
-          },
-        ],
+        rows: asCalendar(
+          [
+            {
+              date: '2099-09-12',
+              start: '19:00',
+              name: 'GTDつき大会',
+              buyin: 3000,
+              guarantee: 300000,
+              prize: '1位 賞品あり',
+              tags: [],
+            },
+          ],
+          '2099-09'
+        ),
       },
     ])
   );
   // data.js に入る行そのものを見る(明細の出所)
-  const entry = result.arr.find((t) => t.venueId === 'v40');
+  const entry = result.arr.find((t) => t.name === 'GTDつき大会');
   assert.equal(entry.guarantee, null, 'carryOver が読み取った GTD を捨てている(既存の不具合)');
   assert.equal(entry.prize, null, 'carryOver が読み取った 賞品 を捨てている(既存の不具合)');
   // 明細はその事実をそのまま映す = ⑤で気づける
-  const row = captureAcceptedRowLines(result.summaries).find((l) => l.includes('追加行: '));
+  const row = findAddedRowLine(captureAcceptedRowLines(result.summaries), 'GTDつき大会');
   assert.match(row, /GTD不明/, '明細が data.js の実態と食い違うと⑤が偽の合格を出す');
   assert.match(row, /賞品不明/);
 });
@@ -2651,11 +3229,14 @@ test('明細: 読み取れた 0 と「読み取れなかった」を混同しな
       {
         permalink: 'https://www.instagram.com/p/FREE/',
         postedAt: '2026-07-20T10:00:00.000Z',
-        rows: [{ date: '2099-09-12', start: '19:00', name: '無料大会', buyin: 0, addon: 0, stack: 0, tags: [] }],
+        rows: asCalendar(
+          [{ date: '2099-09-12', start: '19:00', name: '無料大会', buyin: 0, addon: 0, stack: 0, tags: [] }],
+          '2099-09'
+        ),
       },
     ])
   );
-  const row = captureAcceptedRowLines(result.summaries).find((l) => l.includes('追加行: '));
+  const row = findAddedRowLine(captureAcceptedRowLines(result.summaries), '無料大会');
   assert.match(row, /参加費0 /, '0(=無料)は「不明」にしない');
   assert.match(row, /アドオン0 /);
   assert.match(row, /スタック0 /);
@@ -2688,18 +3269,19 @@ test('明細: 既存の手入力と同じ枠を置き換えた行には★印と
       {
         permalink: 'https://www.instagram.com/p/OVER/',
         postedAt: '2026-07-20T10:00:00.000Z',
-        rows: [{ date: '2099-09-12', start: '19:00', name: 'Visionが読んだ大会', buyin: 3000, tags: [] }],
+        rows: asCalendar([{ date: '2099-09-12', start: '19:00', name: 'Visionが読んだ大会', buyin: 3000, tags: [] }], '2099-09'),
       },
     ])
   );
   const s = result.summaries[0];
-  assert.equal(s.addedRows.length, 1);
-  assert.deepEqual(s.addedRows[0].replacedManualIds, ['kq0804'], '置き換え先の既存idが分かること');
-  const row = captureAcceptedRowLines(result.summaries).find((l) => l.includes('追加行: '));
+  const over = s.addedRows.find((r) => r.entry.name === 'Visionが読んだ大会');
+  assert.ok(over, '置き換えた行が明細に載ること');
+  assert.deepEqual(over.replacedManualIds, ['kq0804'], '置き換え先の既存idが分かること');
+  const row = findAddedRowLine(captureAcceptedRowLines(result.summaries), 'Visionが読んだ大会');
   assert.match(row, /★既存の手入力\(id=kq0804\)を置き換え/);
   // 【明細とサマリの「意味の違い」】明細=実際に増える行 / stats.added=mergeStoreの分類。
   // 手入力の置き換えは added ではなく updated に入るので、両者は一致しない。
-  assert.equal(s.stats.added, 0);
+  assert.equal(s.stats.added, FILLER_COUNT, '置き換えた1行以外(埋め行)は普通に追加される');
   assert.equal(s.stats.updated, 1);
   assert.equal(s.stats.replacedManual.length, 1);
 });
@@ -2711,12 +3293,14 @@ test('明細: 手入力の置き換えが無い通常の追加には★印を出
       {
         permalink: 'https://www.instagram.com/p/NEW/',
         postedAt: '2026-07-20T10:00:00.000Z',
-        rows: [{ date: '2099-09-12', start: '19:00', name: '新規', buyin: 3000, tags: [] }],
+        rows: asCalendar([{ date: '2099-09-12', start: '19:00', name: '新規トナメ', buyin: 3000, tags: [] }], '2099-09'),
       },
     ])
   );
-  const row = captureAcceptedRowLines(result.summaries).find((l) => l.includes('追加行: '));
-  assert.doesNotMatch(row, /★/, '通常の追加に印を付けるとノイズになる');
+  const lines = captureAcceptedRowLines(result.summaries);
+  assert.doesNotMatch(findAddedRowLine(lines, '新規トナメ'), /★/, '通常の追加に印を付けるとノイズになる');
+  // 埋め行(=同じカレンダーの他の行)にも印は付かない
+  for (const l of lines.filter((x) => x.includes('追加行: '))) assert.doesNotMatch(l, /★/);
 });
 
 // ---------- M-2: 投稿ごとにまとまって並ぶ ----------
@@ -2724,23 +3308,23 @@ test('明細: 手入力の置き換えが無い通常の追加には★印を出
 test('明細: 追加行は投稿ごとにまとまり、その中で日付順に並ぶ', async () => {
   // data.js は日付順なので、並べ替えないと同じ投稿の行がばらばらに出る。
   // ⑤は「投稿を1回開いて、その投稿の行をまとめて確認 → 次の投稿」という作業。
+  // 【1回の実行で採用するのは1投稿だけになった(2026-08-04)】ので「投稿ごとにまとまる」は
+  // 自動的に満たされる。残る主張は【その中が日付順であること】。
+  // 並べ替えを外すと、Visionが返した順(= 画像の読み取り順)がそのまま出て⑤の作業が崩れる。
   const result = await monitor.runMonitor(
     { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
     fakeLibsForBehaviour([
       {
         permalink: 'https://www.instagram.com/p/AAA/',
         postedAt: '2026-07-20T10:00:00.000Z',
+        // Visionが返す順はばらばら(実際そうなる)
         rows: [
-          { date: '2099-09-15', start: '19:00', name: 'A後', buyin: 1, tags: [] },
-          { date: '2099-09-11', start: '19:00', name: 'A前', buyin: 1, tags: [] },
-        ],
-      },
-      {
-        permalink: 'https://www.instagram.com/p/BBB/',
-        postedAt: '2026-07-21T10:00:00.000Z',
-        rows: [
-          { date: '2099-09-13', start: '19:00', name: 'B中', buyin: 1, tags: [] },
-          { date: '2099-09-17', start: '19:00', name: 'B後', buyin: 1, tags: [] },
+          { date: '2099-09-15', start: '19:00', name: '4番目トナメ', buyin: 1, tags: [] },
+          { date: '2099-09-11', start: '19:00', name: '2番目トナメ', buyin: 1, tags: [] },
+          { date: '2099-09-22', start: '19:00', name: '6番目トナメ', buyin: 1, tags: [] },
+          { date: '2099-09-17', start: '19:00', name: '5番目トナメ', buyin: 1, tags: [] },
+          { date: '2099-09-13', start: '19:00', name: '3番目トナメ', buyin: 1, tags: [] },
+          { date: '2099-09-11', start: '09:00', name: '1番目トナメ(同じ日の早い時刻)', buyin: 1, tags: [] },
         ],
       },
     ])
@@ -2748,10 +3332,9 @@ test('明細: 追加行は投稿ごとにまとまり、その中で日付順に
   const s = result.summaries[0];
   assert.deepEqual(
     s.addedRows.map((r) => r.entry.name),
-    ['A前', 'A後', 'B中', 'B後'],
-    '投稿ごとにまとまり、その中で日付順であること(日付順に混ざってはいけない)'
+    ['1番目トナメ(同じ日の早い時刻)', '2番目トナメ', '3番目トナメ', '4番目トナメ', '5番目トナメ', '6番目トナメ'],
+    '日付順、同じ日なら開始時刻順であること(Visionが返した順のままにしない)'
   );
-  // 並べ替えないと A前(09-11)→ B中(09-13)→ A後(09-15)→ B後(09-17) の順になる
 });
 
 // ---------- M-3: 日付レンジは書式が正しい日付だけ ----------
@@ -2884,6 +3467,8 @@ test('★品質: 取込み経路の全体で、休み・見出し・リングゲ
       {
         permalink: 'https://www.instagram.com/p/AUG/',
         postedAt: '2026-07-20T10:00:00.000Z',
+        // 【実際のカレンダー1枚ぶんの形にする】休み・見出し・リングゲームは
+        // 月間カレンダーのマスとして混ざって出てくるので、カレンダーの中に置いて確認する。
         rows: [
           { date: '2099-08-01', start: null, name: '休み', buyin: null, stack: null, tags: [] },
           { date: '2099-08-01', start: null, name: '月間TOURNAMENT', buyin: null, stack: null, tags: [] },
@@ -2891,11 +3476,12 @@ test('★品質: 取込み経路の全体で、休み・見出し・リングゲ
           { date: '2099-08-04', start: null, name: 'FST SATELLITE', buyin: null, stack: null, tags: [] },
           { date: '2099-08-05', start: null, name: '時刻不明の大会', buyin: 3000, stack: 10000, tags: ['satellite'] },
           { date: '2099-08-06', start: '19:15', name: 'ちゃんと読めた大会', buyin: 2000, tags: ['mystery・bounty'] },
+          { date: '2099-08-20', start: '19:00', name: 'マンデートナメ', buyin: 3000, tags: [] },
         ],
       },
     ])
   );
-  const names = result.arr.filter((t) => t.venueId === 'v40').map((t) => t.name);
+  const names = realRows(result.arr).filter((t) => t.venueId === 'v40' && t.name !== 'マンデートナメ').map((t) => t.name);
   assert.deepEqual(
     names.sort(),
     ['FST SATELLITE', 'ちゃんと読めた大会', '時刻不明の大会'],
@@ -2925,10 +3511,11 @@ test('★品質: 開始時刻が読めない割合は必ず記録するが、平
       {
         permalink: 'https://www.instagram.com/p/NOSTART/',
         postedAt: '2026-07-20T10:00:00.000Z',
-        rows: Array.from({ length: 4 }, (_, i) => ({
-          date: `2099-08-0${i + 1}`,
+        // カレンダー1枚(異なる日付5・広がり12日)のうち、開始時刻が読めているのは1行だけ
+        rows: [1, 4, 7, 10, 13].map((d, i) => ({
+          date: `2099-08-${String(d).padStart(2, '0')}`,
           start: i === 0 ? '19:00' : null,
-          name: `大会${i}`,
+          name: `デイリートナメ${d}日`,
           buyin: 3000,
           tags: [],
         })),
@@ -2947,9 +3534,9 @@ test('★品質: 開始時刻が読めない割合は必ず記録するが、平
   // 高い割合は【平常】。毎回点灯する警報にしないため、平常値からの変化だけを見る。
   const info = lines.find((l) => l.includes('開始時刻が読めなかった行'));
   assert.ok(info, '割合そのものは必ず記録すること');
-  assert.match(info, /4行中3行\(75%\)/);
+  assert.match(info, /5行中4行\(80%\)/);
   assert.match(info, new RegExp(`${monitor.EXPECTED_NO_START_PCT}%前後が平常`));
-  // 75% は平常95%±25 の範囲内なので警告は出ない
+  // 80% は平常95%±25 の範囲内なので警告は出ない
   assert.ok(!lines.some((l) => l.startsWith('::warning')), '平常の範囲では警告を出さない(常時点灯を作らない)');
   // 明細では「開始時刻不明」と読める形にする(空欄だと⑤で読めない)
   assert.ok(lines.some((l) => l.includes('追加行: ') && l.includes('開始時刻不明')));
@@ -3048,19 +3635,22 @@ test('★品質: 捨てたタグが正規化ログに記録される(コメン�
       {
         permalink: 'https://www.instagram.com/p/TAG/',
         postedAt: '2026-07-20T10:00:00.000Z',
-        rows: [
-          {
-            date: '2099-08-05',
-            start: '19:00',
-            name: 'タグが混ざる大会',
-            buyin: 3000,
-            tags: ['satellite', 'freezeout', 'multi', 'ノーリミット'],
-          },
-        ],
+        rows: asCalendar(
+          [
+            {
+              date: '2099-08-05',
+              start: '19:00',
+              name: 'タグが混ざる大会',
+              buyin: 3000,
+              tags: ['satellite', 'freezeout', 'multi', 'ノーリミット'],
+            },
+          ],
+          '2099-08'
+        ),
       },
     ])
   );
-  assert.deepEqual(result.arr.find((t) => t.venueId === 'v40').tags, ['サテライト']);
+  assert.deepEqual(result.arr.find((t) => t.name === 'タグが混ざる大会').tags, ['サテライト']);
   const note = result.summaries[0].normalized.find((n) => n.notes.some((x) => x.field === 'tags'));
   assert.ok(note, '捨てたタグが正規化ログに残ること');
   assert.deepEqual(note.notes[0].from, ['freezeout', 'multi', 'ノーリミット']);
@@ -3097,7 +3687,7 @@ test('★隔離: CLI — 1店の取得失敗で終了コード2、他店は取�
   );
   fs.writeFileSync(
     path.join(root, 'tools', 'venue-schedule-vision.js'),
-    "exports.extractTournaments = async () => [{ date: '2099-09-12', start: '19:00', name: 'マンデートナメ', buyin: 3000, tags: [] }];\n"
+    calendarVisionStubSource('マンデートナメ')
   );
   fs.writeFileSync(
     path.join(root, 'stub-fetch.js'),
@@ -3136,7 +3726,7 @@ test('★隔離: CLI — dry-run でも同じ挙動(失敗店をスキップし�
   );
   fs.writeFileSync(
     path.join(root, 'tools', 'venue-schedule-vision.js'),
-    "exports.extractTournaments = async () => [{ date: '2099-09-12', start: '19:00', name: 'マンデートナメ', buyin: 3000, tags: [] }];\n"
+    calendarVisionStubSource('マンデートナメ')
   );
   fs.writeFileSync(
     path.join(root, 'stub-fetch.js'),
@@ -3204,13 +3794,19 @@ test('★空振り: 全行が「大会ではない」だけの投稿は異常に
       {
         permalink: 'https://www.instagram.com/p/RING/',
         postedAt: '2026-07-20T10:00:00.000Z',
-        rows: [
-          { date: '2099-08-01', start: '19:00', name: 'リングゲーム', buyin: 3000, tags: [] },
-          { date: '2099-08-02', start: '19:00', name: 'キャッシュゲーム', buyin: 3000, tags: [] },
-        ],
+        // 【カレンダー1枚まるごとリングゲーム】1〜2行の投稿はカレンダーと判定されず
+        // 行の検査に到達しない(2026-08-04のスコープ変更)。v34 の実例は19行だった。
+        rows: FILLER_DAYS.map((d, i) => ({
+          date: `2099-08-${String(d).padStart(2, '0')}`,
+          start: '19:00',
+          name: i % 2 === 0 ? 'リングゲーム' : 'キャッシュゲーム',
+          buyin: 3000,
+          tags: [],
+        })),
       },
     ])
   );
+  assert.equal(result.summaries[0].droppedCount, FILLER_DAYS.length, '全行が捨てられること(テストの前提)');
   assert.equal(result.anomalies.length, 0, '大会が1件も無い投稿を赤にしない');
   assert.equal(result.summaries[0].notATournamentPostCount, 1);
   assert.equal(result.summaries[0].unusablePostCount, 0);
@@ -3226,7 +3822,15 @@ test('★空振り: 大会ではない行と本物の不正行が混在したら
         permalink: 'https://www.instagram.com/p/MIX/',
         postedAt: '2026-07-20T10:00:00.000Z',
         rows: [
-          { date: '2099-08-01', start: '19:00', name: 'リングゲーム', buyin: 3000, tags: [] },
+          ...FILLER_DAYS.map((d) => ({
+            date: `2099-08-${String(d).padStart(2, '0')}`,
+            start: '19:00',
+            name: 'リングゲーム',
+            buyin: 3000,
+            tags: [],
+          })),
+          // 【日付が不正な行はカレンダー判定の材料にならない】ので、上のリングゲームの行で
+          // カレンダーの形を作ったうえで混ぜる。これが「失われた本物の大会」にあたる。
           { date: '2099-8-02', start: '19:00', name: '日付が不正な本物の大会', buyin: 3000, tags: [] },
         ],
       },
@@ -3245,7 +3849,15 @@ test('★空振り: 判定は理由の文面ではなく kind で行う(文言�
       {
         permalink: 'https://www.instagram.com/p/CLOSED/',
         postedAt: '2026-07-20T10:00:00.000Z',
-        rows: [{ date: '2099-08-01', start: null, name: '休み', buyin: null, stack: null, tags: [] }],
+        // 定休日のマスだけが並んだ月間カレンダー(長期休業など)
+        rows: FILLER_DAYS.map((d) => ({
+          date: `2099-08-${String(d).padStart(2, '0')}`,
+          start: null,
+          name: '休み',
+          buyin: null,
+          stack: null,
+          tags: [],
+        })),
       },
     ])
   );
