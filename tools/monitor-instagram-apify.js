@@ -755,6 +755,8 @@ async function runMonitor(opts, libs) {
     const postDetails = [];
     let unusablePosts = 0; // 抽出行はあったのに1件も採用できなかった投稿の数(異常)
     let repostedPosts = 0; // 全行が「既に取込み済み」だった投稿の数(再投稿。異常ではない)
+    let notATournamentPosts = 0; // 全行が「大会ではない」だった投稿の数(異常ではない)
+    let humanEditedPosts = 0; // 全行が「人が訂正した既存と衝突」だった投稿の数(異常ではない)
     let importedPosts = 0; // 1件以上採用できた投稿の数
     let visionFailedPosts = 0; // Vision抽出が例外で終わった投稿の数(内容は失われる)
     let imageFailedPosts = 0; // 画像ダウンロードが失敗した投稿の数(内容は失われる)
@@ -913,14 +915,43 @@ async function runMonitor(opts, libs) {
         importedPosts += 1;
         detail.outcome = '取り込めた';
       } else {
-        const allAlreadyImported =
-          droppedFromPost.length > 0 && droppedFromPost.every((d) => d.kind === 'duplicate-in-run');
-        if (allAlreadyImported) {
-          repostedPosts += 1;
-          detail.outcome = '再投稿';
+        // 【何も失われていない「採用0件」は異常にしない】
+        // 唯一の赤いチャネル(::error::)が空振りで埋まると、本物の異常が読めなくなる。
+        // 判定は【理由の文面ではなく kind】で行う(文言を直した瞬間に静かに壊れるため)。
+        // また `every` を使うこと — 混在(例: リングゲーム + 本物の不正行)は
+        // 失われた行があるので従来どおり異常として上げる。
+        const allDroppedFor = (kind) => droppedFromPost.length > 0 && droppedFromPost.every((d) => d.kind === kind);
+        // (a) 店が同じ画像を再投稿しただけ。内容は1件目から取り込めている。
+        const allAlreadyImported = allDroppedFor('duplicate-in-run');
+        // (b) そもそも大会が1件も写っていない投稿(定休日だけの月・リングゲームの案内など)。
+        //     2026-08-01 の dry-run #5 で、v34 の19行がすべてリングゲームの投稿で赤くなった。
+        //     PR #30 でリングゲーム判定が先に効くようになり、以前は duplicate-in-run として
+        //     再投稿に分類されていたものが異常に変わったもの。【失われた大会は1件も無い】。
+        const allNotATournament = allDroppedFor('not-a-tournament');
+        // (c) 人が admin.html で日時を訂正した投稿。id は日時から作るのでスロットがズレて衝突する。
+        //     【人の訂正は正しく守られている】のに、その投稿がApifyの取得窓に残る限り毎日赤くなる。
+        //     id が日時を含む以上、この kind は「人が日時を訂正した」以外の原因では発生しない。
+        const allHumanEdited = allDroppedFor('existing-slot-conflict');
+        if (allAlreadyImported || allNotATournament || allHumanEdited) {
+          const label = allAlreadyImported
+            ? '再投稿と判断しました'
+            : allNotATournament
+              ? '大会が含まれない投稿と判断しました'
+              : '人が日時を訂正した投稿と判断しました';
+          if (allAlreadyImported) {
+            repostedPosts += 1;
+            detail.outcome = '再投稿';
+          } else if (allNotATournament) {
+            notATournamentPosts += 1;
+            detail.outcome = '大会なし';
+          } else {
+            humanEditedPosts += 1;
+            detail.outcome = '人の訂正と衝突';
+          }
           console.log(
-            `[monitor-instagram-apify] 再投稿と判断しました(異常ではありません): 店=${store.label}(${store.venueId})` +
-              ` / 投稿=${post.permalink}(${post.postedAt}) / 抽出${rows.length}件はすべて既に取込み済みの行と同一のため、` +
+            `[monitor-instagram-apify] ${label}(異常ではありません): 店=${store.label}(${store.venueId})` +
+              ` / 投稿=${post.permalink}(${post.postedAt}) / 抽出${rows.length}件はすべて` +
+              `${allAlreadyImported ? '既に取込み済みの行と同一' : allNotATournament ? '大会ではない行' : '人が訂正した既存と衝突'}のため、` +
               'この投稿からの追加はありません。'
           );
         } else {
@@ -941,6 +972,8 @@ async function runMonitor(opts, libs) {
     summary.normalizedCount = summary.normalized.length;
     summary.unusablePostCount = unusablePosts;
     summary.repostedPostCount = repostedPosts;
+    summary.notATournamentPostCount = notATournamentPosts;
+    summary.humanEditedPostCount = humanEditedPosts;
     summary.importedPostCount = importedPosts;
     summary.visionFailedCount = visionFailedPosts;
     summary.imageFailedCount = imageFailedPosts;
@@ -1018,6 +1051,8 @@ async function runMonitor(opts, libs) {
         normalized: summary.normalizedCount,
         unusablePosts,
         reposts: repostedPosts,
+        notATournamentPosts,
+        humanEditedPosts,
         // 【ここから下が「静かに失われていた経路」の永続カウンタ】
         // runログは既定90日で消えるので、注記やconsole.warnだけでは後から追えない。
         // この状態ファイルは毎回コミットされるため、書けばgit履歴に残る。
@@ -1075,6 +1110,8 @@ function makeStoreSummary(store) {
     // 投稿レベルの内訳。scheduleLike の1投稿は必ずこのどれか1つに入る。
     importedPostCount: 0,
     repostedPostCount: 0,
+    notATournamentPostCount: 0,
+    humanEditedPostCount: 0,
     unusablePostCount: 0,
     visionFailedCount: 0,
     imageFailedCount: 0,
@@ -1158,6 +1195,8 @@ function checkPostAccounting(summary) {
   const actual =
     summary.importedPostCount +
     summary.repostedPostCount +
+    summary.notATournamentPostCount +
+    summary.humanEditedPostCount +
     summary.unusablePostCount +
     summary.visionFailedCount +
     summary.imageFailedCount +
@@ -1214,6 +1253,34 @@ function checkRowAccounting(summary) {
  * 件数の記録は apify-monitor-state.json の lastExtraction 側(コミットされ、git履歴に残る)が持つ。
  */
 /**
+ * 「開始時刻が読めなかった行」の平常値(%)と、警告を出す許容幅。
+ *
+ * 【なぜ定数として持つか】この値は【画像に時刻が書かれていない】という確認済みの事実を表す
+ * (2026-08-01 の⑤で人が画像を確認済み。v20=月間カレンダーに大会名のみ / v18=大会名と日付のみ)。
+ * 「95%が異常」ではなく「95%が平常」なので、値そのもので警告を出すと
+ * **毎回点灯して意味を失う警報**になる。値の【変化】だけを見る。
+ *
+ * 【店が時刻を書き始めたら下がる】その場合はこの定数を更新すること(警告文にも書いてある)。
+ *
+ * 【★この警告で捕まえられるのは【下振れ】だけ(2026-08-04・レビュー部の指摘で訂正)】
+ * 現在の値で実際に発火するのは `pct < 70`(= 店が時刻を書き始めた方向)のみ。
+ * 上振れ側の発火には `pct > 120` が要るが、割合の定義域は [0,100] なので**到達不能**。
+ * これは閾値の付け方のミスではなく【指標の天井効果】で、平常95% + 上限100% =
+ * **上方向の可動域が5ポイントしかない**。許容幅を5未満まで詰めれば形式上は発火するが、
+ * 44行の実行では1行 = 約2.3ポイントなので、その閾値は**通常のゆらぎと区別できない**。
+ * したがって【Visionが時刻を読めなくなったことは、この指標では検知できない】。
+ * 「Visionの劣化は警告が拾う」という前提でcron解除を判断しないこと。
+ * (指標を反転させて「時刻が【読めた】行」を数えれば可動域は95ポイントになり検知できるが、
+ *  指標の入れ替えはロジック変更なので別PRで扱う。README「常時点灯する警報を作らない」参照)
+ *
+ * 【★EXPECTED_NO_START_PCT を大きく下げるときは、この前提も引き直すこと】
+ * 上の「下振れ専用」は平常値が100%に近いことに依存している。平常値が下がれば
+ * 上振れ側も発火しうるようになるので、警告文の文面も併せて見直す。
+ */
+const EXPECTED_NO_START_PCT = 95;
+const NO_START_PCT_TOLERANCE = 25;
+
+/**
  * 手順⑤(採用行の全件照合)のための明細を出す。
  *
  * 【なぜ必要か】dry-run は data.js を書かないので、「実際に何が増えるのか」が
@@ -1231,17 +1298,34 @@ function reportAcceptedRows(summaries) {
   const noStart = withRows.reduce((a, s) => a + s.addedRows.filter((r) => !r.entry.start).length, 0);
   console.log('');
   console.log(`[monitor-instagram-apify] === 追加される行の明細(計${total}行) ===`);
-  if (noStart > 0) {
-    // 【声を大きくする】開始時刻はプレイヤーが最も必要とする値。読めた行が少ないなら
-    // 「店が時刻を書いていない」のではなく「Visionが時刻の列を読めていない」可能性が高い。
-    // 0件のときは出さない(ノイズにしない)。
+  if (total > 0) {
+    // 【常時点灯する警報にしない】当初は「割合が高い=Visionが読めていない可能性」として
+    // ::warning:: を出していたが、2026-08-01 の⑤で【画像に時刻が書かれていない】ことが
+    // 人の目で確認された(v20は月間カレンダーに大会名のみ、v18は大会名と日付のみ)。
+    // つまりこの割合は今後も毎回95%前後で点灯し続ける = 意味を失った警報になる。
+    // この案件で繰り返し潰してきた形なので、【値そのもの】ではなく【値の変化】を見る。
     const pct = Math.round((noStart / total) * 100);
     console.log(
-      `::warning title=Instagram監視 - 開始時刻が読めない行::${total}行中${noStart}行(${pct}%)で開始時刻が読み取れていません。` +
+      `[monitor-instagram-apify] 開始時刻が読めなかった行: ${total}行中${noStart}行(${pct}%)。` +
         'サイトには「—」と表示されます(00:00 とは表示しません)。' +
-        '割合が高い場合は、店が時刻を書いていないのではなく【Visionが時刻を読めていない】可能性が高いので、' +
-        '投稿画像を確認してください。'
+        `【${EXPECTED_NO_START_PCT}%前後が平常】— 対象店の画像には時刻が書かれていないことを2026-08-01に確認済み。` +
+        'この割合が大きく動いたときだけ、画像の形式かVision側の変化を疑ってください。' +
+        '【自動の警告が出るのは下振れ側だけ】なので、上振れ(Visionが時刻を読めなくなった方向)は' +
+        'この数字を人が見て気づくしかありません。'
     );
+    if (Math.abs(pct - EXPECTED_NO_START_PCT) > NO_START_PCT_TOLERANCE) {
+      console.log(
+        `::warning title=Instagram監視 - 開始時刻が読めない行の割合が平常から外れた::` +
+          `今回${pct}%(平常${EXPECTED_NO_START_PCT}%±${NO_START_PCT_TOLERANCE})。` +
+          'この警告が検知しているのは【下振れ】= 店が時刻を書き始めた可能性(良い変化)だけです。' +
+          `上振れ(Visionが時刻を読めなくなった方向)はこの警告の対象外 — 平常${EXPECTED_NO_START_PCT}%に対し` +
+          `割合の上限は100%で、上方向の可動域が${100 - EXPECTED_NO_START_PCT}ポイントしか無いためです。` +
+          '投稿画像を1枚確認してください。' +
+          '【この下振れは、名前由来の参加費に付いていた ⚠ 要確認 が消える方向でもあります】' +
+          '(README リスク台帳 #11)。参加費側も併せて確認すること。平常値が変わったなら ' +
+          'tools/monitor-instagram-apify.js の EXPECTED_NO_START_PCT を更新すること。'
+      );
+    }
   }
   if (total === 0) {
     console.log('  (data.js に増える行はありません)');
@@ -1658,6 +1742,8 @@ module.exports = {
   pickNewPostsWithStats,
   checkIntakeAccounting,
   checkStoreAccounting,
+  EXPECTED_NO_START_PCT,
+  NO_START_PCT_TOLERANCE,
   reportAnomalies,
   reportLostPosts,
   reportEmptyResults,

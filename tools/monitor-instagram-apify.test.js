@@ -455,7 +455,13 @@ test('runMonitor: 既存data.jsに同じidで別日時のエントリがあれ�
   assert.match(result.summaries[0].dropped[0].reason, /既存エントリと id が衝突/);
   assert.equal(result.summaries[0].dropped[0].kind, 'existing-slot-conflict');
   // 内容がどこにも入らないままなので、これは本物の異常(再投稿とは別物)
-  assert.equal(result.anomalies.length, 1, '1行も採用できていないので異常として記録される');
+  // 【2026-08-01変更】この kind は「人が admin.html で日時を訂正した」ときにしか発生しない
+  // (id が日時から作られるため)。人の訂正は正しく守られているのに、その投稿が
+  // Apifyの取得窓に残る限り毎日赤くなる = 確実な空振りの赤。異常から外した。
+  assert.equal(result.anomalies.length, 0, '人の日時訂正による衝突は異常にしない(空振りの赤を作らない)');
+  assert.equal(result.summaries[0].humanEditedPostCount, 1, '別のバケツとして数える');
+  assert.equal(result.summaries[0].unusablePostCount, 0);
+  assert.ok(monitor.checkPostAccounting(result.summaries[0]).ok, '保存則は保たれること');
 });
 
 // ---------- 再投稿の偽警告(2026-07-31 / PR #19のフォローアップ) ----------
@@ -524,6 +530,8 @@ test('runMonitor: 店が同じ画像を再投稿しても異常(::error::)には
     normalized: 0,
     unusablePosts: 0,
     reposts: 1,
+    notATournamentPosts: 0,
+    humanEditedPosts: 0,
     apifyRaw: 2,
     malformed: 0,
     invalidPostedAt: 0,
@@ -715,6 +723,8 @@ test('runMonitor: 抽出品質(採用/破棄/不採用投稿の件数)を状態�
     normalized: 0,
     unusablePosts: 0,
     reposts: 0,
+    notATournamentPosts: 0,
+    humanEditedPosts: 0,
     apifyRaw: 1,
     malformed: 0,
     invalidPostedAt: 0,
@@ -1543,6 +1553,8 @@ test('検知(投稿): 内訳の合計が対象数に足りなければ ok=false 
     scheduleLikeCount: 6,
     importedPostCount: 1,
     repostedPostCount: 1,
+    notATournamentPostCount: 0,
+    humanEditedPostCount: 0,
     unusablePostCount: 1,
     visionFailedCount: 0, // ← 本来1件あるべきものが数えられていない
     imageFailedCount: 0, // ← 同上
@@ -1559,6 +1571,8 @@ test('検知(投稿): 内訳が多すぎる(二重計上)場合も ok=false に�
   const doubled = {
     scheduleLikeCount: 1,
     importedPostCount: 1,
+    notATournamentPostCount: 0,
+    humanEditedPostCount: 0,
     repostedPostCount: 1, // ← 同じ投稿を2つのバケツに入れてしまった
     unusablePostCount: 0,
     visionFailedCount: 0,
@@ -1575,6 +1589,8 @@ test('検知(投稿): 健全な入力では ok=true(検知側が常に false を
     scheduleLikeCount: 3,
     importedPostCount: 1,
     repostedPostCount: 1,
+    notATournamentPostCount: 0,
+    humanEditedPostCount: 0,
     unusablePostCount: 1,
     visionFailedCount: 0,
     imageFailedCount: 0,
@@ -2902,7 +2918,7 @@ test('★品質: 取込み経路の全体で、休み・見出し・リングゲ
   assert.ok(monitor.checkRowAccounting(result.summaries[0]).ok);
 });
 
-test('★品質: 開始時刻が読めない行が多いと ::warning:: で知らせる', async () => {
+test('★品質: 開始時刻が読めない割合は必ず記録するが、平常の範囲では警告しない', async () => {
   const result = await monitor.runMonitor(
     { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
     fakeLibsForBehaviour([
@@ -2927,10 +2943,14 @@ test('★品質: 開始時刻が読めない行が多いと ::warning:: で知�
   } finally {
     console.log = orig;
   }
-  const warn = lines.find((l) => l.startsWith('::warning'));
-  assert.ok(warn, '割合が高いときは警告を出すこと');
-  assert.match(warn, /4行中3行\(75%\)/);
-  assert.match(warn, /Visionが時刻を読めていない/);
+  // 【値そのものでは警告しない】画像に時刻が書かれていないことは⑤で確認済みで、
+  // 高い割合は【平常】。毎回点灯する警報にしないため、平常値からの変化だけを見る。
+  const info = lines.find((l) => l.includes('開始時刻が読めなかった行'));
+  assert.ok(info, '割合そのものは必ず記録すること');
+  assert.match(info, /4行中3行\(75%\)/);
+  assert.match(info, new RegExp(`${monitor.EXPECTED_NO_START_PCT}%前後が平常`));
+  // 75% は平常95%±25 の範囲内なので警告は出ない
+  assert.ok(!lines.some((l) => l.startsWith('::warning')), '平常の範囲では警告を出さない(常時点灯を作らない)');
   // 明細では「開始時刻不明」と読める形にする(空欄だと⑤で読めない)
   assert.ok(lines.some((l) => l.includes('追加行: ') && l.includes('開始時刻不明')));
 });
@@ -3169,4 +3189,159 @@ test('★隔離(検知側): CLI — 店の集計が合わなくなったら ::er
     fs.writeFileSync(p, out);
   });
   assert.match(r.stdout, /::error title=Instagram監視 - 店の集計が合わない::/);
+});
+
+// ============================================================
+// 空振りの赤を作らない(dry-run #5 で実際に出たもの)
+// ============================================================
+
+test('★空振り: 全行が「大会ではない」だけの投稿は異常にしない(何も失われていない)', async () => {
+  // dry-run #5 で v34 の19行すべてがリングゲームの投稿だった。大会は1件も含まれておらず、
+  // 失われたものは無いのに ::error:: が点いた。duplicate-in-run を外したのと同じ理由。
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
+    fakeLibsForBehaviour([
+      {
+        permalink: 'https://www.instagram.com/p/RING/',
+        postedAt: '2026-07-20T10:00:00.000Z',
+        rows: [
+          { date: '2099-08-01', start: '19:00', name: 'リングゲーム', buyin: 3000, tags: [] },
+          { date: '2099-08-02', start: '19:00', name: 'キャッシュゲーム', buyin: 3000, tags: [] },
+        ],
+      },
+    ])
+  );
+  assert.equal(result.anomalies.length, 0, '大会が1件も無い投稿を赤にしない');
+  assert.equal(result.summaries[0].notATournamentPostCount, 1);
+  assert.equal(result.summaries[0].unusablePostCount, 0);
+  assert.ok(monitor.checkPostAccounting(result.summaries[0]).ok, '保存則は保たれること');
+});
+
+test('★空振り: 大会ではない行と本物の不正行が混在したら、従来どおり異常として上げる', async () => {
+  // every を使う理由。混在は「取り込めたはずの行が失われている」ので赤にすべき。
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
+    fakeLibsForBehaviour([
+      {
+        permalink: 'https://www.instagram.com/p/MIX/',
+        postedAt: '2026-07-20T10:00:00.000Z',
+        rows: [
+          { date: '2099-08-01', start: '19:00', name: 'リングゲーム', buyin: 3000, tags: [] },
+          { date: '2099-8-02', start: '19:00', name: '日付が不正な本物の大会', buyin: 3000, tags: [] },
+        ],
+      },
+    ])
+  );
+  assert.equal(result.anomalies.length, 1, '本物の大会が失われているので異常');
+  assert.equal(result.summaries[0].notATournamentPostCount, 0);
+  assert.equal(result.summaries[0].unusablePostCount, 1);
+});
+
+test('★空振り: 判定は理由の文面ではなく kind で行う(文言を直しても壊れない)', async () => {
+  // 理由の日本語を書き換えても分類が変わらないこと。
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
+    fakeLibsForBehaviour([
+      {
+        permalink: 'https://www.instagram.com/p/CLOSED/',
+        postedAt: '2026-07-20T10:00:00.000Z',
+        rows: [{ date: '2099-08-01', start: null, name: '休み', buyin: null, stack: null, tags: [] }],
+      },
+    ])
+  );
+  assert.equal(result.summaries[0].dropped[0].kind, 'not-a-tournament');
+  assert.equal(result.anomalies.length, 0);
+  assert.equal(result.summaries[0].notATournamentPostCount, 1);
+});
+
+/**
+ * 「開始時刻が読めなかった行が noStartCount / total」という採用結果を組み立てる。
+ * total=100 で呼べば noStartCount がそのまま割合(%)になる。
+ */
+const mk = (noStartCount, total) => [
+  {
+    addedRows: Array.from({ length: total }, (_, i) => ({
+      entry: { venueId: 'v40', date: '2099-08-01', start: i < noStartCount ? '' : '19:00', name: `大会${i}`, buyin: 1, tags: [] },
+      permalink: 'p',
+      replacedManualIds: [],
+    })),
+    posts: [],
+  },
+];
+
+/** 実物の reportAcceptedRows を呼び、::warning:: が出たかどうかだけを返す。 */
+function warnsAt(noStartCount, total) {
+  const lines = [];
+  const orig = console.log;
+  console.log = (...a) => lines.push(a.join(' '));
+  try {
+    monitor.reportAcceptedRows(mk(noStartCount, total));
+  } finally {
+    console.log = orig;
+  }
+  return lines.some((l) => l.startsWith('::warning'));
+}
+
+test('★警告: 平常から大きく外れたときだけ ::warning:: を出す', () => {
+  const lines = [];
+  const orig = console.log;
+  // 平常(95%付近)→ 警告なし
+  console.log = (...a) => lines.push(a.join(' '));
+  try {
+    monitor.reportAcceptedRows(mk(19, 20)); // 95%
+  } finally {
+    console.log = orig;
+  }
+  assert.ok(!lines.some((l) => l.startsWith('::warning')), '平常値では警告しない(常時点灯を作らない)');
+
+  // 大きく外れた(0%)→ 警告あり
+  const lines2 = [];
+  console.log = (...a) => lines2.push(a.join(' '));
+  try {
+    monitor.reportAcceptedRows(mk(0, 20)); // 0%
+  } finally {
+    console.log = orig;
+  }
+  const w = lines2.find((l) => l.startsWith('::warning'));
+  assert.ok(w, '平常から外れたら警告すること');
+  assert.match(w, /平常から外れた/);
+  assert.match(w, /EXPECTED_NO_START_PCT を更新/, '平常値が変わったときの手順も示すこと');
+
+  // 【★到達不能な分岐を「ある」と書かない】(2026-08-04・レビュー部の指摘)
+  // 「上がったならVisionが読めなくなった可能性」は EXPECTED(95)+TOL(25) では pct>120 が要り、
+  // 割合の定義域 [0,100] では起こりえない。出ない警告を「出る」と書くのは
+  // 【システムが事実でないことを述べている】状態で、この案件で最も避けたい形。
+  // 【この否定形の検査は弱い】言い換え(例:「なお上振れも警告で拾えます」の追記)は素通りする。
+  // それでも残しているのは、下の「上振れ側では実装が一度も発火しない」を実物で押さえたことで、
+  // 【文面が実装より広い主張をしている】状態は実装側から検出できるようになったため。
+  // 正の側(/下振れ/ /対象外/)との併用と合わせ、歯止めとしてはここまでとする。
+  assert.doesNotMatch(
+    w,
+    /上がったならVisionが読めなくなった/,
+    '到達不能な上振れ分岐を「検知する」と書かないこと(READMEはcron解除の判断材料そのもの)'
+  );
+  assert.match(w, /下振れ/, 'この警告が検知しているのは下振れだけだと明示すること');
+  assert.match(w, /対象外/, '上振れ(Visionの劣化)はこの警告の対象外だと明示すること');
+});
+
+test('★警告: 上振れ側は実装が一度も発火しない(文面と実装のずれを固定する)', () => {
+  // 【★判定式をテスト側に書き写さないこと】以前ここは
+  //   const fires = (pct) => Math.abs(pct - EXPECTED) > TOLERANCE;
+  // というテスト内の再実装を走査していた。これは定数を検査しているだけで
+  // 【実装を一度も呼んでいない】ため、実装の条件に `|| pct > EXPECTED + 2` を足す変異
+  // (= 警告文とREADMEの「上振れは対象外」が再び嘘になる)が生き残った。
+  // 再発を防ぐために足した検査が、その再発を防げていなかった。実物を呼ぶこと。
+  //
+  // total=100 なので noStartCount がそのまま割合(%)になる。
+  for (let pct = monitor.EXPECTED_NO_START_PCT; pct <= 100; pct += 1) {
+    assert.equal(warnsAt(pct, 100), false, `pct=${pct} は上振れ側なので発火しない(天井効果)`);
+  }
+  // 下振れ側は従来どおり発火する(上のループが「常に false」で通る抜け殻でないことの担保)。
+  assert.equal(warnsAt(0, 100), true, '下振れ側では発火すること(検査そのものが死んでいないこと)');
+  // 定数を変えて上振れ側を発火可能にしたときは、警告文とREADMEの「下振れ専用」も書き直すこと
+  // (上のループでも落ちるが、こちらの方が理由が明示的に出る)。
+  assert.ok(
+    monitor.EXPECTED_NO_START_PCT + monitor.NO_START_PCT_TOLERANCE >= 100,
+    '上振れが発火しうる定数にするなら、警告文とREADMEの「下振れ専用」を書き直すこと'
+  );
 });
