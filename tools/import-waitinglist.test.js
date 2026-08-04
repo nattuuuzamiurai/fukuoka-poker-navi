@@ -77,6 +77,15 @@ const mk = (id, storeId, dayOffset, hhmm) => {
     comment: 'QJXZVWQK',
     caption: 'ZQXJVWKZ',
     remark: '龗麤鑫',
+    // 【★これは仮定ではなく実在する】実APIは参加者(=第三者)の氏名とアカウントIDを返す。
+    // 実測(2026-08-04・2店129レコード): players[].name='りょう' / 'T'、
+    // waitinglistId='Q5783853' / 'P3038232'、avatarUrl=アバター画像のURL。
+    // v3 の100件中1件で players が実際に埋まっており、いま現在ライブの応答に入っている。
+    // ★notes と同居させるだけでは足りない。レコード丸ごとを出す変異は notes が同乗するので
+    //   撃墜されるが、【players[].name だけを控えに載せる】変異は素通りする(実測)。
+    //   第三者の個人データが public リポジトリの git 履歴に載ると取り消せないので、
+    //   このフィールドは独立した走査対象として必ず持っておくこと。
+    players: [{ waitinglistId: 'ZQXJVWKZ', name: '龗麤鑫', avatarUrl: 'QJXZVWQK', isFriend: false }],
   };
 };
 const ok = (storeId, n) => {
