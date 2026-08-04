@@ -275,6 +275,47 @@ function saveState(statePath, state) {
   fs.writeFileSync(statePath, `${JSON.stringify(state, null, 2)}\n`);
 }
 
+/** `YYYY-MM-DD` どうしの日数差(a - b)。どちらかが読めなければ null。 */
+function daysBetween(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string') return null;
+  const ms = Date.parse(`${a}T00:00:00Z`) - Date.parse(`${b}T00:00:00Z`);
+  return Number.isNaN(ms) ? null : Math.round(ms / 86400000);
+}
+
+/**
+ * 【矛盾の検出】確認済み投稿日時が【未来】になっていないか(README リスク台帳 #22)。
+ *
+ * 【なぜ要るか — 症状が「静かな永久停止」だから】
+ *   `lastPostedAt` が未来だと `pickNewPostsWithStats` が取得した全投稿を「既読」と判定する。
+ *   ログ上は「新着0件」= 店が何も投稿していない平常日と【区別が付かない】まま、
+ *   その店の取込みが永久に止まる。#19(壊れて毎朝赤くなる)より**見えない**ぶん質が悪い。
+ *
+ * 【★これは「両方向を実データで示す」規律の対象外(2026-08-05・レビュー部の線引き)】
+ *   この案件が禁じてきたのは【閾値や経験則にもとづく警報で、鳴る側を実データで示せないもの】
+ *   (PR #32 の到達不能な上振れ分岐が典型)。
+ *   一方これは【矛盾の検出】である — 投稿日時が現在より未来という状態は物理的に存在しない。
+ *   **ありえない状態の検出は仮説の検証ではないので、鳴る側の実データを要さない**
+ *   (定義上、正常なデータにその状態は存在しない)。この区別は README にも記録してある。
+ *
+ * 【比較の相手は「実行日(JST)の終わり + 1日」】秒単位の時計ずれで誤検知しないための余裕で、
+ *   **調整するための閾値ではない**(1日先の投稿がありえない点は変わらない)。
+ *   JSTの日 D は UTC の D T15:00Z に終わるので、そこから更に24時間を足した時刻を境界にする。
+ *
+ * 【読めない値(NaN)はここでは扱わない】`pickNewPostsWithStats` が「記録なし」として
+ *   全投稿を新着に倒すので、静かな停止にはならない(=安全側に落ちている)。
+ *
+ * @returns {{ value: string, boundary: string }|null}
+ */
+function impossibleLastPostedAt(prev, today) {
+  const value = prev && prev.lastPostedAt;
+  if (typeof value !== 'string' || !value) return null;
+  const ms = Date.parse(value);
+  if (Number.isNaN(ms)) return null;
+  const boundaryMs = Date.parse(`${today}T15:00:00Z`) + 86400000;
+  if (Number.isNaN(boundaryMs) || ms <= boundaryMs) return null;
+  return { value, boundary: new Date(boundaryMs).toISOString() };
+}
+
 /**
  * 記録済みの最終確認投稿日時(lastPostedAt)より新しい投稿だけを、古い順に返す。
  * 記録が無い店舗(初回)は、投稿日時が読み取れたものをそのまま(古い順で)返す
@@ -828,6 +869,12 @@ async function runMonitor(opts, libs) {
     // 【summary は fetch より前に作る】取得に失敗した店も1行ぶんの記録を残す必要があるため。
     // 取込み系の数字(apifyRawCount など)は取得に成功してから埋める。
     const summary = makeStoreSummary(store);
+    // 【矛盾の検出(#22)】確認済み投稿日時が未来 = その店の取込みが静かに止まっている状態。
+    // 取得の成否に関わらず判定できるので、fetch より前に見る。
+    summary.impossibleLastPostedAt = impossibleLastPostedAt(prev, today);
+    // 【静かな停止を測る(警報ではない)】最後に取込みが成立した日。取得に失敗した店・
+    // 新着0件の店もこの後の処理へ進まないので、ここで前回値から初期化しておく。
+    summary.lastImportedAt = (prev && prev.lastImportedAt) || null;
     let posts;
     try {
       posts = await fetchLib.fetchInstagramPosts(store.handle, { stats: fetchStats });
@@ -1383,6 +1430,20 @@ async function runMonitor(opts, libs) {
     }
     summary.posts = postDetails;
 
+    // 【取込みが成立した日を控える】= data.js に1行でも書けた日。
+    // 「静かな停止」(#22 に限らず、Apifyが常に空を返す・カレンダーが一度も一致しない等)を
+    // 人が見つけられるようにするための【測定】で、警報ではない。
+    // ★成立の定義は「採用したカレンダーから data.js の行が増えた/変わった」。
+    //   unchanged(同じ内容を読み直しただけ)は含めない — 含めると、同じカレンダーが
+    //   取得窓に残っている限り毎日「成立」になり、止まっていることが見えなくなる。
+    const importedRows = summary.stats ? summary.stats.added + summary.stats.updated : 0;
+    if (importedRows > 0) summary.lastImportedAt = today;
+    // 状態ファイルにも残す(runログは既定90日で消えるので、日数はここからしか復元できない)。
+    // ★毎回変わる値ではないので、無意味な日次差分にはならない(成立した日だけ動く)。
+    if (nextState[store.venueId] && summary.lastImportedAt) {
+      nextState[store.venueId].lastImportedAt = summary.lastImportedAt;
+    }
+
     // 抽出品質を【記録として残す】。GitHub Actions の注記は緑のrunでは通知が飛ばず、
     // runログも既定90日で消えるため、注記だけでは「Visionの抽出品質を人が測れる」を満たせない。
     // この状態ファイルは元から毎回コミットされるので、ここに書けばgit履歴に差分として残り、
@@ -1509,6 +1570,10 @@ function makeStoreSummary(store) {
     probeReExaminedCount: 0,
     // 位置(新しい順)ごとの判定一覧。探索モードでだけ配列になる。
     probeVerdicts: null,
+    // 【矛盾の検出(#22)】確認済み投稿日時が未来 = その店の取込みが静かに止まっている。
+    impossibleLastPostedAt: null,
+    // 【静かな停止の測定】最後に取込みが成立した日(YYYY-MM-DD)。一度も無ければ null。
+    lastImportedAt: null,
     // 当月カレンダーの有無(店ごとに「あり/なし」を出すための材料)
     currentMonthCalendar: null,
     latestPastCalendar: null,
@@ -1687,6 +1752,12 @@ function checkRowAccounting(summary) {
  *   当月以降のカレンダーは定義上存在しない。**0 と分かっていても出す** —
  *   0 でない値が出たらこの前提(=採用位置の決め方)が壊れているという意味になるため。
  */
+/**
+ * 【形が確定した判定】= Visionの応答から支配月・異なる日付・広がりを計算できたもの。
+ * 画像DL失敗 / Vision抽出失敗は形が分からないので【比較の対象にしない】。
+ */
+const SHAPE_DETERMINED_KINDS = new Set(['calendar-current', 'calendar-past', 'not-calendar', 'empty']);
+
 function probeMetrics(summary) {
   const verdicts = Array.isArray(summary.probeVerdicts) ? summary.probeVerdicts : [];
   const adoptedIndex = verdicts.findIndex((v) => v && v.kind === 'calendar-current');
@@ -1718,7 +1789,97 @@ function probeMetrics(summary) {
     // 採用が1枚も無かった店(=当月以降のカレンダーが取得窓に存在しない)でも
     // 形の分布は測りたいので、全体の内訳も返す。
     allCalendars: calendars(verdicts).length,
+    ...shapeComparison(verdicts, adoptedIndex),
   };
+}
+
+/**
+ * 【#13 の署名 = 採用した投稿が、その店の窓内で最もカレンダーらしい投稿ではないこと】
+ *
+ * 【なぜ分類ではなく「形」を比べるのか(2026-08-05・レビュー部の指示)】
+ *   上の ahead/behind の数は【分類】(カレンダーか否か・当月か過去月か)に依存しているので、
+ *   **採用が偽陽性 かつ 後ろの本物も偽陰性**だと、後ろの本物が数えられず
+ *   `behindCurrentMonth` は **0のまま実害が起きる**。両方の誤りが同時に必要なので確率は低いが、
+ *   cron の可否を決める証拠としては残しておきたくない盲点だった。
+ *   **形(異なる日付)の比較は分類を経由しない**ので、後ろの本物が偽陰性でも効く。
+ *
+ *   レビュー部の再現がそのまま例になる —
+ *   偽陽性は `異なる日付=5`、本物は `20`。「**採用が5、窓内に20が居る**」は直接の異常サイン。
+ *
+ * 【比較の母集団は「形が確定した全投稿」】カレンダーと判定されたものに限らない。
+ *   限ると、まさに拾いたい偽陰性(本物なのに not-calendar / 支配月を読み違えて past)が
+ *   母集団から抜ける。
+ *
+ * 【★この指標が拾えないもの】本物のカレンダーから Vision が【少ししか日付を読めなかった】
+ *   場合は、その投稿の `異なる日付` 自体が小さいので比較でも浮かばない。
+ *   「形が確定していない投稿」の件数と併せて読むこと(README の実走の読み方)。
+ *
+ * 【同点は「採用が最強」に倒す】同じ `異なる日付` の投稿が他にあっても、
+ *   採用が【より弱い】わけではない。印は厳密に小さいときだけ付ける
+ *   (同点で付けると、同じカレンダーの再投稿がある店で毎回点灯する)。
+ */
+function shapeComparison(verdicts, adoptedIndex) {
+  const shaped = verdicts.filter((v) => v && SHAPE_DETERMINED_KINDS.has(v.kind));
+  let strongest = null;
+  for (const v of shaped) {
+    if (!strongest || v.distinctDates > strongest.distinctDates) strongest = v;
+    // 同点なら採用した投稿を代表にする(表示が「採用そのもの」になり、読み違えを防ぐ)
+    else if (v.distinctDates === strongest.distinctDates && v.index === adoptedIndex) strongest = v;
+  }
+  const adopted = adoptedIndex >= 0 ? verdicts[adoptedIndex] : null;
+  return {
+    shapedCount: shaped.length,
+    strongest: strongest
+      ? {
+          index: strongest.index,
+          permalink: strongest.permalink,
+          kind: strongest.kind,
+          distinctDates: strongest.distinctDates,
+          spanDays: strongest.spanDays,
+        }
+      : null,
+    maxDistinctDates: strongest ? strongest.distinctDates : 0,
+    // 採用が無い / 形が1件も確定していない店では判定できない(false にはしない)
+    adoptedIsStrongest: adopted && strongest ? adopted.distinctDates >= strongest.distinctDates : null,
+    strongestPosition:
+      !adopted || !strongest
+        ? null
+        : strongest.index === adoptedIndex
+          ? 'adopted'
+          : strongest.index < adoptedIndex
+            ? 'ahead'
+            : 'behind',
+  };
+}
+
+/**
+ * 形状比較の【店ごとの1行要約】。
+ *
+ * 【1行にする理由】生ログ(投稿ごとの判定行)を人が突き合わせる形にすると、
+ * cron 後には誰もやらない。判断に要る3つ(採用の形 / 窓内の最大 / その位置)を1行に載せる。
+ */
+function formatProbeShapeComparison(store, m) {
+  const head = `[monitor-instagram-apify] 形状比較: 店=${store.label}(${store.venueId})`;
+  if (!m.strongest) return `${head} / 形が確定した投稿がありません(比較できません)`;
+  const pos =
+    m.strongestPosition === 'adopted'
+      ? '採用した投稿そのもの'
+      : m.strongestPosition === 'ahead'
+        ? '採用より【新しい位置】'
+        : m.strongestPosition === 'behind'
+          ? '採用より【古い位置】'
+          : '採用なし';
+  const strongest =
+    `窓内の最大=異なる日付${m.strongest.distinctDates}・広がり${m.strongest.spanDays}日` +
+    `(${pos} / 判定=${m.strongest.kind} / ${m.strongest.permalink})`;
+  if (!m.adopted) {
+    return `${head} / 採用=なし(当月以降のカレンダーが無い) / ${strongest}`;
+  }
+  const adopted = `採用=異なる日付${m.adopted.distinctDates}・広がり${m.adopted.spanDays}日`;
+  const mark = m.adoptedIsStrongest
+    ? '採用が窓内で最もカレンダーらしい投稿'
+    : '★採用は窓内で最もカレンダーらしい投稿ではない(#13 の署名)';
+  return `${head} / ${adopted} / ${strongest} / ${mark}`;
 }
 
 /**
@@ -1758,6 +1919,7 @@ function reportProbe(summaries) {
   let totalAheadCalendars = 0;
   let totalBehindCurrent = 0;
   let totalAheadUndetermined = 0;
+  let notStrongestStores = 0;
   for (const s of summaries) {
     if (s.fetchFailed) {
       console.log(`[monitor-instagram-apify] 探索: ${s.store.label}(${s.store.venueId}) … 取得失敗のため測定できていません`);
@@ -1776,6 +1938,21 @@ function reportProbe(summaries) {
         `::error title=Instagram監視 - 探索の集計が合わない::${s.store.label}(${s.store.venueId}): ` +
           `採用より新しい${acc.aheadTotal}件に対し内訳の合計が${acc.aheadSum}件、` +
           `古い${acc.behindTotal}件に対し${acc.behindSum}件です。判定一覧に穴があります(バグ)。`
+      );
+    }
+    // 【★店ごとの1行要約(形状比較)は、採用の有無に関わらず必ず出す★】
+    // これが #13 の署名(採用が窓内で最もカレンダーらしい投稿ではない)を直接指す行で、
+    // 分類を経由しないので「後ろの本物が偽陰性」でも効く(shapeComparison のコメント参照)。
+    console.log(formatProbeShapeComparison(s.store, m));
+    if (m.adoptedIsStrongest === false) {
+      notStrongestStores += 1;
+      console.log(
+        `::warning title=Instagram監視 - 採用が最もカレンダーらしい投稿ではない::` +
+          `${s.store.label}(${s.store.venueId}): 採用した投稿は異なる日付${m.adopted.distinctDates}件ですが、` +
+          `窓内には異なる日付${m.maxDistinctDates}件の投稿があります` +
+          `(${m.strongestPosition === 'behind' ? '採用より古い位置' : '採用より新しい位置'} / ${m.strongest.permalink})。` +
+          '**これが #13 の署名です** — 採用した1枚が偽陽性で、より完全なカレンダーを追い越している可能性があります。' +
+          '画像を開いて、どちらが本物の月間カレンダーかを人が確かめてください。'
       );
     }
     if (!m.adopted) {
@@ -1824,12 +2001,80 @@ function reportProbe(summaries) {
   console.log(
     `[monitor-instagram-apify] 探索の合計: 本物を追い越せる位置のカレンダー ${totalAheadCalendars}件 / ` +
       `打ち切りの後ろに隠れた当月以降のカレンダー ${totalBehindCurrent}件 / ` +
-      `追い越せる位置で形が確定しなかった投稿 ${totalAheadUndetermined}件`
+      `追い越せる位置で形が確定しなかった投稿 ${totalAheadUndetermined}件 / ` +
+      `★採用が窓内で最もカレンダーらしくない店 ${notStrongestStores}店`
   );
   console.log(
     '  【読み方】1つ目が0でも「偽陽性は起きない」ではありません。この取得窓での観測であり、' +
       '3つ目が0でない限り「見えた範囲で0」です。2つ目が0でなければ、採用した1枚が本物かどうかを' +
       '人が画像で確かめてください(機械には正解がありません)。'
+  );
+  console.log(
+    '  【4つ目が #13 の署名】1〜2つ目は【分類】に依存するので、採用が偽陽性 かつ 後ろの本物も' +
+      '偽陰性(カレンダーでない/過去月と判定)だと 0 のまま実害が起きます。4つ目は【形】だけを' +
+      '比べるのでその場合も効きます。0でなければ、その店の画像を人が確かめてください。'
+  );
+}
+
+/**
+ * 【矛盾の報告(#22)】確認済み投稿日時が未来になっている店を ::error:: で報告する。
+ *
+ * 【★ジョブは落とさない】#19 とまったく同じ理由 — 非ゼロ終了すると後続のコミット・pushが
+ *   走らず、他店の取込みも状態の前進もリポジトリに残らない。赤い注記だけで人に見せる。
+ *
+ * 【★自動では戻さない】`lastPostedAt` を機械が消す/巻き戻すと、その店は取得窓を丸ごと
+ *   読み直す。すると【人が admin.html で消した行が復活する】(リスク台帳 #15)。
+ *   どちらが軽いかは中身を見ないと決められないので、機械は判断しない。
+ *   直し方(と、直すと何が起きるか)をログに書いて人に渡す。
+ */
+function reportImpossibleState(summaries, statePath) {
+  const hits = summaries.filter((s) => s.impossibleLastPostedAt);
+  if (hits.length === 0) return;
+  const name = path.basename(statePath);
+  console.log('');
+  console.log(
+    `::error title=Instagram監視 - 確認済み投稿日時が未来になっています::` +
+      `${hits.length}店の記録が【ありえない値】になっています。` +
+      'この状態では取得できた投稿がすべて「既読」と判定されるため、' +
+      '**その店の取込みは静かに止まったまま**になります(ログ上は「新着0件」= 平常日と区別が付きません)。' +
+      'ジョブは止めません。機械は値を戻しません — 戻すと取得窓を読み直すので、' +
+      '【人が消した行が復活する】可能性があるためです(リスク台帳 #15)。'
+  );
+  for (const s of hits) {
+    console.log(
+      `[monitor-instagram-apify] 未来の確認済み投稿日時: 店=${s.store.label}(${s.store.venueId})` +
+        ` / 記録=${s.impossibleLastPostedAt.value} / ありえる上限=${s.impossibleLastPostedAt.boundary}` +
+        ` / この店の新着として拾えた投稿=${s.newPostCount}件`
+    );
+  }
+  console.log(
+    `[monitor-instagram-apify] 直し方: ${name} の該当店の lastPostedAt を、実在する投稿の日時に直してください。` +
+      'その店の記録ごと消せば取得窓を読み直しますが、【人が消した行が復活しうる】点に注意してください。'
+  );
+}
+
+/**
+ * 【静かな停止の測定(警報ではない)】店ごとに「最後に取込みが成立してから何日か」を毎回出す。
+ *
+ * 【なぜ警報にしないか】店が月に1度しかカレンダーを出さない以上、30日近い値は【平常】である。
+ * 閾値を置けば毎月点灯し、この案件が繰り返し潰してきた「常時点灯する警報」になる。
+ * そこで `EXPECTED_NO_START_PCT` と同じ扱いにする — **値を必ず出し、判断は人がする**。
+ *
+ * 【なぜ #22 の検知と別に要るか】#22 の検知は【原因を1つ名指しする】もので、
+ * 未来日以外の理由(Apifyが常に空を返す / カレンダーが一度も一致しない / 店が投稿をやめた)では
+ * 鳴らない。こちらは原因を問わず【結果】だけを測るので、まだ想像できていない停止も見える。
+ * 逆にこちらは「何日か経たないと気づけない」ので、即座に分かる #22 の検知を置き換えはしない。
+ */
+function formatImportAges(summaries, today) {
+  const parts = summaries.map((s) => {
+    const days = daysBetween(today, s.lastImportedAt);
+    return `${s.store.venueId}=${s.lastImportedAt ? `${days}日` : '未成立'}`;
+  });
+  return (
+    `[monitor-instagram-apify] 取込みが成立してからの日数: ${parts.join(' / ')}` +
+    ' 【警報ではなく測定】月1回しかカレンダーを出さない店では30日前後が平常です。' +
+    '止まっているかどうかは、この値が【その店の投稿頻度に対して長すぎるか】で人が判断してください' +
+    '(「未成立」= この記録を始めてから一度も取り込めていない)。'
   );
 }
 
@@ -2414,6 +2659,12 @@ async function main() {
     }
   }
 
+  // 【静かな停止】原因を名指しする検知(#22)と、原因を問わない測定(日数)を両方出す。
+  // 片方だけでは、それぞれ「未来日以外の停止が見えない」「気づくのが遅れる」という穴が残る。
+  reportImpossibleState(summaries, STATE_PATH);
+  console.log('');
+  console.log(formatImportAges(summaries, today));
+
   reportStoreFailures(storeFailures, summaries, storeCount);
   reportAcceptedRows(summaries);
   reportTotals(summaries, storeCount);
@@ -2559,7 +2810,13 @@ module.exports = {
   checkRowAccounting,
   probeMetrics,
   checkProbeAccounting,
+  shapeComparison,
+  formatProbeShapeComparison,
   reportProbe,
+  impossibleLastPostedAt,
+  reportImpossibleState,
+  formatImportAges,
+  daysBetween,
   forbidWrite,
   runMonitor,
   loadState,

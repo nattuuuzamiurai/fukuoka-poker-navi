@@ -4964,3 +4964,327 @@ test('★CLI(探索): 健全な実行では「探索の集計が合わない」�
   // 採用より新しい位置に非カレンダーが1件並ぶ形なので、その内訳が実際に出ること
   assert.match(r.stdout, /同じ位置のその他: カレンダーでない 1件/);
 });
+
+// ============================================================
+// #13 の署名: 採用が「窓内で最もカレンダーらしい投稿」か(形状の比較)
+// ============================================================
+// 【なぜ ahead/behind の件数では足りないか(2026-08-05・レビュー部の指示)】
+// あの2つは【分類】(カレンダーか否か・当月か過去月か)に依存している。
+// **採用が偽陽性 かつ 後ろの本物も偽陰性**だと、本物が behindCurrentMonth に数えられず
+// 【0のまま実害が起きる】。形(異なる日付)の比較は分類を経由しないので、その場合も効く。
+
+test('★形状比較: 採用が窓内で最大なら印を付けない(常時点灯する警報にしない)', () => {
+  const m = monitor.probeMetrics({
+    probeVerdicts: [
+      { index: 0, permalink: 'p/NOTCAL/', kind: 'not-calendar', distinctDates: 2, spanDays: 1 },
+      { index: 1, permalink: 'p/REAL/', kind: 'calendar-current', distinctDates: 20, spanDays: 30 },
+      { index: 2, permalink: 'p/OLD/', kind: 'calendar-past', distinctDates: 18, spanDays: 29 },
+    ],
+  });
+  assert.equal(m.adoptedIsStrongest, true);
+  assert.equal(m.maxDistinctDates, 20);
+  assert.equal(m.strongestPosition, 'adopted');
+  assert.match(monitor.formatProbeShapeComparison({ label: 'X', venueId: 'v40' }, m), /採用が窓内で最もカレンダーらしい投稿/);
+});
+
+test('★形状比較: 採用より強い投稿が後ろに居たら印を付ける(#13 の署名)', () => {
+  // レビュー部の再現そのもの: 偽陽性(異なる日付5)が本物(20)を追い越している
+  const m = monitor.probeMetrics({
+    probeVerdicts: [
+      { index: 0, permalink: 'p/SERIES/', kind: 'calendar-current', distinctDates: 5, spanDays: 28 },
+      { index: 1, permalink: 'p/REAL/', kind: 'calendar-current', distinctDates: 20, spanDays: 30 },
+    ],
+  });
+  assert.equal(m.adoptedIsStrongest, false);
+  assert.equal(m.maxDistinctDates, 20);
+  assert.equal(m.strongestPosition, 'behind');
+  assert.equal(m.strongest.permalink, 'p/REAL/');
+  const line = monitor.formatProbeShapeComparison({ label: 'X', venueId: 'v40' }, m);
+  assert.match(line, /採用=異なる日付5・広がり28日/);
+  assert.match(line, /窓内の最大=異なる日付20・広がり30日\(採用より【古い位置】/);
+  assert.match(line, /★採用は窓内で最もカレンダーらしい投稿ではない\(#13 の署名\)/);
+});
+
+test('★形状比較: 後ろの本物が【偽陰性】でも効く(分類を経由しないこと)', () => {
+  // 【これが ahead/behind の件数では埋まらない盲点】本物の月間カレンダーの支配月を
+  // Vision が読み違える(年や月をまたいで拾う)と `calendar-past` に落ちる。
+  // すると behindCurrentMonth は 0 = 「後ろに本物は居ない」に見えるが、実際には居る。
+  const m = monitor.probeMetrics({
+    probeVerdicts: [
+      { index: 0, permalink: 'p/SERIES/', kind: 'calendar-current', distinctDates: 5, spanDays: 28 },
+      { index: 1, permalink: 'p/REAL/', kind: 'calendar-past', distinctDates: 20, spanDays: 30 },
+    ],
+  });
+  assert.equal(m.behindCurrentMonth, 0, '分類ベースの数字は 0 のまま(=盲点が実在すること)');
+  assert.equal(m.adoptedIsStrongest, false, '形の比較は分類を経由しないので効くこと');
+  assert.equal(m.strongest.kind, 'calendar-past');
+
+  // 「カレンダーでない」と判定された投稿でも、形が強ければ拾う
+  const m2 = monitor.probeMetrics({
+    probeVerdicts: [
+      { index: 0, permalink: 'p/SERIES/', kind: 'calendar-current', distinctDates: 5, spanDays: 28 },
+      { index: 1, permalink: 'p/REAL/', kind: 'not-calendar', distinctDates: 9, spanDays: 8 },
+    ],
+  });
+  assert.equal(m2.behindCurrentMonth, 0);
+  assert.equal(m2.adoptedIsStrongest, false);
+});
+
+test('★形状比較: 同点は「最強」に倒す / 形が確定していない投稿は母集団に入れない', () => {
+  // 同点(同じカレンダーの再投稿など)で印を付けると、その店で毎回点灯する
+  const tie = monitor.probeMetrics({
+    probeVerdicts: [
+      { index: 0, permalink: 'p/A/', kind: 'calendar-current', distinctDates: 20, spanDays: 30 },
+      { index: 1, permalink: 'p/B/', kind: 'calendar-current', distinctDates: 20, spanDays: 30 },
+    ],
+  });
+  assert.equal(tie.adoptedIsStrongest, true, '同点で点灯させない');
+  assert.equal(tie.strongestPosition, 'adopted', '同点なら採用を代表にする(読み違えを防ぐ)');
+
+  // 画像DL失敗・Vision失敗は形が分からないので比較に混ぜない(0件として最大を歪めない)
+  const withFailures = monitor.probeMetrics({
+    probeVerdicts: [
+      { index: 0, permalink: 'p/IF/', kind: 'image-failed', distinctDates: 0, spanDays: 0 },
+      { index: 1, permalink: 'p/CAL/', kind: 'calendar-current', distinctDates: 7, spanDays: 20 },
+      { index: 2, permalink: 'p/VF/', kind: 'vision-failed', distinctDates: 0, spanDays: 0 },
+    ],
+  });
+  assert.equal(withFailures.shapedCount, 1);
+  assert.equal(withFailures.adoptedIsStrongest, true);
+
+  // 採用が無い / 形が1件も確定していない店では false にしない(判定できないので null)
+  const noAdopt = monitor.probeMetrics({
+    probeVerdicts: [{ index: 0, permalink: 'p/X/', kind: 'not-calendar', distinctDates: 3, spanDays: 2 }],
+  });
+  assert.equal(noAdopt.adoptedIsStrongest, null);
+  assert.match(monitor.formatProbeShapeComparison({ label: 'X', venueId: 'v40' }, noAdopt), /採用=なし/);
+  const nothing = monitor.probeMetrics({ probeVerdicts: [{ index: 0, kind: 'vision-failed', permalink: 'p/Y/' }] });
+  assert.equal(nothing.adoptedIsStrongest, null);
+  assert.match(monitor.formatProbeShapeComparison({ label: 'X', venueId: 'v40' }, nothing), /形が確定した投稿がありません/);
+});
+
+/** 指定した投稿列で `--probe` を回す(古い順に渡す)。rows は投稿ごとの Vision 応答。 */
+function runProbeCliWithPosts(posts) {
+  const root = makeTempRepoRoot();
+  fs.writeFileSync(
+    path.join(root, 'tools', 'fetch-venue-posts-apify.js'),
+    `const POSTS = ${JSON.stringify(
+      posts.map((p, i) => ({
+        permalink: `https://www.instagram.com/p/${p.slug}/`,
+        imageUrl: `https://example.com/${i}.jpg`,
+        postedAt: p.postedAt,
+        caption: '',
+      }))
+    )};
+     exports.fetchInstagramPosts = async (handle) => (handle === 'triple_orio' ? POSTS : []);\n`
+  );
+  fs.writeFileSync(
+    path.join(root, 'tools', 'venue-schedule-vision.js'),
+    `const ROWS = ${JSON.stringify(posts.map((p) => p.rows))};
+     exports.extractTournaments = async (buf) => ROWS[Number(String(buf).replace('https://example.com/', '').replace('.jpg', ''))];\n`
+  );
+  fs.writeFileSync(
+    path.join(root, 'stub-fetch.js'),
+    'globalThis.fetch = async (url) => ({ status: 200, arrayBuffer: async () => new TextEncoder().encode(String(url)).buffer });\n'
+  );
+  const r = spawnSync('node', ['--require', './stub-fetch.js', 'tools/monitor-instagram-apify.js', '--probe'], {
+    cwd: root,
+    env: { ...process.env, APIFY_API_TOKEN: 'dummy', ANTHROPIC_API_KEY: 'dummy' },
+    encoding: 'utf8',
+  });
+  fs.rmSync(root, { recursive: true, force: true });
+  return r;
+}
+
+/** `month`(YYYY-MM)の指定日に1件ずつ大会を置いた行を作る。 */
+function calendarRows(month, days) {
+  return days.map((d) => ({ date: `${month}-${String(d).padStart(2, '0')}`, start: '19:00', name: `T${d}`, buyin: 3000, tags: [] }));
+}
+
+test('★CLI(探索): 採用より強い投稿が後ろに居たら ::warning:: と1行要約が出る(分類では見えない場合も)', () => {
+  // 【盲点をそのまま再現する】本物(20日付)の支配月を過去月にしてある =
+  // 分類ベースの「採用より古い位置にある当月以降のカレンダー」は 0 になる。
+  // それでも形の比較は効くこと、を1回のCLI実行で見る。
+  const r = runProbeCliWithPosts([
+    { slug: 'REAL', postedAt: '2026-07-10T10:00:00.000Z', rows: calendarRows('2026-06', [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 30, 2, 4, 6, 8]) },
+    { slug: 'SERIES', postedAt: '2026-07-12T10:00:00.000Z', rows: calendarRows('2099-09', [3, 10, 17, 24, 30]) },
+  ]);
+  assert.equal(r.status, 0, r.stderr);
+  // 分類ベースの数字は 0(=盲点が実在する)
+  assert.match(r.stdout, /採用より【古い位置】にある当月以降のカレンダー: 0件/);
+  // 形の比較は効く
+  assert.match(r.stdout, /形状比較: .*採用=異なる日付5・広がり27日/);
+  assert.match(r.stdout, /★採用は窓内で最もカレンダーらしい投稿ではない\(#13 の署名\)/);
+  assert.match(r.stdout, /::warning title=Instagram監視 - 採用が最もカレンダーらしい投稿ではない::/);
+  assert.match(r.stdout, /★採用が窓内で最もカレンダーらしくない店 1店/);
+});
+
+test('★CLI(探索): 採用が窓内で最強なら ::warning:: を出さない(両方向を固定する)', () => {
+  const r = runProbeCliWithPosts([
+    { slug: 'OLDCAL', postedAt: '2026-07-10T10:00:00.000Z', rows: calendarRows('2026-06', [1, 5, 9, 13, 17]) },
+    { slug: 'REAL', postedAt: '2026-07-12T10:00:00.000Z', rows: calendarRows('2099-09', [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29]) },
+  ]);
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, /形状比較: .*採用が窓内で最もカレンダーらしい投稿/);
+  assert.doesNotMatch(r.stdout, /採用が最もカレンダーらしい投稿ではない/, '最強なのに印が出てはいけない');
+  assert.match(r.stdout, /★採用が窓内で最もカレンダーらしくない店 0店/);
+});
+
+// ============================================================
+// リスク台帳 #22: 確認済み投稿日時が【未来】= 静かな永久停止
+// ============================================================
+// 【この検知が「両方向を実データで示す」規律の対象外である理由】
+// 禁じられているのは【閾値や経験則にもとづく警報で、鳴る側を実データで示せないもの】。
+// これは【矛盾】の検出で、投稿日時が現在より未来という状態は物理的に存在しない。
+// ありえない状態の検出は仮説の検証ではないので、鳴る側の実データを要さない。
+// (それでも下では「鳴る/鳴らない」を両方固定してある。安いので)
+
+test('★#22: 未来の確認済み投稿日時だけを矛盾として検出する(境界を含む)', () => {
+  const today = '2026-08-05';
+  // JSTの 2026-08-05 は UTC 2026-08-05T15:00Z に終わる。そこから更に24時間が上限。
+  assert.equal(monitor.impossibleLastPostedAt({ lastPostedAt: '2026-08-05T10:00:00.000Z' }, today), null, '当日は矛盾ではない');
+  assert.equal(monitor.impossibleLastPostedAt({ lastPostedAt: '2026-08-06T14:59:00.000Z' }, today), null, '余裕の内側では鳴らさない');
+  assert.equal(monitor.impossibleLastPostedAt({ lastPostedAt: '2020-01-01T00:00:00.000Z' }, today), null, '過去は正常');
+  const hit = monitor.impossibleLastPostedAt({ lastPostedAt: '2026-08-06T15:01:00.000Z' }, today);
+  assert.ok(hit, '余裕を超えた未来は矛盾として検出すること');
+  assert.equal(hit.value, '2026-08-06T15:01:00.000Z');
+  assert.ok(hit.boundary, 'ありえる上限を人に見せること');
+  assert.ok(monitor.impossibleLastPostedAt({ lastPostedAt: '2099-01-01T00:00:00.000Z' }, today));
+  // 記録が無い / 読めない値は対象外(どちらも「全投稿が新着」に倒れるので静かな停止にならない)
+  assert.equal(monitor.impossibleLastPostedAt(null, today), null);
+  assert.equal(monitor.impossibleLastPostedAt({}, today), null);
+  assert.equal(monitor.impossibleLastPostedAt({ lastPostedAt: 'これは日付ではない' }, today), null);
+});
+
+test('★#22: 未来の記録がある店は【新着0件】になり、その事実が summary に残る(静かな停止の再現)', async () => {
+  const state = { v40: { handle: 'triple_orio', lastPostedAt: '2099-01-01T00:00:00.000Z' } };
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state },
+    fakeLibsForBehaviour([
+      { permalink: 'https://www.instagram.com/p/CAL/', postedAt: '2026-07-20T10:00:00.000Z', rows: fillerRows('2099-09') },
+    ])
+  );
+  const s = result.summaries[0];
+  assert.equal(s.newPostCount, 0, '取得できた投稿がすべて「既読」に落ちること(=停止している)');
+  assert.equal(s.alreadySeenCount, 1);
+  assert.ok(s.impossibleLastPostedAt, 'その原因が summary に記録されること');
+  assert.equal(s.impossibleLastPostedAt.value, '2099-01-01T00:00:00.000Z');
+  // 【機械は値を戻さない】戻すと窓を読み直し、人が消した行が復活しうる(#15)
+  assert.equal(result.state.v40.lastPostedAt, '2099-01-01T00:00:00.000Z', '自動で書き換えてはいけない');
+});
+
+test('★CLI(#22): 未来の記録があると ::error:: を出すが、ジョブは落とさず値も戻さない', () => {
+  const root = makeTempRepoRoot();
+  writeSingleCalendarStubs(root);
+  const broken = { v40: { handle: 'triple_orio', lastPostedAt: '2099-01-01T00:00:00.000Z' } };
+  fs.writeFileSync(path.join(root, 'apify-monitor-state.json'), `${JSON.stringify(broken, null, 2)}\n`);
+  try {
+    const r = runCliArgs(root);
+    assert.equal(r.status, 0, `ジョブは落とさない(#19 と同じ理由): ${r.stderr}`);
+    assert.match(r.stdout, /::error title=Instagram監視 - 確認済み投稿日時が未来になっています::/);
+    assert.match(r.stdout, /未来の確認済み投稿日時: 店=TripleBarrel 折尾店\(v40\)/);
+    assert.match(r.stdout, /人が消した行が復活/, '自動で戻さない理由(#15)を人に伝えること');
+    assert.match(r.stdout, /直し方:/);
+    // 機械が値を戻していないこと(戻すと窓を読み直して #15 が発動する)
+    const after = JSON.parse(fs.readFileSync(path.join(root, 'apify-monitor-state.json'), 'utf8'));
+    assert.equal(after.v40.lastPostedAt, '2099-01-01T00:00:00.000Z', '機械が勝手に直してはいけない');
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('★CLI(#22): 記録が正常な回には「未来になっています」を出さない(両方向を固定する)', () => {
+  const root = makeTempRepoRoot();
+  writeSingleCalendarStubs(root);
+  // 【★実在する過去の記録を、境界のすぐ内側に置くこと★】
+  // 空の `{}` だと `lastPostedAt` が無く、判定が値の有無で先に return するので
+  // 【境界の判定を一度も通らない】。それだと「常に矛盾とみなす」変異も
+  // 「境界をずらす」変異もこのテストを素通りする(実測でそうなった)。
+  // 昨日の投稿 = 毎朝の実行でいちばんよくある正常値。ここで鳴ったら誤検知。
+  const yesterday = addDaysJst(monitor.todayJst(), -1);
+  fs.writeFileSync(
+    path.join(root, 'apify-monitor-state.json'),
+    `${JSON.stringify({ v40: { handle: 'triple_orio', lastPostedAt: `${yesterday}T10:00:00.000Z` } }, null, 2)}\n`
+  );
+  try {
+    const r = runCliArgs(root);
+    assert.equal(r.status, 0, r.stderr);
+    assert.doesNotMatch(r.stdout, /確認済み投稿日時が未来になっています/);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+// ---------- 静かな停止の測定(警報ではない) ----------
+
+test('★測定: 取込みが成立した日を記録し、そこからの日数を毎回出す', async () => {
+  const run1 = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
+    fakeLibsForBehaviour([
+      { permalink: 'https://www.instagram.com/p/CAL/', postedAt: '2026-07-20T10:00:00.000Z', rows: fillerRows('2099-09') },
+    ])
+  );
+  assert.equal(run1.summaries[0].lastImportedAt, '2026-07-31', '行が増えた日が「成立した日」');
+  assert.equal(run1.state.v40.lastImportedAt, '2026-07-31', '状態ファイルにも残ること(runログは90日で消える)');
+
+  // 翌月: 新着はあるがカレンダーではない = 取込みは成立しない → 前回値を持ち越す
+  const run2 = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: run1.arr, today: '2026-08-20', state: run1.state },
+    fakeLibsForBehaviour([
+      {
+        permalink: 'https://www.instagram.com/p/PHOTO/',
+        postedAt: '2026-08-19T10:00:00.000Z',
+        rows: [{ date: '2099-09-12', start: '19:00', name: '単発トナメ', buyin: 3000, tags: [] }],
+      },
+    ])
+  );
+  assert.equal(run2.summaries[0].lastImportedAt, '2026-07-31', '成立していない日は前回値のまま');
+  assert.equal(run2.state.v40.lastImportedAt, '2026-07-31');
+  assert.equal(monitor.daysBetween('2026-08-20', run2.summaries[0].lastImportedAt), 20);
+
+  const line = monitor.formatImportAges(run2.summaries, '2026-08-20');
+  assert.match(line, /v40=20日/);
+  assert.match(line, /警報ではなく測定/, '閾値を置かないことを文面で明示する(常時点灯を作らない)');
+
+  // 【★「変更なし」を成立に数えないこと】同じカレンダーを読み直しただけの回を成立にすると、
+  // その投稿が取得窓に残っている限り毎日「成立」になり、【止まっていることが見えなくなる】。
+  const run3 = await monitor.runMonitor(
+    {
+      stores: [monitor.STORES[0]],
+      before: run1.arr,
+      today: '2026-09-01',
+      state: { v40: { handle: 'triple_orio', lastPostedAt: '2026-07-19T00:00:00.000Z', lastImportedAt: '2026-07-31' } },
+      // 【控えを渡す】渡さないと既存行が全部「人のもの」扱いになり、`unchanged` ではなく
+      // 「人の行を守って見送り」に入る(PR #35 の規則)。ここで見たいのは前者。
+      writeRecords: run1.written,
+    },
+    fakeLibsForBehaviour([
+      { permalink: 'https://www.instagram.com/p/CAL/', postedAt: '2026-07-20T10:00:00.000Z', rows: fillerRows('2099-09') },
+    ])
+  );
+  assert.equal(run3.summaries[0].stats.unchanged, FILLER_COUNT, '同じ内容を読み直した回であること(テストの前提)');
+  assert.equal(run3.summaries[0].stats.added + run3.summaries[0].stats.updated, 0);
+  assert.equal(run3.summaries[0].lastImportedAt, '2026-07-31', '「変更なし」だけの回を成立にしてはいけない');
+});
+
+test('★測定: 一度も取り込めていない店は「未成立」と出す(0日と混同しない)', async () => {
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
+    { fetchLib: { async fetchInstagramPosts() { return []; } }, visionLib: {}, mergeLib, downloadImage: async () => Buffer.from('') }
+  );
+  assert.equal(result.summaries[0].lastImportedAt, null);
+  assert.match(monitor.formatImportAges(result.summaries, '2026-07-31'), /v40=未成立/);
+});
+
+test('★CLI: 取込みの日数は【毎回必ず】出る(静かな停止に気づく唯一の常設チャネル)', () => {
+  const root = makeTempRepoRoot();
+  writeSingleCalendarStubs(root, { posts: [] }); // どの店も新着なし = いちばん「何も起きない」回
+  try {
+    const r = runCliArgs(root);
+    assert.equal(r.status, 0, r.stderr);
+    assert.match(r.stdout, /取込みが成立してからの日数: /, '何も起きない回でも出ること');
+    for (const s of monitor.STORES) assert.match(r.stdout, new RegExp(`${s.venueId}=未成立`));
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
