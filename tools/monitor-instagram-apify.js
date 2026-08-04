@@ -585,6 +585,73 @@ function captionSignals(caption) {
  * 便益がほぼ無くリスクだけがあるので、本文は出さず【機械的な信号だけ】にする。
  * 「本文を出さない」ことはテストで固定してある(将来また出すコードが入ったら落ちる)。
  */
+/**
+ * 【月間カレンダーかどうか】を、語彙ではなく【抽出結果の構造】で判定する。
+ *
+ * 【なぜ語彙で判定しないか(2026-08-04)】
+ * 社長の指示でスコープが「最新月のカレンダー1枚だけ」に絞られた。従来のキーワード判定
+ * (`looksLikeSchedulePost`)は廃止した — dry-run #5 で
+ * **v40 は12投稿すべてがキーワードで捨てられ Vision に一度も渡っていなかった**(うち7件は
+ * キャプション自体が無い)。キャプションが無い投稿はキーワードをどう調整しても届かないので、
+ * 「1店まるごと永久に0件」が実際に起きていた。判定は画像の中身(抽出結果)で行う。
+ *
+ * 【判定条件】支配的な月(最も日付が多い月)について
+ *   異なる日付が MIN_CALENDAR_DATES 以上 かつ 日付の広がりが MIN_CALENDAR_SPAN_DAYS 日以上
+ *
+ * 【閾値の根拠(dry-run #5 の実測)】分離が極めて明確だった:
+ *   カレンダー   : 広がり 25 / 29 / 29 / 30 / 30 日
+ *   カレンダーでない: 広がり  0 /  0 /  2 日
+ * **2日と25日の間に何も無い**。広がりを条件に入れているのは、
+ * 週2日営業のような【疎なカレンダー】(日付は少ないが月全体に散る)を取りこぼさないため。
+ * 日付の数だけで判定すると、そういう店の正当なカレンダーを個別告知と誤判定する。
+ */
+const MIN_CALENDAR_DATES = 5;
+const MIN_CALENDAR_SPAN_DAYS = 10;
+
+/** 抽出結果からカレンダーらしさの指標を出す。判定に使った値は必ずログに出すこと。 */
+function calendarShape(rows) {
+  const dates = (Array.isArray(rows) ? rows : [])
+    .map((t) => t && t.date)
+    .filter((d) => typeof d === 'string' && VALID_DATE.test(d));
+  if (dates.length === 0) {
+    return { dominantMonth: null, distinctDates: 0, spanDays: 0, isCalendar: false };
+  }
+  // 支配的な月 = 異なる日付が最も多い月。月をまたぐ投稿(実在する)でも1つに決まる。
+  const byMonth = new Map();
+  for (const d of dates) {
+    const m = d.slice(0, 7);
+    if (!byMonth.has(m)) byMonth.set(m, new Set());
+    byMonth.get(m).add(d);
+  }
+  let dominantMonth = null;
+  let best = null;
+  for (const [m, set] of byMonth) {
+    if (!best || set.size > best.size || (set.size === best.size && m > dominantMonth)) {
+      dominantMonth = m;
+      best = set;
+    }
+  }
+  const sorted = [...best].sort();
+  const spanDays =
+    (Date.parse(`${sorted[sorted.length - 1]}T00:00:00Z`) - Date.parse(`${sorted[0]}T00:00:00Z`)) / 86400000;
+  return {
+    dominantMonth,
+    distinctDates: best.size,
+    spanDays,
+    isCalendar: best.size >= MIN_CALENDAR_DATES && spanDays >= MIN_CALENDAR_SPAN_DAYS,
+  };
+}
+
+/** 判定結果を1行にする(本文は出さない)。閾値の調整はこのログの実測で行う。 */
+function formatCalendarVerdict(store, post, shape, verdict) {
+  return (
+    `[monitor-instagram-apify] 投稿判定: 店=${store.label}(${store.venueId})` +
+    ` / 投稿=${post.permalink}(${post.postedAt})` +
+    ` / 支配月=${shape.dominantMonth || 'なし'} / 異なる日付=${shape.distinctDates} / 広がり=${shape.spanDays}日` +
+    ` / ${verdict}`
+  );
+}
+
 function formatFilteredOutPost(store, post) {
   const sig = captionSignals(post.caption);
   // 空白のみ・ゼロ幅スペースのみも「なし」側に寄せる。文字数だけ出すと
@@ -718,27 +785,6 @@ async function runMonitor(opts, libs) {
       continue;
     }
 
-    const scheduleLike = newPosts.filter((p) => looksLikeSchedulePost(p.caption));
-    summary.scheduleLikeCount = scheduleLike.length;
-    // 【残差(newPosts.length - scheduleLike.length)で数えないこと】保存則が恒等式になるうえ、
-    // 下のキャプション出力ループは looksLikeSchedulePost しか見ていないので、
-    // scheduleLike の条件が増えると【件数だけ増えてログには出ない】不一致も生じる。
-    // 同じ述語で数えれば、件数とログは常に一致する。
-    summary.filteredOutCount = newPosts.filter((p) => !looksLikeSchedulePost(p.caption)).length;
-
-    // 【キーワードで落とした投稿は画像を1度も見ないまま捨てられる】しかも lastPostedAt は
-    // 下で無条件に前進するので二度と処理されない。looksLikeSchedulePost は日本語9語の
-    // 単純な部分一致でしかなく、`AUGUST SCHEDULE`(英語)・`トナメ表`・`8月分アップしました`・
-    // 絵文字のみ、はすべて素通りする。
-    // 「日程を投稿していないから0件」なのか「投稿しているが語に当たらず全部捨てている」のかは
-    // 【キャプションを見なければ区別できない】ので、ここで実際の文面をログに出す。
-    // dry-runは消費ゼロで何度でも回せるため、これで推測を測定に変えられる。
-    // ★キーワードを増やすのは、この実測を見てから。想像で先回りしないこと。
-    for (const p of newPosts) {
-      if (looksLikeSchedulePost(p.caption)) continue;
-      console.log(formatFilteredOutPost(store, p));
-    }
-
     // data.js 側の id → スロット。mergeStore は (date,start) が一致する既存しか置き換えないので、
     // 「同じidだがスロットが違う」既存があると両方残って id が重複する(人が admin.html で
     // 日時だけ直した場合など)。この店の処理を始める時点の arr から作る。
@@ -762,10 +808,34 @@ async function runMonitor(opts, libs) {
     let imageFailedPosts = 0; // 画像ダウンロードが失敗した投稿の数(内容は失われる)
     let emptyResultPosts = 0; // Visionが0行を返した投稿の数(誤検知なら正常)
     let visionRows = 0; // Visionが返した行の総数(行レベルの突き合わせの左辺)
-    for (const post of scheduleLike) {
-      // 【対象投稿は必ず1件ずつここに並ぶ】どの結末になっても記録が残るよう、
-      // 先に push してから結果で埋める(postDetails.length === scheduleLikeCount を保つ。
-      // 途中の continue で record が抜けると、投稿レベルの保存則と件数が食い違う)。
+    let notCalendarPosts = 0; // カレンダーではないので対象外にした投稿の数
+    let pastCalendarPosts = 0; // 過去月のカレンダーだったので採用しなかった投稿の数
+
+    // 【キーワード判定は廃止した(2026-08-04)】理由は calendarShape のコメント参照。
+    // 取得できた新着はすべて判定の対象になる(= 取込みレベルの保存則では filteredOut は常に0)。
+    summary.scheduleLikeCount = newPosts.length;
+    summary.filteredOutCount = 0;
+
+    // ============================================================
+    // 走査フェーズ: 新しい順に見て「当月以降のカレンダー」を1枚だけ採用する
+    // ============================================================
+    // 【打ち切りの条件は「カレンダーを見つけたら」ではない】
+    // 店が当月のカレンダーを出した後に前月分の訂正版を出すことが現実にありうる
+    // (dry-run #5 に月をまたぐ投稿が実在: v18 の 05-31〜07-03、v34 の 03-02〜04-04)。
+    // 「最初のカレンダーで打ち切る」と、訂正版に隠れて当月分を取り逃がす。
+    // そこで【支配月が当月以降のカレンダーを見つけたときだけ打ち切る】。
+    // 過去月のカレンダーは記録だけして走査を続ける。
+    const currentMonth = today.slice(0, 7);
+    const newestFirst = [...newPosts].reverse(); // pickNewPosts は古い順に返す
+    const checkedPosts = { ...((prev && prev.checkedPosts) || {}) };
+    let accepted = null; // { post, rows }
+    let latestPastCalendar = null; // 当月以降が見つからなかったときの説明用
+    let examinedCount = 0; // 【Vision呼び出し地点で独立に加算する】残差で出さない
+    let cacheHitCount = 0;
+    let stoppedAtIndex = newestFirst.length; // 打ち切り位置(未確認の投稿を正の述語で数えるため)
+
+    for (let i = 0; i < newestFirst.length; i++) {
+      const post = newestFirst[i];
       const detail = {
         venueId: store.venueId,
         permalink: post.permalink,
@@ -777,11 +847,22 @@ async function runMonitor(opts, libs) {
         outcome: '不明',
       };
       postDetails.push(detail);
+
+      // 【一度判定した投稿は二度と Vision に渡さない】
+      // キーワード判定を廃止したぶん、初回は window 全体を舐めることになる。
+      // 判定結果を状態ファイルに残せば、以降の費用は【本当に新しい投稿の数】に比例する。
+      const cached = checkedPosts[post.permalink];
+      if (cached && cached !== 'calendar') {
+        cacheHitCount += 1;
+        detail.outcome = `判定済み(${cached})`;
+        continue;
+      }
+
       let imageBuffer;
       try {
         imageBuffer = await download(post.imageUrl);
       } catch (e) {
-        // 【この投稿の内容は失われ、二度と再試行されない】ので必ず数える。
+        // 【判定できていないのでキャッシュしない】次回やり直せるようにする。
         imageFailedPosts += 1;
         detail.outcome = '画像DL失敗';
         lostPosts.push({ store, permalink: post.permalink, postedAt: post.postedAt, kind: 'image-failed', detail: e.message });
@@ -790,10 +871,13 @@ async function runMonitor(opts, libs) {
         );
         continue;
       }
+
       let raw;
       try {
+        examinedCount += 1;
         raw = await visionLib.extractTournaments(imageBuffer, { postedDateHint: post.postedAt.slice(0, 10) });
       } catch (e) {
+        // 【判定できていないのでキャッシュしない】
         visionFailedPosts += 1;
         detail.outcome = 'Vision抽出失敗';
         lostPosts.push({ store, permalink: post.permalink, postedAt: post.postedAt, kind: 'vision-failed', detail: e.message });
@@ -802,35 +886,81 @@ async function runMonitor(opts, libs) {
         );
         continue;
       }
-      // Visionの戻り値は無検証では使えない。1行ずつ「直せるものは直してから」検査し、
-      // それでも不正な行だけを捨てて残りは取り込む。
+
       const rows = Array.isArray(raw) ? raw : [];
       visionRows += rows.length;
       detail.rowCount = rows.length;
-      // 日付レンジは【Visionが返した行そのもの】から取る。過去日の行はマージで落ちるので、
-      // 採用後の行から取ると「なぜ追加0なのか」の説明にならない。
+      const shape = calendarShape(rows);
+      detail.dateMin = shape.dominantMonth ? null : null;
       {
-        // 【書式が正しい日付だけを見る】文字列比較なので `2026-3-31` は `2026-03-15` より
-        // 大きく評価され、レンジの上端が歪む。不正日付の行はどのみち破棄され、
-        // その事実は破棄ログに出るので、ここで除いても情報は失われない。
         const dates = rows.map((t) => t && t.date).filter((d) => typeof d === 'string' && VALID_DATE.test(d));
         detail.dateMin = dates.length ? dates.reduce((a, b) => (a < b ? a : b)) : null;
         detail.dateMax = dates.length ? dates.reduce((a, b) => (a > b ? a : b)) : null;
       }
-      // 0行 = 「この画像から大会を1件も読み取れなかった」。looksLikeSchedulePost は
-      // わざと緩くしてあり誤検知した投稿はここに来るので、異常(赤)ではなく警告(黄)扱いにする。
-      // ただし【黙って通してはいけない】— 本当は日程表なのに読めていない場合と区別が付かず、
-      // 以前はログにも件数にも一切出ていなかった。
+
       if (rows.length === 0) {
         emptyResultPosts += 1;
         detail.outcome = 'Vision抽出0件';
+        checkedPosts[post.permalink] = 'empty';
         emptyResults.push({ store, permalink: post.permalink, postedAt: post.postedAt });
-        console.warn(
-          `[monitor-instagram-apify] ${store.label}: Visionが0件を返しました (${post.permalink})。` +
-            'スケジュール告知ではない投稿を拾った(誤検知)か、日程表なのに読み取れていない可能性があります。'
-        );
+        console.log(formatCalendarVerdict(store, post, shape, 'Visionが0件(カレンダーではない)'));
         continue;
       }
+
+      if (!shape.isCalendar) {
+        notCalendarPosts += 1;
+        detail.outcome = 'カレンダーでない';
+        checkedPosts[post.permalink] = 'not-calendar';
+        console.log(formatCalendarVerdict(store, post, shape, 'カレンダーではない(対象外)'));
+        continue;
+      }
+
+      if (shape.dominantMonth < currentMonth) {
+        // 過去月のカレンダー。採用はしないが【走査は続ける】(上のコメント参照)。
+        pastCalendarPosts += 1;
+        detail.outcome = `過去月のカレンダー(${shape.dominantMonth})`;
+        checkedPosts[post.permalink] = 'past-calendar';
+        if (!latestPastCalendar) latestPastCalendar = { month: shape.dominantMonth, permalink: post.permalink };
+        console.log(formatCalendarVerdict(store, post, shape, `過去月のカレンダー(${shape.dominantMonth})なので採用しない`));
+        continue;
+      }
+
+      // 当月以降のカレンダー。これを採用して打ち切る。
+      accepted = { post, rows, shape, detail };
+      detail.outcome = `採用(${shape.dominantMonth}のカレンダー)`;
+      checkedPosts[post.permalink] = 'calendar';
+      console.log(formatCalendarVerdict(store, post, shape, `★採用(${shape.dominantMonth}のカレンダー)`));
+      stoppedAtIndex = i + 1;
+      break;
+    }
+
+    // 【未確認の投稿は正の述語で数える】`総数 - 確認済み` にすると保存則が恒等式になる。
+    const unexamined = newestFirst.slice(stoppedAtIndex);
+    for (const p of unexamined) {
+      postDetails.push({
+        venueId: store.venueId,
+        permalink: p.permalink,
+        postedAt: p.postedAt,
+        rowCount: 0,
+        dateMin: null,
+        dateMax: null,
+        addedCount: 0,
+        outcome: '未確認(採用後に打ち切り)',
+      });
+    }
+    summary.unexaminedPostCount = unexamined.length;
+    summary.examinedPostCount = examinedCount;
+    summary.cacheHitCount = cacheHitCount;
+    summary.currentMonthCalendar = accepted
+      ? { month: accepted.shape.dominantMonth, permalink: accepted.post.permalink }
+      : null;
+    summary.latestPastCalendar = latestPastCalendar;
+    summary.checkedPosts = checkedPosts;
+
+    for (const { post, rows } of accepted ? [accepted] : []) {
+      // 【ここに来るのは採用したカレンダー1枚だけ】画像の取得・Vision抽出・カレンダー判定は
+      // 走査フェーズで済んでいる。ここは「その1枚の行を1行ずつ検査して取り込む」だけ。
+      const detail = accepted.detail;
       let keptFromPost = 0;
       const droppedFromPost = [];
       for (const t of rows) {
@@ -984,6 +1114,14 @@ async function runMonitor(opts, libs) {
     // (同じ投稿を毎回「新着」として拾い直し続けないため)。
     const newest = newPosts[newPosts.length - 1];
     nextState[store.venueId] = { handle: store.handle, lastPostedAt: newest.postedAt, lastPermalink: newest.permalink };
+    // 【投稿ごとの判定結果を残す】キーワード判定を廃止したぶん初回は window 全体を舐めるが、
+    // ここに残せば以降の Vision 呼び出しは【本当に新しい投稿の数】に比例する。
+    // 画像DL失敗・Vision失敗の投稿は【判定できていないので載せない】(次回やり直せるように)。
+    if (summary.checkedPosts && Object.keys(summary.checkedPosts).length > 0) {
+      nextState[store.venueId].checkedPosts = summary.checkedPosts;
+    } else if (prev && prev.checkedPosts) {
+      nextState[store.venueId].checkedPosts = prev.checkedPosts;
+    }
 
     // 【マージを先に行う】行レベルの内訳(added/updated/unchanged/pastDated)は mergeStore が
     // 返すので、これを lastExtraction に書くにはマージが先に済んでいる必要がある。
@@ -1039,10 +1177,10 @@ async function runMonitor(opts, libs) {
     // ここを `scheduleLike.length > 0` だけにしていると、【このカウンタが最も必要な場面】で
     // lastExtraction 自体が書かれず、状態ファイルに lastPostedAt しか残らない。
     // 「runログは90日で消えるので永続カウンタが要る」という理屈がそこだけ破れてしまう。
-    if (scheduleLike.length > 0 || summary.filteredOutCount > 0) {
+    if (summary.newPostCount > 0) {
       nextState[store.venueId].lastExtraction = {
         checkedAt: today,
-        posts: scheduleLike.length,
+        posts: summary.scheduleLikeCount,
         kept: extracted.length,
         dropped: summary.droppedCount,
         // 正規化した行数と再投稿と判断した投稿数も残す。これが無いと
@@ -1194,6 +1332,10 @@ function checkIntakeAccounting(summary) {
 function checkPostAccounting(summary) {
   const actual =
     summary.importedPostCount +
+    summary.notCalendarPostCount +
+    summary.pastCalendarPostCount +
+    summary.unexaminedPostCount +
+    summary.cacheHitCount +
     summary.repostedPostCount +
     summary.notATournamentPostCount +
     summary.humanEditedPostCount +
@@ -1617,6 +1759,23 @@ async function main() {
           '途中で記録されずに抜けた投稿があります(バグ)。'
       );
     }
+    // 【判断3】当月カレンダーの有無を必ず出す。0件を静かに返さない。
+    // 「新着が無かった0件」と「カレンダーを見つけられなかった0件」は意味が違う。
+    // 月初に店がまだ出していないのは正常なので【赤にはしない】が、要約には必ず出す。
+    if (s.currentMonthCalendar) {
+      console.log(`  当月カレンダー: あり (${s.currentMonthCalendar.month} / ${s.currentMonthCalendar.permalink})`);
+    } else if (s.latestPastCalendar) {
+      console.log(
+        `  当月カレンダー: なし (最新のカレンダーは ${s.latestPastCalendar.month} / ${s.latestPastCalendar.permalink})`
+      );
+    } else {
+      console.log('  当月カレンダー: なし (取得できた投稿の中にカレンダーが見つかりませんでした)');
+    }
+    console.log(
+      `  走査: Vision実行 ${s.examinedPostCount}件 / 判定済みで再実行せず ${s.cacheHitCount}件 / ` +
+        `カレンダーでない ${s.notCalendarPostCount}件 / 過去月のカレンダー ${s.pastCalendarPostCount}件 / ` +
+        `未確認(採用後に打ち切り) ${s.unexaminedPostCount}件`
+    );
     const post = checkPostAccounting(s);
     if (!post.ok) {
       // ここが合わない = どの結末にも数えられていない投稿がある(未知の消失経路)。
