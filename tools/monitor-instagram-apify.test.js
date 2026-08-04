@@ -4805,3 +4805,162 @@ test('★漏洩走査(--probe): 全投稿が判定ログを通るモードでも
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
+
+// ============================================================
+// 探索の【配線】を固定する — 検知器ではなく「記録する側」を試す
+// ============================================================
+// 【なぜ足したか(2026-08-05・品質管理部の指摘)】
+// 上の probeMetrics / checkProbeAccounting のテストは、どれも【テストが手で組み立てた
+// probeVerdicts】を渡している。つまり「数える側」しか試していない。
+// 実装の recordProbe から特定の kind を記録しなくなる変異は、370本すべて緑のまま通った
+// (実測。`not-calendar` / `empty` の2通りで確認)。実行時には ::error:: が出るので
+// 保護そのものは生きているが、【テストが落ちない】以上、退行は次のPRまで気づけない。
+//
+// 【同じ形を3回踏んでいる】PR #35(保護を外すと破壊ではなく重複になり、破壊しか見ない
+// 検査が素通り)、PR #36(本番ツール側の報告の固定が抜けており出力を消しても緑)、そして今回。
+// **検知器を試すテストと、検知器に値を渡す配線を試すテストは別物**。
+//
+// 【欠けていたのは fixture だけ】走査は新しい順なので、「採用より新しい位置」に
+// 非カレンダー・0件・失敗が並ぶ形を作らないと ahead 側の各カウンタが1件も動かない。
+// 上のテストはどれも「いちばん新しい投稿がカレンダー」= ahead が空だった。
+
+/** 採用したカレンダーの【前後】に、すべての判定が1件ずつ並ぶ探索用の投稿列(古い順)。 */
+function probeMixedPosts() {
+  return [
+    // --- 採用より古い位置(本番の走査は打ち切りでここに到達しない) ---
+    { permalink: 'https://www.instagram.com/p/B_PAST/', postedAt: '2026-07-14T10:00:00.000Z', rows: fillerRows('2026-05') },
+    { permalink: 'https://www.instagram.com/p/B_NOTCAL/', postedAt: '2026-07-15T10:00:00.000Z', rows: [{ date: '2099-09-12', start: '19:00', name: '単発トナメ', buyin: 3000, tags: [] }] },
+    // --- 本番ならここで採用して打ち切る ---
+    { permalink: 'https://www.instagram.com/p/CAL/', postedAt: '2026-07-16T10:00:00.000Z', rows: fillerRows('2099-09') },
+    // --- 採用より新しい位置(#13 が問題にしている側) ---
+    { permalink: 'https://www.instagram.com/p/A_PAST/', postedAt: '2026-07-17T10:00:00.000Z', rows: fillerRows('2026-06') },
+    { permalink: 'https://www.instagram.com/p/A_NOTCAL/', postedAt: '2026-07-18T10:00:00.000Z', rows: [{ date: '2099-09-13', start: '19:00', name: '写真だけの投稿', buyin: 3000, tags: [] }] },
+    { permalink: 'https://www.instagram.com/p/A_EMPTY/', postedAt: '2026-07-19T10:00:00.000Z', rows: [] },
+    { permalink: 'https://www.instagram.com/p/A_VF/', postedAt: '2026-07-20T10:00:00.000Z', visionThrows: 'max_tokensで打ち切られました' },
+    { permalink: 'https://www.instagram.com/p/A_IF/', postedAt: '2026-07-21T10:00:00.000Z', downloadThrows: 'HTTP 404' },
+  ];
+}
+
+test('★探索(配線): 採用の前後に並ぶ全種類の判定が、実装から測定値まで届いている', async () => {
+  // 【このテストが守るもの】recordProbe から kind を1つでも記録しなくなったら落ちること。
+  // 【★件数を deepEqual で丸ごと固定する】個別の assert を並べると、次に kind が増えたときに
+  //   「新しい kind を数え忘れる」変異がまた素通りする。合計(checkProbeAccounting)と
+  //   内訳の両方を見る。
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {}, probe: true },
+    fakeLibsForBehaviour(probeMixedPosts())
+  );
+  const s = result.summaries[0];
+  const m = monitor.probeMetrics(s);
+
+  // 判定一覧が【全投稿ぶん】埋まっていること(穴が空いていないこと)
+  assert.equal(m.total, 8, '取得した8投稿すべてに判定が記録されていること');
+  assert.equal(s.probeVerdicts.filter(Boolean).length, 8, '判定一覧に undefined の穴があってはいけない');
+
+  // 本番なら採用していた位置(新しい順で6件目 = index 5)
+  assert.equal(m.adopted.permalink, 'https://www.instagram.com/p/CAL/');
+  assert.equal(m.adoptedIndex, 5);
+
+  // ★採用より【新しい位置】= #13 の「本物を追い越せる位置」。5件の内訳が全部動くこと
+  assert.deepEqual(
+    {
+      aheadTotal: m.aheadTotal,
+      aheadCalendars: m.aheadCalendars,
+      aheadCurrentMonth: m.aheadCurrentMonth,
+      aheadPastMonth: m.aheadPastMonth,
+      aheadNotCalendar: m.aheadNotCalendar,
+      aheadEmpty: m.aheadEmpty,
+      aheadUndetermined: m.aheadUndetermined,
+    },
+    {
+      aheadTotal: 5,
+      aheadCalendars: 1, // A_PAST(形はカレンダー。月の判定だけが止めている)
+      aheadCurrentMonth: 0, // 採用位置の決め方から常に0
+      aheadPastMonth: 1,
+      aheadNotCalendar: 1, // A_NOTCAL
+      aheadEmpty: 1, // A_EMPTY
+      aheadUndetermined: 2, // A_VF(Vision失敗) + A_IF(画像DL失敗)
+    },
+    'ahead 側の内訳が実装から届いていない(recordProbe の記録漏れを疑うこと)'
+  );
+
+  // 採用より【古い位置】= 本番の走査が到達しない側
+  assert.deepEqual(
+    {
+      behindTotal: m.behindTotal,
+      behindCurrentMonth: m.behindCurrentMonth,
+      behindPastMonth: m.behindPastMonth,
+      behindNotCalendar: m.behindNotCalendar,
+      behindEmpty: m.behindEmpty,
+      behindUndetermined: m.behindUndetermined,
+    },
+    { behindTotal: 2, behindCurrentMonth: 0, behindPastMonth: 1, behindNotCalendar: 1, behindEmpty: 0, behindUndetermined: 0 },
+    'behind 側の内訳が実装から届いていない'
+  );
+
+  // 探索の保存則(前後それぞれで、内訳の合計が実際の件数と一致すること)
+  const acc = monitor.checkProbeAccounting(m);
+  assert.ok(acc.ok, `探索の保存則が破れている: ${JSON.stringify(acc)}`);
+  assert.equal(acc.residual, 0);
+
+  // 投稿・行レベルの保存則も同時に成り立つこと(バケツを1つ足した影響が出ていないこと)
+  assert.ok(monitor.checkPostAccounting(s).ok, JSON.stringify(monitor.checkPostAccounting(s)));
+  assert.ok(monitor.checkRowAccounting(s).ok, JSON.stringify(monitor.checkRowAccounting(s)));
+  assert.equal(s.probeCalendarPostCount, 1, '当月以降のカレンダーは1件(採用はしない)');
+  assert.equal(s.importedPostCount, 0, '探索は1件も採用しない');
+  // 失敗した投稿は【判定できていない】のでキャッシュにも載せない(本番と同じ規則)
+  assert.equal(result.changed, false);
+  assert.equal(JSON.stringify(result.state), '{}', '探索は状態を1バイトも動かさない');
+});
+
+/** 探索モードで CLI を回す(mutate で実装に変異を当てられる)。 */
+function runProbeCliWithMutation(mutate) {
+  const root = makeTempRepoRoot();
+  fs.writeFileSync(
+    path.join(root, 'tools', 'fetch-venue-posts-apify.js'),
+    `const p = (slug, day) => ({ permalink: 'https://www.instagram.com/p/' + slug + '/', imageUrl: 'https://example.com/' + slug + '.jpg', postedAt: '2026-07-' + day + 'T10:00:00.000Z', caption: '' });
+     exports.fetchInstagramPosts = async (handle) => (handle === 'triple_orio' ? [p('CALPOST', '16'), p('SINGLE', '18')] : []);\n`
+  );
+  fs.writeFileSync(
+    path.join(root, 'tools', 'venue-schedule-vision.js'),
+    `const CAL = ${JSON.stringify(fillerRows('2099-09'))};
+     exports.extractTournaments = async (buf) => (String(buf).includes('CALPOST')
+       ? CAL
+       : [{ date: '2099-09-13', start: '19:00', name: '単発トナメ', buyin: 3000, tags: [] }]);\n`
+  );
+  fs.writeFileSync(
+    path.join(root, 'stub-fetch.js'),
+    'globalThis.fetch = async (url) => ({ status: 200, arrayBuffer: async () => new TextEncoder().encode(String(url)).buffer });\n'
+  );
+  mutate(root);
+  const r = spawnSync('node', ['--require', './stub-fetch.js', 'tools/monitor-instagram-apify.js', '--probe'], {
+    cwd: root,
+    env: { ...process.env, APIFY_API_TOKEN: 'dummy', ANTHROPIC_API_KEY: 'dummy' },
+    encoding: 'utf8',
+  });
+  fs.rmSync(root, { recursive: true, force: true });
+  return r;
+}
+
+test('★CLI(探索): 判定を記録しない経路が増えたら ::error::(探索の集計が合わない)が stdout に出る', () => {
+  const r = runProbeCliWithMutation((root) => {
+    // 「カレンダーでない」と判断した投稿を、判定一覧に記録しないようにする
+    // (= recordProbe の呼び忘れ。実装に穴が空いたときとまったく同じ形)。
+    const p = path.join(root, 'tools', 'monitor-instagram-apify.js');
+    const src = fs.readFileSync(p, 'utf8');
+    const mutated = src.replace("        recordProbe('not-calendar', shape);\n", '');
+    assert.notEqual(mutated, src, '変異の当て先が見つからない(テストの前提が古い)');
+    fs.writeFileSync(p, mutated);
+  });
+  assert.equal(r.status, 0, `ジョブは落とさない(注記で見せる): ${r.stderr}`);
+  assert.match(r.stdout, /::error title=Instagram監視 - 探索の集計が合わない::/, '判定一覧に穴があるのに注記が出ていない');
+  assert.match(r.stdout, /判定一覧に穴があります/);
+});
+
+test('★CLI(探索): 健全な実行では「探索の集計が合わない」注記を出さない(誤検知しないこと)', () => {
+  const r = runProbeCliWithMutation(() => {});
+  assert.equal(r.status, 0, r.stderr);
+  assert.doesNotMatch(r.stdout, /探索の集計が合わない/, '正常な探索で偽陽性が出てはいけない');
+  // 採用より新しい位置に非カレンダーが1件並ぶ形なので、その内訳が実際に出ること
+  assert.match(r.stdout, /同じ位置のその他: カレンダーでない 1件/);
+});
