@@ -441,7 +441,19 @@ function carryOver(next, prevs) {
     }
   }
   const pinned = [...new Set(pinnedTags)];
-  const entry = { ...next, guarantee, prize, tags: [...new Set([...next.tags, ...humanTags, ...pinned])] };
+  const entry = {
+    ...next,
+    // 【優先順: 人の値 > 今回取得した値 > null】(2026-08-04修正。tools/tournament-merge.js と同じ)
+    // ★このスクリプトの toTournament は guarantee/prize を【定数 null で返す】(APIに該当
+    //   フィールドが無く、notes からの推測は誤りの温床なので入れていない)。したがって
+    //   このフォールバックが実際に効くことは無く、【出力はビット単位で変わらない】。
+    //   それでも同じ式にしてあるのは、2つの mergeStore が同じ upsert規則の別実装であり、
+    //   片方だけ違う形にすると次に読む人が「どちらが正しいのか」を判断できなくなるため
+    //   (共通化そのものは、両方の取込み経路を同時に壊しうる変更なので単独のPRで行う)。
+    guarantee: guarantee != null ? guarantee : next.guarantee != null ? next.guarantee : null,
+    prize: prize != null ? prize : next.prize != null ? next.prize : null,
+    tags: [...new Set([...next.tags, ...humanTags, ...pinned])],
+  };
   // 空のときはキーごと出さない(既存の lowConfidence と同じく任意フィールド扱い。差分を汚さない)
   if (pinned.length) entry.pinnedTags = pinned;
   return entry;

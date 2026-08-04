@@ -3268,15 +3268,15 @@ test('明細: data.js に載る全項目(参加費/アドオン/スタック/GTD
   assert.match(row, /賞品/);
 });
 
-test('★明細: GTD/賞品が data.js に載らない現状を、明細がそのまま映すこと(⑤で露見させるため)', async () => {
-  // 【既存の不具合をあえて固定する】tournament-merge.js の carryOver は guarantee/prize を
-  // 「既存エントリから取る、無ければ null」で上書きし、Visionが読み取った値にフォールバックしない。
+test('★明細: Visionが読み取った GTD/賞品が data.js に入り、明細にもそのまま出る (#5)', async () => {
+  // 【2026-08-04に直した不具合の回帰テスト】以前の carryOver は guarantee/prize を
+  // 「既存エントリから取る、無ければ null」で上書きし、Visionが読み取った値を毎回捨てていた。
   // Waitinglist経路では guarantee/prize は人手専用なので正しいが、Vision経路では
-  // プロンプトが両方を要求している(venue-schedule-vision.js)ため成立しない。
+  // プロンプトが両方を要求している(venue-schedule-vision.js)ため成立しなかった。
+  // いまは【人の値 > 今回読み取った値 > null】の優先順になっている。
   //
-  // 【明細は「読み取った値」ではなく「data.js に書かれる値」を出す】ので `GTD不明` と出る。
-  // これが⑤の最中に「画像には30万GTDとあるのに明細はGTD不明」として必ず露見する。
-  // carryOver を直したらこのテストは落ちる。そのときは期待値を「GTD300000」に更新すること。
+  // 【明細は「読み取った値」ではなく「data.js に書かれる値」を出す】ので、両者が一致することを
+  // ここで固定する。食い違うと⑤が偽の合格を出す(画像に30万GTDとあるのに明細はGTD不明、等)。
   const result = await monitor.runMonitor(
     { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
     fakeLibsForBehaviour([
@@ -3302,12 +3302,12 @@ test('★明細: GTD/賞品が data.js に載らない現状を、明細がそ�
   );
   // data.js に入る行そのものを見る(明細の出所)
   const entry = result.arr.find((t) => t.name === 'GTDつき大会');
-  assert.equal(entry.guarantee, null, 'carryOver が読み取った GTD を捨てている(既存の不具合)');
-  assert.equal(entry.prize, null, 'carryOver が読み取った 賞品 を捨てている(既存の不具合)');
-  // 明細はその事実をそのまま映す = ⑤で気づける
+  assert.equal(entry.guarantee, 300000, '読み取ったGTDが data.js に入ること');
+  assert.equal(entry.prize, '1位 賞品あり', '読み取った賞品が data.js に入ること');
+  // 明細は data.js の実態をそのまま映す = ⑤が画像と突き合わせられる
   const row = findAddedRowLine(captureAcceptedRowLines(result.summaries), 'GTDつき大会');
-  assert.match(row, /GTD不明/, '明細が data.js の実態と食い違うと⑤が偽の合格を出す');
-  assert.match(row, /賞品不明/);
+  assert.match(row, /GTD300000/, '明細が data.js の実態と食い違うと⑤が偽の合格を出す');
+  assert.match(row, /賞品1位 賞品あり/);
 });
 
 test('明細: 読み取れた 0 と「読み取れなかった」を混同しない', async () => {

@@ -391,3 +391,45 @@ test('carryOver: API_OWNED_TAGSでないタグ(人手タグ)とpinnedTagsを引�
   assert.ok(merged.tags.includes('ディープ'));
   assert.deepEqual(merged.pinnedTags, ['ディープ']);
 });
+
+// ============================================================
+// carryOver: 取得結果が読み取った GTD / 賞品を捨てない (#5)
+// ============================================================
+// 【何が壊れていたか】carryOver は両項目を「既存から取る、無ければ null」で上書きしており、
+// 【今回読み取った値を毎回捨てていた】。「guarantee/prize は人手専用」という前提は
+// Waitinglist では正しい(APIに該当フィールドが無い)が、Vision経路では成立しない —
+// プロンプトが "guarantee":number|null と "prize":string|null の両方を要求しているため。
+// 3つの保存則は「行」の会計なので、この「項目」の欠落は原理的に検知できない。だからここで固定する。
+
+test('carryOver: 既存に値が無ければ、今回読み取った GTD / 賞品を採用する', () => {
+  const read = scrapedRow({ guarantee: 100000, prize: 'Tシャツ' });
+  const entry = merge.carryOver(read, [null]);
+  assert.equal(entry.guarantee, 100000, '読み取ったGTDを捨てないこと');
+  assert.equal(entry.prize, 'Tシャツ', '読み取った賞品を捨てないこと');
+});
+
+test('carryOver: 人の値が優先される(読み取った値で上書きしない)', () => {
+  const read = scrapedRow({ guarantee: 100000, prize: '読み取った賞品' });
+  const prev = scrapedRow({ guarantee: 500000, prize: '人が入れた賞品' });
+  const entry = merge.carryOver(read, [prev]);
+  assert.equal(entry.guarantee, 500000, '人の値が勝つこと');
+  assert.equal(entry.prize, '人が入れた賞品');
+});
+
+test('carryOver: どちらにも無ければ null(0 を null に潰したりしない)', () => {
+  const entry = merge.carryOver(scrapedRow(), [null]);
+  assert.equal(entry.guarantee, null);
+  assert.equal(entry.prize, null);
+  // 0 は「読み取れた値」なので残す(参加費で 0 を既定値にしないのと同じ規律)
+  assert.equal(merge.carryOver(scrapedRow({ guarantee: 0 }), [null]).guarantee, 0);
+});
+
+test('carryOver: 人手タグ・pinnedTags の引き継ぎは変わっていない(回帰)', () => {
+  const read = scrapedRow({ tags: ['ターボ'] });
+  const prev = scrapedRow({ tags: ['バウンティ', 'ディープ'], pinnedTags: ['ディープ'] });
+  const entry = merge.carryOver(read, [prev]);
+  assert.ok(entry.tags.includes('ターボ'), '取得結果のタグは残る');
+  assert.ok(entry.tags.includes('バウンティ'), '人が付けたタグは引き継ぐ');
+  assert.ok(entry.tags.includes('ディープ'), 'pinnedTags は tags に合流する');
+  assert.deepEqual(entry.pinnedTags, ['ディープ']);
+});

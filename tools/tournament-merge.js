@@ -133,7 +133,21 @@ function carryOver(next, prevs) {
     }
   }
   const pinned = [...new Set(pinnedTags)];
-  const entry = { ...next, guarantee, prize, tags: [...new Set([...(next.tags || []), ...humanTags, ...pinned])] };
+  const entry = {
+    ...next,
+    // 【優先順: 人の値 > 今回読み取った値 > null】(2026-08-04修正)
+    // ★以前は「人の値、無ければ null」で、【今回読み取った値を毎回捨てていた】。
+    //   「guarantee/prize は人手専用フィールド」という前提は Waitinglist では正しい
+    //   (APIに該当フィールドが無く toTournament が定数 null を返す)が、
+    //   【Vision経路では成立しない】— プロンプトが "guarantee":number|null と
+    //   "prize":string|null の両方を要求しているため、読み取れた値が実際に届く。
+    //   Waitinglist用の設計をVisionに流用したことによる欠陥だった。
+    // ★3つの保存則は「行」の会計なので、この「項目」の欠落は原理的に検知できない。
+    //   だから式そのものをここで正しくしておくこと。
+    guarantee: guarantee != null ? guarantee : next.guarantee != null ? next.guarantee : null,
+    prize: prize != null ? prize : next.prize != null ? next.prize : null,
+    tags: [...new Set([...(next.tags || []), ...humanTags, ...pinned])],
+  };
   if (pinned.length) entry.pinnedTags = pinned;
   return entry;
 }

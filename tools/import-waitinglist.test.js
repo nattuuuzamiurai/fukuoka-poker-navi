@@ -446,3 +446,37 @@ test('6-7: --dry-run は控えも書かない', () => {
   assert.equal(r.state, null, 'waitinglist-write-state.json を作らないこと');
   assert.deepEqual(r.tournaments, r.before);
 });
+
+// ============================================================
+// 7. carryOver の #5 修正が、この経路の出力を1バイトも変えないこと
+// ============================================================
+// 【なぜ固定するか】#5 の修正(人の値 > 今回読み取った値 > null)は Vision経路のための
+// もので、こちらは toTournament が guarantee/prize を【定数 null で返す】ため出力が
+// 変わらない。それを主張ではなく検査で担保しておく。将来 toTournament に
+// guarantee/prize を足すと、この経路にも #5 の挙動が入ることになるので、
+// そのときこのテストが落ちて「意図した変更か」を必ず1度考えることになる。
+
+test('7: APIから作るエントリの guarantee / prize は常に null(推測で埋めない)', () => {
+  const r = run('none');
+  assert.equal(r.code, 0);
+  const fromApi = r.tournaments.filter((t) => t.id.startsWith('wl-4018492-'));
+  assert.ok(fromApi.length > 0, 'API由来の行が入っていること(空だと検査が空振りする)');
+  for (const t of fromApi) {
+    assert.equal(t.guarantee, null, 'APIに該当フィールドが無いので推測で埋めないこと');
+    assert.equal(t.prize, null);
+  }
+});
+
+test('7: 人が入れた GTD / 賞品は、機械が行を作り直しても残る', () => {
+  // 控えは GTD なし = 人が後から付けた、という状態。
+  const record = apiRow(0);
+  const current = apiRow(0, { guarantee: 300000, prize: 'Tシャツ' });
+  const r = run('none', [], null, {
+    dataJs: dataJsWith([current]),
+    writeState: { 'wl-4018492-0': record },
+  });
+  assert.equal(r.code, 0);
+  const after = r.tournaments.find((t) => t.id === 'wl-4018492-0');
+  assert.equal(after.guarantee, 300000, '人が付けたGTDが残ること');
+  assert.equal(after.prize, 'Tシャツ');
+});
