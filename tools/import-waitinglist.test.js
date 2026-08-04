@@ -68,6 +68,15 @@ const mk = (id, storeId, dayOffset, hhmm) => {
     id, name: 'テスト大会', startAt: day + 'T' + hhmm + ':00.000Z',
     registrationFee: 3000, startingStack: 20000, feature: 'ノーマル', gameRule: 'nlh',
     addons: [], entries: [], store: { displayId: storeId, name: 'store-' + storeId },
+    // 【実APIが返す自由文。data.js にも控えにも載せないと決めた場所】
+    // 本物の notes は店が書いた長文の告知そのもので、第三者の氏名・連絡先が入りうる。
+    // 全シナリオに載せてあるので、どのテストの実行経路でも漏洩走査の材料になる。
+    notes: 'ZQXJVWKZ 本日は龗麤鑫様のご来店ありがとうございました 連絡先 090-1234-5678 QJXZVWQK',
+    description: 'ZQXJVWKZ 龗麤鑫 QJXZVWQK',
+    memo: '龗麤鑫',
+    comment: 'QJXZVWQK',
+    caption: 'ZQXJVWKZ',
+    remark: '龗麤鑫',
   };
 };
 const ok = (storeId, n) => {
@@ -494,4 +503,138 @@ test('6-8: 同じidの既存でも、控えが無く seed の条件も満たさ�
     "source が 'auto' でなければ、id が wl- でも上書きしないこと"
   );
   assert.match(r.stdout, /人の行を守り、APIの行を書きませんでした 1件/);
+});
+
+// ============================================================
+// 8. 漏洩走査: このスクリプトが書く公開ファイルに、APIの自由文が1文字も出ないこと
+// ============================================================
+//
+// 【なぜ必要か】このPRは `waitinglist-write-state.json` という【新しい公開出力面】を作る。
+// 実APIの `notes` は店が書いた長文の告知そのもので、第三者の氏名・連絡先が入りうる。
+// リポジトリは public で、状態ファイルはワークフローの `git add -A` で毎朝コミットされる。
+// **一度 git 履歴に載ると取り消せない**(履歴・フォーク・キャッシュ)。
+//
+// **マージと初回実行の間にゲートが無い** — cron で回るので、マージすれば翌朝06:23に
+// この状態ファイルが public に生成・コミットされる。「マージしてから走査を足す」猶予は
+// 構造的に存在しない。
+//
+// 【現時点の漏洩は0件。それでも置くのは将来の変更を捕まえるため】
+// `notes` / `description` / `memo` / `comment` / `caption` / `remark` の参照は実装に0件。
+// 他の2経路(Instagram監視・画像取込み)には同じ形の走査があり、
+// **3つのうち1つだけ無いと、そこが変更されたとき静かに素通りする。**
+//
+// 【走査に `store.name` を含めない理由】これは【当社サイトが公開している店名】であって
+// 第三者の自由文ではない。しかも「別店舗の混入」を検出したときの ::error:: が
+// 正当にこれを出す(どの店のデータが混ざったかを人に伝えるため)。
+// 走査対象にすると、その正当な報告を漏洩として誤検知する。
+
+// ログにも data.js にもコードにも現れない文字だけで構成すること。
+// 【先頭・中間・末尾の3箇所に置く】1箇所だけだと「冒頭N字だけ出す」「末尾だけ出す」
+// といった部分的な漏洩を取り逃がす。
+const WL_FRAGMENT_MARKERS = ['ZQXJVWKZ', '龗麤鑫', 'QJXZVWQK'];
+// 【2文字断片では走査しない印】電話番号は "09" "12" のような断片が
+// data.js の日付・時刻(2026-09-12 / 09:00)と当たり前に一致するので偽陽性になる。
+// 個人情報として現実味のある形なので文面には残し、走査は「丸ごと一致」だけにする。
+const WL_WHOLE_MARKERS = ['090-1234-5678'];
+
+function assertNoApiFreeTextLeak(haystacks) {
+  let checked = 0;
+  for (const marker of WL_FRAGMENT_MARKERS) {
+    const chars = [...marker];
+    for (let i = 0; i + 2 <= chars.length; i++) {
+      const frag = chars.slice(i, i + 2).join('');
+      checked += 1;
+      for (const [name, text] of Object.entries(haystacks)) {
+        assert.ok(!text.includes(frag), `${name} にAPIの自由文の断片が漏れている: ${JSON.stringify(frag)}`);
+      }
+    }
+  }
+  for (const marker of [...WL_FRAGMENT_MARKERS, ...WL_WHOLE_MARKERS]) {
+    checked += 1;
+    for (const [name, text] of Object.entries(haystacks)) {
+      assert.ok(!text.includes(marker), `${name} にAPIの自由文が漏れている: ${JSON.stringify(marker)}`);
+    }
+  }
+  assert.ok(checked >= 20, `走査した断片が少なすぎる(${checked}通り)`);
+}
+
+test('★漏洩走査: 全出力(stdout/stderr/data.js/控えのJSON)にAPIの自由文が1文字も出ない', () => {
+  // 【fixtureが痩せていると走査は空振りする】ログの経路を1本ずつ通してから走査する。
+  // ここで通すのは: 追加 / 人の行を守って見送り(明細つき) / 人が直した項目を残した /
+  // API未掲載の手入力 の4本。いずれもAPI由来の値を文字列にして出す = 最も混入しやすい場所。
+  const blocked = {
+    id: 'cc0804n',
+    venueId: 'v3',
+    name: '人が入れた行(枠を守る)',
+    ...apiSlot(0),
+    buyin: 5000,
+    addon: null,
+    stack: 0,
+    guarantee: 30000,
+    reentry: false,
+    prize: null,
+    tags: [],
+    source: 'semi',
+    verified: false,
+    lowConfidence: true,
+  };
+  const record = apiRow(1, { buyin: 2500 }); // 昨日 機械が書いた値
+  const edited = apiRow(1, { buyin: 2500, name: '人が直した名前' }); // 名前だけ人が直した
+  const kept = {
+    id: 'kq9999',
+    venueId: 'v3',
+    name: 'API未掲載の手入力',
+    date: new Date(Date.now() + 10 * 86400e3).toISOString().slice(0, 10),
+    start: '21:00',
+    buyin: 1000,
+    addon: null,
+    stack: 0,
+    guarantee: null,
+    reentry: false,
+    prize: null,
+    tags: [],
+    source: 'semi',
+    verified: false,
+  };
+
+  const r = run('none', [], null, {
+    dataJs: dataJsWith([blocked, edited, kept]),
+    writeState: { [record.id]: record },
+  });
+
+  // 【走査の前に、狙った経路を実際に通ったことを確かめる】通っていなければ走査は空振りになる。
+  assert.equal(r.code, 0, `正常終了すること: ${r.stderr}`);
+  const all = r.stdout + r.stderr;
+  for (const [label, re] of [
+    ['店ごとの取得ログ', /API 3件 取得/],
+    ['人の行を守って見送り(明細)', /人の行を守り、APIの行を書きませんでした 1件/],
+    ['APIの読み値の明細', /APIの読み値: テスト大会/],
+    ['人が直した項目を残した', /人が直した項目を残しました 1項目/],
+    ['API未掲載の手入力', /API未掲載のため残した手入力/],
+    ['控えの書き出し', /waitinglist-write-state\.json: 更新しました/],
+  ]) {
+    assert.match(all, re, `${label}の経路を通っていない(走査が空振りになる)`);
+  }
+  assert.ok(r.state, '控えが生成されていること');
+  const stateJson = JSON.stringify(r.state);
+  assert.ok(stateJson.includes('テスト大会'), '控えに中身が入っていること(空だと走査が空振りになる)');
+  const dataJson = JSON.stringify(r.tournaments);
+  assert.ok(dataJson.includes('テスト大会'), 'data.js にAPI由来の行が入っていること');
+
+  assertNoApiFreeTextLeak({
+    stdout: r.stdout,
+    // 【stderr を必ず含める】破棄ログ・正規化ログ・失敗店の報告は console.warn / console.error =
+    // stderr に出る。stdout だけを見ると、最も混入しやすい経路を丸ごと見逃す。
+    stderr: r.stderr,
+    'waitinglist-write-state.json': stateJson,
+    'data.js': dataJson,
+  });
+});
+
+test('★漏洩走査: 取得に失敗した店の報告(::error::)にもAPIの自由文が出ない', () => {
+  // 失敗経路は stderr にしか出ないので、上のテストとは別に1回通す。
+  const r = run('v19-wrong-store');
+  assert.equal(r.code, 2, '一部失敗の終了コード');
+  assert.match(r.stderr, /別店舗\(displayId=9999999/, '混入検出の経路を通っていること');
+  assertNoApiFreeTextLeak({ stdout: r.stdout, stderr: r.stderr });
 });
