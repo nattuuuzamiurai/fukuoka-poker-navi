@@ -3288,4 +3288,32 @@ test('★警告: 平常から大きく外れたときだけ ::warning:: を出�
   assert.ok(w, '平常から外れたら警告すること');
   assert.match(w, /平常から外れた/);
   assert.match(w, /EXPECTED_NO_START_PCT を更新/, '平常値が変わったときの手順も示すこと');
+
+  // 【★到達不能な分岐を「ある」と書かない】(2026-08-04・レビュー部の指摘)
+  // 「上がったならVisionが読めなくなった可能性」は EXPECTED(95)+TOL(25) では pct>120 が要り、
+  // 割合の定義域 [0,100] では起こりえない。出ない警告を「出る」と書くのは
+  // 【システムが事実でないことを述べている】状態で、この案件で最も避けたい形。
+  assert.doesNotMatch(
+    w,
+    /上がったならVisionが読めなくなった/,
+    '到達不能な上振れ分岐を「検知する」と書かないこと(READMEはcron解除の判断材料そのもの)'
+  );
+  assert.match(w, /下振れ/, 'この警告が検知しているのは下振れだけだと明示すること');
+  assert.match(w, /対象外/, '上振れ(Visionの劣化)はこの警告の対象外だと明示すること');
+});
+
+test('★警告: 上振れ分岐は定数上そもそも到達不能(文面と実装のずれを固定する)', () => {
+  // 「下振れ専用」という警告文・READMEの記述は、平常値が上限100%に近いことに依存している。
+  // EXPECTED + TOLERANCE >= 100 である限り、上振れの発火に必要な pct は定義域の外にある。
+  // ここが崩れる定数変更(平常値を大きく下げる等)をしたときは、
+  // 【文面の方も引き直す】必要があるので、このテストで気づけるようにしておく。
+  assert.ok(
+    monitor.EXPECTED_NO_START_PCT + monitor.NO_START_PCT_TOLERANCE >= 100,
+    '上振れが発火しうる定数にするなら、警告文とREADMEの「下振れ専用」を書き直すこと'
+  );
+  // 定義域の全域を走査しても、上振れ側では1つも発火しない
+  const fires = (pct) => Math.abs(pct - monitor.EXPECTED_NO_START_PCT) > monitor.NO_START_PCT_TOLERANCE;
+  for (let pct = monitor.EXPECTED_NO_START_PCT; pct <= 100; pct += 1) {
+    assert.equal(fires(pct), false, `pct=${pct} は上振れ側なので発火しない(天井効果)`);
+  }
 });
