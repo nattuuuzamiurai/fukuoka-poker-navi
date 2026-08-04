@@ -1943,6 +1943,100 @@ function emptyPostBuckets() {
   };
 }
 
+// ---------- producer(実装が作る summary)と checker の接続 ----------
+// 【なぜこの2本が要るか(2026-08-04)】
+// 上の検知テストはどれも【テストが手で組み立てた summary】を checker に渡している。
+// そのため「実装が summary に項を入れ忘れた」種類のバグは、検知テストが全部緑のまま通る。
+// 実際そうなった: 走査フェーズのカウンタを summary に写し忘れ、合計が NaN になり
+// 【全店・毎回「投稿の集計が合わない」と誤報する】状態でPRが渡ってきた。
+// しかもそのとき同時に fixture 起因の失敗が53件あったため、
+// 【fixtureが古いだけの失敗】と【実装のバグ】が見分けられなかった。
+// ここは fixture を1件も使わない。落ちたら原因は実装以外にありえない。
+
+test('★保存則: 実装が作った summary をそのまま checker に通す(fixtureを使わない)', async () => {
+  // 新着0件の店 = summary は makeStoreSummary の初期値そのまま。
+  // Vision も画像DLも1度も呼ばれないので、抽出結果の fixture という概念が存在しない。
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
+    {
+      fetchLib: { async fetchInstagramPosts() { return []; } },
+      visionLib: { async extractTournaments() { throw new Error('呼ばれてはいけない'); } },
+      mergeLib,
+      downloadImage: async () => { throw new Error('呼ばれてはいけない'); },
+    }
+  );
+  const s = result.summaries[0];
+  for (const [name, acc] of [
+    ['投稿', monitor.checkPostAccounting(s)],
+    ['行', monitor.checkRowAccounting(s)],
+    ['取込み', monitor.checkIntakeAccounting(s)],
+  ]) {
+    // 【NaN を名指しで捕まえる】summary に項が1つでも欠けると合計が NaN になる。
+    // NaN === 期待値 は常に偽なので「集計が合わない」と毎回誤報するが、
+    // ok を見るだけだと「合わないこと自体が正しい検知」と読めてしまい区別が付かない。
+    const actual = name === '行' ? acc.rows - acc.residual : acc.actual;
+    assert.ok(
+      Number.isFinite(actual),
+      `${name}レベルの内訳の合計が数値になっていない(summary に項の入れ忘れがある): ${JSON.stringify(acc)}`
+    );
+    assert.ok(acc.ok, `何も観測していない店では 0 = 0 で成立するはず: ${JSON.stringify(acc)}`);
+  }
+  assert.equal(monitor.checkPostAccounting(s).actual, 0);
+});
+
+/**
+ * checker が実際に読む summary の項名を Proxy で観測して集める。
+ * 【手で書き写さない理由】書き写した一覧は、実装にバケツが増えたとき黙って古くなる。
+ * それが上のバグの起き方そのものなので、一覧は実装に聞く。
+ */
+function fieldsReadBy(check) {
+  const read = new Set();
+  check(
+    new Proxy(
+      {},
+      {
+        get(_, k) {
+          if (typeof k !== 'string') return undefined;
+          read.add(k);
+          return 0;
+        },
+      }
+    )
+  );
+  return read;
+}
+
+test('★保存則(投稿): checker が読む項が、実装の summary とテスト側の初期値の両方に揃っている', async () => {
+  const buckets = [...fieldsReadBy(monitor.checkPostAccounting)].filter((k) => k !== 'scheduleLikeCount');
+  assert.ok(buckets.length >= 10, `バケツが少なすぎる(観測できていない可能性): ${buckets.join(',')}`);
+
+  // (a) 実装が作る summary に全部あり、すべて有限の数値であること
+  //     = makeStoreSummary の初期化漏れ(バグ①)をここで名指しできる
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
+    {
+      fetchLib: { async fetchInstagramPosts() { return []; } },
+      visionLib: {},
+      mergeLib,
+      downloadImage: async () => Buffer.from(''),
+    }
+  );
+  const s = result.summaries[0];
+  for (const f of buckets) {
+    assert.equal(typeof s[f], 'number', `実装の summary に ${f} が無い(makeStoreSummary の初期化漏れ)`);
+    assert.ok(Number.isFinite(s[f]), `${f} が数値になっていない`);
+  }
+
+  // (b) テスト側の手書き初期値とキー集合が完全に一致すること
+  //     = 実装にバケツが増えたのに emptyPostBuckets() を更新し忘れる二重管理のずれを防ぐ
+  const literal = Object.keys(emptyPostBuckets()).filter((k) => k !== 'scheduleLikeCount');
+  assert.deepEqual(
+    literal.slice().sort(),
+    buckets.slice().sort(),
+    'emptyPostBuckets() と checkPostAccounting が見ているバケツがずれている(どちらかを合わせること)'
+  );
+});
+
 test('検知(投稿): 内訳の合計が対象数に足りなければ ok=false になり、不足分を報告する', () => {
   const broken = {
     ...emptyPostBuckets(),
