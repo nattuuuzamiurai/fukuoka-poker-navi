@@ -20,6 +20,15 @@
  *
  * 対象店舗を増やすときは下の STORES に1行足すだけでよい。
  *
+ * 【人が直した値は上書きしない(2026-08-04)】
+ *   auto エントリは毎朝作り直すので、以前は【人が直した内容が翌朝の実行で機械の値に戻っていた】。
+ *   いまは機械が書いた値そのものを waitinglist-write-state.json に控え、いまの data.js と
+ *   1項目ずつ突き合わせる。食い違う項目は人が直したものとして【その項目だけ】残す
+ *   (行ごと凍結しない — 大会名を1つ直したせいで開始時刻の更新が止まるのは、
+ *    「プレイヤーが違う時間に店へ行く」という最も重い実害を招くため)。
+ *   控えが無い行は【人のもの】として一切触らない。同じ(date,start)に API の行が来ても書かない。
+ *   詳しい規則・状態ファイルが壊れたときの縮退は tools/machine-write-state.js のヘッダを見ること。
+ *
  * 【副産物】リポジトリ直下に auto-import-stores.json を書き出す。
  *   掲載管理コンソール(別リポジトリ fukuoka-poker-admin・ローカル専用)が読んで
  *   「この店は自動取得なので手入力不要」を出すための機械可読リスト。
@@ -58,6 +67,11 @@
 
 const fs = require('fs');
 const path = require('path');
+
+// 「機械が最後に書いた値」の控えと、そこから導く所有の判定。
+// ★このモジュールは tools/tournament-merge.js(Instagram監視・画像取込み)とも共有している。
+//   規則を2箇所に書くと必ず片方が古くなるので、判定の所有者はあちら1つに寄せてある。
+const state = require('./machine-write-state');
 
 // ============================================================
 // 店舗設定 — 1行足せば対象店舗を増やせる
@@ -130,6 +144,20 @@ const RETRY_BASE_MS = 3000;      // リトライ間隔(3秒 → 6秒)
 const DATA_JS = path.join(__dirname, '..', 'data.js');
 // 掲載管理コンソール向けの「自動取得している店」のリスト(下記 writeStoreList)
 const STORES_JSON = path.join(__dirname, '..', 'auto-import-stores.json');
+// 機械が最後に書いた値の控え。これといまの data.js を突き合わせて「人が直したか」を判定する。
+// ★書き手ごとにファイルを分けてある。Instagram監視(07:10 JST)と時刻が近く、
+//   同じJSONを両方が触ると `git pull --rebase` が衝突してジョブが落ちるため。
+const WRITE_STATE_JSON = path.join(__dirname, '..', 'waitinglist-write-state.json');
+
+// 状態ファイル導入(2026-08-04)より前に機械が書いた行の引き継ぎ規則。
+// ★`wl-<ULID>` の ULID は API が発行した値で【人が発明できない】。`source: 'auto'` を書くのも
+//   このスクリプトだけ(recurring-dedupe.js のヘッダも同じ事実に依存している)。
+//   したがって「控えは無いが wl- で始まる auto 行」は機械が書いたものだと断定できる。
+// ★効くのは各行につき1回だけ。以後は控えが付くので自然に解消する。
+// ★★ここを `source: 'semi'` に広げてはいけない。手入力572件と同じ source なので、
+//   広げた瞬間に社長の入力が「機械のもの」に化けて静かに上書きされる
+//   (machine-write-state.js の assertSeedSpec が例外にして止める)。
+const WRITE_STATE_SEED = { source: 'auto', idPrefix: 'wl-' };
 
 // 一部の店だけ失敗したときの終了コード。0(全店成功)とも 1(何も書いていない)とも
 // 区別できる値にしてある。ワークフローはこれを見て「コミットは進めるが最後に赤くする」を選ぶ。
@@ -384,7 +412,10 @@ const API_OWNED_TAGS = ['ターボ', 'ディープ', 'PLO', 'ミックス'];
 /**
  * APIから作った新エントリに、既存エントリが持っていた「APIが供給できない情報」を引き継ぐ。
  * 対象は guarantee(GTD) / prize / pinnedTags / 人間が付けたタグ。
- * 引き継ぎ元は「同じidの既存auto」と「同じ(date,start)の手入力」の両方(前者を優先)。
+ * 引き継ぎ元は【機械が所有する同じidの既存】1件だけ(2026-08-04)。
+ * 以前は「同じ(date,start)の手入力」も引き継ぎ元にしていたが、いまは人の行の枠に
+ * APIの行を書かないので渡す相手が存在しない。人の行の GTD/タグは
+ * 【その行がそのまま残る】ことで守られる。
  *
  * これが無いと、初回の置き換えでGTDやバウンティ等が消え、さらに毎日の再生成で
  * 人が後から足した情報も翌朝には消えてしまう(冪等性のためにも必須)。
@@ -410,7 +441,19 @@ function carryOver(next, prevs) {
     }
   }
   const pinned = [...new Set(pinnedTags)];
-  const entry = { ...next, guarantee, prize, tags: [...new Set([...next.tags, ...humanTags, ...pinned])] };
+  const entry = {
+    ...next,
+    // 【優先順: 人の値 > 今回取得した値 > null】(2026-08-04修正。tools/tournament-merge.js と同じ)
+    // ★このスクリプトの toTournament は guarantee/prize を【定数 null で返す】(APIに該当
+    //   フィールドが無く、notes からの推測は誤りの温床なので入れていない)。したがって
+    //   このフォールバックが実際に効くことは無く、【出力はビット単位で変わらない】。
+    //   それでも同じ式にしてあるのは、2つの mergeStore が同じ upsert規則の別実装であり、
+    //   片方だけ違う形にすると次に読む人が「どちらが正しいのか」を判断できなくなるため
+    //   (共通化そのものは、両方の取込み経路を同時に壊しうる変更なので単独のPRで行う)。
+    guarantee: guarantee != null ? guarantee : next.guarantee != null ? next.guarantee : null,
+    prize: prize != null ? prize : next.prize != null ? next.prize : null,
+    tags: [...new Set([...next.tags, ...humanTags, ...pinned])],
+  };
   // 空のときはキーごと出さない(既存の lowConfidence と同じく任意フィールド扱い。差分を汚さない)
   if (pinned.length) entry.pinnedTags = pinned;
   return entry;
@@ -421,81 +464,141 @@ function carryOver(next, prevs) {
  *
  * ルール:
  *   - 過去日(today未満)のエントリは内容を一切変更しない
- *   - today以降: その店の source==='auto' は作り直す(ただし上記 carryOver で人手情報は温存)
- *   - today以降: 手入力(semi/manual)のうちAPIに同じ(date,start)があるものはAPI版に置き換える
- *   - today以降: 手入力のうちAPIに対応が無いものは残す(件数と内訳をログに出す)
+ *   - today以降: 【機械が所有する】source==='auto' は作り直す(carryOver で人手情報は温存)
+ *   - today以降: 機械が所有する行のうち【人が直した項目】は、その項目だけ人の値を残す
+ *   - today以降: 【機械が所有しない行】(人が作った行・人が直した行)には一切触らない。
+ *                同じ(date,start)にAPIの行が来ても【APIの行を書かない】
+ *   - today以降: APIに対応が無い既存の手入力は残す(件数と内訳をログに出す)
+ *
+ * 【★「同じ枠なら手入力を置き換える」を 2026-08-04 にやめた理由】
+ *   置き換えは値の交換ではなく【情報量の低下】だった。Instagram監視の dry-run #5 では
+ *   人の39件が Vision の読み取りに置き換わり、しかも39件はすべて `lowConfidence: true`
+ *   (表示は ⚠ 要確認)なので、置き換えると【誰も確認していないのに ⚠ が外れる】。
+ *   Waitinglist側でも同じ規則を使っていたため、v22 のような
+ *   「社長が DMM公式と突き合わせて直した手入力」を持つ店を有効化した瞬間に同じことが起きる。
+ *   規則の所有者は tools/tournament-merge.js のヘッダ(そちらに詳しい経緯がある)。
+ *
+ * @param {object} [opts] opts.records(控え) / opts.seed(導入前の行の引き継ぎ規則)
+ * @returns {{ next: Array, stats: object, written: object }}
+ *   written … 今回機械が書いた【人の値を戻す前の候補行】。★状態ファイルにはこれを控える。
  */
-function mergeStore(all, store, apiEntries, today) {
+function mergeStore(all, store, apiEntries, today, opts = {}) {
   const slotOf = (t) => `${t.date} ${t.start}`;
+  const records = opts.records || {};
+  const seed = state.assertSeedSpec(opts.seed || null);
+  const recordOf = (t) => (Object.prototype.hasOwnProperty.call(records, t.id) ? records[t.id] : null);
 
   const existing = all.filter((t) => t.venueId === store.venueId);
   const past = existing.filter((t) => t.date < today);
   const future = existing.filter((t) => !(t.date < today));
 
   const rawFuture = apiEntries.filter((t) => t.date >= today).sort(byDateStart);
-  const apiSlots = new Set(rawFuture.map(slotOf));
-  const apiById = new Map(rawFuture.map((t) => [t.id, t]));
 
-  const existingAutoById = new Map(future.filter((t) => t.source === 'auto').map((t) => [t.id, t]));
-  // 手入力を (date,start) で引けるようにする。同じ枠に複数あればすべて対象。
-  const manualsBySlot = new Map();
+  // 既存の未来行の所有をここで1回だけ判定する(以降はこの結果だけを見る)。
+  const own = new Map();
+  for (const t of future) own.set(t.id, state.ownership(t, recordOf(t), seed));
+  const existingById = new Map(future.map((t) => [t.id, t]));
+
+  // 【人のもの】を (date,start) で引けるようにする。APIの行はこの枠に入れない。
+  const humanBySlot = new Map();
   for (const t of future) {
-    if (t.source === 'auto') continue;
+    if (own.get(t.id).owned) continue;
     const k = slotOf(t);
-    if (!manualsBySlot.has(k)) manualsBySlot.set(k, []);
-    manualsBySlot.get(k).push(t);
+    if (!humanBySlot.has(k)) humanBySlot.set(k, []);
+    humanBySlot.get(k).push(t);
   }
 
-  // 同じ(date,start)にAPI側が何件あるか。1件のときだけ手入力と1対1に対応づけられる。
-  const apiCountBySlot = new Map();
-  for (const t of rawFuture) apiCountBySlot.set(slotOf(t), (apiCountBySlot.get(slotOf(t)) || 0) + 1);
-
-  const stats = { added: 0, updated: 0, unchanged: 0, removed: 0, carried: 0, ambiguous: 0, keptManual: [], replacedManual: [] };
+  const stats = {
+    added: 0,
+    updated: 0,
+    unchanged: 0,
+    removed: 0,
+    carried: 0,
+    // 【★残差で作らないこと★】書かないと決めたその場で +1 する。
+    // `rawFuture.length - 書いた数` にすると、別の理由で行が消えてもこの項に吸い込まれる。
+    protected: 0,
+    protectedRows: [],
+    fieldsProtected: 0,
+    protectedFields: [],
+    removedHumanEdited: [],
+    keptManual: [],
+  };
 
   // API側を1件ずつ確定させる(既存の情報を引き継ぎながら)
   const future$ = [];
+  const written = {};
+  const blockedIds = new Set();
+  const protectedIncomingIds = new Set();
+
   for (const raw of rawFuture) {
-    const prevAuto = existingAutoById.get(raw.id) || null;
-    const prevManuals = manualsBySlot.get(slotOf(raw)) || [];
+    const prev = existingById.get(raw.id) || null;
+    const o = prev ? own.get(prev.id) : null;
 
-    // ★ 同じ枠にAPI側が複数あるとき、手入力のGTD/プライズがどちらの大会のものか特定できない。
-    //   そのまま両方に配ると「GTD100万」のカードが2枚並び、片方が事実と異なる情報になる。
-    //   名前が一致するものだけに限定し、一致しなければ引き継がない(欠落は誤情報より軽い)。
-    const usableManuals =
-      apiCountBySlot.get(slotOf(raw)) === 1 ? prevManuals : prevManuals.filter((m) => m.name === raw.name);
-    if (prevManuals.length && usableManuals.length < prevManuals.length) stats.ambiguous++;
+    // (1) 同じidの既存が【人のもの】= 控えが無い。行ごと守る。
+    if (prev && !o.owned) {
+      stats.protected += 1;
+      stats.protectedRows.push({ incoming: raw, existing: [prev] });
+      blockedIds.add(prev.id);
+      protectedIncomingIds.add(raw.id);
+      continue;
+    }
 
-    const entry = carryOver(raw, [prevAuto, ...usableManuals]);
+    // (2) 別idの人の行が同じ枠を占めている。APIの行を書かない。
+    //     ★項目単位で守れないのは、id が違う行同士は項目を対応づける根拠が無いため。
+    //       旧実装の「名前が一致しない手入力のGTDは引き継がない」判断(欠落 > 誤情報)は
+    //       否定されていない — 引き継ぎを見送るのではなく行そのものを書かないことで包含された。
+    const blockers = (humanBySlot.get(slotOf(raw)) || []).filter((t) => t.id !== raw.id);
+    if (blockers.length) {
+      stats.protected += 1;
+      stats.protectedRows.push({ incoming: raw, existing: blockers });
+      for (const b of blockers) blockedIds.add(b.id);
+      protectedIncomingIds.add(raw.id);
+      continue;
+    }
+
+    // (3) 通常経路。APIの候補を作り、人が直した項目【だけ】を戻す。
+    const prevOwned = prev && o.owned ? prev : null;
+    const machineValue = carryOver(raw, [prevOwned]);
+    written[raw.id] = machineValue;
+    if (!sameEntry(machineValue, raw)) stats.carried++;
+
+    const fields = prevOwned ? o.humanFields : [];
+    if (fields.length) {
+      stats.fieldsProtected += fields.length;
+      stats.protectedFields.push({ entry: prevOwned, fields });
+    }
+    const entry = state.preserveHumanFields(machineValue, prevOwned, fields);
     future$.push(entry);
-    if (!sameEntry(entry, raw)) stats.carried++;
 
-    if (prevAuto) {
-      if (sameEntry(prevAuto, entry)) stats.unchanged++;
+    if (prev) {
+      if (sameEntry(prev, entry)) stats.unchanged++;
       else stats.updated++;
-    } else if (prevManuals.length) {
-      stats.updated++;
     } else {
       stats.added++;
     }
   }
 
-  // 既存の未来ぶんの後始末。置き換え対象の手入力はここで1回だけ数える(二重計上を防ぐ)。
-  const keptManual = [];
+  // 既存の未来ぶんの後始末。
+  const writtenIds = new Set(future$.map((e) => e.id));
+  const kept = [];
   for (const t of future) {
-    if (t.source === 'auto') {
-      if (!apiById.has(t.id)) stats.removed++; // APIから消えた = 中止/削除
-      continue; // auto は丸ごと作り直すのでここでは残さない
+    if (writtenIds.has(t.id)) continue; // 作り直した行(future$ 側に入っている)
+    const o = own.get(t.id);
+    // 機械が所有する auto 行は「APIの応答=その時点の全件」が前提なので、
+    // 応答に無い = APIから消えた(中止/削除)とみなして削除する(従来どおり)。
+    // ★ただし今回【書かなかった】行は消しもしない(守った行に手を出さない)。
+    if (t.source === 'auto' && o.owned && !protectedIncomingIds.has(t.id)) {
+      stats.removed++;
+      if (o.humanFields.length) stats.removedHumanEdited.push({ entry: t, fields: o.humanFields });
+      continue;
     }
-    if (apiSlots.has(slotOf(t))) {
-      stats.replacedManual.push(t);
-    } else {
-      keptManual.push(t);
-      stats.keptManual.push(t);
-    }
+    kept.push(t);
+    // 枠を守って APIの行を止めた行は protectedRows で数えているので、ここには入れない(二重計上を防ぐ)。
+    if (!o.owned && !blockedIds.has(t.id)) stats.keptManual.push(t);
   }
 
   // 店舗ブロックを再構成(date → start 昇順)。過去日の中身は触らない。
-  const block = [...past, ...keptManual, ...future$].sort(byDateStart);
+  const block = [...past, ...kept, ...future$].sort(byDateStart);
 
   // 元の位置(その店の最初のエントリ位置)に差し込む。無ければ末尾。
   const firstIdx = all.findIndex((t) => t.venueId === store.venueId);
@@ -503,7 +606,7 @@ function mergeStore(all, store, apiEntries, today) {
   const insertAt = firstIdx < 0 ? rest.length : all.slice(0, firstIdx).filter((t) => t.venueId !== store.venueId).length;
   const next = [...rest.slice(0, insertAt), ...block, ...rest.slice(insertAt)];
 
-  return { next, stats };
+  return { next, stats, written };
 }
 
 // ---------- 1店舗ぶんの取得と検査 ----------
@@ -582,6 +685,24 @@ async function main() {
   const before = file.arr;
   const beforeJson = JSON.stringify(before);
 
+  // 0) 機械が最後に書いた値の控えを読む。
+  //    読めない/壊れているときは【空として続行する】— ここで落とすと状態ファイル1つで
+  //    日次の取込みが永久に止まる。空でも人の行は守られる側に倒れる(既定値が「人のもの」)。
+  const writeState = state.readState(WRITE_STATE_JSON);
+  if (writeState.broken) {
+    console.warn(
+      `[import-waitinglist] ⚠ ${path.basename(WRITE_STATE_JSON)} を読めませんでした(壊れている?)。` +
+        '控えなしで続行します。人の行は守られますが、【auto行に対する人の修正は今回だけ守れません】。'
+    );
+  } else if (writeState.missing) {
+    console.log(
+      `[import-waitinglist] ${path.basename(WRITE_STATE_JSON)} はまだありません。` +
+        `今回 ${WRITE_STATE_SEED.idPrefix} で始まる auto 行を機械のものとして控え直します。`
+    );
+  } else {
+    console.log(`[import-waitinglist] 機械が書いた値の控え: ${Object.keys(writeState.entries).length}件`);
+  }
+
   // 1) 先に全店ぶん取得しきる。
   //    店ごとに独立して成否を判定し、【失敗した店だけを落として他店は通す】。
   //    失敗は StoreError として捨てずに集め、最後にまとめて報告する。
@@ -618,9 +739,14 @@ async function main() {
   // 2) マージ
   let arr = before;
   const allStats = [];
+  const writtenAll = {}; // id → 機械が書いた候補値(人の値を戻す前)。状態ファイルに控える
   for (const { store, mapped } of fetched) {
-    const { next, stats } = mergeStore(arr, store, mapped, today);
+    const { next, stats, written } = mergeStore(arr, store, mapped, today, {
+      records: writeState.entries,
+      seed: WRITE_STATE_SEED,
+    });
     arr = next;
+    Object.assign(writtenAll, written);
     allStats.push({ store, stats });
   }
 
@@ -630,16 +756,33 @@ async function main() {
     console.log(`[${store.label} / ${store.venueId}]`);
     console.log(
       `  追加 ${stats.added}件 / 更新 ${stats.updated}件 / 変更なし ${stats.unchanged}件 / ` +
-        `削除(APIから消滅) ${stats.removed}件 / 手入力の置き換え ${stats.replacedManual.length}件 / ` +
+        `削除(APIから消滅) ${stats.removed}件 / 人の行を守って見送り ${stats.protected}件 / ` +
         `API未掲載の手入力 ${stats.keptManual.length}件`
     );
     console.log(`  うち人手情報(GTD/プライズ/pinnedTags/人手タグ)を引き継いだもの ${stats.carried}件`);
-    if (stats.ambiguous) {
-      console.log(`  ⚠ 同じ枠にAPIが複数あり対応づけできず引き継ぎを見送ったもの ${stats.ambiguous}件(必要なら人手で付け直す)`);
+    if (stats.protectedRows.length) {
+      // 【::error:: にはしない】人の行がある限り毎日同じ件数が出る性質のものなので、
+      // 警告チャネルに載せると常時点灯になり、本物の異常が読めなくなる。事実として明細に出す。
+      console.log(`  人の行を守り、APIの行を書きませんでした ${stats.protectedRows.length}件:`);
+      for (const { incoming, existing } of stats.protectedRows) {
+        console.log(`    - ${incoming.date} ${incoming.start} 人の行: ${existing.map((e) => `${e.name} (${e.id})`).join(' / ')}`);
+        // ★機械の読み値も並べて出す。両者がずれているなら、そのずれ自体が人の確認対象。
+        console.log(`      APIの読み値: ${incoming.name} / 参加費 ${incoming.buyin} / スタック ${incoming.stack} (${incoming.id})`);
+      }
     }
-    if (stats.replacedManual.length) {
-      console.log(`  手入力→API版に置き換え ${stats.replacedManual.length}件:`);
-      for (const t of stats.replacedManual) console.log(`    - ${t.date} ${t.start} ${t.name} (${t.id}, source=${t.source})`);
+    if (stats.protectedFields.length) {
+      console.log(`  人が直した項目を残しました ${stats.fieldsProtected}項目 / ${stats.protectedFields.length}行:`);
+      for (const { entry, fields } of stats.protectedFields) {
+        console.log(`    - ${entry.date} ${entry.start} ${entry.name} (${entry.id}): ${fields.join(', ')}`);
+      }
+    }
+    if (stats.removedHumanEdited.length) {
+      // 人が直した行がAPIから消えた = その行は削除される。存在の有無はAPIが正なので削除するが、
+      // 黙って消すと人の作業が理由不明に消えるので必ず出す。
+      console.log(`  ⚠ 人が直した行がAPIから消えたため削除しました ${stats.removedHumanEdited.length}件:`);
+      for (const { entry, fields } of stats.removedHumanEdited) {
+        console.log(`    - ${entry.date} ${entry.start} ${entry.name} (${entry.id}): 直していた項目 ${fields.join(', ')}`);
+      }
     }
     if (stats.keptManual.length) {
       console.log('  API未掲載のため残した手入力(APIに未登録か、中止された可能性。要目視確認):');
@@ -671,14 +814,46 @@ async function main() {
     fail('過去日のエントリが変化しています(バグ)。書き込みを中止します。');
   }
 
+  // 4.5) 人の行・人が直した項目が1つも壊れていないことの突き合わせ。
+  //   ★上の stats(protected / fieldsProtected)を一切参照しない。
+  //     マージ前のディープコピーと、マージ後の配列と、控えだけで判定するので、
+  //     集計を潰す変異が入ってもこの検査は独立に生き残る。
+  //     カウンタで検算する形にすると同じ材料どうしの比較=恒等式になり、何も検査しない。
+  try {
+    const recordOf = (t) =>
+      Object.prototype.hasOwnProperty.call(writeState.entries, t.id) ? writeState.entries[t.id] : null;
+    const isOwned = (t) => state.ownership(t, recordOf(t), WRITE_STATE_SEED).owned;
+    const rowProblem = state.findUnownedRowChange(beforeSnapshot, arr, isOwned);
+    if (rowProblem) throw new Error(rowProblem);
+    const fieldProblem = state.findHumanFieldChange(beforeSnapshot, arr, recordOf);
+    if (fieldProblem) throw new Error(fieldProblem);
+    // 破壊だけでなく【重複】の向きも見る(理由は machine-write-state.js の同関数のコメント)。
+    const slotProblem = state.findMachineRowInHumanSlot(beforeSnapshot, arr, isOwned);
+    if (slotProblem) throw new Error(slotProblem);
+  } catch (e) {
+    fail(`${e.message}(バグ)。書き込みを中止します。`);
+  }
+
   const changed = JSON.stringify(arr) !== beforeJson;
   console.log('');
   console.log(`[import-waitinglist] TOURNAMENTS 全体: ${before.length}件 → ${arr.length}件 / 変更${changed ? 'あり' : 'なし'}`);
+
+  // 次の控え。今回マージした店の記録は入れ替え、取得に失敗してスキップした店の記録は残す
+  // (その店の data.js は1バイトも変えていないので、控えも変えてはいけない)。
+  // 過去日と、data.js から消えた行は刈る(控える意味が無く、放っておくと際限なく膨らむ)。
+  const nextStateEntries = state.buildNextEntries(writeState.entries, writtenAll, {
+    today,
+    replacedVenueIds: fetched.map(({ store }) => store.venueId),
+    liveIds: new Set(arr.map((t) => t.id)),
+  });
 
   if (DRY_RUN) {
     console.log('[import-waitinglist] --dry-run のため data.js は書き換えていません。');
     if (writeStoreList(true)) {
       console.log('[import-waitinglist] auto-import-stores.json は STORES とズレています（--dry-run 無しで実行すると更新されます）。');
+    }
+    if (state.writeState(WRITE_STATE_JSON, nextStateEntries, { writtenBy: 'tools/import-waitinglist.js', dryRun: true })) {
+      console.log(`[import-waitinglist] ${path.basename(WRITE_STATE_JSON)} も更新対象です（--dry-run のため書いていません）。`);
     }
     return failures.length ? EXIT_PARTIAL : 0;
   }
@@ -698,6 +873,19 @@ async function main() {
     writeDataJs(file, arr);
     console.log('[import-waitinglist] data.js を更新しました。');
   }
+
+  // 6) 機械が書いた値の控えを更新する。
+  //    ★data.js に差分が無くても書く。控えは「機械が最後に書いた値」であって
+  //      「data.js が変わったか」ではない(過去日の刈り込みだけの日もある)。
+  //    ★控えるのは【人の値を戻す前】の候補行。戻した後を控えると、翌日は控えといまの値が
+  //      一致して食い違いが消え、人の修正が翌々日に上書きされる。
+  const stateChanged = state.writeState(WRITE_STATE_JSON, nextStateEntries, {
+    writtenBy: 'tools/import-waitinglist.js',
+  });
+  console.log(
+    `[import-waitinglist] ${path.basename(WRITE_STATE_JSON)}: ${stateChanged ? '更新しました' : '変更なし'}` +
+      `（控え ${Object.keys(nextStateEntries).length}件）`
+  );
 
   if (failures.length) {
     console.error(

@@ -21,6 +21,20 @@
  *   4. 安全なupsert(tools/tournament-merge.js。対象venue以外・過去日は一切触らない、
  *      書き込み前に自己チェック、失敗時は書き換えない)で `data.js` に反映する
  *
+ * 【人が入力した行は上書きしない(2026-08-04)】
+ * 以前は「同じ(date,start)の手入力は取込み結果で置き換える」規則だった。いまは
+ * 【機械が最後に書いた値の控え】(venue-image-write-state.json)を持ち、控えがある行だけを
+ * 更新する。控えの無い行 — 人が admin.html で入れた行 — は同じ枠でも一切触らない。
+ * ★このツール自身が前回書いた行(`photo-` 接頭辞)は控えがあるので、再取込みで更新される。
+ *   控えを消した場合・このPRより前に書いた `photo-` 行は「人のもの」として扱われ、
+ *   再取込みでは更新されず並存する。その場合は admin.html で古い行を消してから取り込むこと
+ *   (削除 = 機械への引き渡し)。
+ *
+ * 【★seed を足さないこと】Waitinglist取込みには「控えが無くても `wl-` + `source:'auto'` なら
+ * 機械のもの」という引き継ぎ規則があるが、このツールが書くのは `source: 'semi'` で、
+ * これは人が admin.html で入れた行と同じ source である。同じ規則をここへ持ち込むと
+ * 手入力が機械のものに化ける(tools/machine-write-state.js の assertSeedSpec が例外にする)。
+ *
  * 使い方:
  *   node tools/import-venue-image.js --venue v40 --image ./inbox/orio-2026-09.jpg
  *   node tools/import-venue-image.js --venue v40 --image ./inbox/orio.jpg --dry-run
@@ -50,8 +64,15 @@ const path = require('path');
 // extractedRowProblem は1行だけの検査、duplicateIdProblem は行を跨ぐ検査(id重複)。
 const { normalizeExtractedRow, extractedRowProblem, duplicateIdProblem } = require('./validate-data');
 
+// 「機械が最後に書いた値」の控えと、そこから導く所有の判定。
+const machineState = require('./machine-write-state');
+
 const REPO_ROOT = path.join(__dirname, '..');
 const DATA_JS = path.join(REPO_ROOT, 'data.js');
+// 書き手ごとにファイルを分けてある(理由は tools/import-waitinglist.js の同名の定数を参照)。
+// ★実際のパスは【書き込む data.js と同じディレクトリ】から導く(下記 importVenueImage)。
+//   ここでファイル名だけを持つのは、定数を既定値にするとテストが本物のリポジトリに書いてしまうため。
+const WRITE_STATE_BASENAME = 'venue-image-write-state.json';
 
 function parseArgs(argv) {
   const args = { dryRun: argv.includes('--dry-run') };
@@ -168,9 +189,34 @@ async function importVenueImage(opts, libs) {
 
   const file = mergeLib.readDataJs(opts.dataJsPath);
   const before = file.arr;
-  const { next, stats } = mergeLib.mergeStore(before, opts.venueId, tournaments, today);
-  mergeLib.assertOnlyTargetChanged(before, next, opts.venueId, today);
+  // ★突き合わせの左辺はマージ前のディープコピー。before と next が同じ要素オブジェクトを
+  //   共有していると、in-place で書き換えるバグが両辺に同じように映って素通りする。
+  const beforeSnapshot = JSON.parse(JSON.stringify(before));
+
+  // 控え。読めなければ空(= 全行が人のもの)として続行する。安全側に倒れる。
+  // ★パスは【書き込む data.js と同じディレクトリ】から導く。定数(WRITE_STATE_JSON)を既定値に
+  //   すると、一時ディレクトリの data.js を渡すテストが【本物のリポジトリに控えを書いてしまう】
+  //   (実際に踏んだ)。data.js と控えは必ず同じ場所で対になっている必要もある。
+  const statePath = opts.writeStatePath || path.join(path.dirname(opts.dataJsPath), WRITE_STATE_BASENAME);
+  const prevState = machineState.readState(statePath);
+
+  const { next, stats, written } = mergeLib.mergeStore(before, opts.venueId, tournaments, today, {
+    records: prevState.entries,
+    // ★seed は渡さない。このツールが書くのは source:'semi' で、手入力と同じ source のため。
+  });
+  mergeLib.assertOnlyTargetChanged(beforeSnapshot, next, opts.venueId, today);
+  mergeLib.assertHumanEditsPreserved(beforeSnapshot, next, { records: prevState.entries });
   mergeLib.writeDataJs(opts.dataJsPath, file, next);
+
+  machineState.writeState(
+    statePath,
+    machineState.buildNextEntries(prevState.entries, written, {
+      today,
+      replacedVenueIds: [opts.venueId],
+      liveIds: new Set(next.map((t) => t.id)),
+    }),
+    { writtenBy: 'tools/import-venue-image.js' }
+  );
 
   return { tournaments, stats };
 }
@@ -245,9 +291,23 @@ async function main() {
 
   console.log(
     `[import-venue-image] data.js を更新しました(追加${stats.added}/更新${stats.updated}/` +
-      `変更なし${stats.unchanged}/削除${stats.removed}/手入力の置き換え${stats.replacedManual.length}件/` +
+      `変更なし${stats.unchanged}/削除${stats.removed}/人の行を守って見送り${stats.protected}件/` +
       `残した手入力${stats.keptManual.length}件)。`
   );
+  if (stats.protectedRows.length) {
+    console.log('[import-venue-image] 人の行を守り、読み取った行を書きませんでした(人が入れた内容が正です):');
+    for (const { incoming, existing } of stats.protectedRows) {
+      console.log(`  - ${incoming.date} ${incoming.start} 人の行: ${existing.map((e) => `${e.name} (${e.id})`).join(' / ')}`);
+      console.log(`    読み取った値: ${incoming.name} / 参加費 ${incoming.buyin} / スタック ${incoming.stack}`);
+    }
+    console.log('  ※ 読み取った側を採用したい行は、admin.html でその行を消してから取り込み直してください。');
+  }
+  if (stats.protectedFields.length) {
+    console.log(`[import-venue-image] 人が直した項目を残しました(${stats.fieldsProtected}項目 / ${stats.protectedFields.length}行):`);
+    for (const { entry, fields } of stats.protectedFields) {
+      console.log(`  - ${entry.date} ${entry.start} ${entry.name} (${entry.id}): ${fields.join(', ')}`);
+    }
+  }
   console.log('[import-venue-image] 忘れずに `node tools/gen-venue-pages.js .` を実行し、店舗静的ページを再生成してください。');
   console.log(
     '[import-venue-image] 注意: 日程が大幅に変わった月の再取込みでは、前回取り込んだ古いエントリが' +
