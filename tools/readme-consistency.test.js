@@ -53,7 +53,16 @@ const README = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8');
 /** 一覧表の各行 `| **#12** | … | 🔴 未了・cron阻害 | … |` から番号と状態記号を拾う。 */
 function ledgerRows() {
   const rows = [];
-  for (const line of README.split('\n')) {
+  // 【README全体を走査してはいけない】`| **#35** | …` の形は台帳以外の表にも現れる
+  // (例: 定型「検知器を試したら配線にも変異を当てる」の PR 一覧)。全体を走査すると
+  // 台帳の行数が水増しされ、内訳表を正しく直しても落ち続ける。実際に PR #39 と #40 を
+  // マージした時点で 25行 → 28行 と誤認して落ちた。台帳の「### 一覧」節に限定する。
+  const start = README.indexOf('### 一覧');
+  assert.ok(start >= 0, '台帳の「### 一覧」節が見つかりません(見出しを変えたらこのテストも直すこと)');
+  const after = README.slice(start + 1);
+  const endRel = after.indexOf('\n## ');
+  const section = endRel >= 0 ? after.slice(0, endRel) : after;
+  for (const line of section.split('\n')) {
     const m = line.match(/^\|\s*\*\*#(\d+)\*\*\s*\|(.*)$/);
     if (!m) continue;
     const cells = m[2].split('|');
