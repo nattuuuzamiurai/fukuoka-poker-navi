@@ -290,3 +290,41 @@ test('9: 突き合わせはカウンタを一切参照しない(引数が before
   assert.equal(S.findUnownedRowChange.length, 3);
   assert.equal(S.findHumanFieldChange.length, 3);
 });
+
+// ---------- 10. 重複の向き(破壊ではなく「同じ枠に2行」) ----------
+// 【1と2では足りない】いまの実装は置き換えではなく「書かない」ので、保護が外れると
+// 人の行はそのまま残り、機械の行が1行増える = 破壊ではなく重複になる。
+// 検査が破壊しか見ていないと、この向きの退行を素通りする(変異試験で実際に判明した)。
+
+test('10: 人の行が居る枠に機械の行を新設したら検出する', () => {
+  const human = handRow({ id: 'cc0804n', venueId: 'v3', date: '2099-09-12', start: '19:00' });
+  const machine = autoRow({ id: 'wl-NEW', venueId: 'v3', date: '2099-09-12', start: '19:00' });
+  const isOwned = (t) => t.source === 'auto';
+
+  assert.equal(S.findMachineRowInHumanSlot([human], [human], isOwned), null, '何も増えていなければ鳴らない');
+  const bad = S.findMachineRowInHumanSlot([human], [human, machine], isOwned);
+  assert.match(String(bad), /人の行が居る枠に機械の行を書いています/);
+  assert.match(String(bad), /cc0804n/);
+});
+
+test('10: 枠が空いていれば機械の行を増やしてよい(自動化が止まらない)', () => {
+  const human = handRow({ id: 'cc0804n', venueId: 'v3', date: '2099-09-12', start: '19:00' });
+  const machine = autoRow({ id: 'wl-NEW', venueId: 'v3', date: '2099-09-13', start: '19:00' });
+  const isOwned = (t) => t.source === 'auto';
+  assert.equal(S.findMachineRowInHumanSlot([human], [human, machine], isOwned), null);
+});
+
+test('10: 既存どうしの同時刻衝突には触れない(実データに正当なものがある)', () => {
+  // 実データの v35 には start:'' 同士の行が5件ある。既存を再掲しただけで鳴ってはいけない。
+  const a = handRow({ id: 'ak-1', venueId: 'v35', date: '2099-09-12', start: '' });
+  const b = handRow({ id: 'ak-2', venueId: 'v35', date: '2099-09-12', start: '' });
+  const isOwned = () => false;
+  assert.equal(S.findMachineRowInHumanSlot([a, b], [a, b], isOwned), null);
+});
+
+test('10: 機械のものだった枠は対象外(自分の行を作り直すのは正常)', () => {
+  const prev = autoRow({ id: 'wl-OLD', venueId: 'v3', date: '2099-09-12', start: '19:00' });
+  const next = autoRow({ id: 'wl-NEW', venueId: 'v3', date: '2099-09-12', start: '19:00' });
+  const isOwned = (t) => t.source === 'auto';
+  assert.equal(S.findMachineRowInHumanSlot([prev], [next], isOwned), null);
+});

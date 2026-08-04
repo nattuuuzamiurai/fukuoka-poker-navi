@@ -480,3 +480,18 @@ test('7: 人が入れた GTD / 賞品は、機械が行を作り直しても残�
   assert.equal(after.guarantee, 300000, '人が付けたGTDが残ること');
   assert.equal(after.prize, 'Tシャツ');
 });
+
+test('6-8: 同じidの既存でも、控えが無く seed の条件も満たさなければ上書きしない', () => {
+  // 【seed は wl- 【かつ】source:'auto' の両方を要求する】ことを行き先で確かめる。
+  // 片方だけで判定する実装に変えると、手入力572件(手書きid + semi)や、
+  // 人が source を変えた行が機械のものに化ける。
+  const notAuto = apiRow(0, { source: 'semi', name: '人のものとして扱うべき行' });
+  const r = run('none', [], null, { dataJs: dataJsWith([notAuto]) });
+  assert.equal(r.code, 0);
+  assert.deepEqual(
+    r.tournaments.find((t) => t.id === 'wl-4018492-0'),
+    notAuto,
+    "source が 'auto' でなければ、id が wl- でも上書きしないこと"
+  );
+  assert.match(r.stdout, /人の行を守り、APIの行を書きませんでした 1件/);
+});

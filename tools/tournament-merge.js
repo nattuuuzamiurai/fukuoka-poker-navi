@@ -351,6 +351,10 @@ function assertHumanEditsPreserved(before, after, opts = {}) {
   if (rowProblem) throw new Error(`${rowProblem}(バグ)。書き込みを中止します。`);
   const fieldProblem = state.findHumanFieldChange(before, after, recordOf);
   if (fieldProblem) throw new Error(`${fieldProblem}(バグ)。書き込みを中止します。`);
+  // 破壊だけでなく【重複】の向きも見る(いまの実装は置き換えではなく「書かない」ので、
+  // 保護が外れると人の行はそのまま残って機械の行が1行増える = 同じ枠が2行になる)。
+  const slotProblem = state.findMachineRowInHumanSlot(before, after, isOwned);
+  if (slotProblem) throw new Error(`${slotProblem}(バグ)。書き込みを中止します。`);
 }
 
 module.exports = {

@@ -318,6 +318,46 @@ function findHumanFieldChange(before, after, recordOf) {
   return null;
 }
 
+/**
+ * 書き込み直前の突き合わせ 3/3。
+ * 【人のものだった行が占めている枠に、機械の行を新しく置いていないこと】。
+ *
+ * 【なぜ 1/2 では足りないか(変異試験で判明・2026-08-04)】
+ *   枠の保護を外す変異を入れても、1(行が書き換わっていないか)は鳴らなかった。
+ *   いまの実装は「置き換える」のではなく「書かない」ので、保護を外すと
+ *   【人の行はそのまま残り、機械の行がもう1行増える】= 破壊ではなく重複になるためである。
+ *   重複も実害で、`recurring-dedupe.js` のヘッダが言うとおり
+ *   「同じ大会が2行に見えるのは1行足りないより信用を損なう」。
+ *   検査が「破壊」しか見ていないと、この向きの退行を素通りさせる。
+ *
+ * 【誤検知しない理由】見るのは【今回新しく増えた行】だけで、既存どうしの同時刻衝突には触れない
+ *   (実データには v35 の start:'' 同士のように正当な同枠の行が存在する)。
+ *   「人のものだった枠に機械の行を新設する」ことは保護の規則が禁じているので、
+ *   ここが鳴る = 規則が破れた、以外の意味を持たない。
+ *
+ * こちらもカウンタを参照しない(before / after / 所有判定だけ)。
+ */
+function findMachineRowInHumanSlot(before, after, isOwned) {
+  const slotKey = (t) => `${t.venueId} ${t.date} ${t.start}`;
+  const beforeIds = new Set(before.map((t) => t.id));
+  const humanSlots = new Map();
+  for (const t of before) {
+    if (isOwned(t)) continue;
+    if (!humanSlots.has(slotKey(t))) humanSlots.set(slotKey(t), t);
+  }
+  for (const t of after) {
+    if (beforeIds.has(t.id)) continue; // 今回新しく増えた行だけを見る
+    const human = humanSlots.get(slotKey(t));
+    if (human && human.id !== t.id) {
+      return (
+        `人の行が居る枠に機械の行を書いています: ${t.date} ${t.start} / ` +
+        `人の行=${human.name}(${human.id}) / 書こうとした行=${t.name}(${t.id})`
+      );
+    }
+  }
+  return null;
+}
+
 module.exports = {
   STATE_VERSION,
   FIELD_REPORT_ORDER,
@@ -332,4 +372,5 @@ module.exports = {
   writeState,
   findUnownedRowChange,
   findHumanFieldChange,
+  findMachineRowInHumanSlot,
 };

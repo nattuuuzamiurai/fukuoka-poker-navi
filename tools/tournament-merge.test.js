@@ -186,6 +186,53 @@ test('★守る(項目単位): 控えと食い違う項目だけ人の値を残�
   }
 });
 
+test('★守る: 同じidの既存に控えが無ければ、枠が空いていても上書きしない', () => {
+  // 【枠の保護とは別の経路】取得結果の (date,start) に人の行が無くても、
+  // 同じidの既存に控えが無ければその行は【人のもの】。
+  // これが無いと、状態ファイルを失った直後の実行が
+  // 「この経路が前回書いた行」と「人が入れた行」を区別できないまま全部上書きする。
+  const file = writeFixture();
+  try {
+    const parsed = merge.readDataJs(file);
+    const at = { id: 'ig-v40-2026-08-07-1900-slot', date: '2026-08-07' };
+    const human = scrapedRow({ ...at, name: '人が入れた行', buyin: 1500 });
+    const arr = [...parsed.arr, human];
+    const before = JSON.parse(JSON.stringify(arr));
+
+    // 取得結果は【同じid・別の枠】。枠 08-09 19:00 には誰も居ないので blockers は空になる。
+    const { next, stats } = merge.mergeStore(arr, 'v40', [scrapedRow({ ...at, date: '2026-08-09' })], TODAY);
+    merge.assertHumanEditsPreserved(before, next, {});
+
+    assert.deepEqual(next.find((t) => t.id === at.id), human, '人の行が1バイトも変わらないこと');
+    assert.equal(stats.protected, 1, '見送りとして数えられること');
+    assert.equal(stats.protectedRows[0].existing[0].id, at.id);
+  } finally {
+    fs.unlinkSync(file);
+  }
+});
+
+test('★守る: 突き合わせは stats を一切見ないので、集計が正しく見えても壊れていれば止まる', () => {
+  // 【この案件の要】保存則(カウンタ)は「マージが自分で数えた値」なので、
+  // マージが壊れているときは【集計も一緒に壊れて辻褄が合ってしまう】ことがある。
+  // 突き合わせはマージ前のディープコピーとマージ後の配列だけを見るので、その共倒れが起きない。
+  const file = writeFixture();
+  try {
+    const parsed = merge.readDataJs(file);
+    const before = JSON.parse(JSON.stringify(parsed.arr));
+    // 「集計上は完璧」だが人の行を書き換えた結果を、そのまま突き合わせに渡す。
+    const corrupted = parsed.arr.map((t) => (t.id === 'manual-1' ? { ...t, buyin: 9999 } : t));
+    const perfectLookingStats = { added: 0, updated: 0, unchanged: 0, protected: 1, residual: 0, ok: true };
+    assert.ok(perfectLookingStats.ok, '集計は正常に見えている');
+    assert.throws(
+      () => merge.assertHumanEditsPreserved(before, corrupted, {}),
+      /書き換えられています/,
+      'カウンタが何を言おうと、実際の値が変わっていれば止まること'
+    );
+  } finally {
+    fs.unlinkSync(file);
+  }
+});
+
 test('★守る: 人の行の GTD・タグは、その行がそのまま残ることで守られる', () => {
   // 旧実装は「人の行を置き換えたうえで GTD を引き継ぐ」形だった。いまは置き換えないので
   // 引き継ぐ必要がない。GTD 500000 と 'バウンティ' は人の行そのものに残る。

@@ -827,6 +827,9 @@ async function main() {
     if (rowProblem) throw new Error(rowProblem);
     const fieldProblem = state.findHumanFieldChange(beforeSnapshot, arr, recordOf);
     if (fieldProblem) throw new Error(fieldProblem);
+    // 破壊だけでなく【重複】の向きも見る(理由は machine-write-state.js の同関数のコメント)。
+    const slotProblem = state.findMachineRowInHumanSlot(beforeSnapshot, arr, isOwned);
+    if (slotProblem) throw new Error(slotProblem);
   } catch (e) {
     fail(`${e.message}(バグ)。書き込みを中止します。`);
   }
