@@ -1988,6 +1988,12 @@ test('★保存則: 実装が作った summary をそのまま checker に通す
  * checker が実際に読む summary の項名を Proxy で観測して集める。
  * 【手で書き写さない理由】書き写した一覧は、実装にバケツが増えたとき黙って古くなる。
  * それが上のバグの起き方そのものなので、一覧は実装に聞く。
+ *
+ * 【★Proxy は spread / `Object.keys` / `in` を観測できない(2026-08-04・品質管理部の申し送り)】
+ * checker がそれらの読み方に変わると、この関数は項名を1つも拾えず観測は空振りする。
+ * **その観測漏れを受け止めているのは下の (b) のキー集合一致(`deepEqual`)なので、(b) は冗長ではない。**
+ * 実測でも、Proxy不可視な読み方に変える変異(R3/R4)を撃墜していたのは Proxy ではなく (b) だった。
+ * 「Proxyで観測しているのだから (b) は要らない」と削ると、この検査は静かに空振りする。
  */
 function fieldsReadBy(check) {
   const read = new Set();
@@ -3417,13 +3423,16 @@ test('★品質: 画像の見出しは「見出し語を除くと何も残らな
   }
 });
 
-test('★品質: 証拠ゼロの行には lowConfidence(⚠要確認)を付けて公開する', () => {
-  // 「詳細未定の大会」も「語の判定から漏れた定休日」も、機械には区別できない。
-  // どちらに対しても「要確認」の表示は意味が正しい。
-  const noEvidence = monitor.toTournament({ date: '2026-08-05', name: 'FST SATELLITE', tags: [] }, 'v18');
-  assert.equal(noEvidence.lowConfidence, true, '証拠ゼロの行は要確認として出す');
-  assert.equal(noEvidence.start, '', '捨てずに取り込む');
-  // 証拠が1つでもあれば印を付けない(ノイズにしない)
+test('★品質: 名前しか読めない行も捨てずに取り込む(⚠は付けない)', () => {
+  // 【2026-08-04に⚠の側だけ変えた】以前はこの行に lowConfidence を付けていたが、
+  // 実測で44行中42行(95%)に点灯し、印としての意味を失っていた。社長の基準では
+  // 「最低限はトナメ名」なので名前だけの行は平常。**捨てない**ことは従来どおり
+  // (ここを「証拠を要求するフィルタ」に戻すと v18 の30行がまるごと消える)。
+  const nameOnly = monitor.toTournament({ date: '2026-08-05', name: 'FST SATELLITE', tags: [] }, 'v18');
+  assert.equal(nameOnly.start, '', '捨てずに取り込む(00:00 で埋めない)');
+  assert.equal(nameOnly.name, 'FST SATELLITE');
+  assert.equal(nameOnly.lowConfidence, undefined, '名前だけの行は平常(常時点灯する印にしない)');
+  // 項目がいくつ読めていても、名前由来の参加費でなければ印は付かない
   for (const t of [
     { date: '2026-08-05', name: 'X', start: '19:00', tags: [] },
     { date: '2026-08-05', name: 'X', buyin: 3000, tags: [] },
@@ -3431,7 +3440,7 @@ test('★品質: 証拠ゼロの行には lowConfidence(⚠要確認)を付け�
     { date: '2026-08-05', name: 'X', stack: 30000, tags: [] },
     { date: '2026-08-05', name: 'X', guarantee: 100000, tags: [] },
   ]) {
-    assert.equal(monitor.toTournament(t, 'v18').lowConfidence, undefined, `証拠があれば印は不要: ${JSON.stringify(t)}`);
+    assert.equal(monitor.toTournament(t, 'v18').lowConfidence, undefined, `印は不要: ${JSON.stringify(t)}`);
   }
 });
 
@@ -3485,14 +3494,15 @@ test('★品質: 取込み経路の全体で、休み・見出し・リングゲ
   assert.deepEqual(
     names.sort(),
     ['FST SATELLITE', 'ちゃんと読めた大会', '時刻不明の大会'],
-    '休み・見出し・リングゲームは入らないが、証拠ゼロの正当な大会は残る'
+    '休み・見出し・リングゲームは入らないが、名前しか読めない正当な大会は残る'
   );
   const reasons = result.summaries[0].dropped.map((d) => d.reason);
   assert.equal(reasons.filter((r) => /定休日・休業のマス/.test(r)).length, 1);
   assert.equal(reasons.filter((r) => /画像の見出し/.test(r)).length, 1);
   assert.equal(reasons.filter((r) => /トーナメントではない競技形式/.test(r)).length, 1);
-  // 証拠ゼロの行には⚠印が付く
-  assert.equal(result.arr.find((t) => t.name === 'FST SATELLITE').lowConfidence, true);
+  // 【2026-08-04】名前しか読めない行は平常なので⚠は付かない(旧規則ではここが true だった)。
+  // どちらの行も「捨てない」ことは変わらない — 変えたのは印だけ。
+  assert.equal(result.arr.find((t) => t.name === 'FST SATELLITE').lowConfidence, undefined);
   assert.equal(result.arr.find((t) => t.name === 'ちゃんと読めた大会').lowConfidence, undefined);
   // 残った行の中身
   const byName = Object.fromEntries(result.arr.filter((t) => t.venueId === 'v40').map((t) => [t.name, t]));
@@ -3595,30 +3605,151 @@ test('品質: 休業語だけでできた名前は引き続き落とす', () => 
   }
 });
 
-test('★品質: 名前由来かもしれない参加費は「証拠」に数えない(⚠を消させない)', () => {
+// ============================================================
+// ⚠ 要確認(lowConfidence)の判定 — 2026-08-04に作り直した
+//
+// 【新しい規則】⚠ が付く条件は【参加費が大会名から推測された疑い】ただ1つ。
+// 「時刻も参加費も無い行」は社長の基準では平常なので付けない(旧判定は44行中42行=95%に点灯し、
+// 全部に付く印は何も指していないのと同じだった)。
+//
+// 【★ここは「鳴らない警報」になりやすい】平常時この判定は0行しか返さない。
+// 壊れても本番のログは何も変わらないので、**両方向を必ず固定する**:
+//   ・付くべき行で付く(時刻あり/スタックあり/GTDあり/何も無し の4通り全部)
+//   ・付くべきでない行で付かない(名前だけ / 時刻だけ)
+// この案件は同じ罠を2度踏んでいる(PR #32 の到達不能な上振れ分岐、
+// および「上振れで発火しないことだけを検査すると警告が完全に死んでも緑」)。
+// ============================================================
+
+test('★品質: 参加費が大会名から推測された疑いがある行には、他の項目に関わらず⚠を付ける', () => {
   // Visionは画像に金額が無くても FREE ROLL→0 / 1K MULTI→1000 と推論して返すことがある。
-  // これを証拠に数えると ⚠要確認 が消え、「誤った参加費の公開」と
-  // 「それを疑えと伝える唯一の表示の消失」が重なる。⑤でも画像に数字はあるので見抜けない。
-  for (const t of [
+  // 誤った参加費は【持っていく金額】を間違えさせるうえ、画像に数字はあるので
+  // ⑤(人の照合)でも一致して見え、見抜けない。ここだけは印を残す。
+  const names = [
     { name: '1K MULTI', buyin: 1000 },
     { name: 'FREE ROLL', buyin: 0 },
     { name: '大還元フリロ', buyin: 0 },
     { name: '2K BOUNTY', buyin: 2000 },
     { name: '3000円トナメ', buyin: 3000 },
-  ]) {
-    assert.equal(monitor.hasTournamentEvidence(t), false, `⚠を残すこと: ${t.name}`);
+  ];
+  // 【★4通り全部を確かめる】旧実装は start / stack / guarantee のどれかがあると
+  // 先に「証拠あり」を返し、名前由来のガードが素通りしていた(リスク台帳 #11)。
+  // 「Visionが時刻を1つ読めた瞬間に⚠が消える」という壊れ方だったので、
+  // 他の項目を足した形でも必ず⚠が付くことを固定する。
+  const others = [
+    ['何も無し', {}],
+    ['時刻あり', { start: '19:00' }],
+    ['スタックあり', { stack: 20000 }],
+    ['GTDあり', { guarantee: 100000 }],
+  ];
+  for (const base of names) {
+    for (const [label, extra] of others) {
+      assert.equal(
+        monitor.buyinMayComeFromName({ ...base, ...extra }),
+        true,
+        `⚠を付けること(${label}): ${base.name}`
+      );
+    }
   }
-  // 名前に金額トークンが無ければ、buyin は従来どおり証拠
-  assert.equal(monitor.hasTournamentEvidence({ name: 'デイリートナメ', buyin: 3000 }), true);
-  // buyin 以外の証拠があれば、名前に金額トークンがあっても証拠あり(名前由来を疑う必要がない)
-  assert.equal(monitor.hasTournamentEvidence({ name: '1K MULTI', buyin: 1000, start: '19:00' }), true);
-  assert.equal(monitor.hasTournamentEvidence({ name: '1K MULTI', buyin: 1000, stack: 20000 }), true);
+});
+
+test('★品質: 名前だけの行・時刻だけの行には⚠を付けない(常時点灯する警報を作らない)', () => {
+  // 前回の試験実行では 44行中42行(95%)に⚠が点灯していた。社長の基準では
+  // 「最低限はトナメ名」なので、名前だけの行は平常。
+  for (const t of [
+    { name: 'FST SATELLITE' }, // 名前だけ(実測の大多数)
+    { name: '華金' },
+    { name: 'DEEP STACK', start: '19:00' }, // 時刻だけ
+    { name: 'マンデートナメ', stack: 20000 }, // スタックだけ
+    { name: 'サンデースペシャル', guarantee: 100000 }, // GTDだけ
+    { name: 'デイリートナメ', buyin: 3000 }, // 名前に金額トークンが無い参加費
+    { name: '1K MULTI' }, // 名前に金額はあるが、参加費は入っていない = 捏造されていない
+    { name: 'FREE ROLL', buyin: null },
+  ]) {
+    assert.equal(monitor.buyinMayComeFromName(t), false, `⚠を付けてはいけない: ${t.name}`);
+  }
 });
 
 test('★品質: 参加費の値そのものは消さない(⚠を残すだけ)', () => {
   const e = monitor.toTournament({ date: '2026-08-05', name: '1K MULTI', buyin: 1000, tags: [] }, 'v20');
   assert.equal(e.buyin, 1000, '値を消すと情報が失われる。消すのではなく⚠を残す');
   assert.equal(e.lowConfidence, true);
+});
+
+test('★品質: toTournament が新しい規則どおりに ⚠ を付ける(判定と結線の両方を固定する)', () => {
+  // 純関数だけを検査していると、`toTournament` の呼び出しを消す変異が素通りする。
+  // 実際に data.js へ入るエントリの形で両方向を押さえる。
+  const rowsWithWarn = [
+    { date: '2026-08-05', name: '1K MULTI', buyin: 1000, start: '19:00', tags: [] }, // 時刻あり
+    { date: '2026-08-06', name: '1K MULTI', buyin: 1000, stack: 20000, tags: [] }, // スタックあり
+    { date: '2026-08-07', name: '1K MULTI', buyin: 1000, guarantee: 100000, tags: [] }, // GTDあり
+    { date: '2026-08-08', name: '1K MULTI', buyin: 1000, tags: [] }, // 何も無し
+  ];
+  for (const row of rowsWithWarn) {
+    const e = monitor.toTournament(row, 'v20');
+    assert.equal(e.lowConfidence, true, `⚠が付くこと: ${JSON.stringify(row)}`);
+    assert.equal(e.buyin, 1000, '値は残すこと');
+  }
+  const rowsWithoutWarn = [
+    { date: '2026-08-09', name: 'FST SATELLITE', tags: [] }, // 名前だけ = 平常
+    { date: '2026-08-10', name: 'DEEP STACK', start: '19:00', tags: [] }, // 時刻だけ
+  ];
+  for (const row of rowsWithoutWarn) {
+    const e = monitor.toTournament(row, 'v20');
+    assert.equal(e.lowConfidence, undefined, `⚠を付けないこと(平常): ${row.name}`);
+    assert.ok(!('lowConfidence' in e), '平常の行にキー自体を生やさない(差分を汚さない)');
+  }
+});
+
+test('★品質: 実行経路でも新しい規則どおりに⚠が付く(明細と件数にも出る)', async () => {
+  // 【なぜ実行経路でも見るか】判定が正しくても、`toTournament` の結果が data.js へ届くまでに
+  // 印が落ちれば意味がない。前回44行の実測(名前だけ42行 + 時刻あり2行)に対応する形を作り、
+  // 名前由来の参加費の行だけに⚠が付くことを、追加されたエントリと⑤向けの明細の両方で確かめる。
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {} },
+    fakeLibsForBehaviour([
+      {
+        permalink: 'https://www.instagram.com/p/WARN/',
+        postedAt: '2026-07-20T10:00:00.000Z',
+        rows: asCalendar(
+          [
+            { date: '2099-08-01', name: '名前だけトナメ', tags: [] },
+            { date: '2099-08-02', name: '時刻ありトナメ', start: '19:00', tags: [] },
+            { date: '2099-08-03', name: '1K MULTI', buyin: 1000, start: '19:00', tags: [] },
+          ],
+          '2099-08'
+        ),
+      },
+    ])
+  );
+  const byName = (n) => result.arr.find((t) => t.name === n);
+  assert.equal(byName('名前だけトナメ').lowConfidence, undefined, '名前だけの行は平常(⚠を付けない)');
+  assert.equal(byName('時刻ありトナメ').lowConfidence, undefined, '時刻だけの行も平常');
+  assert.equal(byName('1K MULTI').lowConfidence, true, '時刻が読めても名前由来の参加費には⚠が残ること');
+  assert.equal(byName('1K MULTI').buyin, 1000, '値は消さない');
+
+  const lines = [];
+  const orig = console.log;
+  console.log = (...a) => lines.push(a.join(' '));
+  try {
+    monitor.reportAcceptedRows(result.summaries);
+  } finally {
+    console.log = orig;
+  }
+  // 件数の行(0行が平常なので、⑤が「今日は何行あるか」を1行で読めるようにしてある)
+  const count = lines.find((l) => l.includes('⚠ 要確認(参加費が大会名から推測された疑い)の行'));
+  assert.ok(count, '⚠の件数を必ず出すこと');
+  assert.match(count, new RegExp(`${result.arr.length}行中1行`), '件数が実際の⚠行数と一致すること');
+  // 明細側の印は⚠が付いた行にだけ出る
+  const detail = lines.filter((l) => l.includes('追加行: '));
+  assert.equal(detail.filter((l) => l.includes('★⚠要確認')).length, 1, '⚠の印は該当行だけに出すこと');
+  assert.ok(
+    detail.find((l) => l.includes('1K MULTI')).includes('★⚠要確認'),
+    '⑤が「どの行の参加費を見ればよいか」を明細から拾えること'
+  );
+  // 【別チャネルの警報を増やさない】⚠はサイトのバッジと明細で伝える。
+  // ::warning:: にすると「0行が平常」の指標に赤い注記を足すことになり、
+  // 開始時刻の割合の警告(別物)と紛れる。
+  assert.ok(!count.startsWith('::warning'), '⚠の件数は ::warning:: にしない');
 });
 
 test('★品質: 捨てたタグが正規化ログに記録される(コメントを事実にする)', async () => {
