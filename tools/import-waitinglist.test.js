@@ -145,8 +145,14 @@ function run(scenario, args = [], injectBeforeSelfCheck = null, opts = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'wl-import-'));
   fs.mkdirSync(path.join(dir, 'tools'));
   fs.writeFileSync(path.join(dir, 'tools', 'import-waitinglist.js'), scriptWithFixtureStores(injectBeforeSelfCheck));
-  // 「機械が最後に書いた値」の控えと所有判定。スクリプトが require するので一緒に置く。
-  fs.copyFileSync(path.join(__dirname, 'machine-write-state.js'), path.join(dir, 'tools', 'machine-write-state.js'));
+  // スクリプトが require する共有モジュールを一緒に置く。
+  // 【★ここは増えやすい★】import-waitinglist.js は module.exports を持たない純CLIで、
+  //   このテストは「ファイルを一時ディレクトリに写して spawn する」形でしか動かせない。
+  //   本体に require を1行足すたびにここも足さないと、全テストが「終了コード1」で落ちる
+  //   (落ち方が原因を示さないので、この注意書きを残しておく)。
+  for (const mod of ['machine-write-state.js', 'schedule-write-guard.js']) {
+    fs.copyFileSync(path.join(__dirname, mod), path.join(dir, 'tools', mod));
+  }
   const src = opts.dataJs || dataJsSource();
   fs.writeFileSync(path.join(dir, 'data.js'), src);
   if (opts.writeState) {
@@ -191,6 +197,12 @@ test('全店成功なら終了コード0で、両店とも取り込まれる', (
   assert.equal(r.code, 0);
   assert.equal(ofVenue(r.tournaments, 'v3').length, 3);
   assert.equal(ofVenue(r.tournaments, 'v19').length, 3);
+  // 【★この1行を消さないこと★】並びの報告は【この経路にしかない出力】で、
+  //   README が v27 / v22 の有効化手順として「動いた行数は実行ログに必ず出る」と約束している。
+  //   有効化の初回は data.js の差分が500〜1,200行になる(中身は1行も変わらない)ので、
+  //   この行が無いと運用者は「データが壊れたのか」と誤認する。
+  //   0行でも出すのは、変化時だけ出す形にすると出力が壊れたときに静かに何も出なくなるため。
+  assert.match(r.stdout, /過去日の並び: 変化なし\(0行\)/, '並びの報告は0行でも必ず出す(鳴らない警報にしない)');
 });
 
 // ---- 2. 一部失敗(これがこの変更の本体) ----
