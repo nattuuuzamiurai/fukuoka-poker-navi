@@ -5,7 +5,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { execFileSync } = require('node:child_process');
+const { execFileSync, spawnSync } = require('node:child_process');
 
 const importer = require('./import-venue-image');
 const merge = require('./tournament-merge');
@@ -180,6 +180,8 @@ const FILES_TO_COPY = [
   'venue-schedule-vision.js',
   'instagram-oembed.js',
   'validate-data.js',
+  // 「機械が最後に書いた値」の控えと所有判定。tournament-merge.js が require するので必須。
+  'machine-write-state.js',
 ];
 
 function makeTempRepoRoot() {
@@ -262,6 +264,115 @@ test('CLI: --image と --instagram-url の同時指定は異常終了する', ()
       runCli(root, ['--venue', 'v40', '--image', 'x.jpg', '--instagram-url', 'https://www.instagram.com/p/AAAA/'])
     );
     assert.equal(fs.readFileSync(path.join(root, 'data.js'), 'utf8'), before);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+// ============================================================
+// 漏洩走査: コミットされる出力面に、抽出元の余計な文字列が出ないこと
+// ============================================================
+// 【なぜこの経路にも要るか】このツールも public リポジトリにコミットされるファイルを
+// 2つ書く(`data.js` と `venue-image-write-state.json`)。**現時点の実リスクは低い** —
+// この経路には自由文の入力面が無く、`--instagram-url` も oEmbed から【サムネイル画像だけ】を
+// 取り、`title` / `author_name` は使わない。控えの中身も `data.js` に載る項目だけである。
+//
+// **それでもテストを置くのは、将来の変更を捕まえるため。** 3つの状態ファイルのうち
+// 1つだけ走査が無いと、そこが変更されたとき静かに素通りする
+// (Instagram監視・Waitinglist取込みには同じ形の走査がある)。
+//
+// 【★このツールは未知のタグを落としていない(2026-08-04に本走査で判明・別PR)】
+// `monitor-instagram-apify.js` の `toTournament` は `canonicalTags(t.tags)` を通すが、
+// こちらは `Array.isArray(t.tags) ? t.tags : []` で素通しする。つまり Vision が返した
+// `freeroll` のような未知の語がそのまま `data.js` に入り、サイトのタグ絞り込みを汚しうる。
+// **この PR ではロジックを変えないので直していない。** ここでは走査の対象から tags を外し、
+// 「載せないと決めた場所」だけを見る(仕様を欠陥として誤検知しないため)。
+//
+// 走査用の希少文字列は、Visionの生の出力のうち【data.js に載せないと決めた場所】に仕込む。
+// ログにもコードにも現れない文字だけで構成し、2文字断片まで見る
+// (「冒頭N字だけ出す」「末尾だけ出す」といった部分的な漏洩を取り逃がさないため)。
+const VI_FRAGMENT_MARKERS = ['ZQXJVWKZ', '龗麤鑫', 'QJXZVWQK'];
+
+function assertNoExtraTextLeak(haystacks) {
+  let checked = 0;
+  for (const marker of VI_FRAGMENT_MARKERS) {
+    const chars = [...marker];
+    for (let i = 0; i + 2 <= chars.length; i++) {
+      const frag = chars.slice(i, i + 2).join('');
+      checked += 1;
+      for (const [name, text] of Object.entries(haystacks)) {
+        assert.ok(!text.includes(frag), `${name} に抽出元の断片が漏れている: ${JSON.stringify(frag)}`);
+      }
+    }
+    checked += 1;
+    for (const [name, text] of Object.entries(haystacks)) {
+      assert.ok(!text.includes(marker), `${name} に抽出元の文字列が漏れている: ${JSON.stringify(marker)}`);
+    }
+  }
+  assert.ok(checked >= 15, `走査した断片が少なすぎる(${checked}通り)`);
+}
+
+test('★漏洩走査: CLIの全出力(stdout/stderr/data.js/控えのJSON)に、載せないと決めた文字列が1文字も出ない', () => {
+  const root = makeTempRepoRoot();
+  // TOURNAMENTS の終端検出は「\n];」のリテラル探索なので、空配列でも改行を挟んでおく
+  // (makeTempRepoRoot の既定は1行の `[]` で、そこまで到達する他のテストが無いため
+  //  この形になっている。ここは実際に書き込みまで走らせるので直して使う)。
+  fs.writeFileSync(
+    path.join(root, 'data.js'),
+    'const VENUES = [{"id":"v40","name":"TripleBarrel 折尾店"}];\nconst TOURNAMENTS = [\n];\nconst AREAS = [];\n' +
+      'if (typeof module !== "undefined") { module.exports = { VENUES, TOURNAMENTS, AREAS }; }\n'
+  );
+  // Vision が「data.js に載せない項目」まで返してくる状況を作る。
+  // notes は長文の告知そのもの、caption/author は将来 oEmbed 由来の値が混ざりうる場所。
+  fs.writeFileSync(
+    path.join(root, 'tools', 'venue-schedule-vision.js'),
+    `exports.mediaTypeFromPath = () => 'image/jpeg';
+     exports.extractTournaments = async () => ([
+       // 【tags には印を仕込まない】このツールは canonicalTags を通しておらず、
+       // 未知のタグがそのまま data.js に入る(Instagram監視側とは違う。下記の注記参照)。
+       // つまり tags は「載せないと決めた場所」ではないので、走査の対象にすると
+       // 【実装の欠陥ではなく仕様を誤検知する】テストになってしまう。
+       { date: '2099-09-12', start: '19:00', name: '採用される大会', buyin: 3000, stack: 10000,
+         tags: ['ターボ'],
+         notes: 'ZQXJVWKZ 優勝は龗麤鑫さん 連絡先 QJXZVWQK',
+         caption: 'ZQXJVWKZ 龗麤鑫 QJXZVWQK',
+         author: '龗麤鑫' },
+       { date: '2099-9-13', start: '19:00', name: '破棄される大会(日付書式)', buyin: 3000,
+         notes: 'QJXZVWQK 龗麤鑫 ZQXJVWKZ' },
+     ]);\n`
+  );
+  fs.writeFileSync(path.join(root, 'sample.jpg'), Buffer.from([0xff, 0xd8, 0xff, 0xd9]));
+  try {
+    // 【runCli ではなく spawnSync を使う】破棄ログ・正規化ログは console.warn = stderr に出る。
+    // stdout だけを走査すると、最も混入しやすい経路を1つ見逃す。
+    const r = spawnSync('node', ['tools/import-venue-image.js', '--venue', 'v40', '--image', 'sample.jpg'], {
+      cwd: root,
+      env: { ...process.env, ANTHROPIC_API_KEY: 'dummy' },
+      encoding: 'utf8',
+    });
+    assert.equal(r.status, 0, `正常終了すること: ${r.stderr}`);
+    const all = r.stdout + r.stderr;
+
+    // 【走査の前に、狙った経路を実際に通ったことを確かめる】通っていなければ走査は空振りになる。
+    assert.match(all, /1件を抽出しました/, '抽出のログ経路を通っていること');
+    assert.match(all, /抽出結果を1件破棄しました/, '破棄ログの経路を通っていること(最も混入しやすい)');
+    assert.match(all, /data\.js を更新しました/, '書き込みまで到達していること');
+
+    const dataJs = fs.readFileSync(path.join(root, 'data.js'), 'utf8');
+    assert.ok(dataJs.includes('採用される大会'), '採用行が data.js に入っていること(空だと走査が空振りになる)');
+
+    const stateJson = fs.readFileSync(path.join(root, 'venue-image-write-state.json'), 'utf8');
+    assert.ok(
+      stateJson.includes('採用される大会'),
+      '控えが生成され、中身が入っていること(空だと走査が空振りになる)'
+    );
+
+    assertNoExtraTextLeak({
+      stdout: r.stdout,
+      stderr: r.stderr,
+      'data.js': dataJs,
+      'venue-image-write-state.json': stateJson,
+    });
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
