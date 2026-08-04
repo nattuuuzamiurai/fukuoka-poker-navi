@@ -135,13 +135,15 @@ function scriptWithFixtureStores(injectBeforeSelfCheck) {
 }
 
 /**
- * 一時リポジトリを作り、スクリプトを1回動かして結果を返す。
+ * 一時リポジトリ(<tmp>/tools/import-waitinglist.js ＋ <tmp>/data.js ＋ stub)を組み立てる。
+ * 起動の仕方だけが違う run() と requireOnly() で共有する。
  *
  * @param {object} [opts]
  *   opts.dataJs      … data.js の中身(省略時は上の既定fixture)
  *   opts.writeState  … waitinglist-write-state.json の entries(省略時はファイル自体を置かない)
+ * @param {string|null} [injectBeforeSelfCheck] … 自己チェック直前に注入するコード(変異試験用)
  */
-function run(scenario, args = [], injectBeforeSelfCheck = null, opts = {}) {
+function makeRepo(injectBeforeSelfCheck = null, opts = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'wl-import-'));
   fs.mkdirSync(path.join(dir, 'tools'));
   fs.writeFileSync(path.join(dir, 'tools', 'import-waitinglist.js'), scriptWithFixtureStores(injectBeforeSelfCheck));
@@ -163,6 +165,16 @@ function run(scenario, args = [], injectBeforeSelfCheck = null, opts = {}) {
   }
   const stub = path.join(dir, 'stub.js');
   fs.writeFileSync(stub, stubSource());
+  return { dir, src, stub };
+}
+
+/**
+ * 一時リポジトリを作り、スクリプトを1回動かして結果を返す。
+ *
+ * @param {object} [opts] … makeRepo と同じ
+ */
+function run(scenario, args = [], injectBeforeSelfCheck = null, opts = {}) {
+  const { dir, src, stub } = makeRepo(injectBeforeSelfCheck, opts);
 
   const res = spawnSync(process.execPath, ['-r', stub, path.join(dir, 'tools', 'import-waitinglist.js'), ...args], {
     encoding: 'utf8',
@@ -189,6 +201,115 @@ function run(scenario, args = [], injectBeforeSelfCheck = null, opts = {}) {
 }
 
 const ofVenue = (list, id) => list.filter((t) => t.venueId === id);
+
+// ============================================================
+// ★require ガード（リスク台帳 #21）
+// ============================================================
+//
+// 【何を固定するか】このファイルを require しても main() が走らないこと。
+//   ガードが無かった頃は `node -e "require('./tools/import-waitinglist')"` が
+//   【本物の data.js と本物のAPI】に対して本番の取込みを走らせた(実際に事故になっている)。
+//
+// 【なぜ「require が返った」では判定できないか】main() は async なので、ガードが無くても
+//   require はすぐ返る。走ったかどうかは【副作用】でしか見えない。そこで次の5つを見る:
+//     1. fetch が1回でも呼ばれたか(プロセス終了時に回数を書き出す)
+//     2. data.js が1バイトでも変わったか
+//     3. main() が差分の有無に関係なく必ず書く auto-import-stores.json ができたか
+//     4. main() が差分の有無に関係なく必ず書く waitinglist-write-state.json ができたか
+//     5. `[import-waitinglist]` のログが1行でも出たか
+//
+// 【空振りの検査にしないための対】同じ計測で「CLIとして起動すれば5つとも反転する」ことも
+//   確かめる。これが無いと、計測の仕掛け自体が壊れて常に0/false でも上のテストが通る。
+
+/** fetch の呼び出し回数を数えるプリロード。stub の後に読み込んで包む。 */
+function fetchCounterSource() {
+  return `
+const fs = require('node:fs');
+const path = require('node:path');
+let calls = 0;
+const orig = globalThis.fetch;
+globalThis.fetch = async (...args) => { calls += 1; return orig(...args); };
+// main() は async。走ったなら走り終えた後(= プロセス終了時)に書き出す。
+// fail() 経由の process.exit(1) でも exit ハンドラは走る。
+process.on('exit', () => {
+  fs.writeFileSync(path.join(__dirname, 'fetch-calls.txt'), String(calls));
+});
+`;
+}
+
+/** スクリプトを require するだけのエントリ。 */
+function requirerSource() {
+  return `
+const m = require('./tools/import-waitinglist.js');
+console.log('REQUIRE_RETURNED');
+console.log('EXPORT_KEYS=' + JSON.stringify(Object.keys(m || {})));
+`;
+}
+
+/**
+ * 一時リポジトリを作り、entry を起動して【副作用】を観測する。
+ * entry: 'require' … requirer.js を実行する / 'cli' … スクリプトを直接起動する
+ */
+function observe(entry, scenario = 'none') {
+  const { dir, src, stub } = makeRepo(null, {});
+  fs.writeFileSync(path.join(dir, 'fetch-counter.js'), fetchCounterSource());
+  fs.writeFileSync(path.join(dir, 'requirer.js'), requirerSource());
+  const target = entry === 'require'
+    ? path.join(dir, 'requirer.js')
+    : path.join(dir, 'tools', 'import-waitinglist.js');
+
+  const res = spawnSync(process.execPath, ['-r', stub, '-r', path.join(dir, 'fetch-counter.js'), target], {
+    encoding: 'utf8',
+    env: { ...process.env, SCENARIO: scenario },
+  });
+
+  let fetchCalls = null; // null = 終了ハンドラに到達しなかった(＝計測できていない)
+  try {
+    fetchCalls = Number(fs.readFileSync(path.join(dir, 'fetch-calls.txt'), 'utf8'));
+  } catch (e) {
+    /* 未生成 */
+  }
+  return {
+    code: res.status,
+    stdout: res.stdout || '',
+    stderr: res.stderr || '',
+    dataJsBefore: src,
+    dataJsAfter: fs.readFileSync(path.join(dir, 'data.js'), 'utf8'),
+    fetchCalls,
+    wroteStoreList: fs.existsSync(path.join(dir, 'auto-import-stores.json')),
+    wroteWriteState: fs.existsSync(path.join(dir, 'waitinglist-write-state.json')),
+    dir,
+  };
+}
+
+test('★require ガード: require しても main() が走らない(APIを叩かない / data.js を書かない)', () => {
+  const r = observe('require');
+  assert.equal(r.code, 0, `require しただけで異常終了した:\n${r.stderr}`);
+  assert.match(r.stdout, /REQUIRE_RETURNED/, 'require 自体が失敗している(観測が成立していない)');
+  assert.equal(r.fetchCalls, 0, 'require しただけで fetch が呼ばれた(＝本物のAPIを叩く経路)');
+  assert.equal(r.dataJsAfter, r.dataJsBefore, 'require しただけで data.js が書き換わった');
+  assert.equal(r.wroteStoreList, false, 'require しただけで auto-import-stores.json が作られた');
+  assert.equal(r.wroteWriteState, false, 'require しただけで waitinglist-write-state.json が作られた');
+  assert.doesNotMatch(r.stdout, /\[import-waitinglist\]/, 'require しただけで main() のログが出た');
+});
+
+test('★require ガード: 同じ計測でCLI起動なら5つとも反転する(空振りの検査にしない)', () => {
+  const r = observe('cli');
+  assert.equal(r.code, 0, `CLI起動が失敗した:\n${r.stderr}`);
+  assert.ok(r.fetchCalls > 0, `CLI起動なのに fetch が0回(計測が壊れている): ${r.fetchCalls}`);
+  assert.notEqual(r.dataJsAfter, r.dataJsBefore, 'CLI起動なのに data.js が変わっていない');
+  assert.equal(r.wroteStoreList, true, 'CLI起動なのに auto-import-stores.json が無い');
+  assert.equal(r.wroteWriteState, true, 'CLI起動なのに waitinglist-write-state.json が無い');
+  assert.match(r.stdout, /\[import-waitinglist\]/, 'CLI起動なのに main() のログが出ていない');
+});
+
+test('★require ガード: module.exports は空のまま(require で呼べる経路を増やさない)', () => {
+  // 【意図的に exports を持たせていない】毎朝06:23に本番稼働しているツールなので、
+  // 「require して関数だけ呼ぶ」経路を新設すると実行経路そのものに手を入れることになる。
+  // ガードの目的は require を【安全にする】ことで、require を【使えるようにする】ことではない。
+  const r = observe('require');
+  assert.match(r.stdout, /EXPORT_KEYS=\[\]/, 'module.exports が生えている(この判断を変えるならREADMEの #21 も直すこと)');
+});
 
 // ---- 1. 全店成功 ----
 
