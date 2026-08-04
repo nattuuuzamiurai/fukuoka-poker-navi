@@ -73,6 +73,12 @@ const path = require('path');
 //   規則を2箇所に書くと必ず片方が古くなるので、判定の所有者はあちら1つに寄せてある。
 const state = require('./machine-write-state');
 
+// 書き込み直前の最終自己チェック。
+// ★このモジュールも tools/monitor-instagram-apify.js と共有している。
+//   同じ検査を2箇所に書くと必ず片方が古くなる(実際 2026-08-05 まで、まったく同じ欠陥が
+//   この2つのツールに同居していた)。検査の所有者はあちら1つに寄せてある。
+const guard = require('./schedule-write-guard');
+
 // ============================================================
 // 店舗設定 — 1行足せば対象店舗を増やせる
 //   venueId : data.js の VENUES における店舗ID
@@ -119,6 +125,14 @@ const STORES = [
   // 将来の候補(APIに掲載があることは確認済み)。有効化は「data.jsの店名 = APIの店名」を
   // 目視で確かめてから行うこと。venueIdを取り違えるとよその店の日程を掲載してしまう。
   // 有効化は【1店ずつ】行う。まとめて足すと、差分が出たときにどの店の取込が原因か切り分けられない。
+  //
+  // ★有効化した初回だけ data.js の差分が大きくなることがある(2026-08-05)。
+  //   その店の行が data.js 内で2ブロックに分かれていると、mergeStore が1か所にまとめるため
+  //   【中身は1件も変わらないのに数百行が移動する】。実測: v27 で952行 / v22 で832行。
+  //   店ごとに一度きりで、2回目以降は0行。動いた行数は実行ログに必ず出る
+  //   (「過去日の並び: N行の位置が変わりました」)。理由は tools/schedule-write-guard.js を参照。
+  //   ⚠ 2026-08-05 より前のコードでは、これが「過去日が変化しています(バグ)」と判定されて
+  //      【毎朝 exit 1 で永久に止まる】状態だった(v27 で再現。v22 では起きない)。
   //
   //   [店名が一致・そのまま有効化してよい]
   //   { venueId: 'v22', displayId: '4012445', label: 'CRownCLown' },
@@ -802,16 +816,23 @@ async function main() {
   //      beforeJson は冒頭で取得済みなので、そこから復元すれば実行時のコストもほぼ無い。
   //      現在の mergeStore / carryOver は常に新しいオブジェクトを作るので今のところ実害は無いが、
   //      将来 in-place な実装が紛れ込んでも検査が効くようにしておく。
+  //
+  //    ★ 過去日は【順序を見ない】。理由(実データでは1店が2ブロックに分かれており、
+  //      mergeStore がそれを1か所にまとめると別の店の過去日を追い越す)と、
+  //      その代わりに何を厳密に見ているかは tools/schedule-write-guard.js のヘッダに書いてある。
+  //      ★この検査は書き込みの【前】にあるので、落ちると data.js が書き換わらず、
+  //        翌朝も同じ配置で同じように落ちる = 自分では回復しない。あちらのヘッダを必ず読むこと。
   const beforeSnapshot = JSON.parse(beforeJson);
   const targets = new Set(fetched.map(({ store }) => store.venueId));
-  const others = (list) => list.filter((t) => !targets.has(t.venueId));
-  if (JSON.stringify(others(beforeSnapshot)) !== JSON.stringify(others(arr))) {
-    fail('取得に成功した店舗以外のデータが変化しています(バグ)。書き込みを中止します。');
-  }
-  // 過去日のエントリが変化していないことも確認(同じ理由で左辺はスナップショット)
-  const pastOf = (list) => list.filter((t) => targets.has(t.venueId) && t.date < today);
-  if (JSON.stringify(pastOf(beforeSnapshot)) !== JSON.stringify(pastOf(arr))) {
-    fail('過去日のエントリが変化しています(バグ)。書き込みを中止します。');
+  const verdict = guard.checkNothingElseChanged(beforeSnapshot, arr, {
+    targets,
+    today,
+    othersLabel: '取得に成功した店舗以外',
+  });
+  // 並びが変わった行数は【0でも必ず出す】(変化時だけ出す形にすると壊れても気付けない)。
+  for (const line of guard.formatReorderReport(verdict, '[import-waitinglist]')) console.log(line);
+  if (!verdict.ok) {
+    fail(verdict.message);
   }
 
   // 4.5) 人の行・人が直した項目が1つも壊れていないことの突き合わせ。

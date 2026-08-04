@@ -1082,7 +1082,7 @@ test('★隔離: 取得に失敗した店でも、他の3つの保存則は破�
 
 const TOOLS_DIR = __dirname;
 
-function makeTempRepoRoot() {
+function makeTempRepoRoot(extraTournaments = []) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'monitor-instagram-apify-cli-'));
   fs.mkdirSync(path.join(root, 'tools'));
   for (const f of [
@@ -1092,11 +1092,16 @@ function makeTempRepoRoot() {
     'validate-data.js',
     // 「機械が最後に書いた値」の控えと所有判定。tournament-merge.js が require するので必須。
     'machine-write-state.js',
+    // 書き込み直前の最終自己チェック。monitor-instagram-apify.js が require するので必須。
+    // 【★require を足したらここも足すこと★】足し忘れると全CLIテストが
+    //   「Cannot find module」で終了コード1になり、落ち方が原因を示さない。
+    'schedule-write-guard.js',
   ]) {
     fs.copyFileSync(path.join(TOOLS_DIR, f), path.join(root, 'tools', f));
   }
   const tournaments = [
     { id: 'other-1', venueId: 'v99', name: '対象外店舗(触ってはいけない)', date: '2099-01-01', start: '19:00', buyin: 0, addon: null, stack: 0, guarantee: null, reentry: false, prize: null, tags: [], source: 'manual', verified: true },
+    ...extraTournaments,
   ];
   fs.writeFileSync(
     path.join(root, 'data.js'),
@@ -4198,4 +4203,88 @@ test('★警告: 上振れ側は実装が一度も発火しない(文面と実�
     monitor.EXPECTED_NO_START_PCT + monitor.NO_START_PCT_TOLERANCE >= 100,
     '上振れが発火しうる定数にするなら、警告文とREADMEの「下振れ専用」を書き直すこと'
   );
+});
+
+// ============================================================
+// 書き込み直前の最終自己チェックの【配線】(検査そのものは schedule-write-guard.test.js)
+//
+// 【★CLIで確かめる理由★】この検査は main() の中にあり、以前はインラインで書かれていて
+// 【テストから呼べなかった】。だから 2026-08-04 に実データで落ちるまで、147本のテストが
+// 全部緑のままだった。共有モジュールに切り出して単体で覆ったうえで、
+// 「main() がそれを正しく呼んでいるか」だけをここで見る。
+// ============================================================
+
+/** data.js 上で店の行が2ブロックに分かれた配置を作る(実データと同じ形)。 */
+function splitBlockTournaments() {
+  const t = (id, venueId, date, name) => ({
+    id, venueId, name, date, start: '19:00', buyin: 1000, addon: null, stack: null,
+    guarantee: null, reentry: false, prize: null, tags: [], source: 'manual', verified: true,
+  });
+  return [
+    t('orio-past-1', 'v40', '2020-01-01', '折尾の古い大会1'), // v40 の1ブロック目
+    t('iris-past-1', 'v18', '2020-02-01', 'IRISの古い大会'), //  別の対象店(追い越される側)
+    t('orio-past-2', 'v40', '2020-03-01', '折尾の古い大会2'), // v40 の2ブロック目 = 分断されている
+  ];
+}
+
+test('★CLI: 店の行が2ブロックに分かれていても中止せず、並べ直した行数をログに出す(#17の配線)', () => {
+  const root = makeTempRepoRoot(splitBlockTournaments());
+  fs.writeFileSync(
+    path.join(root, 'tools', 'fetch-venue-posts-apify.js'),
+    `exports.fetchInstagramPosts = async (handle) => {
+       if (handle !== 'triple_orio') return [];
+       return [{ permalink: 'https://www.instagram.com/p/S/', imageUrl: 'https://example.com/S.jpg', postedAt: '2026-07-20T10:00:00.000Z', caption: '9月のスケジュール' }];
+     };\n`
+  );
+  fs.writeFileSync(path.join(root, 'tools', 'venue-schedule-vision.js'), calendarVisionStubSource('並び替えテスト大会'));
+  fs.writeFileSync(
+    path.join(root, 'stub-fetch.js'),
+    'globalThis.fetch = async (url) => ({ status: 200, arrayBuffer: async () => new TextEncoder().encode(String(url)).buffer });\n'
+  );
+  try {
+    const r = spawnSync('node', ['--require', './stub-fetch.js', 'tools/monitor-instagram-apify.js'], {
+      cwd: root,
+      env: { ...process.env, APIFY_API_TOKEN: 'dummy', ANTHROPIC_API_KEY: 'dummy' },
+      encoding: 'utf8',
+    });
+    // 修正前はここで「過去日のエントリが変化しています(バグ)」として終了コード1になっていた。
+    assert.equal(r.status, 0, `中止してはいけない: ${r.stderr}`);
+    assert.match(r.stdout, /過去日の並び: 1行の位置が変わりました/);
+    assert.match(r.stdout, /理由: data\.js 内で行が2つ以上に分かれていた店/);
+    assert.match(r.stdout, /v40\(2ブロック\)/);
+    // 実際に書けていること(=中止していないこと)を data.js 側でも確かめる
+    assert.match(fs.readFileSync(path.join(root, 'data.js'), 'utf8'), /並び替えテスト大会/);
+    // 過去日の行は3件とも中身そのままで残っている
+    const after = fs.readFileSync(path.join(root, 'data.js'), 'utf8');
+    for (const id of ['orio-past-1', 'orio-past-2', 'iris-past-1']) assert.match(after, new RegExp(id));
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('★CLI: 並びが変わらない実行でも「変化なし(0行)」を必ず出す(鳴らない警報にしない)', () => {
+  const root = makeTempRepoRoot();
+  fs.writeFileSync(
+    path.join(root, 'tools', 'fetch-venue-posts-apify.js'),
+    `exports.fetchInstagramPosts = async (handle) => {
+       if (handle !== 'triple_orio') return [];
+       return [{ permalink: 'https://www.instagram.com/p/S/', imageUrl: 'https://example.com/S.jpg', postedAt: '2026-07-20T10:00:00.000Z', caption: '9月のスケジュール' }];
+     };\n`
+  );
+  fs.writeFileSync(path.join(root, 'tools', 'venue-schedule-vision.js'), calendarVisionStubSource('マンデートナメ'));
+  fs.writeFileSync(
+    path.join(root, 'stub-fetch.js'),
+    'globalThis.fetch = async (url) => ({ status: 200, arrayBuffer: async () => new TextEncoder().encode(String(url)).buffer });\n'
+  );
+  try {
+    const r = spawnSync('node', ['--require', './stub-fetch.js', 'tools/monitor-instagram-apify.js'], {
+      cwd: root,
+      env: { ...process.env, APIFY_API_TOKEN: 'dummy', ANTHROPIC_API_KEY: 'dummy' },
+      encoding: 'utf8',
+    });
+    assert.equal(r.status, 0, r.stderr);
+    assert.match(r.stdout, /過去日の並び: 変化なし\(0行\)/);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
 });

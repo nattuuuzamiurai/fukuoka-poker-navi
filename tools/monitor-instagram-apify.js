@@ -1816,9 +1816,13 @@ async function main() {
   const fetchLib = require('./fetch-venue-posts-apify');
   const visionLib = require('./venue-schedule-vision');
   const mergeLib = require('./tournament-merge');
+  const guardLib = require('./schedule-write-guard');
 
   const file = mergeLib.readDataJs(DATA_JS);
   const before = file.arr;
+  // 最終自己チェックの左辺。before は arr と要素オブジェクトを共有するので、ここで一度だけ
+  // 深く写しておく(理由は下の checkNothingElseChanged 呼び出し箇所のコメント)。
+  const beforeSnapshot = JSON.parse(JSON.stringify(before));
   let state;
   try {
     state = loadState(STATE_PATH);
@@ -1972,16 +1976,23 @@ async function main() {
   reportEmptyResults(emptyResults);
   reportAnomalies(anomalies);
 
-  // 対象外店舗・過去日が変化していないことの最終自己チェック(店舗ごとのassertOnlyTargetChangedに加えた二重チェック)
-  const targets = new Set(STORES.map((s) => s.venueId));
-  const others = (list) => list.filter((t) => !targets.has(t.venueId));
-  if (JSON.stringify(others(before)) !== JSON.stringify(others(arr))) {
-    fail('対象外の店舗のデータが変化しています(バグ)。書き込みを中止します。');
-    return;
+  // 対象外店舗・過去日が変化していないことの最終自己チェック(店舗ごとのassertOnlyTargetChangedに加えた二重チェック)。
+  // 【★左辺はマージ前のディープコピー★】before と arr は past の要素オブジェクトを共有しているので、
+  //   before をそのまま渡すと「エントリを in-place で書き換えるバグ」が両辺に同じように映って素通りする
+  //   (Waitinglist取込みが先に同じ手当てをしている。理由はそちらの beforeSnapshot のコメントに詳しい)。
+  // 【★過去日は順序を見ない★】理由と、その代わりに何を厳密に見ているかは
+  //   tools/schedule-write-guard.js のヘッダに書いてある。ここを読む前にあちらを読むこと。
+  const verdict = guardLib.checkNothingElseChanged(beforeSnapshot, arr, {
+    targets: new Set(STORES.map((s) => s.venueId)),
+    today,
+  });
+  // 並びが変わった行数は【0でも必ず出す】。変化したときだけ出す形にすると、
+  // 出力そのものが壊れたときに静かに何も出なくなる(鳴らない警報)。
+  for (const line of guardLib.formatReorderReport(verdict, '[monitor-instagram-apify]')) {
+    console.log(line);
   }
-  const pastOf = (list) => list.filter((t) => targets.has(t.venueId) && t.date < today);
-  if (JSON.stringify(pastOf(before)) !== JSON.stringify(pastOf(arr))) {
-    fail('過去日のエントリが変化しています(バグ)。書き込みを中止します。');
+  if (!verdict.ok) {
+    fail(verdict.message);
     return;
   }
 

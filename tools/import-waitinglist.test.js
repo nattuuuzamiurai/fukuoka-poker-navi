@@ -145,8 +145,14 @@ function run(scenario, args = [], injectBeforeSelfCheck = null, opts = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'wl-import-'));
   fs.mkdirSync(path.join(dir, 'tools'));
   fs.writeFileSync(path.join(dir, 'tools', 'import-waitinglist.js'), scriptWithFixtureStores(injectBeforeSelfCheck));
-  // 「機械が最後に書いた値」の控えと所有判定。スクリプトが require するので一緒に置く。
-  fs.copyFileSync(path.join(__dirname, 'machine-write-state.js'), path.join(dir, 'tools', 'machine-write-state.js'));
+  // スクリプトが require する共有モジュールを一緒に置く。
+  // 【★ここは増えやすい★】import-waitinglist.js は module.exports を持たない純CLIで、
+  //   このテストは「ファイルを一時ディレクトリに写して spawn する」形でしか動かせない。
+  //   本体に require を1行足すたびにここも足さないと、全テストが「終了コード1」で落ちる
+  //   (落ち方が原因を示さないので、この注意書きを残しておく)。
+  for (const mod of ['machine-write-state.js', 'schedule-write-guard.js']) {
+    fs.copyFileSync(path.join(__dirname, mod), path.join(dir, 'tools', mod));
+  }
   const src = opts.dataJs || dataJsSource();
   fs.writeFileSync(path.join(dir, 'data.js'), src);
   if (opts.writeState) {
