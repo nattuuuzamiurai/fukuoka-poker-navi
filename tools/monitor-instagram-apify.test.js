@@ -5041,6 +5041,42 @@ test('★形状比較: 同点は「最強」に倒す / 形が確定していな
   assert.equal(tie.adoptedIsStrongest, true, '同点で点灯させない');
   assert.equal(tie.strongestPosition, 'adopted', '同点なら採用を代表にする(読み違えを防ぐ)');
 
+  // 【★同点の相手が「採用より新しい位置」に居る場合★】(品質管理部が見つけた素通りの穴)
+  // 上の fixture は同点の2件がどちらも calendar-current なので、先頭が採用位置になり
+  // 代表の選び方を外しても結果が変わらない = 変異が見えない。
+  // 代表の選び方が効くのは【同点の相手が採用より前に居て、かつ採用ではない】ときだけ。
+  // ここが崩れると1行要約が
+  //   「窓内の最大=…(採用より【新しい位置】/ 判定=calendar-past …)」
+  // となり、【最大が採用より新しい位置にあるのに警告が出ていない】と読める行になる。
+  // cron 後は生ログを突き合わせないので、この1行の読み違え防止はテストで留める。
+  const tieAhead = monitor.probeMetrics({
+    probeVerdicts: [
+      { index: 0, permalink: 'p/PAST/', kind: 'calendar-past', distinctDates: 20, spanDays: 30 },
+      { index: 1, permalink: 'p/ADOPTED/', kind: 'calendar-current', distinctDates: 20, spanDays: 30 },
+    ],
+  });
+  assert.equal(tieAhead.adoptedIsStrongest, true, '同点なので印は付かない(ここは変異しても同じ)');
+  assert.equal(tieAhead.strongestPosition, 'adopted', '同点なら【採用】を代表にすること');
+  assert.equal(tieAhead.strongest.permalink, 'p/ADOPTED/');
+  assert.equal(tieAhead.strongest.kind, 'calendar-current');
+  const tieLine = monitor.formatProbeShapeComparison({ label: 'X', venueId: 'v40' }, tieAhead);
+  assert.match(tieLine, /窓内の最大=異なる日付20・広がり30日\(採用した投稿そのもの/);
+  assert.doesNotMatch(
+    tieLine,
+    /採用より【新しい位置】/,
+    '同点なのに「最大は採用より新しい位置」と出ると、警告が出ていないことを読み違える'
+  );
+
+  // 1件差なら同点ではないので、従来どおり印が付く(免除が広がっていないこと)
+  const oneApart = monitor.probeMetrics({
+    probeVerdicts: [
+      { index: 0, permalink: 'p/PAST/', kind: 'calendar-past', distinctDates: 21, spanDays: 30 },
+      { index: 1, permalink: 'p/ADOPTED/', kind: 'calendar-current', distinctDates: 20, spanDays: 30 },
+    ],
+  });
+  assert.equal(oneApart.adoptedIsStrongest, false, '1件でも差があれば印を付ける');
+  assert.equal(oneApart.strongestPosition, 'ahead');
+
   // 画像DL失敗・Vision失敗は形が分からないので比較に混ぜない(0件として最大を歪めない)
   const withFailures = monitor.probeMetrics({
     probeVerdicts: [
