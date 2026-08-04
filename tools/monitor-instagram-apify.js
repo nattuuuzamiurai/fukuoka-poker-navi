@@ -125,19 +125,8 @@ const STORES = [
   { venueId: 'v35', handle: 'ace_and_king259', label: 'A&K' },
 ];
 
-// キャプションにこれらの語が含まれる投稿だけを「スケジュール告知らしい」として扱う簡易判定。
-// 取りこぼしより誤検知の方が実害が小さい(誤検知してもVision抽出が0件なら何も起きない)ため広めに取る。
-const SCHEDULE_KEYWORDS = [
-  'スケジュール',
-  '日程',
-  'タイムテーブル',
-  '月間',
-  '今月',
-  '来月',
-  '開催予定',
-  '大会情報',
-  'トーナメント表',
-];
+// 【キーワードによる事前の絞り込みは廃止した(2026-08-04)】理由は calendarShape のコメント参照。
+// 取り込むかどうかは【画像を読んだ結果の構造】だけで決める。キャプションは一切参照しない。
 
 const DRY_RUN = process.argv.includes('--dry-run');
 const REQUEST_TIMEOUT_MS = 20000;
@@ -167,11 +156,6 @@ function loadState(statePath) {
 
 function saveState(statePath, state) {
   fs.writeFileSync(statePath, `${JSON.stringify(state, null, 2)}\n`);
-}
-
-function looksLikeSchedulePost(caption) {
-  const text = String(caption || '');
-  return SCHEDULE_KEYWORDS.some((kw) => text.includes(kw));
 }
 
 /**
@@ -527,64 +511,24 @@ function toTournament(t, venueId) {
  * 「どの店の・どの投稿の・どんな値だったか」が揃っていないとVisionの抽出品質を測れないので、
  * 理由 / 店 / 投稿URL / 投稿日時 / 実際の date と name をすべて出す。
  */
-/**
- * キャプションから【本文を出さずに】較正の判断材料になる機械的な信号だけを取り出す。
- *
- * 信号の意味:
- *   chars       … 文字数。とくに【0 = キャプションが無い】が重要で、これが分かるだけで
- *                 「画像だけの日程投稿」= キーワード方式では構造的に永久に拾えない、と原因が確定する
- *   hasDateLike … `8月` `8/1` のような日付らしき並びがあるか
- *   hasTimeLike … `19:30` `19時` のような時刻らしき並びがあるか
- * 全角数字も拾う(店の告知は全角混じりが多い)。
- *
- * 【★この2つは「片側の証拠」として読むこと★】
- *   あり ⇒ 日程告知の可能性が高い(キーワード側を疑う根拠になる)
- *   なし ⇒ 【何も言えない】
- * 例えば `AUGUST SCHEDULE` は数字を1つも含まないので「日付=なし / 時刻=なし」と出るが、
- * これは紛れもない日程告知である。**「両方なし」を「日程告知ではない」と読むと、
- * 4本目の経路(キーワード不一致)の較正判断を誤る。**
- */
-/** 日付レンジの集計に使ってよい書式(YYYY-MM-DD ゼロ埋め)。 */
+/** 日付レンジ・カレンダー判定に使ってよい書式(YYYY-MM-DD ゼロ埋め)。 */
 const VALID_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
-const CAPTION_DATE_LIKE = /[0-9０-９]{1,2}\s*[/／月]/;
-const CAPTION_TIME_LIKE = /[0-9０-９]{1,2}\s*[:：時]/;
-
 /**
- * 「実質的に空」と見なす文字。半角/全角の空白・改行は `trim()` が落とすが、
- * 【ゼロ幅スペース(U+200B等)は落とさない】ので明示的に除く。
- * 全角スペースだけ・ゼロ幅スペースだけのキャプションは looksLikeSchedulePost では
- * 空文字と同じく【構造的に永久に拾えない】ため、`キャプション3字` のように出すと
- * 「短いだけだからキーワードを足せば拾えるかも」と誤読される。
- */
-const CAPTION_BLANK_CHARS = /[\s\u200B-\u200D\u2060\uFEFF]/g;
-
-function captionSignals(caption) {
-  const text = String(caption || '');
-  return {
-    chars: [...text].length,
-    isBlank: text.replace(CAPTION_BLANK_CHARS, '') === '',
-    hasDateLike: CAPTION_DATE_LIKE.test(text),
-    hasTimeLike: CAPTION_TIME_LIKE.test(text),
-  };
-}
-
-/**
- * キーワード判定(looksLikeSchedulePost)で落とした投稿を1行にする。
+ * 【キャプションはどこからも参照しない(2026-08-04)】
+ * 以前はキーワードで落とした投稿の較正のために、本文を出さずに機械的な信号
+ * (文字数 / 日付らしき表記 / 時刻らしき表記)だけを出す `formatFilteredOutPost` があった。
+ * キーワード判定の廃止でその経路ごと無くなったので、関数もろとも削除した。
+ * 較正に必要な数値は `formatCalendarVerdict`(支配月 / 異なる日付 / 広がり)が出す。
  *
- * この経路は画像を1度も見ずに投稿を捨て、それでいて lastPostedAt は前進する。
- * 件数だけでは「日程を投稿していない店」なのか「投稿しているが語に当たらない店」なのか
- * 区別できないので、どの投稿を落としたかを追える情報を出す。
- *
- * 【★キャプション本文は出さない(2026-08-01)★】
- * このリポジトリは public で、Actions のログは誰でも読める(既定90日保持)。
- * しかもこのログが集めるのは「キーワードに当たらなかった投稿」= 日程告知【以外】であり、
- * 優勝者名・お礼・連絡先が入りやすい側に【収集が偏っている】。
- * 一方で診断に必要なのは「取りこぼしていないか」の判断で、それは permalink を開けば
- * キャプション全文が読める以上、本文の複製が人にできることを増やしていない。
- * 便益がほぼ無くリスクだけがあるので、本文は出さず【機械的な信号だけ】にする。
- * 「本文を出さない」ことはテストで固定してある(将来また出すコードが入ったら落ちる)。
+ * 【★キャプションを読むコードを足すときは、まずここを読むこと★】
+ * このリポジトリは public で Actions のログは誰でも読める(既定90日保持)。
+ * 新方式は【全投稿】が判定ログを通るので、本文を出すと日程告知以外
+ * (優勝者名・お礼・連絡先)まで公開ログに複製されることになる。旧方式より収集範囲が広い。
+ * 診断に必要なことは permalink を開けば分かるので、本文を出す便益はほぼ無い。
+ * 「本文を出さない」ことは formatCalendarVerdict のテストとCLI全出力の漏洩走査で固定してある。
  */
+
 /**
  * 【月間カレンダーかどうか】を、語彙ではなく【抽出結果の構造】で判定する。
  *
@@ -649,25 +593,6 @@ function formatCalendarVerdict(store, post, shape, verdict) {
     ` / 投稿=${post.permalink}(${post.postedAt})` +
     ` / 支配月=${shape.dominantMonth || 'なし'} / 異なる日付=${shape.distinctDates} / 広がり=${shape.spanDays}日` +
     ` / ${verdict}`
-  );
-}
-
-function formatFilteredOutPost(store, post) {
-  const sig = captionSignals(post.caption);
-  // 空白のみ・ゼロ幅スペースのみも「なし」側に寄せる。文字数だけ出すと
-  // 「短いだけだからキーワードを足せば拾えるかも」と誤読されるが、実際には空文字と同じで
-  // キーワード方式では【構造的に永久に拾えない】。
-  const captionDesc = sig.isBlank
-    ? sig.chars === 0
-      ? 'キャプションなし(0字)'
-      : `キャプション実質なし(空白のみ${sig.chars}字)`
-    : `キャプション${sig.chars}字 / 日付らしき表記=${sig.hasDateLike ? 'あり' : 'なし'}` +
-      ` / 時刻らしき表記=${sig.hasTimeLike ? 'あり' : 'なし'}`;
-  return (
-    `[monitor-instagram-apify] キーワード不一致で対象外: 店=${store.label}(${store.venueId})` +
-    ` / 投稿=${post.permalink}(${post.postedAt})` +
-    ` / ${captionDesc}` +
-    ' ※本文は出しません(公開ログのため)。内容は投稿URLで確認してください'
   );
 }
 
@@ -1949,14 +1874,11 @@ if (require.main === module) {
 
 module.exports = {
   STORES,
-  SCHEDULE_KEYWORDS,
-  looksLikeSchedulePost,
   pickNewPosts,
   slugify,
   toTournament,
   formatDroppedRow,
   formatNormalizedRow,
-  formatFilteredOutPost,
   canonicalTag,
   canonicalTags,
   droppedTags,
@@ -1967,7 +1889,6 @@ module.exports = {
   normalizeName,
   tournamentEvidence,
   isNonTournamentFormat,
-  captionSignals,
   calendarShape,
   formatCalendarVerdict,
   MIN_CALENDAR_DATES,

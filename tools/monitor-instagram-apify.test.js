@@ -73,13 +73,6 @@ test('pickNewPosts: postedAtが読み取れない投稿は無視する', () => {
   );
 });
 
-test('looksLikeSchedulePost: キーワードを含む/含まないキャプションを判定する', () => {
-  assert.equal(monitor.looksLikeSchedulePost('9月のスケジュールです🔥'), true);
-  assert.equal(monitor.looksLikeSchedulePost('今日も盛り上がりました!ありがとうございました'), false);
-  assert.equal(monitor.looksLikeSchedulePost(''), false);
-  assert.equal(monitor.looksLikeSchedulePost(undefined), false);
-});
-
 // ---------- runMonitor(中核ロジック。依存注入・ファイルI/Oなし) ----------
 
 function addDaysJst(dateStr, days) {
@@ -1859,11 +1852,35 @@ test('formatCalendarVerdict: 判定に使った数値と投稿URLが1行に出�
   assert.match(line, /異なる日付=28/);
   assert.match(line, /広がり=30日/);
   // 【公開ログなのでキャプション本文は出さない】この経路は【全投稿】が通るため、
-  // 旧経路(キーワード不一致)より更に広く本文を集めてしまう。
-  for (const secret of ['山田', '太郎', '優勝', '090', '1234', '5678']) {
-    assert.ok(!line.includes(secret), `キャプション本文が漏れている: ${secret}`);
+  // 旧経路(キーワード不一致で落ちた投稿だけ)より更に広く本文を集めてしまう。
+  // 【断片まで走査する】部分的な漏洩(冒頭N字だけ出す等)を取り逃がさないため、
+  // 廃止した formatFilteredOutPost のテストが持っていた2文字断片の走査をここに引き継ぐ。
+  const caption = '優勝は山田太郎さんでした!連絡先 090-1234-5678';
+  const chars = [...caption];
+  let checked = 0;
+  for (let i = 0; i + 2 <= chars.length; i++) {
+    const gram = chars.slice(i, i + 2).join('');
+    if (/^\s*$/.test(gram)) continue;
+    checked += 1;
+    assert.ok(!line.includes(gram), `キャプションの断片が漏れている: ${JSON.stringify(gram)}`);
   }
+  assert.ok(checked >= 20, `走査した断片が少なすぎる(${checked}通り)`);
   assert.doesNotMatch(line, /\n/, '改行を潰してログが崩れないようにすること');
+});
+
+test('★キャプションは実装のどこからも参照されない(公開ログへの複製経路を構造的に無くす)', () => {
+  // 【関数単位のテストだけでは足りない】formatCalendarVerdict が本文を出さないことを
+  // 確かめても、【別の行が出す】変更は素通りする(実際、過去の走査で
+  // 「Vision 0件のログ行に本文を出す」変異だけが生き残った)。
+  // キーワード判定の廃止でキャプションを読む理由が無くなったので、
+  // 【そもそも参照が1つも無い】ことをソースに対して直接固定する。
+  // ここが落ちたら、キャプションを読むコードが復活したということ。
+  // 本当に必要なら、公開ログに何が出るかを上のような断片走査つきで必ず確認すること。
+  const src = fs.readFileSync(path.join(__dirname, 'monitor-instagram-apify.js'), 'utf8');
+  const code = src
+    .replace(/\/\*[\s\S]*?\*\//g, '') // ブロックコメントを除く(経緯の説明で語そのものは出てくる)
+    .replace(/\/\/.*$/gm, '');
+  assert.doesNotMatch(code, /\bcaption\b/, 'キャプションを参照するコードが復活している');
 });
 
 test('calendarShape: 支配月・異なる日付・広がりを、閾値の境界で正しく判定する', () => {
@@ -1897,100 +1914,6 @@ test('calendarShape: 月をまたぐカレンダーでも支配月が1つに決�
   assert.equal(shape.dominantMonth, '2026-06');
   assert.equal(shape.distinctDates, 20, '支配月の日付だけを数えること(はみ出したぶんを混ぜない)');
   assert.equal(shape.isCalendar, true);
-});
-
-test('formatFilteredOutPost: 店・投稿URL・投稿日時が1行に出る', () => {
-  const line = monitor.formatFilteredOutPost(
-    { venueId: 'v40', label: 'TripleBarrel 折尾店' },
-    {
-      permalink: 'https://www.instagram.com/p/ABC/',
-      postedAt: '2026-07-20T10:00:00.000Z',
-      caption: 'AUGUST SCHEDULE 8/1〜 19:30スタート',
-    }
-  );
-  assert.match(line, /TripleBarrel 折尾店/);
-  assert.match(line, /v40/);
-  assert.match(line, /https:\/\/www\.instagram\.com\/p\/ABC\//, '投稿を特定できること(本文の代わりにこれで確認する)');
-  assert.match(line, /2026-07-20T10:00:00\.000Z/);
-  assert.doesNotMatch(line, /\n/, '改行を潰してログが崩れないようにすること');
-});
-
-test('★formatFilteredOutPost: キャプション本文を1文字も出さない(公開ログのため)', () => {
-  // 【この経路は収集が偏っている】ログに残るのは「キーワードに当たらなかった投稿」=
-  // 日程告知【以外】で、優勝者名・お礼・連絡先が入りやすい側。リポジトリは public で
-  // Actionsログは誰でも読める。permalink があれば全文は投稿を開けば読めるので、
-  // 本文の複製は人にできることを増やさないまま公開の複製だけを作る。
-  // 将来また本文を出すコードが入ったらこのテストが落ちる。
-  const caption = '優勝は山田太郎さんでした!おめでとうございます。お問い合わせは 090-1234-5678 まで';
-  const line = monitor.formatFilteredOutPost(
-    { venueId: 'v40', label: '店' },
-    { permalink: 'https://www.instagram.com/p/ABC/', postedAt: 't', caption }
-  );
-  for (const secret of ['山田', '太郎', '優勝', 'おめでとう', '090', '1234', '5678', 'お問い合わせ']) {
-    assert.ok(!line.includes(secret), `キャプション本文が漏れている: ${secret}`);
-  }
-  // 本文の断片(2文字以上の連続)が1つも含まれないことも機械的に確認する
-  const chars = [...caption];
-  for (let i = 0; i + 2 <= chars.length; i++) {
-    const gram = chars.slice(i, i + 2).join('');
-    if (/^[\s]*$/.test(gram)) continue;
-    assert.ok(!line.includes(gram), `キャプションの断片が漏れている: ${JSON.stringify(gram)}`);
-  }
-});
-
-test('formatFilteredOutPost: 本文の代わりに機械的な信号(文字数・日付/時刻らしき表記)を出す', () => {
-  const withBoth = monitor.formatFilteredOutPost(
-    { venueId: 'v40', label: '店' },
-    { permalink: 'p', postedAt: 't', caption: '8/1から 19:30スタートです' }
-  );
-  assert.match(withBoth, /キャプション\d+字/);
-  assert.match(withBoth, /日付らしき表記=あり/);
-  assert.match(withBoth, /時刻らしき表記=あり/);
-
-  const neither = monitor.formatFilteredOutPost(
-    { venueId: 'v40', label: '店' },
-    { permalink: 'p', postedAt: 't', caption: '本日も営業しております' }
-  );
-  assert.match(neither, /日付らしき表記=なし/);
-  assert.match(neither, /時刻らしき表記=なし/);
-});
-
-test('★formatFilteredOutPost: キャプションが無い投稿はそれと分かる(キーワード方式では永久に拾えない)', () => {
-  // 画像だけの日程投稿は、キャプションが空である限りキーワード方式では構造的に拾えない。
-  // これが分かるだけで「キーワードを増やしても解決しない」と原因が確定する。
-  const none = monitor.formatFilteredOutPost({ venueId: 'v40', label: '店' }, { permalink: 'p', postedAt: 't' });
-  assert.match(none, /キャプションなし\(0字\)/);
-  const empty = monitor.formatFilteredOutPost(
-    { venueId: 'v40', label: '店' },
-    { permalink: 'p', postedAt: 't', caption: '' }
-  );
-  assert.match(empty, /キャプションなし\(0字\)/);
-});
-
-test('captionSignals: 全角の数字・コロンでも日付/時刻らしき表記を拾う', () => {
-  assert.deepEqual(monitor.captionSignals(''), { chars: 0, isBlank: true, hasDateLike: false, hasTimeLike: false });
-  assert.equal(monitor.captionSignals('８月のお知らせ').hasDateLike, true, '全角の月表記');
-  assert.equal(monitor.captionSignals('１９：３０開始').hasTimeLike, true, '全角の時刻表記');
-  assert.equal(monitor.captionSignals('19時スタート').hasTimeLike, true);
-  assert.equal(monitor.captionSignals('8/1開催').hasDateLike, true);
-  assert.equal(monitor.captionSignals('ありがとうございました').hasDateLike, false);
-  assert.equal(monitor.captionSignals('🎰🃏').chars, 2, '絵文字はコードポイントで数える');
-});
-
-test('キーワード不一致: レビュー部が挙げた表記はすべて現状のキーワードから漏れる(実測の固定)', () => {
-  // 【このテストは「漏れている」ことを固定するもの】キーワードを増やすかどうかは
-  // 次のdry-runで実際のキャプションを見てから決める。想像で先回りしない。
-  // ここが落ちたらキーワードを増やした証拠なので、そのとき期待値を更新すること。
-  for (const caption of ['AUGUST SCHEDULE', '8月のトナメ表です', '8月分アップしました', '＼8月のイベント／', '🎰🃏', '']) {
-    assert.equal(
-      monitor.looksLikeSchedulePost(caption),
-      false,
-      `${JSON.stringify(caption)} がキーワードに当たるようになっている(期待値の更新が必要)`
-    );
-  }
-  // 現状当たるもの(この判定自体が壊れていないことの確認)
-  assert.equal(monitor.looksLikeSchedulePost('8月のスケジュールです'), true);
-  assert.equal(monitor.looksLikeSchedulePost('今月の日程はこちら'), true);
 });
 
 // ============================================================
@@ -2755,12 +2678,14 @@ test('CLI: Vision抽出0件が無い回には但し書きを出さない(ノイ�
 // ============================================================
 // 公開ログへのキャプション漏洩を「出力の全経路」に対して走査する
 // ============================================================
-// 【なぜ formatFilteredOutPost の戻り値だけでは足りないか】
-// 断片検査をその1関数にしか当てていないと、【別のログ行に本文を出す変異】が素通りする。
+// 【なぜ1つの関数の戻り値だけでは足りないか】
+// 断片検査を1関数にしか当てていないと、【別のログ行に本文を出す変異】が素通りする。
 // 実際、品質管理部の走査で「Vision 0件 のログ行に本文を出す」変異だけが生き残った。
 // しかも次の工程はまさに「Vision 0件 の全件目視」なので、
 // 「permalink だけだと確認が面倒だからキャプションも出そう」という変更が入りやすい場所。
 // そこで【CLIを実際に走らせ、stdout/stderr/状態ファイル/data.js のすべて】を走査する。
+// 【2026-08-04】キーワード判定の廃止で【全投稿】が判定ログを通るようになった =
+// 本文を出したときに公開される範囲は旧方式より広い。この走査の重要度は上がっている。
 
 /**
  * 走査用の「希少文字列」。日本語の一般的な2文字(「スケ」「日程」など)と偶然一致すると
@@ -2893,34 +2818,6 @@ test('★漏洩走査: CLIの全出力(stdout/stderr/状態ファイル/data.js)
     });
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
-  }
-});
-
-test('captionSignals: 空白のみ・ゼロ幅スペースのみも「実質なし」と判定する', () => {
-  // trim() は全角スペースは落とすが【ゼロ幅スペースは落とさない】ので明示的に除いている。
-  for (const blank of ['', '   ', '\n\t ', '　　', '​​', '‍', '﻿', ' ​　']) {
-    assert.equal(captionSignalsIsBlank(blank), true, `空白扱いにならない: ${JSON.stringify(blank)}`);
-  }
-  for (const notBlank of ['8月', 'a', '　8　']) {
-    assert.equal(captionSignalsIsBlank(notBlank), false, `空白扱いにしてはいけない: ${JSON.stringify(notBlank)}`);
-  }
-});
-function captionSignalsIsBlank(s) {
-  return monitor.captionSignals(s).isBlank;
-}
-
-test('formatFilteredOutPost: 空白のみのキャプションは「実質なし」と出す(短いだけと誤読させない)', () => {
-  // 【誤読を防ぐのが目的】`キャプション3字` と出ると「短いだけだからキーワードを足せば拾えるかも」
-  // と読めてしまうが、実際には空文字と同じでキーワード方式では構造的に永久に拾えない。
-  for (const [caption, expected] of [
-    ['   ', /キャプション実質なし\(空白のみ3字\)/],
-    ['　　', /キャプション実質なし\(空白のみ2字\)/],
-    ['​​', /キャプション実質なし\(空白のみ2字\)/],
-    ['', /キャプションなし\(0字\)/],
-  ]) {
-    const line = monitor.formatFilteredOutPost({ venueId: 'v40', label: '店' }, { permalink: 'p', postedAt: 't', caption });
-    assert.match(line, expected, `入力 ${JSON.stringify(caption)}`);
-    assert.doesNotMatch(line, /日付らしき表記/, '実質なしのときに信号を並べても意味がない');
   }
 });
 
