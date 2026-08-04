@@ -810,6 +810,13 @@ async function runMonitor(opts, libs) {
     let visionRows = 0; // Visionが返した行の総数(行レベルの突き合わせの左辺)
     let notCalendarPosts = 0; // カレンダーではないので対象外にした投稿の数
     let pastCalendarPosts = 0; // 過去月のカレンダーだったので採用しなかった投稿の数
+    // 【採用しなかった投稿の行数】走査フェーズでは「採用しない投稿」の行もVisionから返ってくる。
+    // それを数えないと、行レベルの保存則の左辺(visionRows)だけが増えて右辺に行き先が無く、
+    // 【正常な実行で毎回「行の集計が合わない」と誤報する】(新方式では大半の投稿が不採用のため)。
+    // 【★残差で出さないこと★】`visionRows - 採用した行` にすると保存則が恒等式になり、
+    // 採用した投稿の行が消えても、この項に吸い込まれて表に出なくなる。
+    // 不採用と判断したその場で rows.length を足す(= 正の述語で数える)。
+    let notAdoptedRows = 0;
 
     // 【キーワード判定は廃止した(2026-08-04)】理由は calendarShape のコメント参照。
     // 取得できた新着はすべて判定の対象になる(= 取込みレベルの保存則では filteredOut は常に0)。
@@ -891,7 +898,6 @@ async function runMonitor(opts, libs) {
       visionRows += rows.length;
       detail.rowCount = rows.length;
       const shape = calendarShape(rows);
-      detail.dateMin = shape.dominantMonth ? null : null;
       {
         const dates = rows.map((t) => t && t.date).filter((d) => typeof d === 'string' && VALID_DATE.test(d));
         detail.dateMin = dates.length ? dates.reduce((a, b) => (a < b ? a : b)) : null;
@@ -900,6 +906,7 @@ async function runMonitor(opts, libs) {
 
       if (rows.length === 0) {
         emptyResultPosts += 1;
+        notAdoptedRows += rows.length; // 0件だが、行の保存則の形を全経路でそろえておく
         detail.outcome = 'Vision抽出0件';
         checkedPosts[post.permalink] = 'empty';
         emptyResults.push({ store, permalink: post.permalink, postedAt: post.postedAt });
@@ -909,6 +916,7 @@ async function runMonitor(opts, libs) {
 
       if (!shape.isCalendar) {
         notCalendarPosts += 1;
+        notAdoptedRows += rows.length;
         detail.outcome = 'カレンダーでない';
         checkedPosts[post.permalink] = 'not-calendar';
         console.log(formatCalendarVerdict(store, post, shape, 'カレンダーではない(対象外)'));
@@ -918,6 +926,7 @@ async function runMonitor(opts, libs) {
       if (shape.dominantMonth < currentMonth) {
         // 過去月のカレンダー。採用はしないが【走査は続ける】(上のコメント参照)。
         pastCalendarPosts += 1;
+        notAdoptedRows += rows.length;
         detail.outcome = `過去月のカレンダー(${shape.dominantMonth})`;
         checkedPosts[post.permalink] = 'past-calendar';
         if (!latestPastCalendar) latestPastCalendar = { month: shape.dominantMonth, permalink: post.permalink };
@@ -1100,6 +1109,12 @@ async function runMonitor(opts, libs) {
     summary.extractedCount = extracted.length;
     summary.droppedCount = summary.dropped.length;
     summary.normalizedCount = summary.normalized.length;
+    // 【この2本を summary に写し忘れると保存則が NaN になる】checkPostAccounting は
+    // 内訳を足し算するので、1つでも undefined があれば合計が NaN になり、
+    // `NaN === scheduleLikeCount` は常に false = 【毎回「集計が合わない」と誤報する】。
+    // 誤報が常態化すると本物の不整合が読めなくなるので、走査フェーズで数えた値は必ずここで写す。
+    summary.notCalendarPostCount = notCalendarPosts;
+    summary.pastCalendarPostCount = pastCalendarPosts;
     summary.unusablePostCount = unusablePosts;
     summary.repostedPostCount = repostedPosts;
     summary.notATournamentPostCount = notATournamentPosts;
@@ -1109,6 +1124,7 @@ async function runMonitor(opts, libs) {
     summary.imageFailedCount = imageFailedPosts;
     summary.emptyResultCount = emptyResultPosts;
     summary.visionRowCount = visionRows;
+    summary.notAdoptedRowCount = notAdoptedRows;
 
     // 新着の確認記録は、Vision抽出の成否に関わらずこの店で確認できた最新投稿まで進める
     // (同じ投稿を毎回「新着」として拾い直し続けないため)。
@@ -1201,13 +1217,21 @@ async function runMonitor(opts, libs) {
         invalidPostedAt: summary.invalidPostedAtCount,
         alreadySeen: summary.alreadySeenCount,
         newPosts: summary.newPostCount,
-        filteredOut: summary.filteredOutCount, // キーワードに当たらず画像を見ないまま捨てた投稿
+        filteredOut: summary.filteredOutCount, // キーワード判定の廃止により常に0(保存則の形は残す)
         importedPosts,
         visionFailed: visionFailedPosts,
         imageFailed: imageFailedPosts,
         emptyResult: emptyResultPosts,
-        // 行レベルの突き合わせ用(抽出 = 追加+更新+変更なし+過去日+破棄 が成り立つか)
+        // 【走査フェーズの行き先も残す】これが無いと状態ファイルには「新着12件・取込み0件」しか
+        // 残らず、「カレンダーを1枚も出していない店」なのか「カレンダーはあるが過去月ばかり」
+        // なのかが git履歴から読めない(runログは90日で消える)。
+        notCalendar: notCalendarPosts,
+        pastCalendar: pastCalendarPosts,
+        unexamined: summary.unexaminedPostCount,
+        cacheHit: summary.cacheHitCount,
+        // 行レベルの突き合わせ用(抽出 = 不採用の投稿の行+追加+更新+変更なし+過去日+破棄)
         visionRows,
+        notAdoptedRows,
         pastDated: summary.stats ? summary.stats.pastDated : 0,
         added: summary.stats ? summary.stats.added : 0,
         updated: summary.stats ? summary.stats.updated : 0,
@@ -1245,7 +1269,10 @@ function makeStoreSummary(store) {
     dropped: [],
     normalizedCount: 0,
     normalized: [],
-    // 投稿レベルの内訳。scheduleLike の1投稿は必ずこのどれか1つに入る。
+    // 投稿レベルの内訳。新着の1投稿は必ずこのどれか1つに入る。
+    // 【0で初期化しておくこと】取得に失敗した店・新着0件の店はこの下の処理へ進まないので、
+    // ここで初期化していないと undefined のまま checkPostAccounting に渡り、合計が NaN になる
+    // (NaN === 0 は false なので、何も観測していない店が毎回「集計が合わない」と誤報される)。
     importedPostCount: 0,
     repostedPostCount: 0,
     notATournamentPostCount: 0,
@@ -1254,8 +1281,18 @@ function makeStoreSummary(store) {
     visionFailedCount: 0,
     imageFailedCount: 0,
     emptyResultCount: 0,
+    notCalendarPostCount: 0,
+    pastCalendarPostCount: 0,
+    unexaminedPostCount: 0,
+    cacheHitCount: 0,
+    examinedPostCount: 0,
+    // 当月カレンダーの有無(店ごとに「あり/なし」を出すための材料)
+    currentMonthCalendar: null,
+    latestPastCalendar: null,
+    checkedPosts: null,
     // 行レベル。visionRowCount = Visionが返した行の総数。
     visionRowCount: 0,
+    notAdoptedRowCount: 0,
     stats: null,
     // 取得そのものに失敗した店(この店は1件も観測できていない)。
     fetchFailed: false,
@@ -1354,21 +1391,28 @@ function checkPostAccounting(summary) {
 /**
  * 【行レベルの保存則】Visionが返した1行は、必ずどれか1つの結末に落ちる。
  *
- *   Visionが返した行 = 破棄 + 過去日 + 追加 + 更新 + 変更なし
+ *   Visionが返した行 = 不採用の投稿の行 + 破棄 + 過去日 + 追加 + 更新 + 変更なし
  *
  * 2026-07-31 の dry-run では「久留米: 抽出20 / 破棄0 / 追加0」のように、
  * 抽出した行がどこへ消えたのか誰も説明できない数字が並んでいた(正常に全部過去日だったのか、
  * 別の経路で消えたのかが区別できない)。残余が出るなら、それが未知の消失経路そのもの。
  *
- * @returns {{ ok: boolean, rows: number, dropped: number, pastDated: number,
+ * 【notAdopted を足した理由(2026-08-04)】走査フェーズでは「カレンダーではない」
+ * 「過去月のカレンダー」と判断した投稿の行もVisionから返ってくる。新方式では大半の投稿が
+ * これに当たるため、数えないと【正常な実行で毎回この保存則が破れて誤報になる】。
+ * なお notAdopted は不採用と判断したその場で加算する(残差ではない)ので、この式は恒等式にならない。
+ *
+ * @returns {{ ok: boolean, rows: number, notAdopted: number, dropped: number, pastDated: number,
  *             added: number, updated: number, unchanged: number, residual: number }}
  */
 function checkRowAccounting(summary) {
   const s = summary.stats || { pastDated: 0, added: 0, updated: 0, unchanged: 0 };
-  const accounted = summary.droppedCount + s.pastDated + s.added + s.updated + s.unchanged;
+  const notAdopted = summary.notAdoptedRowCount || 0;
+  const accounted = notAdopted + summary.droppedCount + s.pastDated + s.added + s.updated + s.unchanged;
   return {
     ok: accounted === summary.visionRowCount,
     rows: summary.visionRowCount,
+    notAdopted,
     dropped: summary.droppedCount,
     pastDated: s.pastDated,
     added: s.added,
@@ -1582,13 +1626,28 @@ function reportTotals(summaries, storeCount) {
       `${intakeResidual === 0 ? '' : ` ← 残余 ${intakeResidual}件`}`
   );
   console.log(
-    `  新着投稿 ${sum((s) => s.newPostCount)}件 → 対象 ${sum((s) => s.scheduleLikeCount)}件 / ` +
-      `キーワード不一致で対象外 ${sum((s) => s.filteredOutCount)}件`
+    `  新着投稿 ${sum((s) => s.newPostCount)}件 → 判定対象 ${sum((s) => s.scheduleLikeCount)}件` +
+      (sum((s) => s.filteredOutCount) > 0 ? ` / 画像を見ずに対象外 ${sum((s) => s.filteredOutCount)}件` : '')
+  );
+  // 【当月カレンダーを見つけられた店の数】これがこの監視の目的そのものなので合計にも出す。
+  // 「取り込めた0件」だけだと、新着が無かったのかカレンダーが無かったのかが区別できない。
+  const observed = summaries.filter((s) => !s.fetchFailed);
+  // 【新着0件の店を「なし」に混ぜない】混ぜると「6店中5店でカレンダーが見つからない」に見えるが、
+  // 実際は3店が新着なしで1枚も判定していない、ということが起こる(較正の判断を誤る)。
+  const judged = observed.filter((s) => s.newPostCount > 0);
+  console.log(
+    `  当月カレンダー: あり ${judged.filter((s) => s.currentMonthCalendar).length}店 / ` +
+      `なし ${judged.filter((s) => !s.currentMonthCalendar).length}店 / ` +
+      `新着なしで未判定 ${observed.length - judged.length}店(観測できた ${observed.length}店中)`
   );
   // 【M-5】行側だけでなく投稿側にも残余マーカーを出す(片方だけ出ていると、
   // 「投稿側は常に合っている」と誤読される)。
   console.log(
-    `  投稿の行き先: 取り込めた ${sum((s) => s.importedPostCount)}件 / 再投稿 ${sum((s) => s.repostedPostCount)}件 / ` +
+    `  投稿の行き先: 取り込めた ${sum((s) => s.importedPostCount)}件 / ` +
+      `カレンダーでない ${sum((s) => s.notCalendarPostCount)}件 / ` +
+      `過去月のカレンダー ${sum((s) => s.pastCalendarPostCount)}件 / ` +
+      `判定済み ${sum((s) => s.cacheHitCount)}件 / 未確認 ${sum((s) => s.unexaminedPostCount)}件 / ` +
+      `再投稿 ${sum((s) => s.repostedPostCount)}件 / ` +
       `【失われた ${lost}件】(画像DL失敗 ${sum((s) => s.imageFailedCount)} / ` +
       `Vision抽出失敗 ${sum((s) => s.visionFailedCount)} / 全行不採用 ${sum((s) => s.unusablePostCount)}) / ` +
       `Vision抽出0件 ${sum((s) => s.emptyResultCount)}件${emptyCaveat(sum((s) => s.emptyResultCount))}` +
@@ -1599,7 +1658,8 @@ function reportTotals(summaries, storeCount) {
   console.log(
     `  行の行き先: Vision抽出 ${rsum((r) => r.rows)}行 = 追加 ${rsum((r) => r.added)} + ` +
       `更新 ${rsum((r) => r.updated)} + 変更なし ${rsum((r) => r.unchanged)} + ` +
-      `過去日 ${rsum((r) => r.pastDated)} + 破棄 ${rsum((r) => r.dropped)}` +
+      `過去日 ${rsum((r) => r.pastDated)} + 破棄 ${rsum((r) => r.dropped)} + ` +
+      `不採用の投稿の行 ${rsum((r) => r.notAdopted)}` +
       `${rows.every((r) => r.ok) ? '(残余なし)' : ` ← 残余 ${rsum((r) => r.residual)}行`}`
   );
 }
@@ -1639,8 +1699,9 @@ function reportLostPosts(lostPosts) {
 /**
  * Visionが0件を返した投稿を ::warning:: で報告する。
  *
- * 【赤(::error::)にしない理由】looksLikeSchedulePost はわざと緩く作ってあり
- * (「取りこぼしより誤検知の方が実害が小さい」)、誤検知した投稿は正常に0件で返る。
+ * 【赤(::error::)にしない理由】キーワード判定を廃止して【新着の全投稿を画像で判定する】
+ * ようになった(2026-08-04)ので、日程と無関係な投稿(店内の写真・お礼など)も必ず1回は
+ * Vision に渡る。それらは正常に0件で返る = 0件は日常的に発生する。
  * これを赤にすると、既存の duplicate-in-run を異常から外したのと同じ理由 —
  * 「唯一の警告チャネルが空振りで埋まり、本物の異常が読めなくなる」— に抵触する。
  * 一方で【黙って通してもいけない】(本当は日程表なのに読めていない場合と区別が付かない)ので、
@@ -1741,9 +1802,13 @@ async function main() {
           'Vision に届く前の段階で投稿が消えています(バグ)。'
       );
     }
+    // 【キーワード判定を廃止したので「対象 = 新着」になる(2026-08-04)】
+    // 毎回「キーワード不一致で対象外 0件」と出すと、まだキーワードで絞っているように読める。
+    // filteredOut は取込みレベルの保存則の【形】を保つために残しているだけなので、
+    // 0でないときだけ出す(将来また前段の絞り込みが増えたら、そのときだけ表に出る)。
     console.log(
-      `  新着投稿 ${s.newPostCount}件 → 対象 ${s.scheduleLikeCount}件 / ` +
-        `キーワード不一致で対象外 ${s.filteredOutCount}件`
+      `  新着投稿 ${s.newPostCount}件 → 判定対象 ${s.scheduleLikeCount}件` +
+        (s.filteredOutCount > 0 ? ` / 画像を見ずに対象外 ${s.filteredOutCount}件` : '')
     );
     console.log(
       `  投稿の行き先: 取り込めた ${s.importedPostCount}件 / 再投稿 ${s.repostedPostCount}件 / ` +
@@ -1764,6 +1829,11 @@ async function main() {
     // 月初に店がまだ出していないのは正常なので【赤にはしない】が、要約には必ず出す。
     if (s.currentMonthCalendar) {
       console.log(`  当月カレンダー: あり (${s.currentMonthCalendar.month} / ${s.currentMonthCalendar.permalink})`);
+    } else if (s.newPostCount === 0) {
+      // 【「新着が無かった」と「カレンダーが見つからなかった」を同じ文言にしない】
+      // 新着0件の店は今回1枚も判定していない。「なし」と書くと
+      // 「投稿はあるのにカレンダーが無い店」と区別が付かず、較正の判断を誤る。
+      console.log('  当月カレンダー: 今回は判定していません(新着なし)');
     } else if (s.latestPastCalendar) {
       console.log(
         `  当月カレンダー: なし (最新のカレンダーは ${s.latestPastCalendar.month} / ${s.latestPastCalendar.permalink})`
@@ -1788,7 +1858,8 @@ async function main() {
     const row = checkRowAccounting(s);
     console.log(
       `  行の行き先: Vision抽出 ${row.rows}行 = 追加 ${row.added} + 更新 ${row.updated} + ` +
-        `変更なし ${row.unchanged} + 過去日 ${row.pastDated} + 破棄 ${row.dropped}` +
+        `変更なし ${row.unchanged} + 過去日 ${row.pastDated} + 破棄 ${row.dropped} + ` +
+        `不採用の投稿の行 ${row.notAdopted}` +
         `${row.ok ? '' : ` ← 残余 ${row.residual}行`}`
     );
     if (!row.ok) {
@@ -1897,6 +1968,10 @@ module.exports = {
   tournamentEvidence,
   isNonTournamentFormat,
   captionSignals,
+  calendarShape,
+  formatCalendarVerdict,
+  MIN_CALENDAR_DATES,
+  MIN_CALENDAR_SPAN_DAYS,
   emptyCaveat,
   pickNewPostsWithStats,
   checkIntakeAccounting,
