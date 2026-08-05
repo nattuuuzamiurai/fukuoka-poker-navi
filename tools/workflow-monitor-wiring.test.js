@@ -234,6 +234,39 @@ test('★配線(実行): rc=0 と rc ファイル無しでは緑のまま(赤く
   assert.equal(missing.status, 0, 'rc ファイルが無い場合は 0 として扱う(前段の失敗はそのまま見せる)');
 });
 
+test('★★配線(実行): 【知らない終了コード】でも緑にならない — 2値の照合をしない★★', () => {
+  // 【なぜ2値(2/3)の照合では足りないか — 品質管理部の指摘(2026-08-05)】
+  //   ステップが 2 と 3 だけを名指しで見ていると、それ以外の非0 は素通りして exit 0 になり、
+  //   しかも「全店の取得に成功し…」という【事実でない成功メッセージ】まで出る。
+  //   このテストも 2/3 だけを照合していたら、その穴を素通りさせていた。
+  //   そこで【値を1つずつ確かめるのではなく、「非0はすべて非0で終わる」を確かめる】。
+  //
+  // ★1 は本来この位置まで来ない(取込みステップが即座に落とす)が、
+  //   来たときに緑にしてよい理由は無いので同じ扱いにする。
+  for (const rc of ['1', '4', '5', '42', '99', '128', '255']) {
+    const r = runExitWiring(`${rc}\n`);
+    assert.notEqual(r.status, 0, `rc=${rc} が緑になっている(未知のコードを通す穴): ${r.stdout}`);
+    assert.doesNotMatch(
+      r.stdout,
+      /全店の取得に成功し/,
+      `rc=${rc} なのに成功メッセージを出している(事実でない報告): ${r.stdout}`
+    );
+  }
+  // 知らないコードは、名指しの2つとは別の注記で見せる(人が「分岐を足す」と分かるように)
+  const unknown = runExitWiring('99\n');
+  assert.equal(unknown.status, 99, `終了コードはそのまま伝えること(実際: ${unknown.status})`);
+  assert.match(unknown.stdout, /::error title=Instagram監視 - 未知の終了コード/);
+});
+
+test('★配線(実行): rc ファイルが数値でなく壊れていても、緑にはならない', () => {
+  // `exit "$rc"` に数値でない値を渡すとシェル自身がエラーになる。どちらに転んでも
+  // 【緑にしない】ことだけは固定しておく(壊れた記録を「正常」と読ませない)。
+  for (const junk of ['garbage', '3x', '-1']) {
+    const r = runExitWiring(`${junk}\n`);
+    assert.notEqual(r.status, 0, `rc="${junk}" が緑になっている: ${r.stdout}${r.stderr}`);
+  }
+});
+
 test('★配線: 取込みステップは rc=1 だけ即座に落とし、2/3 は控えて後段に渡す', () => {
   // ここが `if [ "$rc" != "0" ]` などに変わると、rc=2/3 の回で
   // 【取り込めたぶんがコミットされない】(赤いが、データが残らない)。
@@ -254,6 +287,10 @@ test('★配線: スクリプトが出す終了コードの定義と、ワーク
   assert.match(wiring, new RegExp(`if \\[ "\\$rc" = "${monitor.PARTIAL_FAILURE}" \\]`), 'PARTIAL_FAILURE を見ていない');
   assert.match(wiring, new RegExp(`exit ${monitor.LOSS_FAILURE}`));
   assert.match(wiring, new RegExp(`exit ${monitor.PARTIAL_FAILURE}`));
+  // 【catch-all が名指しの分岐の【後ろ】にあること】前に置くと 2/3 の注記に到達しない。
+  const catchAll = wiring.indexOf('if [ "$rc" != "0" ]');
+  assert.ok(catchAll >= 0, '知らない終了コードを拾う catch-all が無い');
+  assert.ok(catchAll > wiring.indexOf(`if [ "$rc" = "${monitor.PARTIAL_FAILURE}" ]`), 'catch-all は名指しの分岐より後ろに置くこと');
 });
 
 // ============================================================
