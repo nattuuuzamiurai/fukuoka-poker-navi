@@ -1815,8 +1815,13 @@ function probeMetrics(summary) {
  *   「形が確定していない投稿」の件数と併せて読むこと(README の実走の読み方)。
  *
  * 【同点は「採用が最強」に倒す】同じ `異なる日付` の投稿が他にあっても、
- *   採用が【より弱い】わけではない。印は厳密に小さいときだけ付ける
- *   (同点で付けると、同じカレンダーの再投稿がある店で毎回点灯する)。
+ *   採用が【より弱い】わけではない。比較で「小さい」と言うのは厳密に小さいときだけ
+ *   (同点を小さい扱いにすると、同じカレンダーの再投稿がある店で毎回そう出る)。
+ *
+ * 【★「採用が最大でない」ことと「★印を出す」ことは別★(2026-08-05・実測で分離した)】
+ *   比較そのもの(adoptedIsStrongest)は全店・全投稿に対して今までどおり行い、行にも出す。
+ *   ★印と `::warning::` を出すのは、そのうち `shapeSignature` の条件を満たしたものだけ。
+ *   理由は `shapeSignature` のコメントを参照。
  */
 function shapeComparison(verdicts, adoptedIndex) {
   const shaped = verdicts.filter((v) => v && SHAPE_DETERMINED_KINDS.has(v.kind));
@@ -1834,6 +1839,7 @@ function shapeComparison(verdicts, adoptedIndex) {
           index: strongest.index,
           permalink: strongest.permalink,
           kind: strongest.kind,
+          dominantMonth: strongest.dominantMonth === undefined ? null : strongest.dominantMonth,
           distinctDates: strongest.distinctDates,
           spanDays: strongest.spanDays,
         }
@@ -1849,7 +1855,66 @@ function shapeComparison(verdicts, adoptedIndex) {
           : strongest.index < adoptedIndex
             ? 'ahead'
             : 'behind',
+    ...shapeSignature(adopted, strongest),
   };
+}
+
+/**
+ * 【★印(#13 の署名)を出す条件】— 2026-08-05 の実走(run 30963380537)で絞り込んだ。
+ *
+ * 【なぜ絞ったか — 「採用が窓内の最大でない」だけでは誤警報が構造的に出る】
+ *   実走で ★ は **6店中4店**で点灯し、**4件すべてが誤警報**だった(画像で確認済み)。
+ *   4件とも `窓内の最大` は【過去月のカレンダー】で、当月ぶんより日付が多かっただけである:
+ *
+ *     v40 採用29 / 最大30(past)   v20 採用17 / 最大23(past)
+ *     v18 採用26 / 最大30(past)   v35 採用29 / 最大30(past)
+ *
+ *   同じ run の過去月のカレンダーを数えると **1店あたり 2〜7枚**
+ *   (v35=2 / v18=4 / v21=4 / v34=6 / v20=7 / v40=7・合計30件)、その異なる日付は **16〜31**。
+ *   **当月ぶんがその最大になる確率は、過去月が k 枚なら 1/(k+1) にすぎない。**
+ *   採用があった4店で★が鳴る店数の期待値は 7/8+7/8+4/5+2/3 = **3.2店**で、実測の4店とほぼ一致する。
+ *   つまり ★ は放っておいても改善せず、
+ *   **誤警報が既知の警報を、人は開かなくなる**(2026-08-05・レビュー部)。
+ *
+ * 【★母集団は絞っていない★】比較する相手は今までどおり「形が確定した全投稿」で、
+ *   `adoptedIsStrongest` / `strongest` も全店で今までどおり出す。**絞ったのは印だけ。**
+ *   母集団を絞ると、まさに拾いたい偽陰性(本物が not-calendar / past と誤読)が抜ける。
+ *   印が付かない比較は【参考行】として1行要約に残るので、**比較そのものは消えていない**。
+ *
+ * 【条件は2つの OR。片方だけでは要件を満たさない】
+ *   (1) **窓内の最大の支配月が、採用の支配月以上**(レビュー部の提案)
+ *       — 当月以降を名乗る投稿が採用より大きい = 分類が正しい前提での #13 そのもの。
+ *   (2) **採用の異なる日付が、窓内の最大の【半分以下】**
+ *       — (1) だけだと、レビュー部自身が指摘した盲点(**本物が支配月を誤読されて past 扱い**)に
+ *         印が付かない。その形は (1) を満たさないまま実害が起きるので、(1) だけでは足りない。
+ *
+ * 【なぜ「半分以下」か — 両方向の値で挟んである】
+ *   ・**鳴らない側は実測**: 上の4件の比は **17/23=0.74 〜 29/30=0.97**。最小でも 0.74 で、
+ *     同じ店の月間カレンダーどうしが半分になることは、営業日数が半減しない限り起きない
+ *     (月の長さだけなら比は最大でも 31/28=1.11)
+ *   ・**鳴る側はレビュー部が構成した再現シナリオ**(実測ではない): 偽陽性のシリーズ告知は
+ *     `異なる日付=5`、本物は `20` で **5/20=0.25**
+ *   ・0.74 と 0.25 の間を取って **1/2**。どちら側にも 1.5倍以上の余裕がある
+ *   ★この 1/2 は「鳴る側の実データ」を持たない閾値である(#13 の実害は一度も観測されていない)。
+ *     **緩めるにせよ厳しくするにせよ、上の4件と再現シナリオの両方を測り直してから動かすこと。**
+ *
+ * 【この絞りで何を捨てたか(正直に)】採用が最大の 0.5〜1.0 倍に収まる偽陽性には印が付かない。
+ *   その形は【参考行】としてログに残るので、**比較を読む人には見える**。消えるのは注意喚起だけ。
+ */
+function shapeSignature(adopted, strongest) {
+  // 採用が無い / 形が1件も確定していない店では判定できない(false にはしない)
+  if (!adopted || !strongest) return { signature: null, signatureReasons: [] };
+  // 採用が窓内の最大そのもの(同点を含む)なら、そもそも比較で負けていない
+  if (adopted.distinctDates >= strongest.distinctDates) return { signature: false, signatureReasons: [] };
+  const reasons = [];
+  // (1) 支配月が読めていない投稿(日付0件)は最大になれないので、ここに来る時点で両方ある想定。
+  //     それでも欠けていたら【この条件は判定しない】— 欠損を「鳴る」側にも「鳴らない」側にも倒さない。
+  if (adopted.dominantMonth && strongest.dominantMonth && strongest.dominantMonth >= adopted.dominantMonth) {
+    reasons.push('month');
+  }
+  // (2) 整数のまま比べる(0.5 を浮動小数で作らない)
+  if (adopted.distinctDates * 2 <= strongest.distinctDates) reasons.push('half');
+  return { signature: reasons.length > 0, signatureReasons: reasons };
 }
 
 /**
@@ -1863,6 +1928,11 @@ function shapeComparison(verdicts, adoptedIndex) {
  * 片方のURLしか無いと、同じ店のブロックの別の行(「本番ならここで採用して打ち切っていた投稿」)を
  * 探しに行くことになり、**1行に集約した意味が薄れる**。
  * ★この行だけで2枚に到達できることをテストで固定してある(URLを1つに減らす変異で落ちる)。
+ *
+ * 【★印が付かない比較も必ずこの行に残す(2026-08-05)★】
+ * ★の条件を絞った(`shapeSignature`)結果、「採用は窓内の最大ではないが署名ではない」行が出る。
+ * その行を消すと**母集団を絞ったのと同じ**になり、支配月を誤読された本物が見えなくなる。
+ * だから **参考: …** として、何が理由で印を付けなかったかまで書いて残す。
  */
 function formatProbeShapeComparison(store, m) {
   const head = `[monitor-instagram-apify] 形状比較: 店=${store.label}(${store.venueId})`;
@@ -1884,10 +1954,35 @@ function formatProbeShapeComparison(store, m) {
   const adopted =
     `採用=異なる日付${m.adopted.distinctDates}・広がり${m.adopted.spanDays}日` +
     `(${m.adopted.permalink})`;
-  const mark = m.adoptedIsStrongest
-    ? '採用が窓内で最もカレンダーらしい投稿'
-    : '★採用は窓内で最もカレンダーらしい投稿ではない(#13 の署名)';
-  return `${head} / ${adopted} / ${strongest} / ${mark}`;
+  return `${head} / ${adopted} / ${strongest} / ${formatShapeMark(m)}`;
+}
+
+/** 1行要約の末尾。★署名 / 参考(印を付けない理由つき) / 採用が最大、の3通り。 */
+function formatShapeMark(m) {
+  if (m.adoptedIsStrongest) return '採用が窓内で最もカレンダーらしい投稿';
+  if (m.signature) {
+    return `★採用は窓内で最もカレンダーらしい投稿ではない(#13 の署名: ${formatSignatureReasons(m)})`;
+  }
+  // 【参考行】比較では負けているが署名の条件を満たさない。**なぜ印を付けないかまで書く** —
+  // 理由が無いと「警報が出ていない」と「比較していない」の区別が読み手に付かない。
+  const month =
+    m.strongest.dominantMonth && m.adopted.dominantMonth
+      ? `支配月が採用より古く(${m.strongest.dominantMonth} < ${m.adopted.dominantMonth})`
+      : '支配月を比べられず';
+  return (
+    `参考: 窓内の最大は採用より大きい(${m.adopted.distinctDates}→${m.maxDistinctDates})が、` +
+    `${month}、採用は最大の半分を超えている → #13 の署名ではない(★は付けない)`
+  );
+}
+
+/** どちらの条件で署名が立ったかを日本語にする(両方立つこともある)。 */
+function formatSignatureReasons(m) {
+  const list = (m.signatureReasons || []).map((r) =>
+    r === 'month'
+      ? `窓内の最大の支配月(${m.strongest.dominantMonth})が採用(${m.adopted.dominantMonth})以上`
+      : `採用${m.adopted.distinctDates}は窓内の最大${m.maxDistinctDates}の半分以下`
+  );
+  return list.join(' / ') || '条件不明';
 }
 
 /**
@@ -1927,7 +2022,8 @@ function reportProbe(summaries, storeCount) {
   let totalAheadCalendars = 0;
   let totalBehindCurrent = 0;
   let totalAheadUndetermined = 0;
-  let notStrongestStores = 0;
+  let signatureStores = 0;
+  let referenceStores = 0; // 採用が窓内の最大ではないが、署名の条件は満たさない店(参考行)
   for (const s of summaries) {
     if (s.fetchFailed) {
       console.log(`[monitor-instagram-apify] 探索: ${s.store.label}(${s.store.venueId}) … 取得失敗のため測定できていません`);
@@ -1952,16 +2048,22 @@ function reportProbe(summaries, storeCount) {
     // これが #13 の署名(採用が窓内で最もカレンダーらしい投稿ではない)を直接指す行で、
     // 分類を経由しないので「後ろの本物が偽陰性」でも効く(shapeComparison のコメント参照)。
     console.log(formatProbeShapeComparison(s.store, m));
-    if (m.adoptedIsStrongest === false) {
-      notStrongestStores += 1;
+    if (m.signature === true) {
+      signatureStores += 1;
       console.log(
         `::warning title=Instagram監視 - 採用が最もカレンダーらしい投稿ではない::` +
           `${s.store.label}(${s.store.venueId}): 採用した投稿は異なる日付${m.adopted.distinctDates}件ですが、` +
           `窓内には異なる日付${m.maxDistinctDates}件の投稿があります` +
           `(${m.strongestPosition === 'behind' ? '採用より古い位置' : '採用より新しい位置'} / ${m.strongest.permalink})。` +
+          `条件: ${formatSignatureReasons(m)}。` +
           '**これが #13 の署名です** — 採用した1枚が偽陽性で、より完全なカレンダーを追い越している可能性があります。' +
           '画像を開いて、どちらが本物の月間カレンダーかを人が確かめてください。'
       );
+    } else if (m.adoptedIsStrongest === false) {
+      // 【★ここで ::warning:: を出さないのが今回の変更点★】比較では負けているが、
+      // 過去月のカレンダーが大きかっただけ = 実走で6店中4店に出た形。上の1行要約に
+      // 「参考: …」として残るので、比較そのものは消えていない。
+      referenceStores += 1;
     }
     if (!m.adopted) {
       console.log(
@@ -2010,7 +2112,7 @@ function reportProbe(summaries, storeCount) {
     `[monitor-instagram-apify] 探索の合計: 本物を追い越せる位置のカレンダー ${totalAheadCalendars}件 / ` +
       `打ち切りの後ろに隠れた当月以降のカレンダー ${totalBehindCurrent}件 / ` +
       `追い越せる位置で形が確定しなかった投稿 ${totalAheadUndetermined}件 / ` +
-      `★採用が窓内で最もカレンダーらしくない店 ${notStrongestStores}店`
+      `★#13 の署名が出た店 ${signatureStores}店(参考: 採用が窓内の最大でない店 ${referenceStores}店)`
   );
   console.log(
     '  【読み方】1つ目が0でも「偽陽性は起きない」ではありません。この取得窓での観測であり、' +
@@ -2021,6 +2123,11 @@ function reportProbe(summaries, storeCount) {
     '  【4つ目が #13 の署名】1〜2つ目は【分類】に依存するので、採用が偽陽性 かつ 後ろの本物も' +
       '偽陰性(カレンダーでない/過去月と判定)だと 0 のまま実害が起きます。4つ目は【形】だけを' +
       '比べるのでその場合も効きます。0でなければ、その店の画像を人が確かめてください。'
+  );
+  console.log(
+    '  【括弧の「参考」は警報ではありません】採用が窓内の最大ではないが、相手が過去月のカレンダーで' +
+      '採用の半分より多い場合です(2026-08-05 の実走では6店中4店がこれで、全件が誤警報でした)。' +
+      '比較は各店の「形状比較:」の行に残してあるので、疑わしいときはその行を読んでください。'
   );
   // 【★この行が最後に出る = 探索が最後まで走った証拠★】理由は formatProbeCompletion 参照。
   console.log(formatProbeCompletion(probeCompletion(summaries, storeCount)));
@@ -2873,6 +2980,7 @@ module.exports = {
   probeMetrics,
   checkProbeAccounting,
   shapeComparison,
+  shapeSignature,
   formatProbeShapeComparison,
   reportProbe,
   probeCompletion,

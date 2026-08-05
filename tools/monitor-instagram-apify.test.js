@@ -4991,18 +4991,19 @@ test('★形状比較: 採用より強い投稿が後ろに居たら印を付け
   // レビュー部の再現そのもの: 偽陽性(異なる日付5)が本物(20)を追い越している
   const m = monitor.probeMetrics({
     probeVerdicts: [
-      { index: 0, permalink: 'p/SERIES/', kind: 'calendar-current', distinctDates: 5, spanDays: 28 },
-      { index: 1, permalink: 'p/REAL/', kind: 'calendar-current', distinctDates: 20, spanDays: 30 },
+      { index: 0, permalink: 'p/SERIES/', kind: 'calendar-current', dominantMonth: '2026-08', distinctDates: 5, spanDays: 28 },
+      { index: 1, permalink: 'p/REAL/', kind: 'calendar-current', dominantMonth: '2026-08', distinctDates: 20, spanDays: 30 },
     ],
   });
   assert.equal(m.adoptedIsStrongest, false);
+  assert.equal(m.signature, true);
   assert.equal(m.maxDistinctDates, 20);
   assert.equal(m.strongestPosition, 'behind');
   assert.equal(m.strongest.permalink, 'p/REAL/');
   const line = monitor.formatProbeShapeComparison({ label: 'X', venueId: 'v40' }, m);
   assert.match(line, /採用=異なる日付5・広がり28日/);
   assert.match(line, /窓内の最大=異なる日付20・広がり30日\(採用より【古い位置】/);
-  assert.match(line, /★採用は窓内で最もカレンダーらしい投稿ではない\(#13 の署名\)/);
+  assert.match(line, /★採用は窓内で最もカレンダーらしい投稿ではない\(#13 の署名: /);
 
   // 【★この1行だけで2枚の画像に到達できること★】印が付くのは異常時で、そのとき担当が
   // することは「採用した投稿」と「窓内の最大」を見比べることしかない。片方しか無いと
@@ -5022,23 +5023,35 @@ test('★形状比較: 後ろの本物が【偽陰性】でも効く(分類を�
   // すると behindCurrentMonth は 0 = 「後ろに本物は居ない」に見えるが、実際には居る。
   const m = monitor.probeMetrics({
     probeVerdicts: [
-      { index: 0, permalink: 'p/SERIES/', kind: 'calendar-current', distinctDates: 5, spanDays: 28 },
-      { index: 1, permalink: 'p/REAL/', kind: 'calendar-past', distinctDates: 20, spanDays: 30 },
+      { index: 0, permalink: 'p/SERIES/', kind: 'calendar-current', dominantMonth: '2026-08', distinctDates: 5, spanDays: 28 },
+      { index: 1, permalink: 'p/REAL/', kind: 'calendar-past', dominantMonth: '2026-07', distinctDates: 20, spanDays: 30 },
     ],
   });
   assert.equal(m.behindCurrentMonth, 0, '分類ベースの数字は 0 のまま(=盲点が実在すること)');
   assert.equal(m.adoptedIsStrongest, false, '形の比較は分類を経由しないので効くこと');
   assert.equal(m.strongest.kind, 'calendar-past');
+  // 【★2026-08-05: ★印の条件を絞った後もこの盲点で印が付くこと★】
+  // 支配月は past なのでレビュー部が提案した条件(1)は満たさない。それでも
+  // 「採用5は最大20の半分以下」で条件(2)が立つ。**ここが立たなくなる絞り方は採らない。**
+  assert.equal(m.signature, true, '支配月を誤読された本物を追い越している形で印が消えてはいけない');
+  assert.deepEqual(m.signatureReasons, ['half']);
 
-  // 「カレンダーでない」と判定された投稿でも、形が強ければ拾う
+  // 「カレンダーでない」と判定された投稿でも、形が強ければ【比較には出る】
   const m2 = monitor.probeMetrics({
     probeVerdicts: [
-      { index: 0, permalink: 'p/SERIES/', kind: 'calendar-current', distinctDates: 5, spanDays: 28 },
-      { index: 1, permalink: 'p/REAL/', kind: 'not-calendar', distinctDates: 9, spanDays: 8 },
+      { index: 0, permalink: 'p/SERIES/', kind: 'calendar-current', dominantMonth: '2026-08', distinctDates: 5, spanDays: 28 },
+      { index: 1, permalink: 'p/REAL/', kind: 'not-calendar', dominantMonth: '2026-07', distinctDates: 9, spanDays: 8 },
     ],
   });
   assert.equal(m2.behindCurrentMonth, 0);
-  assert.equal(m2.adoptedIsStrongest, false);
+  assert.equal(m2.adoptedIsStrongest, false, '母集団は絞っていない(not-calendar も比較に入る)');
+  // 5 は 9 の半分より多く、支配月も過去 → 署名にはしない(参考行として残る)
+  assert.equal(m2.signature, false);
+  assert.match(
+    monitor.formatProbeShapeComparison({ label: 'X', venueId: 'v40' }, m2),
+    /参考: 窓内の最大は採用より大きい\(5→9\)/,
+    '印が付かなくても比較の中身は1行要約に残ること'
+  );
 });
 
 test('★形状比較: 同点は「最強」に倒す / 形が確定していない投稿は母集団に入れない', () => {
@@ -5078,15 +5091,17 @@ test('★形状比較: 同点は「最強」に倒す / 形が確定していな
     '同点なのに「最大は採用より新しい位置」と出ると、警告が出ていないことを読み違える'
   );
 
-  // 1件差なら同点ではないので、従来どおり印が付く(免除が広がっていないこと)
+  // 1件差なら同点ではないので、比較としては「採用が最大ではない」になる。
+  // ただし★印は付けない(2026-08-05 に絞った条件。過去月が1件多いだけの形は実走で誤警報だった)
   const oneApart = monitor.probeMetrics({
     probeVerdicts: [
-      { index: 0, permalink: 'p/PAST/', kind: 'calendar-past', distinctDates: 21, spanDays: 30 },
-      { index: 1, permalink: 'p/ADOPTED/', kind: 'calendar-current', distinctDates: 20, spanDays: 30 },
+      { index: 0, permalink: 'p/PAST/', kind: 'calendar-past', dominantMonth: '2026-07', distinctDates: 21, spanDays: 30 },
+      { index: 1, permalink: 'p/ADOPTED/', kind: 'calendar-current', dominantMonth: '2026-08', distinctDates: 20, spanDays: 30 },
     ],
   });
-  assert.equal(oneApart.adoptedIsStrongest, false, '1件でも差があれば印を付ける');
+  assert.equal(oneApart.adoptedIsStrongest, false, '1件でも差があれば「採用が最大ではない」と出す');
   assert.equal(oneApart.strongestPosition, 'ahead');
+  assert.equal(oneApart.signature, false, '過去月が1件多いだけで★を付けない(実走の誤警報4件と同じ形)');
 
   // 画像DL失敗・Vision失敗は形が分からないので比較に混ぜない(0件として最大を歪めない)
   const withFailures = monitor.probeMetrics({
@@ -5108,6 +5123,145 @@ test('★形状比較: 同点は「最強」に倒す / 形が確定していな
   const nothing = monitor.probeMetrics({ probeVerdicts: [{ index: 0, kind: 'vision-failed', permalink: 'p/Y/' }] });
   assert.equal(nothing.adoptedIsStrongest, null);
   assert.match(monitor.formatProbeShapeComparison({ label: 'X', venueId: 'v40' }, nothing), /形が確定した投稿がありません/);
+});
+
+// ============================================================
+// ★★★の条件を絞ったこと(2026-08-05)を、実測データと盲点の両方で固定する
+// ============================================================
+/**
+ * 【実走 run 30963380537(2026-08-05・16分・★完走 71/71・書き込み0)の生ログから写した値】
+ * 6店のうち採用があった4店で、当時の条件(採用が窓内の最大でない)が★を出した。
+ * **4件すべて誤警報**で、いずれも「窓内の最大」は過去月のカレンダーだった(画像で確認済み)。
+ *
+ * 数字は生ログの `投稿判定:` 行の 支配月 / 異なる日付 / 広がり をそのまま使っている。
+ * 例(v18): 支配月=2026-08 異なる日付=26 広がり=30日 ← 採用 /
+ *          支配月=2026-06 異なる日付=30 広がり=29日 ← 窓内の最大(過去月のカレンダー)
+ */
+const MEASURED_2026_08_05 = [
+  {
+    venueId: 'v40', label: 'TripleBarrel 折尾店',
+    adopted: { permalink: 'https://www.instagram.com/p/DbQuwnpSBB7/', dominantMonth: '2026-08', distinctDates: 29, spanDays: 30 },
+    strongest: { permalink: 'https://www.instagram.com/p/DZfLifDSvTS/', dominantMonth: '2026-06', distinctDates: 30, spanDays: 29 },
+  },
+  {
+    venueId: 'v20', label: 'KING&QUEEN SUITED 直方店',
+    adopted: { permalink: 'https://www.instagram.com/p/DbVXB9xzVfb/', dominantMonth: '2026-08', distinctDates: 17, spanDays: 25 },
+    strongest: { permalink: 'https://www.instagram.com/p/DaSi7jlTAQZ/', dominantMonth: '2026-07', distinctDates: 23, spanDays: 30 },
+  },
+  {
+    venueId: 'v18', label: 'Poker Bar IRIS',
+    adopted: { permalink: 'https://www.instagram.com/p/DbTQ1e2j7vz/', dominantMonth: '2026-08', distinctDates: 26, spanDays: 30 },
+    strongest: { permalink: 'https://www.instagram.com/p/DY3UWBQj7-7/', dominantMonth: '2026-06', distinctDates: 30, spanDays: 29 },
+  },
+  {
+    venueId: 'v35', label: 'A&K',
+    adopted: { permalink: 'https://www.instagram.com/p/DbiWr9Vkz64/', dominantMonth: '2026-08', distinctDates: 29, spanDays: 28 },
+    strongest: { permalink: 'https://www.instagram.com/p/DY_glZpTgMz/', dominantMonth: '2026-06', distinctDates: 30, spanDays: 29 },
+  },
+];
+
+/** 実走の1店ぶんを probeVerdicts の形にする(採用が新しい位置・最大が古い位置、という実走と同じ並び)。 */
+function measuredVerdicts(c) {
+  return [
+    { index: 0, permalink: c.adopted.permalink, kind: 'calendar-current', ...c.adopted },
+    { index: 1, permalink: c.strongest.permalink, kind: 'calendar-past', ...c.strongest },
+  ].map((v, i) => ({ ...v, index: i }));
+}
+
+/** レビュー部が構成した盲点の再現(実測ではない): 偽陽性5日付 / 後ろの本物20日付を past と誤読。 */
+function blindSpotVerdicts() {
+  return [
+    { index: 0, permalink: 'p/SERIES/', kind: 'calendar-current', dominantMonth: '2026-08', distinctDates: 5, spanDays: 28 },
+    { index: 1, permalink: 'p/REAL/', kind: 'calendar-past', dominantMonth: '2026-07', distinctDates: 20, spanDays: 30 },
+  ];
+}
+
+test('★形状比較(実測): 2026-08-05 の実走で鳴った4件は、すべて★無しの【参考行】になる', () => {
+  for (const c of MEASURED_2026_08_05) {
+    const m = monitor.probeMetrics({ probeVerdicts: measuredVerdicts(c) });
+    // 比較そのものは今までどおり成立している(母集団も絞っていない)
+    assert.equal(m.adoptedIsStrongest, false, `${c.venueId}: 比較では採用が最大ではないままであること`);
+    assert.equal(m.maxDistinctDates, c.strongest.distinctDates, `${c.venueId}`);
+    // ★印だけを外した
+    assert.equal(m.signature, false,
+      `${c.venueId}: 実走で誤警報だった形に★が付いている(採用${c.adopted.distinctDates} / 最大${c.strongest.distinctDates})`);
+    const line = monitor.formatProbeShapeComparison({ label: c.label, venueId: c.venueId }, m);
+    assert.doesNotMatch(line, /★採用は窓内で最もカレンダーらしい投稿ではない/, `${c.venueId}: ${line}`);
+    assert.doesNotMatch(line, /#13 の署名: /, `${c.venueId}: ${line}`);
+    assert.match(line, /参考: 窓内の最大は採用より大きい/, `${c.venueId}: 比較の中身が行から消えている`);
+    // 【参考行でも2枚の画像に到達できること】印を消した代わりに、読む人は行だけで判断する
+    assert.ok(line.includes(c.adopted.permalink), `${c.venueId}: 採用のURLが参考行に無い`);
+    assert.ok(line.includes(c.strongest.permalink), `${c.venueId}: 窓内の最大のURLが参考行に無い`);
+  }
+});
+
+test('★形状比較(盲点): 支配月を誤読された本物を追い越している形には★が付く(実測4件と両立)', () => {
+  const m = monitor.probeMetrics({ probeVerdicts: blindSpotVerdicts() });
+  assert.equal(m.signature, true, '盲点の再現で★が消えてはいけない');
+  assert.deepEqual(m.signatureReasons, ['half'], 'レビュー部の条件(1)は満たさず、半分以下の条件だけで立つこと');
+  assert.match(
+    monitor.formatProbeShapeComparison({ label: 'X', venueId: 'v40' }, m),
+    /★採用は窓内で最もカレンダーらしい投稿ではない\(#13 の署名: 採用5は窓内の最大20の半分以下\)/
+  );
+  // 【★この2つが両立していることが要件★】実測4件は参考行 / 盲点は署名。
+  const measuredSignatures = MEASURED_2026_08_05.map(
+    (c) => monitor.probeMetrics({ probeVerdicts: measuredVerdicts(c) }).signature
+  );
+  assert.deepEqual(measuredSignatures, [false, false, false, false], '実測4件のどれかに★が戻っている');
+});
+
+test('★形状比較: 当月以降を名乗る投稿が採用より大きければ、半分以下でなくても★(レビュー部の条件)', () => {
+  const m = monitor.probeMetrics({
+    probeVerdicts: [
+      { index: 0, permalink: 'p/ADOPTED/', kind: 'calendar-current', dominantMonth: '2026-08', distinctDates: 20, spanDays: 30 },
+      { index: 1, permalink: 'p/BIGGER/', kind: 'calendar-current', dominantMonth: '2026-08', distinctDates: 21, spanDays: 30 },
+    ],
+  });
+  assert.equal(m.signature, true);
+  assert.deepEqual(m.signatureReasons, ['month'], '半分以下ではないので month だけで立つこと');
+});
+
+/**
+ * `tools/monitor-instagram-apify.js` に文字列置換の変異を当てた【別インスタンス】を読み込む。
+ *
+ * 【なぜ変異まで当てるか】この案件は #35 / #36 / #38 / readme-consistency で
+ * 「検知器は作ったが、値を渡す配線が効いていない」を4回出している。
+ * ★の条件は**片方向だけ**を確かめても足りない —
+ * 「絞りすぎ(盲点で鳴らない)」と「絞れていない(実測4件で鳴る)」は別の壊れ方なので、
+ * **両方向それぞれについて、条件を壊すと結果が変わること**を機械で固定する。
+ */
+function requireMutatedMonitor(from, to) {
+  const root = makeTempRepoRoot();
+  const p = path.join(root, 'tools', 'monitor-instagram-apify.js');
+  const src = fs.readFileSync(p, 'utf8');
+  assert.ok(src.includes(from), `変異の当て先が見つからない(テストの前提が古い): ${from}`);
+  fs.writeFileSync(p, src.split(from).join(to));
+  const mod = require(p);
+  fs.rmSync(root, { recursive: true, force: true });
+  return mod;
+}
+
+test('★形状比較(変異): 「半分以下」の条件を消すと、盲点の再現で★が消える', () => {
+  const mutated = requireMutatedMonitor(
+    "  if (adopted.distinctDates * 2 <= strongest.distinctDates) reasons.push('half');",
+    '  // 変異: 半分以下の条件を消した'
+  );
+  const m = mutated.probeMetrics({ probeVerdicts: blindSpotVerdicts() });
+  assert.equal(m.signature, false, '変異が効いていない(この変異で★が消えないなら、上の盲点テストは何も守っていない)');
+  // 変異していない本物では立つ
+  assert.equal(monitor.probeMetrics({ probeVerdicts: blindSpotVerdicts() }).signature, true);
+});
+
+test('★形状比較(変異): 支配月の条件を「常に真」にすると、実測4件に★が戻る', () => {
+  const mutated = requireMutatedMonitor(
+    "  if (adopted.dominantMonth && strongest.dominantMonth && strongest.dominantMonth >= adopted.dominantMonth) {",
+    '  if (true) {'
+  );
+  const back = MEASURED_2026_08_05.map(
+    (c) => mutated.probeMetrics({ probeVerdicts: measuredVerdicts(c) }).signature
+  );
+  assert.deepEqual(back, [true, true, true, true],
+    '変異が効いていない(絞りを外しても★が戻らないなら、実測4件のテストは何も守っていない)');
 });
 
 /** 指定した投稿列で `--probe` を回す(古い順に渡す)。rows は投稿ごとの Vision 応答。 */
@@ -5161,7 +5315,7 @@ test('★CLI(探索): 採用より強い投稿が後ろに居たら ::warning:: 
   assert.match(r.stdout, /採用より【古い位置】にある当月以降のカレンダー: 0件/);
   // 形の比較は効く
   assert.match(r.stdout, /形状比較: .*採用=異なる日付5・広がり27日/);
-  assert.match(r.stdout, /★採用は窓内で最もカレンダーらしい投稿ではない\(#13 の署名\)/);
+  assert.match(r.stdout, /★採用は窓内で最もカレンダーらしい投稿ではない\(#13 の署名: /);
   // 【★1行要約だけで2枚の画像に到達できること(実出力で確かめる)★】
   const shapeLine = r.stdout.split('\n').find((l) => l.includes('形状比較: '));
   assert.ok(shapeLine, '形状比較の1行要約が出ていない');
@@ -5173,7 +5327,25 @@ test('★CLI(探索): 採用より強い投稿が後ろに居たら ::warning:: 
     `1行要約に2つの投稿URLが揃っていない(別の行を探させることになる): ${shapeLine}`
   );
   assert.match(r.stdout, /::warning title=Instagram監視 - 採用が最もカレンダーらしい投稿ではない::/);
-  assert.match(r.stdout, /★採用が窓内で最もカレンダーらしくない店 1店/);
+  assert.match(r.stdout, /★#13 の署名が出た店 1店\(参考: 採用が窓内の最大でない店 0店\)/);
+});
+
+test('★CLI(探索・実測の再現): 過去月のカレンダーが最大でも ::warning:: を出さず、参考行だけ残す', () => {
+  // 実走 run 30963380537 の v18 と同じ形(採用=当月26日付 / 窓内の最大=過去月30日付)。
+  // 当時はこれで★が点いたが、画像で確認すると誤警報だった。
+  const r = runProbeCliWithPosts([
+    { slug: 'PAST', postedAt: '2026-05-28T10:00:00.000Z', rows: calendarRows('2026-06', Array.from({ length: 30 }, (_, i) => i + 1)) },
+    { slug: 'ADOPTED', postedAt: '2026-07-27T10:00:00.000Z', rows: calendarRows('2099-09', Array.from({ length: 26 }, (_, i) => i + 1)) },
+  ]);
+  assert.equal(r.status, 0, r.stderr);
+  assert.doesNotMatch(r.stdout, /::warning title=Instagram監視 - 採用が最もカレンダーらしい投稿ではない::/,
+    '過去月のカレンダーが最大なだけで警報を出してはいけない(実走で6店中4店が全部これだった)');
+  // 【比較そのものは消していない】参考行に、採用と窓内の最大の両方が残ること
+  const shapeLine = r.stdout.split('\n').find((l) => l.includes('形状比較: '));
+  assert.ok(shapeLine, '形状比較の1行要約が出ていない');
+  assert.match(shapeLine, /参考: 窓内の最大は採用より大きい\(26→30\)/, shapeLine);
+  assert.ok(shapeLine.includes('/p/ADOPTED/') && shapeLine.includes('/p/PAST/'), `参考行に2枚のURLが揃っていない: ${shapeLine}`);
+  assert.match(r.stdout, /★#13 の署名が出た店 0店\(参考: 採用が窓内の最大でない店 1店\)/);
 });
 
 test('★CLI(探索): 採用が窓内で最強なら ::warning:: を出さない(両方向を固定する)', () => {
@@ -5184,7 +5356,7 @@ test('★CLI(探索): 採用が窓内で最強なら ::warning:: を出さない
   assert.equal(r.status, 0, r.stderr);
   assert.match(r.stdout, /形状比較: .*採用が窓内で最もカレンダーらしい投稿/);
   assert.doesNotMatch(r.stdout, /採用が最もカレンダーらしい投稿ではない/, '最強なのに印が出てはいけない');
-  assert.match(r.stdout, /★採用が窓内で最もカレンダーらしくない店 0店/);
+  assert.match(r.stdout, /★#13 の署名が出た店 0店\(参考: 採用が窓内の最大でない店 0店\)/);
 });
 
 // ============================================================
