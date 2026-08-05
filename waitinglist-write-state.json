@@ -126,22 +126,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01KXSJK2C0J1ED3DE5RX306ZHB": {
-      "id": "wl-01KXSJK2C0J1ED3DE5RX306ZHB",
-      "venueId": "v3",
-      "name": "【3.5K 飲み放題！】m Booze up",
-      "date": "2026-08-05",
-      "start": "18:00",
-      "buyin": 3500,
-      "addon": 1500,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01KXSJK2CH0ZX4D3EPBZY5SJEB": {
       "id": "wl-01KXSJK2CH0ZX4D3EPBZY5SJEB",
       "venueId": "v3",
@@ -486,28 +470,6 @@
       ],
       "source": "auto",
       "verified": false
-    },
-    "wl-01KYMFK7KZH5PD03ZDM2J6BH6F": {
-      "id": "wl-01KYMFK7KZH5PD03ZDM2J6BH6F",
-      "venueId": "v3",
-      "name": "ｍ Hyper Deep Turbo",
-      "date": "2026-08-05",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": null,
-      "stack": 100000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ",
-        "ディープ"
-      ],
-      "source": "auto",
-      "verified": false,
-      "pinnedTags": [
-        "ディープ"
-      ]
     },
     "wl-01KYMMQWQGSW86X4NFN7BFQH8K": {
       "id": "wl-01KYMMQWQGSW86X4NFN7BFQH8K",
