@@ -182,6 +182,10 @@ const FILES_TO_COPY = [
   'validate-data.js',
   // 「機械が最後に書いた値」の控えと所有判定。tournament-merge.js が require するので必須。
   'machine-write-state.js',
+  // 店ごとの掲載ルール(社長指示)。import-venue-image.js が require するので必須。
+  // 【★require を足したらここも足すこと★】足し忘れると全CLIテストが
+  //   「Cannot find module」で終了コード1になり、落ち方が原因を示さない。
+  'venue-listing-rules.js',
 ];
 
 function makeTempRepoRoot() {
@@ -391,3 +395,188 @@ test('★漏洩走査: CLIの全出力(stdout/stderr/data.js/控えのJSON)に�
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
+
+// ============================================================
+// 店ごとの掲載ルール(社長指示・2026-08-05)
+// ============================================================
+// 【なぜこの経路にも要るか】このCLIは、Instagram監視が内容を取りこぼしたときの
+// **手動の代替経路**として README・実行ログの両方から名指しで案内されている
+// (「内容が必要なら node tools/import-venue-image.js … で手動取込みしてください」)。
+// ここで規則が効かないと、**自動経路で消したはずの参加費・行が手動経路から入る**。
+// 実害(利用者が持っていく金額を誤る / 内容の分からない開催を信じて来店する)は経路によらず同じ。
+//
+// 【両方向を固定する】除外される側と、除外されない側(とくに他店の `大還元`)。
+
+function withTempDataJs(fn) {
+  const dataJsPath = path.join(os.tmpdir(), `data-rules-${Date.now()}-${Math.random().toString(36).slice(2)}.js`);
+  fs.writeFileSync(dataJsPath, 'const VENUES = [];\nconst TOURNAMENTS = [\n];\nconst AREAS = [];\n');
+  return Promise.resolve(fn(dataJsPath)).finally(() => fs.unlinkSync(dataJsPath));
+}
+
+const visionStub = (rows) => ({ async extractTournaments() { return rows; } });
+
+test('★掲載ルール(v35): 手動取込みでも参加費は記録しない(0も金額も)', () =>
+  withTempDataJs(async (dataJsPath) => {
+    const result = await importer.importVenueImage(
+      { venueId: 'v35', imageBuffer: Buffer.from('fake'), dryRun: false, dataJsPath, today: TODAY },
+      {
+        visionLib: visionStub([
+          { date: '2026-09-10', start: '19:00', name: 'FREE ROLL', buyin: 0 },
+          { date: '2026-09-11', start: '19:00', name: 'ハイローラーTOURNAMENT', buyin: 600 },
+          { date: '2026-09-12', start: '19:00', name: 'WIN THE BUTTON' },
+        ]),
+        mergeLib: merge,
+      }
+    );
+    assert.equal(result.tournaments.length, 3, '行そのものは捨てない(消すのは参加費だけ)');
+    for (const t of result.tournaments) assert.strictEqual(t.buyin, null, `参加費を記録してはいけない: ${t.name}`);
+    // 参加費以外は触らない
+    assert.equal(result.tournaments[1].name, 'ハイローラーTOURNAMENT');
+  }));
+
+test('★掲載ルール(v35・逆方向): 他店では参加費をそのまま記録する', () =>
+  withTempDataJs(async (dataJsPath) => {
+    const result = await importer.importVenueImage(
+      { venueId: 'v40', imageBuffer: Buffer.from('fake'), dryRun: false, dataJsPath, today: TODAY },
+      {
+        visionLib: visionStub([
+          { date: '2026-09-10', start: '19:00', name: 'FST SATELLITE', buyin: 3000 },
+          { date: '2026-09-11', start: '19:00', name: 'TAGマッチ', buyin: 0 },
+        ]),
+        mergeLib: merge,
+      }
+    );
+    assert.equal(result.tournaments[0].buyin, 3000);
+    assert.strictEqual(result.tournaments[1].buyin, 0, '0(無料)も他店では読み取れた値として残す');
+  }));
+
+test('★掲載ルール(v40/v20): 手動取込みでも「大還元」「華金」は除外される', () =>
+  withTempDataJs(async (dataJsPath) => {
+    const orio = await importer.importVenueImage(
+      { venueId: 'v40', imageBuffer: Buffer.from('fake'), dryRun: false, dataJsPath, today: TODAY },
+      {
+        visionLib: visionStub([
+          { date: '2026-09-06', start: '19:00', name: 'チップ大還元' },
+          { date: '2026-09-16', start: '19:00', name: 'スーパー大還元' },
+          { date: '2026-09-07', start: '19:00', name: 'FST SATELLITE' },
+        ]),
+        mergeLib: merge,
+      }
+    );
+    assert.deepEqual(orio.tournaments.map((t) => t.name), ['FST SATELLITE']);
+    return withTempDataJs(async (p2) => {
+      const nogata = await importer.importVenueImage(
+        { venueId: 'v20', imageBuffer: Buffer.from('fake'), dryRun: false, dataJsPath: p2, today: TODAY },
+        {
+          visionLib: visionStub([
+            { date: '2026-09-07', start: '19:00', name: '華金' },
+            { date: '2026-09-08', start: '19:00', name: 'Cエントリートナメ' },
+          ]),
+          mergeLib: merge,
+        }
+      );
+      assert.deepEqual(nogata.tournaments.map((t) => t.name), ['Cエントリートナメ']);
+    });
+  }));
+
+test('★掲載ルール(逆方向・これが本命): 他店の「大還元」は手動取込みでも落ちない', () =>
+  withTempDataJs(async (dataJsPath) => {
+    // v18 は実データに `大還元フリロ` `月末大還元` を持つ監視対象店。
+    const result = await importer.importVenueImage(
+      { venueId: 'v18', imageBuffer: Buffer.from('fake'), dryRun: false, dataJsPath, today: TODAY },
+      {
+        visionLib: visionStub([
+          { date: '2026-09-01', start: '19:00', name: '大還元フリロ' },
+          { date: '2026-09-25', start: '19:00', name: '月末大還元' },
+          { date: '2026-09-07', start: '19:00', name: '華金' },
+        ]),
+        mergeLib: merge,
+      }
+    );
+    assert.deepEqual(
+      result.tournaments.map((t) => t.name).sort(),
+      ['大還元フリロ', '月末大還元', '華金'].sort(),
+      '他店の同名大会を1件も落とさないこと'
+    );
+  }));
+
+test('★掲載ルール: 0件でも規則の適用結果をログに出す(鳴らない警報にしない)', () =>
+  withTempDataJs(async (dataJsPath) => {
+    const lines = [];
+    const orig = console.log;
+    console.log = (...a) => lines.push(a.join(' '));
+    try {
+      await importer.importVenueImage(
+        { venueId: 'v18', imageBuffer: Buffer.from('fake'), dryRun: true, dataJsPath, today: TODAY },
+        { visionLib: visionStub([{ date: '2026-09-01', start: '19:00', name: 'FST SATELLITE' }]), mergeLib: merge }
+      );
+    } finally {
+      console.log = orig;
+    }
+    const text = lines.join('\n');
+    assert.match(text, /店ごとの掲載ルール.*除外した行 0件/, '0件でも出すこと');
+    assert.match(text, /参加費の非記録: 対象外の店/);
+  }));
+
+test('★掲載ルール: 全行が除外対象なら、その理由がログに出てから0件で落ちる', () =>
+  withTempDataJs(async (dataJsPath) => {
+    // 【落ち方が原因を示すこと】規則で全部落ちた結果の0件と、画像が告知でなかった0件は
+    // 同じ例外文になる。件数のログを throw より前に出しておかないと区別できない。
+    const lines = [];
+    const orig = console.log;
+    console.log = (...a) => lines.push(a.join(' '));
+    try {
+      await assert.rejects(
+        () =>
+          importer.importVenueImage(
+            { venueId: 'v40', imageBuffer: Buffer.from('fake'), dryRun: true, dataJsPath, today: TODAY },
+            { visionLib: visionStub([{ date: '2026-09-06', start: '19:00', name: 'チップ大還元' }]), mergeLib: merge }
+          ),
+        /Vision抽出結果が0件でした/
+      );
+    } finally {
+      console.log = orig;
+    }
+    assert.match(lines.join('\n'), /除外した行 1件/, '0件になった理由が直前のログから読めること');
+  }));
+
+test('★配線(変異): 除外が止まったら、書き込み前の事後条件が鳴って止まる', () =>
+  withTempDataJs(async (dataJsPath) => {
+    // 【仕組み】import-venue-image.js は `listingRules.excludedByListingRule(...)` と
+    // モジュールオブジェクト経由で規則を引くが、事後条件 `listingRuleViolations` は
+    // 同ファイル内のローカル束縛を呼ぶ。export を差し替えると【適用だけが止まる】。
+    const rulesLib = require('./venue-listing-rules');
+    const original = rulesLib.excludedByListingRule;
+    rulesLib.excludedByListingRule = () => null;
+    try {
+      await assert.rejects(
+        () =>
+          importer.importVenueImage(
+            { venueId: 'v40', imageBuffer: Buffer.from('fake'), dryRun: true, dataJsPath, today: TODAY },
+            { visionLib: visionStub([{ date: '2026-09-06', start: '19:00', name: 'チップ大還元' }]), mergeLib: merge }
+          ),
+        (e) => /掲載ルールが適用されていない行/.test(e.message) && /excluded-row-present/.test(e.message)
+      );
+    } finally {
+      rulesLib.excludedByListingRule = original;
+    }
+  }));
+
+test('★配線(変異): 参加費の非記録が止まったら、書き込み前の事後条件が鳴って止まる', () =>
+  withTempDataJs(async (dataJsPath) => {
+    const rulesLib = require('./venue-listing-rules');
+    const original = rulesLib.buyinNotRecorded;
+    rulesLib.buyinNotRecorded = () => null;
+    try {
+      await assert.rejects(
+        () =>
+          importer.importVenueImage(
+            { venueId: 'v35', imageBuffer: Buffer.from('fake'), dryRun: true, dataJsPath, today: TODAY },
+            { visionLib: visionStub([{ date: '2026-09-10', start: '19:00', name: 'FREE ROLL', buyin: 0 }]), mergeLib: merge }
+          ),
+        (e) => /掲載ルールが適用されていない行/.test(e.message) && /buyin-not-suppressed/.test(e.message)
+      );
+    } finally {
+      rulesLib.buyinNotRecorded = original;
+    }
+  }));

@@ -116,6 +116,10 @@ const path = require('path');
 const { normalizeExtractedRow, extractedRowProblem, duplicateIdProblem } = require('./validate-data');
 // 「機械が最後に書いた値」の控えと、そこから導く所有の判定。
 const machineState = require('./machine-write-state');
+// 【店ごとの掲載ルール】その店の実態を人が知っていないと決められない規則(社長指示)。
+// 行そのものの性質で決まる isClosureRow などとは種類が違うので、ファイルを分けてある。
+// tools/import-venue-image.js も同じものを使う(判定を書き分けない)。
+const listingRules = require('./venue-listing-rules');
 
 const REPO_ROOT = path.join(__dirname, '..');
 const DATA_JS = path.join(REPO_ROOT, 'data.js');
@@ -427,15 +431,12 @@ const CLOSURE_TERMS = [
   'off',
 ];
 
-/** 正規化(全角→半角・小文字・区切りの揺れ吸収)。名前の判定はすべてこれを通す。 */
-function normalizeName(name) {
-  return String(name == null ? '' : name)
-    .normalize('NFKC')
-    .toLowerCase()
-    .replace(/[・/\-_]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
+/**
+ * 正規化(全角→半角・小文字・区切りの揺れ吸収)。名前の判定はすべてこれを通す。
+ * 【実体は tools/venue-listing-rules.js にある】掲載ルールの語の一致判定も同じ正規化を
+ * 通す必要があり、二重に書くと必ず片方が古くなるため。ここは再輸出しているだけ。
+ */
+const normalizeName = listingRules.normalizeName;
 
 /**
  * 定休日・休業のマスか。
@@ -661,13 +662,18 @@ function toTournament(t, venueId) {
   // 同じ日・同じ名前で時刻が読めない行が2つあれば id は衝突するが、それは
   // 【区別できないものを区別できないと言っている】だけで正しい。duplicateIdProblem が拾う。
   const startKey = start ? start.replace(':', '') : 'nostart';
+  // 【店ごとの掲載ルール: 参加費を一切記録しない店】(社長指示・tools/venue-listing-rules.js)
+  // Visionが読み取っていても捨てる。0(無料)も同じく捨てる — この店の数字は店内通過価格で
+  // 円と対応せず、0 は「0円で参加できる」という裏付けの無い円建ての主張になるため。
+  // ★ここで捨てた件数は呼び出し側が数えてログに出す(黙って消さない)。
+  const noBuyinRule = listingRules.buyinNotRecorded(venueId);
   const entry = {
     id: `ig-${venueId}-${t.date}-${startKey}-${slugify(t.name)}`,
     venueId,
     name: String(t.name).trim(),
     date: t.date,
     start,
-    buyin: t.buyin != null ? Number(t.buyin) : null,
+    buyin: noBuyinRule ? null : t.buyin != null ? Number(t.buyin) : null,
     addon: t.addon != null ? Number(t.addon) : null,
     stack: t.stack != null ? Number(t.stack) : null,
     guarantee: t.guarantee != null ? Number(t.guarantee) : null,
@@ -680,7 +686,14 @@ function toTournament(t, venueId) {
   // 【⚠ 要確認 を付ける唯一の条件】= 参加費が大会名から推測された疑いがあること。
   // 「時刻も参加費も無い行」は社長の基準では【平常】なので印を付けない(判定の根拠は
   // buyinMayComeFromName のコメント。旧判定は44行中42行に点灯していた)。
-  if (buyinMayComeFromName(t)) entry.lowConfidence = true;
+  //
+  // 【★参加費を記録しない店では ⚠ も付けない★】この印の意味は
+  // 「**載せている参加費**が大会名から推測された疑いがある」であって、⑤に対して
+  // 「その行の参加費だけを画像と突き合わせてください」と依頼するためのもの。
+  // 参加費を1つも載せていない行にこれを付けると、**存在しない値を確認しろ**という
+  // 指示になり、平常0行であるべき印を v35 の FREE ROLL 系だけで毎月7件前後点灯させる。
+  // この案件が繰り返し潰してきた【何も指していない警報】そのものなので付けない。
+  if (!noBuyinRule && buyinMayComeFromName(t)) entry.lowConfidence = true;
   return entry;
 }
 
@@ -944,6 +957,11 @@ async function runMonitor(opts, libs) {
     let unusablePosts = 0; // 抽出行はあったのに1件も採用できなかった投稿の数(異常)
     let repostedPosts = 0; // 全行が「既に取込み済み」だった投稿の数(再投稿。異常ではない)
     let notATournamentPosts = 0; // 全行が「大会ではない」だった投稿の数(異常ではない)
+    let venueRuleOnlyPosts = 0; // 全行が「店ごとの掲載ルールで除外」だった投稿の数(異常ではない)
+    // 【店ごとの掲載ルール】の観測。0でも必ずログに出す(鳴らない警報にしないため)。
+    let venueRuleDroppedRows = 0; // 掲載ルールで除外した行の数
+    let buyinSuppressedRows = 0; // 参加費を記録しない店で、Visionが読んだ参加費を捨てた行の数
+    let buyinAbsentRows = 0; // 同じ店で、そもそもVisionが参加費を返さなかった行の数
     let humanEditedPosts = 0; // 全行が「人が訂正した既存と衝突」だった投稿の数(異常ではない)
     let importedPosts = 0; // 1件以上採用できた投稿の数
     let visionFailedPosts = 0; // Vision抽出が例外で終わった投稿の数(内容は失われる)
@@ -1205,6 +1223,28 @@ async function runMonitor(opts, libs) {
           reason = 'トーナメントではない競技形式(リングゲーム/キャッシュゲーム)';
           kind = 'not-a-tournament';
         }
+        // 【店ごとの掲載ルールによる除外】(社長指示・tools/venue-listing-rules.js)
+        // ★上の3つと kind を分けてある。上は「行そのものの性質」で大会でないと言えるが、
+        //   こちらは【この店では載せないと決めた】だけで、大会でないと分かったわけではない
+        //   (v20 の `華金` は「なにか分からない」が理由)。同じ kind に混ぜると、
+        //   ログでも投稿の分類でも両者が区別できなくなる。
+        if (!reason) {
+          const exclusion = listingRules.excludedByListingRule(store.venueId, row.name);
+          if (exclusion) {
+            reason = listingRules.exclusionReasonText(exclusion);
+            kind = 'venue-rule';
+            venueRuleDroppedRows += 1;
+            summary.venueRuleDropped.push({
+              venueId: store.venueId,
+              label: store.label,
+              permalink: post.permalink,
+              term: exclusion.term,
+              basis: exclusion.basis,
+              date: row && row.date,
+              name: row && row.name,
+            });
+          }
+        }
         let entry = null;
         if (!reason) {
           entry = toTournament(row, store.venueId);
@@ -1238,6 +1278,15 @@ async function runMonitor(opts, libs) {
           const note = [{ field: 'tags', from: lostTags, to: null, reason: 'サイトの語彙に無いタグを捨てた' }];
           summary.normalized.push({ venueId: store.venueId, permalink: post.permalink, notes: note, name: row.name });
           console.warn(formatNormalizedRow(store, post, row, note));
+        }
+        // 【参加費を記録しない店で、実際に何件捨てたかを数える】
+        // ★採用が確定したこの位置で数える(上で数えると、この後 id重複で破棄された行まで
+        //   数えてしまい、下の checkVenueRuleAccounting の左辺 extractedCount と合わなくなる)。
+        // ★残差(採用行数 - 参加費が残った行数)ではなく、正の述語で数える。残差にすると
+        //   「別の理由で参加費が消えた」ときにこの項へ吸い込まれて表に出ない。
+        if (listingRules.buyinNotRecorded(store.venueId)) {
+          if (row.buyin != null) buyinSuppressedRows += 1;
+          else buyinAbsentRows += 1;
         }
         usedIds.add(entry.id);
         extracted.push(entry);
@@ -1274,18 +1323,30 @@ async function runMonitor(opts, libs) {
         //     【人の訂正は正しく守られている】のに、その投稿がApifyの取得窓に残る限り毎日赤くなる。
         //     id が日時を含む以上、この kind は「人が日時を訂正した」以外の原因では発生しない。
         const allHumanEdited = allDroppedFor('existing-slot-conflict');
-        if (allAlreadyImported || allNotATournament || allHumanEdited) {
+        // (d) 全行が【店ごとの掲載ルール】で除外された投稿(社長指示による非掲載)。
+        //     ★平常は 0 のはずのバケツ。それでも保存則の項として置くのは、ここを用意しないと
+        //       この投稿が `unusablePosts`(=::error::)に落ちて【空振りの赤】になるため。
+        //       0のまま動かない項を保存則に入れる先例は probeCalendarPostCount(探索専用)。
+        //     ★「大会ではない」(b)とは別に数える。除外は【載せないと決めた】だけで、
+        //       大会でないと分かったわけではない(v20 の `華金` は内容が不明なだけ)。
+        const allVenueRule = allDroppedFor('venue-rule');
+        if (allAlreadyImported || allNotATournament || allHumanEdited || allVenueRule) {
           const label = allAlreadyImported
             ? '再投稿と判断しました'
             : allNotATournament
               ? '大会が含まれない投稿と判断しました'
-              : '人が日時を訂正した投稿と判断しました';
+              : allVenueRule
+                ? '全行が店ごとの掲載ルールの除外対象でした'
+                : '人が日時を訂正した投稿と判断しました';
           if (allAlreadyImported) {
             repostedPosts += 1;
             detail.outcome = '再投稿';
           } else if (allNotATournament) {
             notATournamentPosts += 1;
             detail.outcome = '大会なし';
+          } else if (allVenueRule) {
+            venueRuleOnlyPosts += 1;
+            detail.outcome = '全行が掲載ルールで除外';
           } else {
             humanEditedPosts += 1;
             detail.outcome = '人の訂正と衝突';
@@ -1293,7 +1354,15 @@ async function runMonitor(opts, libs) {
           console.log(
             `[monitor-instagram-apify] ${label}(異常ではありません): 店=${store.label}(${store.venueId})` +
               ` / 投稿=${post.permalink}(${post.postedAt}) / 抽出${rows.length}件はすべて` +
-              `${allAlreadyImported ? '既に取込み済みの行と同一' : allNotATournament ? '大会ではない行' : '人が訂正した既存と衝突'}のため、` +
+              `${
+                allAlreadyImported
+                  ? '既に取込み済みの行と同一'
+                  : allNotATournament
+                    ? '大会ではない行'
+                    : allVenueRule
+                      ? '店ごとの掲載ルールの除外対象(tools/venue-listing-rules.js)'
+                      : '人が訂正した既存と衝突'
+              }のため、` +
               'この投稿からの追加はありません。'
           );
         } else {
@@ -1321,6 +1390,12 @@ async function runMonitor(opts, libs) {
     summary.unusablePostCount = unusablePosts;
     summary.repostedPostCount = repostedPosts;
     summary.notATournamentPostCount = notATournamentPosts;
+    summary.venueRuleOnlyPostCount = venueRuleOnlyPosts;
+    // 【店ごとの掲載ルールの観測】0でも必ず summary に載せる(下の reportVenueListingRules が
+    // 0件のときも1行出す。「今日は何も除外しなかった」と「規則が死んだ」を区別するため)。
+    summary.venueRuleDroppedCount = venueRuleDroppedRows;
+    summary.buyinSuppressedCount = buyinSuppressedRows;
+    summary.buyinAbsentCount = buyinAbsentRows;
     summary.humanEditedPostCount = humanEditedPosts;
     summary.importedPostCount = importedPosts;
     summary.visionFailedCount = visionFailedPosts;
@@ -1363,6 +1438,12 @@ async function runMonitor(opts, libs) {
     // 【マージを先に行う】行レベルの内訳(added/updated/unchanged/pastDated)は mergeStore が
     // 返すので、これを lastExtraction に書くにはマージが先に済んでいる必要がある。
     if (extracted.length > 0) {
+      // 【★書き込みの直前に、出来上がったエントリそのものを検査する★】
+      // 掲載ルールを適用しているのは toTournament の中だが、エントリを作る経路が
+      // 増えた日にそこだけ見ていると静かに素通りする。**物を見る**検査をここに置く。
+      // 良性の入力では鳴らない(=自分のコードのバグ専用)。鳴ったら書き進めない。
+      // ★店単位の隔離を受けない点は下の assertOnlyTargetChanged と同じ(リスク台帳 #20)。
+      listingRules.assertListingRulesApplied(extracted, `${store.label}(${store.venueId})の取込み`);
       // 【mergeStore には手を入れない】「実際に増えた行」はマージ前後のidの差分で求める。
       // 共有モジュール(import-venue-image.js / Waitinglist取込みとの関係)に触らずに済み、
       // かつ「追加」の定義がマージの実装ではなく観測結果になる。
@@ -1552,6 +1633,10 @@ function makeStoreSummary(store) {
     repostedPostCount: 0,
     notATournamentPostCount: 0,
     humanEditedPostCount: 0,
+    // 【店ごとの掲載ルール(社長指示)で全行が除外された投稿】平常は0のまま動かない。
+    // 0でも保存則の項に入れてあるのは、ここを用意しないとその投稿が「全行不採用」= ::error::
+    // に落ちて空振りの赤になるため(probeCalendarPostCount と同じ趣旨)。
+    venueRuleOnlyPostCount: 0,
     unusablePostCount: 0,
     visionFailedCount: 0,
     imageFailedCount: 0,
@@ -1581,6 +1666,13 @@ function makeStoreSummary(store) {
     // 行レベル。visionRowCount = Visionが返した行の総数。
     visionRowCount: 0,
     notAdoptedRowCount: 0,
+    // 【店ごとの掲載ルールの観測】(tools/venue-listing-rules.js)
+    // ★0で初期化すること。取得に失敗した店・新着0件の店はこの先へ進まないので、
+    //   初期化しないと undefined のまま checkVenueRuleAccounting に渡って合計が NaN になる。
+    venueRuleDroppedCount: 0, // 掲載ルールで除外した行の数(summary.dropped にも入る)
+    venueRuleDropped: [], // 除外した行の明細(⑤が「何を落としたか」を見るため)
+    buyinSuppressedCount: 0, // 参加費を記録しない店で、読み取れていた参加費を捨てた行の数
+    buyinAbsentCount: 0, // 同じ店で、そもそも参加費が読み取れていなかった行の数
     stats: null,
     // 取得そのものに失敗した店(この店は1件も観測できていない)。
     fetchFailed: false,
@@ -1668,6 +1760,8 @@ function checkPostAccounting(summary) {
     summary.cacheHitCount +
     summary.repostedPostCount +
     summary.notATournamentPostCount +
+    // 全行が【店ごとの掲載ルール】で除外された投稿(平常は0。項が無いと ::error:: に落ちる)。
+    summary.venueRuleOnlyPostCount +
     summary.humanEditedPostCount +
     summary.unusablePostCount +
     summary.visionFailedCount +
@@ -1722,6 +1816,105 @@ function checkRowAccounting(summary) {
     protected: protectedRows,
     residual: summary.visionRowCount - accounted,
   };
+}
+
+/**
+ * 【店ごとの掲載ルールの保存則】参加費を記録しない店では
+ *
+ *   その店で採用した行 = 参加費を捨てた行 + そもそも参加費が無かった行
+ *
+ * 【なぜ「捨てた件数」を数えるだけで終わらせないか】
+ * 件数だけだと「今日は捨てるものが無かった」と「数える場所を通らなくなった」が同じ0に見える。
+ * この案件が繰り返し潰してきた形なので、**採用行の総数と突き合わせる**。
+ * ★どちらの項も【その場で正の述語で数えている】(残差ではない)ので、この式は恒等式にならない。
+ *   採用行を作る経路が1本増えて数え忘れれば、その瞬間に残余として表に出る。
+ *
+ * 【対象外の店では 0 = 0 で成立する】規則の無い店は3項ともゼロなので、
+ * 「規則が無い店」と「規則が壊れた店」の区別はこの式では付かない。
+ * それは `listingRuleViolations`(出来上がったエントリそのものを見る事後条件)の担当。
+ *
+ * @returns {{ ok: boolean, applies: boolean, accepted: number, suppressed: number,
+ *             absent: number, residual: number, excluded: number }}
+ */
+function checkVenueRuleAccounting(summary) {
+  const applies = Boolean(listingRules.buyinNotRecorded(summary.store && summary.store.venueId));
+  const suppressed = summary.buyinSuppressedCount || 0;
+  const absent = summary.buyinAbsentCount || 0;
+  const accepted = summary.extractedCount || 0;
+  const residual = applies ? accepted - (suppressed + absent) : 0;
+  return {
+    ok: residual === 0,
+    applies,
+    accepted,
+    suppressed,
+    absent,
+    residual,
+    excluded: summary.venueRuleDroppedCount || 0,
+  };
+}
+
+/**
+ * 【店ごとの掲載ルール】が今回の実行で何をしたかを、**0件でも必ず**報告する。
+ *
+ * 【★0件でも出す理由★】この規則は「毎月10行前後を落とす/参加費を捨てる」程度の頻度でしか
+ * 動かない。件数が出るときだけ出力する形にすると、**規則が死んだ日と、対象の投稿が無かった日が
+ * 同じ「何も出ない」になる**。この案件が繰り返し潰してきた【鳴らない警報】そのものなので、
+ * 規則そのものを一覧で出し、その横に今回の件数(0を含む)を並べる。
+ *
+ * 【`::warning::` にはしない】除外も参加費の非記録も**指示どおりの正常動作**で、
+ * 毎回同じ件数が出る性質のもの。警告チャネルに載せると常時点灯になり本物の異常が読めなくなる
+ * (⚠ 要確認 の件数を `::warning::` にしなかったのと同じ判断)。
+ */
+function reportVenueListingRules(summaries) {
+  const list = Array.isArray(summaries) ? summaries : [];
+  console.log('');
+  console.log('[monitor-instagram-apify] === 店ごとの掲載ルール(社長指示・tools/venue-listing-rules.js) ===');
+  console.log(
+    '  この規則は【その店の実態を人が知っていないと決められない】もので、行そのものの性質で' +
+      '決まる定休日・見出し・リングゲームの判定とは種類が違います。0件でも毎回出します。'
+  );
+  // (1) 参加費を記録しない店
+  for (const rule of listingRules.BUYIN_NOT_RECORDED) {
+    const target = list.filter((s) => s.store && s.store.venueId === rule.venueId);
+    const suppressed = target.reduce((a, s) => a + (s.buyinSuppressedCount || 0), 0);
+    const absent = target.reduce((a, s) => a + (s.buyinAbsentCount || 0), 0);
+    console.log(
+      `  参加費を記録しない: ${rule.label}(${rule.venueId}) — ` +
+        `今回の採用行 ${suppressed + absent}行 = 読み取れた参加費を捨てた ${suppressed}行 + ` +
+        `元から参加費が無かった ${absent}行` +
+        (target.length === 0 ? '(この実行の対象店に含まれていません)' : '')
+    );
+    console.log(`    理由: ${rule.reason}`);
+    for (const s of target) {
+      const acc = checkVenueRuleAccounting(s);
+      if (!acc.ok) {
+        console.log(
+          `::error title=Instagram監視 - 掲載ルールの集計が合わない::${rule.label}(${rule.venueId}): ` +
+            `採用${acc.accepted}行に対し内訳が${acc.suppressed + acc.absent}行で、${acc.residual}行が数えられていません。` +
+            '参加費を捨てる判定を通らずにエントリが作られた経路があります(バグ)。'
+        );
+      }
+    }
+  }
+  // (2) 大会名で除外する店
+  for (const rule of listingRules.NAME_EXCLUSIONS) {
+    const target = list.filter((s) => s.store && s.store.venueId === rule.venueId);
+    const rows = target.flatMap((s) => s.venueRuleDropped || []).filter((r) => r.term === rule.term);
+    console.log(
+      `  除外: ${rule.label}(${rule.venueId}) — 大会名に「${rule.term}」を含む行 ${rows.length}件` +
+        `(根拠: ${rule.basis} / ${rule.instructedAt} 社長指示)` +
+        (target.length === 0 ? '(この実行の対象店に含まれていません)' : '')
+    );
+    console.log(`    理由: ${rule.reason}`);
+    for (const r of rows) {
+      console.log(`    除外行: ${r.venueId} / ${r.date} / ${r.name} / ${r.permalink}`);
+    }
+  }
+  // 【他店に同じ語があっても落ちないこと】を毎回の実行でも見えるようにしておく。
+  console.log(
+    '  ※ 除外は【対象店だけ】に効きます。`大還元` は他店(v18 / v37)の正当な大会名にも' +
+      '現れるため、全店に効かせると別の店の大会が静かに落ちます(tools/venue-listing-rules.js の実測)。'
+  );
 }
 
 // ============================================================
@@ -2520,6 +2713,8 @@ function reportTotals(summaries, storeCount) {
       `過去月のカレンダー ${sum((s) => s.pastCalendarPostCount)}件 / ` +
       `判定済み ${sum((s) => s.cacheHitCount)}件 / 未確認 ${sum((s) => s.unexaminedPostCount)}件 / ` +
       `再投稿 ${sum((s) => s.repostedPostCount)}件 / ` +
+      // 平常0の項。0でも出す(この項が消えると、該当した投稿が「全行不採用」の赤に化ける)。
+      `全行が掲載ルールで除外 ${sum((s) => s.venueRuleOnlyPostCount)}件 / ` +
       `【失われた ${lost}件】(画像DL失敗 ${sum((s) => s.imageFailedCount)} / ` +
       `Vision抽出失敗 ${sum((s) => s.visionFailedCount)} / 全行不採用 ${sum((s) => s.unusablePostCount)}) / ` +
       `Vision抽出0件 ${sum((s) => s.emptyResultCount)}件${emptyCaveat(sum((s) => s.emptyResultCount))}` +
@@ -2533,6 +2728,14 @@ function reportTotals(summaries, storeCount) {
       `過去日 ${rsum((r) => r.pastDated)} + 破棄 ${rsum((r) => r.dropped)} + ` +
       `不採用の投稿の行 ${rsum((r) => r.notAdopted)}` +
       `${rows.every((r) => r.ok) ? '(残余なし)' : ` ← 残余 ${rsum((r) => r.residual)}行`}`
+  );
+  // 【店ごとの掲載ルールの内訳を合計にも出す】除外した行は上の「破棄」に含まれているので
+  // 行の保存則は破れないが、**破棄の中に何が混ざっているか**は合計だけでは読めない。
+  // 0でも出す(この行が消えたら規則が死んでも誰も気づけない)。
+  console.log(
+    `  うち店ごとの掲載ルールで除外 ${sum((s) => s.venueRuleDroppedCount || 0)}行 / ` +
+      `参加費を記録しなかった行 ${sum((s) => (s.buyinSuppressedCount || 0) + (s.buyinAbsentCount || 0))}行` +
+      `(うち読み取れた参加費を捨てた ${sum((s) => s.buyinSuppressedCount || 0)}行)`
   );
 }
 
@@ -2836,6 +3039,8 @@ async function main() {
 
   reportStoreFailures(storeFailures, summaries, storeCount);
   reportAcceptedRows(summaries);
+  // 【0件でも必ず出す】規則が死んだ日と、対象が無かった日を同じ「無出力」にしないため。
+  reportVenueListingRules(summaries);
   reportTotals(summaries, storeCount);
   reportLostPosts(lostPosts, { probe: PROBE });
   reportEmptyResults(emptyResults);
@@ -2977,6 +3182,8 @@ module.exports = {
   reportAcceptedRows,
   checkPostAccounting,
   checkRowAccounting,
+  checkVenueRuleAccounting,
+  reportVenueListingRules,
   probeMetrics,
   checkProbeAccounting,
   shapeComparison,
