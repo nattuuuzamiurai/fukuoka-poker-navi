@@ -421,99 +421,128 @@ function recovery() {
  * 【判定に使う出力】ローカルが汚染されたことと、remote が無傷であることを別々に示す。
  *   remote 側は「SHAが同じ」だけでなく **`git cat-file -e <汚染SHA>` が origin に無いこと**まで見る
  *   （SHAの一致は「同じ枝先」であることしか言わないが、cat-file はオブジェクトの不在そのものを言う）。
+ *
+ * 【★汚染の判定を残差で出さないこと（2026-08-05・品質管理部が指摘・この案件で5回目）★】
+ *   最初の実装は `polluted = localSha !== beforeSha`（＝HEADが人間のコミットと同一でない）だった。
+ *   これは**残差**で、**健全な回も入る** — `rev-list --count` が正常に 0 を返すと
+ *   `--amend` ではなく【新しいコミットを積む】枝に入るので、HEAD は正しく前進する。
+ *   その回に上の式は「汚染あり」と言い、続けて `cat-file` が「★到達した」と言う。
+ *   **人間のコミットは無傷なのに、道具が分類を ⚪ →「不可視の履歴汚染」へ誤って昇格させる。**
+ *   そこで **「人間のコミットが HEAD の祖先として残っているか」を正の述語で見る**
+ *   （`git merge-base --is-ancestor`）。`--amend` は親を差し替えるので祖先から外れ、
+ *   新しいコミットを積んだだけなら祖先に残る。**この2つは残差ではなく別の事実である。**
+ *
+ * 【★健全な回も必ず測ること★】この関数は各ワークフローについて
+ *   **基準（無変異）と 変異（rev-list を失敗させる）の2回**を回す。
+ *   基準で「汚染なし」と出ることを見ないと、上の誤報は永久に見つからない。
  */
 function amend24() {
   console.log('===== リスク台帳 #24 の再現（rev-list --count の失敗 → 人間のコミットを amend）=====');
-  for (const [label, yml, importStep, commitStep, env] of [
-    ['Waitinglist 取込み', WL_YML, 'Waitinglist から日程を取得', '差分があればコミット', { WL_SCENARIO: 'ok' }],
-    ['Instagram監視', IG_YML, null, '差分があればコミット', { DRY_RUN: 'false' }],
+  console.log('※ 各ワークフローについて【基準(無変異)】と【変異(rev-list を失敗)】の2回を回す。');
+  console.log('  基準で「汚染なし」と出ることまで見ないと、判定式の誤報を検出できない。');
+  for (const wf of [
+    { label: 'Waitinglist 取込み', yml: WL_YML, importStep: 'Waitinglist から日程を取得', commitStep: '差分があればコミット', env: { WL_SCENARIO: 'ok' } },
+    { label: 'Instagram監視', yml: IG_YML, importStep: null, commitStep: '差分があればコミット', env: { DRY_RUN: 'false' } },
   ]) {
-    const sb = makeSandbox({ shims: true });
-    const g = G(sb), og = OG(sb);
-    // 1. その日の差分を作る（IG 側は本体を代替に置き換えてあるので data.js を直接書き換える）
-    if (importStep) {
-      const r = runBlock(sb, block(yml, importStep).body, env, { resetOutputs: true });
-      if (r.code !== 0) throw new Error(`${label}: 前処理の取得ステップが失敗 exit=${r.code}`);
-    } else {
-      // ★コメント行を足すだけでは【生成物が変わらない】ので amend の枝に入らない。
-      //   #24 は「rebase 後の再生成に差分が出る」ことが前提なので、公開ページに出る値を変える。
-      const p = path.join(sb.work, 'data.js');
-      const src = fs.readFileSync(p, 'utf8');
-      const m = src.match(/"name": "([^"]*)"/);
-      if (!m) throw new Error('data.js に name が見つかりません');
-      fs.writeFileSync(p, src.replace(m[0], '"name": "IG監視が書き換えた大会名"'));
-    }
-    // 2. 同じ内容を人間が先に push する（bot のコミットが rebase で空になる条件）
-    const changed = execFileSync('git', ['status', '--porcelain'], { cwd: sb.work, encoding: 'utf8' })
-      .split('\n').filter(Boolean).map((l) => l.slice(3).trim());
-    if (!changed.length) throw new Error(`${label}: 差分が無いので筋書きが成立しない`);
-    const human = path.join(sb.dir, 'human');
-    execFileSync('git', ['clone', '-q', sb.origin, human]);
-    for (const f of changed) {
-      fs.mkdirSync(path.dirname(path.join(human, f)), { recursive: true });
-      fs.copyFileSync(path.join(sb.work, f), path.join(human, f));
-    }
-    // 人間だけの変更（bot は絶対に触らないファイル）。これが混ざると「人の作業が書き換わる」形になる
-    fs.writeFileSync(path.join(human, 'HUMAN_NOTE.md'), '人間が書いた作業メモ。botは触らない。\n');
-    const hg = (...a) => execFileSync('git', a, { cwd: human, encoding: 'utf8' });
-    hg('config', 'user.name', '人間'); hg('config', 'user.email', 'human@example.com');
-    hg('add', '-A'); hg('commit', '-q', '-m', 'feat: 人間による重要な変更(bot と同じ内容を含む)'); hg('push', '-q');
-
-    const beforeSha = og('rev-parse', 'main');
-    const beforeTree = og('rev-parse', 'main^{tree}');
-    console.log(`\n--- ${label}`);
-    console.log('  === 人間のコミット（bot が触る前・origin/main） ===');
-    console.log(`    sha=${beforeSha.slice(0, 7)} / ${og('log', '-1', '--pretty=%s')}`);
-    console.log(`    author=${og('log', '-1', '--pretty=%an')} / committer=${og('log', '-1', '--pretty=%cn')}`);
-
-    // 3. rev-list --count だけを失敗させる
-    const r = runBlock(sb, block(yml, commitStep).body, { ...env, FAIL_MATCH: 'rev-list --count' });
-    const all = r.stdout + r.stderr;
-    console.log(`  === コミットステップ exit=${r.code} ===`);
-    for (const line of all.split('\n')) {
-      if (/SHIM_FAIL|rejected|Successfully rebased|non-fast-forward|^error: failed to push/.test(line.trim())) {
-        console.log(`    ${line.trim()}`);
-      }
-    }
-
-    // 4. ローカル HEAD と origin を突き合わせる
-    const localSha = g('rev-parse', 'HEAD');
-    console.log('  === amend 後のローカル HEAD ===');
-    console.log(`    sha=${localSha.slice(0, 7)}（人間のコミットから ${localSha === beforeSha ? '変わっていない' : '★変わった'}）`);
-    console.log(`    subject=${g('log', '-1', '--pretty=%s')}`);
-    console.log(`    author=${g('log', '-1', '--pretty=%an')} / committer=${g('log', '-1', '--pretty=%cn')}`);
-    const localTree = g('rev-parse', 'HEAD^{tree}');
-    console.log(`    tree が人間のコミットと ${localTree === beforeTree ? '同じ' : '★違う（botの生成物が混入した）'}`);
-
-    console.log('  === origin（remote に到達したか）===');
-    const afterSha = og('rev-parse', 'main');
-    console.log(`    origin/main = ${afterSha.slice(0, 7)}（人間のコミットのまま: ${afterSha === beforeSha ? '★はい' : 'いいえ'}）`);
-    console.log(`    origin の tree が人間のコミットと同じ: ${og('rev-parse', 'main^{tree}') === beforeTree ? '★はい' : 'いいえ'}`);
-    // ★汚染が起きていない回に cat-file を当てると、人間のコミット自身が「存在する」と出て
-    //   【到達した】と読めてしまう。汚染の有無を先に判定し、起きていない回は測定不能として出す。
-    const polluted = localSha !== beforeSha;
-    let reachedCode = null;
-    if (polluted) {
-      reachedCode = spawnSync('git', ['--git-dir', sb.origin, 'cat-file', '-e', localSha], { encoding: 'utf8' }).status;
-      console.log(`    $ git --git-dir origin.git cat-file -e ${localSha.slice(0, 7)}（汚染コミット）→ exit=${reachedCode}` +
-        `（${reachedCode === 0 ? '★汚染コミットが origin に存在する＝到達した' : '汚染コミットは origin に存在しない＝到達していない'}）`);
-    } else {
-      console.log('    （ローカルが汚染されていないので、到達の判定は行わない）');
-    }
-    console.log(`    origin の bot コミット ${botCount(sb)}件`);
-    console.log(`  ▼判定: ローカル HEAD の汚染=${polluted ? 'あり' : 'なし'} / ` +
-      `remote への到達=${!polluted ? '—（汚染なし）' : reachedCode === 0 ? '★到達した' : 'していない'} / ステップ exit=${r.code}`);
-
-    // 【翌朝どうなるか】ランナーは毎回まっさらなので、汚染されたローカル HEAD は持ち越さない。
-    //   #25 と同じ扱い（停止するが真因を指さない）にできるかは、ここが「回復する」かで決まる。
-    if (importStep) {
-      fresh(sb);
-      const d2 = runWlJob(sb, env);
-      console.log(`  === 翌朝（新しいランナー・rev-list は壊れていない）=== ${d2.ok ? '成功' : `失敗(${d2.failedAt} exit=${d2.code})`}` +
-        `  [${d2.log.join(' / ')}]  origin の bot コミット ${botCount(sb)}件`);
-    }
-    drop(sb);
+    console.log(`\n########## ${wf.label} ##########`);
+    amend24Case(wf, { failMatch: null, title: '基準（無変異・rev-list は正常に 0 を返す）' });
+    amend24Case(wf, { failMatch: 'rev-list --count', title: '変異（rev-list --count だけを失敗させる）' });
   }
+}
+
+/** amend24 の1回ぶん。`failMatch` が null なら基準（無変異）。 */
+function amend24Case({ label, yml, importStep, commitStep, env }, { failMatch, title }) {
+  const sb = makeSandbox({ shims: true });
+  const g = G(sb), og = OG(sb);
+  // 1. その日の差分を作る（IG 側は本体を代替に置き換えてあるので data.js を直接書き換える）
+  if (importStep) {
+    const r = runBlock(sb, block(yml, importStep).body, env, { resetOutputs: true });
+    if (r.code !== 0) throw new Error(`${label}: 前処理の取得ステップが失敗 exit=${r.code}`);
+  } else {
+    // ★コメント行を足すだけでは【生成物が変わらない】ので amend の枝に入らない。
+    //   #24 は「rebase 後の再生成に差分が出る」ことが前提なので、公開ページに出る値を変える。
+    const p = path.join(sb.work, 'data.js');
+    const src = fs.readFileSync(p, 'utf8');
+    const m = src.match(/"name": "([^"]*)"/);
+    if (!m) throw new Error('data.js に name が見つかりません');
+    fs.writeFileSync(p, src.replace(m[0], '"name": "IG監視が書き換えた大会名"'));
+  }
+  // 2. 同じ内容を人間が先に push する（bot のコミットが rebase で空になる条件）
+  const changed = execFileSync('git', ['status', '--porcelain'], { cwd: sb.work, encoding: 'utf8' })
+    .split('\n').filter(Boolean).map((l) => l.slice(3).trim());
+  if (!changed.length) throw new Error(`${label}: 差分が無いので筋書きが成立しない`);
+  const human = path.join(sb.dir, 'human');
+  execFileSync('git', ['clone', '-q', sb.origin, human]);
+  for (const f of changed) {
+    fs.mkdirSync(path.dirname(path.join(human, f)), { recursive: true });
+    fs.copyFileSync(path.join(sb.work, f), path.join(human, f));
+  }
+  // 人間だけの変更（bot は絶対に触らないファイル）。これが混ざると「人の作業が書き換わる」形になる
+  fs.writeFileSync(path.join(human, 'HUMAN_NOTE.md'), '人間が書いた作業メモ。botは触らない。\n');
+  const hg = (...a) => execFileSync('git', a, { cwd: human, encoding: 'utf8' });
+  hg('config', 'user.name', '人間'); hg('config', 'user.email', 'human@example.com');
+  hg('add', '-A'); hg('commit', '-q', '-m', 'feat: 人間による重要な変更(bot と同じ内容を含む)'); hg('push', '-q');
+
+  const beforeSha = og('rev-parse', 'main');
+  const beforeTree = og('rev-parse', 'main^{tree}');
+  console.log(`\n--- ${title}`);
+  console.log('  === 人間のコミット（bot が触る前・origin/main） ===');
+  console.log(`    sha=${beforeSha.slice(0, 7)} / ${og('log', '-1', '--pretty=%s')}`);
+  console.log(`    author=${og('log', '-1', '--pretty=%an')} / committer=${og('log', '-1', '--pretty=%cn')}`);
+
+  // 3. コミットステップを走らせる
+  const r = runBlock(sb, block(yml, commitStep).body, { ...env, ...(failMatch ? { FAIL_MATCH: failMatch } : {}) });
+  const all = r.stdout + r.stderr;
+  console.log(`  === コミットステップ exit=${r.code} ===`);
+  for (const line of all.split('\n')) {
+    if (/SHIM_FAIL|rejected|Successfully rebased|non-fast-forward|^error: failed to push|amendは行いません/.test(line.trim())) {
+      console.log(`    ${line.trim()}`);
+    }
+  }
+
+  // 4. 【★正の述語★】人間のコミットが HEAD の祖先として残っているか。
+  //    残差（HEADのSHAが違う）で見ると、健全に新しいコミットを積んだ回まで「汚染」になる。
+  const localSha = g('rev-parse', 'HEAD');
+  const ancestor = spawnSync('git', ['merge-base', '--is-ancestor', beforeSha, 'HEAD'], { cwd: sb.work, encoding: 'utf8' });
+  const polluted = ancestor.status !== 0;
+  console.log('  === コミットステップ後のローカル HEAD ===');
+  console.log(`    sha=${localSha.slice(0, 7)} / subject=${g('log', '-1', '--pretty=%s')}`);
+  console.log(`    author=${g('log', '-1', '--pretty=%an')} / committer=${g('log', '-1', '--pretty=%cn')}`);
+  console.log(`    $ git merge-base --is-ancestor ${beforeSha.slice(0, 7)}（人間のコミット） HEAD → exit=${ancestor.status}` +
+    `（${polluted ? '★祖先から消えた＝人間のコミットが書き換えられた' : '祖先として残っている＝人間のコミットは無傷'}）`);
+  if (polluted) {
+    // 【★この行にも同じガードを掛ける★】健全な回は HEAD が1つ進むので tree は当然変わる。
+    //   ガード無しで出すと「botの生成物が混入した」と誤読させる（品質管理部の指摘）。
+    console.log(`    tree が人間のコミットと ${g('rev-parse', 'HEAD^{tree}') === beforeTree ? '同じ' : '★違う（botの生成物が混入した）'}`);
+  }
+
+  console.log('  === origin ===');
+  const afterSha = og('rev-parse', 'main');
+  console.log(`    origin/main = ${afterSha.slice(0, 7)}（人間のコミットから ${afterSha === beforeSha ? '進んでいない' : '進んだ'}）`);
+  const originKeeps = spawnSync('git', ['--git-dir', sb.origin, 'merge-base', '--is-ancestor', beforeSha, 'main'], { encoding: 'utf8' });
+  console.log(`    origin に人間のコミットがそのまま残っている: ${originKeeps.status === 0 ? '★はい' : 'いいえ'}`);
+  let reachedCode = null;
+  if (polluted) {
+    // ★SHAの一致より強い証拠: 汚染コミットのオブジェクトそのものが origin に存在するか
+    reachedCode = spawnSync('git', ['--git-dir', sb.origin, 'cat-file', '-e', localSha], { encoding: 'utf8' }).status;
+    console.log(`    $ git --git-dir origin.git cat-file -e ${localSha.slice(0, 7)}（汚染コミット）→ exit=${reachedCode}` +
+      `（${reachedCode === 0 ? '★汚染コミットが origin に存在する＝到達した' : '汚染コミットは origin に存在しない＝到達していない'}）`);
+  } else {
+    console.log('    （人間のコミットが書き換えられていないので、到達の判定は行わない）');
+  }
+  console.log(`    origin の bot コミット ${botCount(sb)}件`);
+  console.log(`  ▼判定: 人間のコミットの汚染=${polluted ? '★あり' : 'なし'} / ` +
+    `remote への到達=${!polluted ? '—（汚染なし）' : reachedCode === 0 ? '★到達した' : 'していない'} / ステップ exit=${r.code}`);
+
+  // 【翌朝どうなるか】ランナーは毎回まっさらなので、汚染されたローカル HEAD は持ち越さない。
+  //   #25 と同じ扱い（停止するが真因を指さない）にできるかは、ここが「回復する」かで決まる。
+  if (importStep && failMatch) {
+    fresh(sb);
+    const d2 = runWlJob(sb, env);
+    console.log(`  === 翌朝（新しいランナー・rev-list は壊れていない）=== ${d2.ok ? '成功' : `失敗(${d2.failedAt} exit=${d2.code})`}` +
+      `  [${d2.log.join(' / ')}]  origin の bot コミット ${botCount(sb)}件`);
+  }
+  drop(sb);
 }
 
 // ============================================================
