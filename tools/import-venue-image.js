@@ -67,6 +67,13 @@ const { normalizeExtractedRow, extractedRowProblem, duplicateIdProblem } = requi
 // 「機械が最後に書いた値」の控えと、そこから導く所有の判定。
 const machineState = require('./machine-write-state');
 
+// 【店ごとの掲載ルール】(社長指示)。Instagram監視(tools/monitor-instagram-apify.js)と
+// 【同じものを使う】。このツールは Instagram監視が内容を取りこぼしたときの手動の代替経路
+// (「内容が必要なら node tools/import-venue-image.js … で手動取込みしてください」)なので、
+// ここで規則が効かないと【自動経路で消したはずの参加費・行が、手動経路から入ってくる】。
+// 実害(利用者が持っていく金額を誤る)は経路によらず同じ。
+const listingRules = require('./venue-listing-rules');
+
 const REPO_ROOT = path.join(__dirname, '..');
 const DATA_JS = path.join(REPO_ROOT, 'data.js');
 // 書き手ごとにファイルを分けてある(理由は tools/import-waitinglist.js の同名の定数を参照)。
@@ -108,13 +115,17 @@ function slugify(name) {
  */
 function toTournament(t, venueId) {
   const start = t.start || '00:00';
+  // 【店ごとの掲載ルール: 参加費を一切記録しない店】(社長指示)
+  // Instagram監視側の toTournament と同じ扱いにする。この経路だけ参加費が残ると、
+  // 同じ店の日程が「載っている行と載っていない行」に割れて、利用者にはどちらが正しいか分からない。
+  const noBuyinRule = listingRules.buyinNotRecorded(venueId);
   return {
     id: `photo-${venueId}-${t.date}-${String(start).replace(':', '')}-${slugify(t.name)}`,
     venueId,
     name: String(t.name).trim(),
     date: t.date,
     start,
-    buyin: t.buyin != null ? Number(t.buyin) : null,
+    buyin: noBuyinRule ? null : t.buyin != null ? Number(t.buyin) : null,
     addon: t.addon != null ? Number(t.addon) : null,
     stack: t.stack != null ? Number(t.stack) : null,
     guarantee: t.guarantee != null ? Number(t.guarantee) : null,
@@ -150,6 +161,12 @@ async function importVenueImage(opts, libs) {
   // そこまで見ている — tools/monitor-instagram-apify.js の existingIdSlots)。
   const tournaments = [];
   const usedIds = new Set();
+  // 【店ごとの掲載ルールの観測】0件でも下で必ず出す(鳴らない警報にしない)。
+  // ★どちらも「その場で正の述語で数える」。残差で出すと、別の理由で消えた行がここへ
+  //   吸い込まれて表に出なくなる(Instagram監視側と同じ規律)。
+  let venueRuleExcluded = 0;
+  let buyinSuppressed = 0;
+  let buyinAbsent = 0;
   for (const t of Array.isArray(raw) ? raw : []) {
     // 検査の前に、直せる逸脱(`9:00`→`09:00` / 読めない金額はその項目だけ null)を直す。
     // 直した内容は【正規化前の値ごと】ログに出す(人が結果を見ながら実行するCLIなので、
@@ -162,6 +179,14 @@ async function importVenueImage(opts, libs) {
       );
     }
     let reason = extractedRowProblem(row);
+    // 【店ごとの掲載ルールによる除外】(社長指示)。理由の文面は自動経路と同じものを使う。
+    if (!reason) {
+      const exclusion = listingRules.excludedByListingRule(opts.venueId, row && row.name);
+      if (exclusion) {
+        reason = listingRules.exclusionReasonText(exclusion);
+        venueRuleExcluded += 1;
+      }
+    }
     let entry = null;
     if (!reason) {
       entry = toTournament(row, opts.venueId);
@@ -175,9 +200,32 @@ async function importVenueImage(opts, libs) {
       );
       continue;
     }
+    // 【参加費を記録しない店で何件捨てたか】採用が確定したこの位置で数える
+    // (上で数えると、この後 id重複で破棄された行まで数えてしまう)。
+    if (listingRules.buyinNotRecorded(opts.venueId)) {
+      if (row.buyin != null) buyinSuppressed += 1;
+      else buyinAbsent += 1;
+    }
     usedIds.add(entry.id);
     tournaments.push(entry);
   }
+
+  // 【★0件でも必ず出す★】このCLIは人が結果を見ながら実行する。件数が出るときだけ出す形にすると、
+  // 「今回は対象が無かった」と「規則を通らなくなった」が同じ無出力になって区別が付かない。
+  // ★下の「0件でした」の throw より【前】に出すこと。全行が除外対象だった場合に、
+  //   なぜ0件になったのかが分からないまま落ちるのを防ぐ。
+  const noBuyinRule = listingRules.buyinNotRecorded(opts.venueId);
+  console.log(
+    `[import-venue-image] 店ごとの掲載ルール(tools/venue-listing-rules.js): ` +
+      `除外した行 ${venueRuleExcluded}件 / ` +
+      (noBuyinRule
+        ? `参加費を記録しない店(${noBuyinRule.label}) — 採用${buyinSuppressed + buyinAbsent}行のうち` +
+          `読み取れた参加費を捨てた ${buyinSuppressed}行 / 元から参加費が無かった ${buyinAbsent}行`
+        : '参加費の非記録: 対象外の店')
+  );
+  // 【店ごとの掲載ルールの事後条件】規則を適用する場所とは別に、出来上がった物そのものを見る。
+  // 良性の入力では鳴らない(自分のコードのバグ専用)。
+  listingRules.assertListingRulesApplied(tournaments, `import-venue-image(${opts.venueId})`);
 
   if (!tournaments.length) {
     throw new Error('Vision抽出結果が0件でした(告知画像ではなかった、または抽出結果がすべて不正だった可能性があります)。');

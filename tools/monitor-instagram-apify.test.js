@@ -1096,6 +1096,8 @@ function makeTempRepoRoot(extraTournaments = []) {
     // 【★require を足したらここも足すこと★】足し忘れると全CLIテストが
     //   「Cannot find module」で終了コード1になり、落ち方が原因を示さない。
     'schedule-write-guard.js',
+    // 店ごとの掲載ルール(社長指示)。monitor-instagram-apify.js が require するので必須。
+    'venue-listing-rules.js',
   ]) {
     fs.copyFileSync(path.join(TOOLS_DIR, f), path.join(root, 'tools', f));
   }
@@ -2013,6 +2015,9 @@ function emptyPostBuckets() {
     // 探索モード(--probe)でだけ動くバケツ。本番では常に0だが、保存則の項なのでここにも要る
     // (足し忘れると合計が NaN になり、全店・毎回「集計が合わない」と誤報する)。
     probeCalendarPostCount: 0,
+    // 全行が【店ごとの掲載ルール】で除外された投稿。平常は0のまま動かないが、
+    // これが無いとその投稿が「全行不採用」= ::error:: に落ちて空振りの赤になる。
+    venueRuleOnlyPostCount: 0,
   };
 }
 
@@ -5628,6 +5633,405 @@ test('★CLI(探索): 取得に失敗した店があると完走マーカーが�
     assert.ok(line, '完走マーカーが出ていない');
     assert.match(line, /★不完全/);
     assert.match(line, /取得に失敗した店 1店/);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+// ============================================================
+// 店ごとの掲載ルール(社長指示・2026-08-05) — 取込み経路での【配線】
+// ============================================================
+// 【なぜ純関数のテスト(tools/venue-listing-rules.test.js)だけでは足りないか】
+// 判定が正しくても、その結果が `data.js` に届くまでのどこかで落ちれば意味がない。
+// この案件は同じ形で一度やられている(⚠ 要確認 の判定は正しかったのに、
+// `toTournament` の呼び出しが印を落としていれば誰も気づけなかった)。
+// ここでは **runMonitor を通した結果の行そのもの** と **保存則の数字** を見る。
+//
+// 【★平常時ほとんど動かない規則なので、両方向を必ず固定する★】
+//   ・除外すべき行が除外される / 参加費が消える
+//   ・**除外すべきでない行が残る**(とくに他店の `大還元`)/ 対象外の店の参加費は消えない
+
+const listingRulesLib = require('./venue-listing-rules');
+
+const STORE_V40 = monitor.STORES.find((s) => s.venueId === 'v40');
+const STORE_V20 = monitor.STORES.find((s) => s.venueId === 'v20');
+const STORE_V18 = monitor.STORES.find((s) => s.venueId === 'v18');
+const STORE_V35 = monitor.STORES.find((s) => s.venueId === 'v35');
+
+test('★掲載ルール(v35): 参加費は0も金額も記録しない。⚠も付かない', async () => {
+  // 試験実行 run `30973996821` の v35 の形(FREE ROLL系=0 / 金額あり / 参加費なし)を再現する。
+  const result = await monitor.runMonitor(
+    { stores: [STORE_V35], before: [], today: '2026-07-31', state: {} },
+    fakeLibsFor(
+      asCalendar(
+        [
+          { date: '2099-09-02', name: '1周年記念 FREE ROLL', buyin: 0, tags: ['フリーロール'] },
+          { date: '2099-09-05', name: 'Super ハイローラーTOURNAMENT', buyin: 1000, tags: [] },
+          { date: '2099-09-06', name: 'ランキングPT付バウンティTOURNAMENT', buyin: 400, tags: [] },
+          { date: '2099-09-08', name: 'WIN THE BUTTON', buyin: null, tags: [] },
+        ],
+        '2099-09'
+      )
+    )
+  );
+  const rows = realRows(result.arr).filter((t) => t.venueId === 'v35');
+  assert.equal(rows.length, 4, '行そのものは1件も捨てない(消すのは参加費だけ)');
+  for (const t of rows) {
+    assert.equal(t.buyin, null, `参加費を記録してはいけない: ${t.name}`);
+    // 参加費が無い行に「参加費が名前由来かもしれない」印を付けると、存在しない値の確認を
+    // ⑤に依頼することになる(FREE ROLL 系だけで毎月7件前後の常時点灯になる)。
+    assert.equal(t.lowConfidence, undefined, `⚠を付けてはいけない: ${t.name}`);
+    assert.ok(!('lowConfidence' in t), '平常の行にキー自体を生やさない(差分を汚さない)');
+  }
+  // 参加費以外は触らない
+  assert.deepEqual(rows.find((t) => t.name === '1周年記念 FREE ROLL').tags, ['フリーロール']);
+
+  const s = result.summaries[0];
+  // 【保存則】その店の採用行 = 参加費を捨てた行 + 元から参加費が無かった行
+  const acc = monitor.checkVenueRuleAccounting(s);
+  assert.equal(acc.applies, true);
+  // 主張したい3行(0 / 1000 / 400)に加え、カレンダー判定用の埋め行(buyin:3000 が FILLER_COUNT 行)も
+  // この店では参加費を捨てられる。埋め行の性質は「★ヘルパ自体の健全性」テストが固定している。
+  assert.equal(acc.suppressed, 3 + FILLER_COUNT, '読み取れていた参加費を捨てた行(0 も含む)');
+  assert.equal(acc.absent, 1, '元から参加費が無かった行');
+  assert.equal(acc.accepted, 4 + FILLER_COUNT, '採用行の総数と突き合わせていること');
+  assert.equal(acc.residual, 0, '★残余が出ないこと(数え漏らしがない)');
+  assert.ok(acc.ok);
+  // 他の保存則も同時に成り立つ(項を1つ足した影響が出ていないこと)
+  assert.ok(monitor.checkRowAccounting(s).ok, JSON.stringify(monitor.checkRowAccounting(s)));
+  assert.ok(monitor.checkPostAccounting(s).ok);
+});
+
+test('★掲載ルール(v35・逆方向): 同じ行でも他店なら参加費はそのまま残る', async () => {
+  // 【これが本命】規則が「全店で参加費を消す」に化けると、他店の参加費が静かに消える。
+  // 表示は「詳細は店舗SNSを確認」に変わるだけなので、サイトを見ても壊れたと分からない。
+  const result = await monitor.runMonitor(
+    { stores: [STORE_V40], before: [], today: '2026-07-31', state: {} },
+    fakeLibsFor(
+      asCalendar(
+        [
+          { date: '2099-09-02', name: 'FST SATELLITE', buyin: 3000, tags: [] },
+          { date: '2099-09-05', name: 'TAGマッチ', buyin: 0, tags: ['フリーロール'] },
+        ],
+        '2099-09'
+      )
+    )
+  );
+  const rows = realRows(result.arr).filter((t) => t.venueId === 'v40');
+  assert.equal(rows.find((t) => t.name === 'FST SATELLITE').buyin, 3000);
+  assert.equal(rows.find((t) => t.name === 'TAGマッチ').buyin, 0, '0(無料)も他店では読み取れた値として残す');
+  const acc = monitor.checkVenueRuleAccounting(result.summaries[0]);
+  assert.equal(acc.applies, false, 'v40 は参加費の非記録の対象ではない');
+  assert.equal(acc.suppressed, 0);
+  assert.equal(acc.absent, 0);
+});
+
+test('★掲載ルール(v40): 「大還元」を含む行を除外し、件数と明細を残す', async () => {
+  const result = await monitor.runMonitor(
+    { stores: [STORE_V40], before: [], today: '2026-07-31', state: {} },
+    fakeLibsFor(
+      asCalendar(
+        [
+          { date: '2099-09-06', name: 'チップ大還元', buyin: null, tags: [] },
+          { date: '2099-09-16', name: 'スーパー大還元', buyin: null, tags: [] },
+          { date: '2099-09-07', name: 'FST SATELLITE', buyin: null, tags: [] },
+          { date: '2099-09-08', name: 'TAGマッチ', buyin: 3000, tags: [] },
+        ],
+        '2099-09'
+      )
+    )
+  );
+  const names = realRows(result.arr)
+    .filter((t) => t.venueId === 'v40')
+    .map((t) => t.name)
+    .sort();
+  assert.deepEqual(names, ['FST SATELLITE', 'TAGマッチ'], '除外した2行だけが消え、正当な大会は残ること');
+
+  const s = result.summaries[0];
+  assert.equal(s.venueRuleDroppedCount, 2, '除外した行数を数えること(黙って消さない)');
+  assert.deepEqual(s.venueRuleDropped.map((r) => r.name).sort(), ['スーパー大還元', 'チップ大還元']);
+  // 破棄ログの理由に、語・根拠・指示日が読める形で入っていること
+  const dropped = s.dropped.filter((d) => d.kind === 'venue-rule');
+  assert.equal(dropped.length, 2);
+  for (const d of dropped) {
+    assert.match(d.reason, /店ごとの掲載ルールで除外/);
+    assert.match(d.reason, /「大還元」/);
+    assert.match(d.reason, /推定/, '根拠が推定であることが破棄ログにも残ること');
+  }
+  // 【保存則】除外した行は「破棄」に数えられているので残余は出ない
+  const row = monitor.checkRowAccounting(s);
+  assert.ok(row.ok, JSON.stringify(row));
+  assert.equal(row.residual, 0);
+  assert.ok(monitor.checkPostAccounting(s).ok);
+});
+
+test('★掲載ルール(v20): 「華金」を含む行を除外する', async () => {
+  const result = await monitor.runMonitor(
+    { stores: [STORE_V20], before: [], today: '2026-07-31', state: {} },
+    fakeLibsFor(
+      asCalendar(
+        [
+          { date: '2099-09-07', name: '華金', buyin: null, tags: [] },
+          { date: '2099-09-21', name: '華金', buyin: null, tags: [] },
+          { date: '2099-09-08', name: 'Cエントリートナメ', buyin: null, tags: [] },
+          { date: '2099-09-09', name: 'DEEP STACK', buyin: null, tags: [] },
+        ],
+        '2099-09'
+      )
+    )
+  );
+  const names = realRows(result.arr)
+    .filter((t) => t.venueId === 'v20')
+    .map((t) => t.name)
+    .sort();
+  assert.deepEqual(names, ['Cエントリートナメ', 'DEEP STACK']);
+  const s = result.summaries[0];
+  assert.equal(s.venueRuleDroppedCount, 2);
+  assert.match(s.dropped.find((d) => d.kind === 'venue-rule').reason, /不明/, '「分からないから除外」が残ること');
+  assert.ok(monitor.checkRowAccounting(s).ok);
+});
+
+test('★掲載ルール(逆方向・これが本命): 他店の「大還元」は取込み経路でも落ちない', async () => {
+  // v18(Poker Bar IRIS)は【監視対象6店の1つ】で、実データに `大還元フリロ` `月末大還元` がある。
+  // 除外を全店に効かせると、この店の正当な大会が毎月静かに消える。
+  const result = await monitor.runMonitor(
+    { stores: [STORE_V18], before: [], today: '2026-07-31', state: {} },
+    fakeLibsFor(
+      asCalendar(
+        [
+          { date: '2099-09-01', name: '大還元フリロ', buyin: null, tags: [] },
+          { date: '2099-09-25', name: '月末大還元', buyin: null, tags: [] },
+          { date: '2099-09-07', name: '華金', buyin: null, tags: [] },
+        ],
+        '2099-09'
+      )
+    )
+  );
+  const names = realRows(result.arr)
+    .filter((t) => t.venueId === 'v18')
+    .map((t) => t.name)
+    .sort();
+  assert.deepEqual(names, ['大還元フリロ', '月末大還元', '華金'].sort(), '他店の同名大会は1件も落とさないこと');
+  assert.equal(result.summaries[0].venueRuleDroppedCount, 0);
+  assert.equal(result.summaries[0].dropped.filter((d) => d.kind === 'venue-rule').length, 0);
+});
+
+test('★掲載ルール: 全行が除外対象の投稿は【異常にしない】(空振りの赤を作らない)', async () => {
+  // 抽出行はあるのに1件も採用できない投稿は通常 ::error::(全行不採用)になる。
+  // 掲載ルールで全行落ちた場合は【指示どおりの正常動作】なので、専用のバケツに入れる。
+  const result = await monitor.runMonitor(
+    { stores: [STORE_V40], before: [], today: '2026-07-31', state: {} },
+    fakeLibsFor([
+      { date: '2099-09-01', name: 'チップ大還元', buyin: null, tags: [] },
+      { date: '2099-09-06', name: 'チップ大還元', buyin: null, tags: [] },
+      { date: '2099-09-10', name: 'スーパー大還元', buyin: null, tags: [] },
+      { date: '2099-09-14', name: 'チップ大還元', buyin: null, tags: [] },
+      { date: '2099-09-17', name: 'チップ大還元', buyin: null, tags: [] },
+      { date: '2099-09-23', name: 'チップ大還元', buyin: null, tags: [] },
+    ])
+  );
+  const s = result.summaries[0];
+  assert.equal(s.venueRuleOnlyPostCount, 1, '専用のバケツに入ること');
+  assert.equal(s.unusablePostCount, 0, '「全行不採用」の異常にしないこと');
+  assert.equal(result.anomalies.length, 0, '::error:: を出さないこと');
+  assert.equal(s.venueRuleDroppedCount, 6);
+  // 保存則は全部成り立つ(バケツを1つ足した影響が出ていないこと)
+  assert.ok(monitor.checkPostAccounting(s).ok, JSON.stringify(monitor.checkPostAccounting(s)));
+  assert.ok(monitor.checkRowAccounting(s).ok, JSON.stringify(monitor.checkRowAccounting(s)));
+  assert.equal(s.posts.find((p) => p.rowCount === 6).outcome, '全行が掲載ルールで除外');
+});
+
+test('★掲載ルール: 除外0件・参加費0件の実行でも必ずログに出る(鳴らない警報にしない)', async () => {
+  // 【この規則は平常ほとんど動かない】件数が出るときだけ出力する形にすると、
+  // 「今日は対象が無かった」と「判定が死んだ」が同じ無出力になって区別が付かない。
+  const result = await monitor.runMonitor(
+    { stores: [STORE_V18], before: [], today: '2026-07-31', state: {} },
+    fakeLibsFor(asCalendar([{ date: '2099-09-01', name: 'FST SATELLITE', buyin: null, tags: [] }], '2099-09'))
+  );
+  const lines = [];
+  const orig = console.log;
+  console.log = (...a) => lines.push(a.join(' '));
+  try {
+    monitor.reportVenueListingRules(result.summaries);
+  } finally {
+    console.log = orig;
+  }
+  const text = lines.join('\n');
+  assert.match(text, /店ごとの掲載ルール/);
+  // 3つの規則すべてが、0件でも名前と件数つきで出ること
+  assert.match(text, /参加費を記録しない: A&K\(v35\)/);
+  assert.match(text, /除外: TripleBarrel 折尾店\(v40\) — 大会名に「大還元」を含む行 0件/);
+  assert.match(text, /除外: KING&QUEEN SUITED 直方店\(v20\) — 大会名に「華金」を含む行 0件/);
+  // 理由(なぜそうするのか)もログに出る
+  assert.match(text, /店内通過価格/);
+  assert.match(text, /おそらく/);
+  assert.match(text, /なにかわからない/);
+  // 【::warning:: にはしない】正常動作なので、警告チャネルを常時点灯させない
+  assert.ok(!lines.some((l) => l.startsWith('::warning')), '正常動作を警告チャネルに載せないこと');
+  assert.ok(!lines.some((l) => l.startsWith('::error')), '正常動作を赤にしないこと');
+});
+
+test('★掲載ルール: 除外した行の明細が、件数と一緒にログへ出る', async () => {
+  const result = await monitor.runMonitor(
+    { stores: [STORE_V40], before: [], today: '2026-07-31', state: {} },
+    fakeLibsFor(
+      asCalendar([{ date: '2099-09-06', name: 'チップ大還元', buyin: null, tags: [] }], '2099-09')
+    )
+  );
+  const lines = [];
+  const orig = console.log;
+  console.log = (...a) => lines.push(a.join(' '));
+  try {
+    monitor.reportVenueListingRules(result.summaries);
+  } finally {
+    console.log = orig;
+  }
+  const text = lines.join('\n');
+  assert.match(text, /大会名に「大還元」を含む行 1件/);
+  assert.match(text, /除外行: v40 \/ 2099-09-06 \/ チップ大還元 \/ https:\/\/www\.instagram\.com\/p\/FAKE\//);
+});
+
+// ---------- 検知器そのものと、そこへ値を渡す【配線】の両方に変異を当てる ----------
+// 【定型(README「検知器を試したら配線にも変異を当てる」)】
+// 事後条件 `assertListingRulesApplied` は良性の入力では絶対に鳴らないので、
+// 「本当に呼ばれているのか」を確かめないと、呼び出しを消す変異が静かに生き残る。
+//
+// 【この2本が変異になる仕組み】
+//   `tools/monitor-instagram-apify.js` は `listingRules.buyinNotRecorded(...)` のように
+//   **モジュールオブジェクト経由**で規則を引く。一方 `listingRuleViolations` は
+//   同じファイル内の**ローカル束縛**を呼ぶ。したがって export を差し替えると
+//   【規則の適用だけが止まり、検知器は生きたまま】になる = 事後条件が鳴るはず。
+// ★もし将来 monitor 側が `const { buyinNotRecorded } = require(...)` に変わると、
+//   差し替えが効かなくなってこのテストは【落ちる】(緑のまま無意味化はしない)。
+async function withPatchedRule(name, fn) {
+  const original = listingRulesLib[name];
+  listingRulesLib[name] = () => null;
+  try {
+    return await fn();
+  } finally {
+    listingRulesLib[name] = original;
+  }
+}
+
+test('★配線(変異): 参加費の非記録が止まったら、書き込み前の事後条件が鳴って止まる', async () => {
+  await withPatchedRule('buyinNotRecorded', async () => {
+    await assert.rejects(
+      () =>
+        monitor.runMonitor(
+          { stores: [STORE_V35], before: [], today: '2026-07-31', state: {} },
+          fakeLibsFor(asCalendar([{ date: '2099-09-02', name: 'FREE ROLL', buyin: 0, tags: [] }], '2099-09'))
+        ),
+      (e) => /掲載ルールが適用されていない行/.test(e.message) && /buyin-not-suppressed/.test(e.message)
+    );
+  });
+  // 差し戻した後は正常に通る(パッチの後始末ができていること)
+  const result = await monitor.runMonitor(
+    { stores: [STORE_V35], before: [], today: '2026-07-31', state: {} },
+    fakeLibsFor(asCalendar([{ date: '2099-09-02', name: 'FREE ROLL', buyin: 0, tags: [] }], '2099-09'))
+  );
+  assert.equal(realRows(result.arr).find((t) => t.venueId === 'v35').buyin, null);
+});
+
+test('★配線(変異): 名前による除外が止まったら、書き込み前の事後条件が鳴って止まる', async () => {
+  await withPatchedRule('excludedByListingRule', async () => {
+    await assert.rejects(
+      () =>
+        monitor.runMonitor(
+          { stores: [STORE_V40], before: [], today: '2026-07-31', state: {} },
+          fakeLibsFor(asCalendar([{ date: '2099-09-06', name: 'チップ大還元', buyin: null, tags: [] }], '2099-09'))
+        ),
+      (e) => /掲載ルールが適用されていない行/.test(e.message) && /excluded-row-present/.test(e.message)
+    );
+  });
+});
+
+test('★掲載ルール(検知側): 保存則の残余を作ると checkVenueRuleAccounting が偽になる', () => {
+  // 【健全な入力で ok=true になることだけを見ない】この案件が2度踏んだ罠。
+  const base = { store: { venueId: 'v35' }, extractedCount: 5, buyinSuppressedCount: 2, buyinAbsentCount: 3 };
+  assert.equal(monitor.checkVenueRuleAccounting(base).ok, true);
+  assert.equal(monitor.checkVenueRuleAccounting({ ...base, buyinAbsentCount: 2 }).ok, false, '数え漏らしを見逃さない');
+  assert.equal(monitor.checkVenueRuleAccounting({ ...base, buyinAbsentCount: 2 }).residual, 1);
+  assert.equal(monitor.checkVenueRuleAccounting({ ...base, buyinSuppressedCount: 4 }).ok, false, '二重計上も検知');
+  // 対象外の店では 0 = 0 で成立する(規則の無い店を毎回赤くしない)
+  assert.equal(monitor.checkVenueRuleAccounting({ store: { venueId: 'v18' }, extractedCount: 9 }).ok, true);
+  assert.equal(monitor.checkVenueRuleAccounting({ store: { venueId: 'v18' }, extractedCount: 9 }).applies, false);
+});
+
+// ---------- CLI(子プロセス)まで通した掲載ルールの配線 ----------
+// 【なぜ CLI でも見るか】上のテストは `monitor.reportVenueListingRules(...)` を直接呼んでいるので、
+// **main() からの呼び出しを消す変異が素通りする**(実測: 消してもテストは全部緑だった)。
+// 報告の有無は実行ログにしか現れないため、実際の stdout で確かめる。
+
+test('★CLI: 掲載ルールの節は【毎回】実行ログに出る(0件の回でも)', () => {
+  const r = runCliWithMutation(() => {});
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, /=== 店ごとの掲載ルール\(社長指示/);
+  assert.match(r.stdout, /参加費を記録しない: A&K\(v35\)/);
+  assert.match(r.stdout, /大会名に「大還元」を含む行 0件/);
+  assert.match(r.stdout, /大会名に「華金」を含む行 0件/);
+  // 合計にも0のまま出る(この行が消えると規則が死んでも気づけない)
+  assert.match(r.stdout, /うち店ごとの掲載ルールで除外 0行/);
+  assert.doesNotMatch(r.stdout, /::error/, '正常な実行で赤を出さない');
+});
+
+test('★CLI(実データの形): v40の「大還元」が落ち、v35の参加費が消えて、他店は無傷', () => {
+  // 試験実行 run `30973996821` で社長が指摘した3件を、1回のCLI実行で同時に再現する。
+  const root = makeTempRepoRoot();
+  fs.writeFileSync(
+    path.join(root, 'tools', 'fetch-venue-posts-apify.js'),
+    `const P = (h) => [{ permalink: 'https://www.instagram.com/p/' + h + '/', imageUrl: 'https://example.com/' + h + '.jpg', postedAt: '2026-07-20T10:00:00.000Z', caption: '8月のスケジュール' }];
+     exports.fetchInstagramPosts = async (handle) => {
+       if (handle === 'triple_orio' || handle === 'ace_and_king259' || handle === 'pokerbar_iris') return P(handle);
+       return [];
+     };\n`
+  );
+  const filler = fillerRows('2099-09');
+  fs.writeFileSync(
+    path.join(root, 'tools', 'venue-schedule-vision.js'),
+    `const F = ${JSON.stringify(filler)};
+     const ORIO = [...F,
+       { date: '2099-09-06', start: null, name: 'チップ大還元', buyin: null, tags: [] },
+       { date: '2099-09-16', start: null, name: 'スーパー大還元', buyin: null, tags: [] },
+       { date: '2099-09-07', start: null, name: 'FST SATELLITE', buyin: null, tags: [] }];
+     const AK = [...F,
+       { date: '2099-09-02', start: null, name: '1周年記念 FREE ROLL', buyin: 0, tags: ['フリーロール'] },
+       { date: '2099-09-05', start: null, name: 'Super ハイローラーTOURNAMENT', buyin: 1000, tags: [] }];
+     const IRIS = [...F,
+       { date: '2099-09-01', start: null, name: '大還元フリロ', buyin: 0, tags: ['フリーロール'] },
+       { date: '2099-09-25', start: null, name: '月末大還元', buyin: 500, tags: [] }];
+     exports.extractTournaments = async (buf) => {
+       const s = String(buf);
+       if (s.includes('triple_orio')) return ORIO;
+       if (s.includes('ace_and_king259')) return AK;
+       return IRIS;
+     };\n`
+  );
+  fs.writeFileSync(
+    path.join(root, 'stub-fetch.js'),
+    'globalThis.fetch = async (url) => ({ status: 200, arrayBuffer: async () => new TextEncoder().encode(String(url)).buffer });\n'
+  );
+  try {
+    const r = runCliArgs(root, ['--dry-run']);
+    assert.equal(r.status, 0, r.stderr);
+    // (1) v40 … 「大還元」2件が除外され、理由と明細が出る
+    assert.match(r.stdout, /大会名に「大還元」を含む行 2件/);
+    assert.match(r.stdout, /除外行: v40 \/ 2099-09-06 \/ チップ大還元/);
+    assert.match(r.stdout, /除外行: v40 \/ 2099-09-16 \/ スーパー大還元/);
+    assert.doesNotMatch(r.stdout, /追加行: v40 .*大還元/, '除外した行が追加行に出てはいけない');
+    assert.match(r.stdout, /追加行: v40 .*FST SATELLITE/, '正当な大会は残ること');
+    // (2) v35 … 参加費が1件も載らない(0 も 1000 も)
+    assert.match(r.stdout, /読み取れた参加費を捨てた 7行/, '埋め行5 + FREE ROLL(0) + 1000 = 7行');
+    for (const line of r.stdout.split('\n').filter((l) => /追加行: v35/.test(l))) {
+      assert.match(line, /参加費不明/, `v35 に参加費が載っている: ${line}`);
+      assert.doesNotMatch(line, /⚠要確認/, 'v35 に⚠が付いてはいけない');
+    }
+    // (3) v18 … 同じ語を含む大会が【残る】。参加費もそのまま
+    assert.match(r.stdout, /追加行: v18 .*大還元フリロ.*参加費0/);
+    assert.match(r.stdout, /追加行: v18 .*月末大還元.*参加費500/);
+    // (4) 保存則は全部成立し、赤は出ない
+    assert.doesNotMatch(r.stdout, /集計が合わない/);
+    assert.doesNotMatch(r.stdout, /::error/);
+    assert.match(r.stdout, /うち店ごとの掲載ルールで除外 2行/);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
