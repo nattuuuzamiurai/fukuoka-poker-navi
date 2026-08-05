@@ -1919,7 +1919,7 @@ function checkProbeAccounting(m) {
  * 探索モードの結果を報告する。
  * 【この関数は data.js にも状態ファイルにも触らない】— 表示だけを行う。
  */
-function reportProbe(summaries) {
+function reportProbe(summaries, storeCount) {
   console.log('');
   console.log('[monitor-instagram-apify] === 探索(--probe)の結果: リスク台帳 #13 の測定 ===');
   console.log('  この実行では【何も採用していません】。data.js も状態ファイルも書き換えていません。');
@@ -2021,6 +2021,60 @@ function reportProbe(summaries) {
     '  【4つ目が #13 の署名】1〜2つ目は【分類】に依存するので、採用が偽陽性 かつ 後ろの本物も' +
       '偽陰性(カレンダーでない/過去月と判定)だと 0 のまま実害が起きます。4つ目は【形】だけを' +
       '比べるのでその場合も効きます。0でなければ、その店の画像を人が確かめてください。'
+  );
+  // 【★この行が最後に出る = 探索が最後まで走った証拠★】理由は formatProbeCompletion 参照。
+  console.log(formatProbeCompletion(probeCompletion(summaries, storeCount)));
+}
+
+/**
+ * 【探索が最後まで走ったか】を、投稿数の突き合わせで判定する。
+ *
+ * 【なぜ要るか — 部分的な分布はいちばん危ない読み違えを生む】
+ *   探索は打ち切らないので、取得窓の全投稿(実測で71件)が Vision に渡る。途中で
+ *   ジョブが打ち切られる(タイムアウト)と【一部の店・一部の投稿だけを見た分布】が
+ *   ログに残る。それを「全投稿を見た」と読むと、**#13 を誤った根拠で閉じる**ことになる。
+ *   この案件が繰り返してきた「ゼロを安全と読む」の最も高くつく形。
+ *
+ * 【2通りの「不完全」を1つの式で見る】
+ *   1. 取得に失敗した店がある … その店は1投稿も見ていない(タイムアウトでなくても起きる)
+ *   2. 判定した投稿数が判定対象に足りない … 走査の途中で終わった/記録漏れ
+ *   ★どちらも【正の述語】で数え、残差で出さない(残差にすると恒等式になり何も検査しない)。
+ *
+ * 【★タイムアウトで殺された場合はこの関数自体が呼ばれない★】
+ *   そのときログにこの行が【出ない】ことが唯一の合図になる。だから
+ *   「出るはずのものが出ない」を検知の合図にできるよう、**必ず最後に・必ず1行だけ**出す。
+ *   ワークフロー側はこの行の有無を検査する(`.github/workflows/monitor-instagram-apify.yml`)。
+ */
+function probeCompletion(summaries, storeCount) {
+  const observed = summaries.filter((s) => !s.fetchFailed);
+  const failed = summaries.filter((s) => s.fetchFailed).length;
+  const expected = typeof storeCount === 'number' ? storeCount : summaries.length;
+  // 判定対象(走査するはずだった投稿)と、実際に判定を記録できた投稿。
+  const targeted = observed.reduce((a, s) => a + s.scheduleLikeCount, 0);
+  const judged = observed.reduce(
+    (a, s) => a + (Array.isArray(s.probeVerdicts) ? s.probeVerdicts.filter(Boolean).length : 0),
+    0
+  );
+  const missingStores = expected - (observed.length + failed);
+  const complete = failed === 0 && missingStores === 0 && judged === targeted;
+  return { complete, expected, observed: observed.length, failed, missingStores, targeted, judged };
+}
+
+/** 完走判定の1行。★文言ではなく `探索の完了状態:` の【有無】が機械可読の合図。 */
+function formatProbeCompletion(c) {
+  const head =
+    `[monitor-instagram-apify] 探索の完了状態: 対象${c.expected}店 = 観測できた${c.observed}店 + 取得失敗${c.failed}店` +
+    ` / 判定した投稿 ${c.judged}件(判定対象 ${c.targeted}件)`;
+  if (c.complete) {
+    return `${head} → ★完走(全店・全投稿を判定しました。この分布は取得窓の全体です)`;
+  }
+  const reasons = [];
+  if (c.failed > 0) reasons.push(`取得に失敗した店 ${c.failed}店(その店は1投稿も見ていません)`);
+  if (c.missingStores !== 0) reasons.push(`記録が無い店 ${c.missingStores}店`);
+  if (c.judged !== c.targeted) reasons.push(`判定できていない投稿 ${c.targeted - c.judged}件`);
+  return (
+    `${head} → ★不完全(${reasons.join(' / ')})。` +
+    'この実行の分布は【部分的】です。#13 の判断に使わないでください。'
   );
 }
 
@@ -2679,7 +2733,7 @@ async function main() {
   reportLostPosts(lostPosts, { probe: PROBE });
   reportEmptyResults(emptyResults);
   reportAnomalies(anomalies);
-  if (PROBE) reportProbe(summaries);
+  if (PROBE) reportProbe(summaries, storeCount);
 
   // 対象外店舗・過去日が変化していないことの最終自己チェック(店舗ごとのassertOnlyTargetChangedに加えた二重チェック)。
   // 【★左辺はマージ前のディープコピー★】before と arr は past の要素オブジェクトを共有しているので、
@@ -2821,6 +2875,8 @@ module.exports = {
   shapeComparison,
   formatProbeShapeComparison,
   reportProbe,
+  probeCompletion,
+  formatProbeCompletion,
   impossibleLastPostedAt,
   reportImpossibleState,
   formatImportAges,

@@ -5345,3 +5345,118 @@ test('★CLI: 取込みの日数は【毎回必ず】出る(静かな停止に�
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
+
+// ============================================================
+// 探索が【最後まで走ったか】— 部分的な分布を「全部見た」と読ませない
+// ============================================================
+// 【なぜ要るか】探索は打ち切らないので取得窓の全投稿が Vision に渡る。途中でジョブが
+// 打ち切られると【一部だけ見た分布】がログに残り、それを「全投稿を見た」と読むと
+// #13 を誤った根拠で閉じることになる。ワークフローはこの行の有無と内容を検査している。
+
+test('★完走: 全店・全投稿を判定できた実行は「★完走」と出る', async () => {
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-07-31', state: {}, probe: true },
+    fakeLibsForBehaviour([
+      { permalink: 'https://www.instagram.com/p/A/', postedAt: '2026-07-20T10:00:00.000Z', rows: fillerRows('2099-09') },
+      { permalink: 'https://www.instagram.com/p/B/', postedAt: '2026-07-21T10:00:00.000Z', rows: [] },
+    ])
+  );
+  const c = monitor.probeCompletion(result.summaries, 1);
+  assert.equal(c.complete, true);
+  assert.equal(c.targeted, 2);
+  assert.equal(c.judged, 2, '判定対象と判定できた数が一致すること');
+  assert.equal(c.failed, 0);
+  const line = monitor.formatProbeCompletion(c);
+  assert.match(line, /探索の完了状態: /, 'ワークフローが探す機械可読の目印');
+  assert.match(line, /判定した投稿 2件\(判定対象 2件\)/);
+  assert.match(line, /★完走/);
+  assert.doesNotMatch(line, /★不完全/);
+});
+
+test('★完走: 取得に失敗した店があれば「★不完全」になる(その店は1投稿も見ていない)', async () => {
+  const result = await monitor.runMonitor(
+    { stores: monitor.STORES.slice(0, 2), before: [], today: '2026-07-31', state: {}, probe: true },
+    {
+      fetchLib: {
+        async fetchInstagramPosts(handle) {
+          if (handle === monitor.STORES[1].handle) throw new Error('timeout');
+          return [{ permalink: 'https://www.instagram.com/p/A/', imageUrl: 'https://example.com/0.jpg', postedAt: '2026-07-20T10:00:00.000Z' }];
+        },
+      },
+      visionLib: { async extractTournaments() { return fillerRows('2099-09'); } },
+      mergeLib,
+      downloadImage: async (u) => Buffer.from(u),
+    }
+  );
+  const c = monitor.probeCompletion(result.summaries, 2);
+  assert.equal(c.complete, false);
+  assert.equal(c.failed, 1);
+  const line = monitor.formatProbeCompletion(c);
+  assert.match(line, /★不完全/);
+  assert.match(line, /取得に失敗した店 1店/);
+  assert.match(line, /#13 の判断に使わないでください/);
+});
+
+test('★完走: 判定が記録されていない投稿があれば「★不完全」になる(打ち切られた形)', () => {
+  // 走査の途中で終わると、判定対象より判定済みが少なくなる。実行が殺されるとこの行自体が
+  // 出ないが、ここでは「行は出たが数が合わない」側(記録漏れ)を固定する。
+  const summaries = [
+    { store: monitor.STORES[0], fetchFailed: false, scheduleLikeCount: 10, probeVerdicts: [{ kind: 'not-calendar' }, { kind: 'empty' }] },
+  ];
+  const c = monitor.probeCompletion(summaries, 1);
+  assert.equal(c.complete, false);
+  assert.equal(c.targeted, 10);
+  assert.equal(c.judged, 2);
+  const line = monitor.formatProbeCompletion(c);
+  assert.match(line, /★不完全/);
+  assert.match(line, /判定できていない投稿 8件/);
+});
+
+test('★完走: 店の記録そのものが欠けていても「★不完全」になる(残差で数えていないこと)', () => {
+  // 対象6店なのに summaries が1店ぶんしか無い = どこかで push を忘れた形。
+  const summaries = [
+    { store: monitor.STORES[0], fetchFailed: false, scheduleLikeCount: 1, probeVerdicts: [{ kind: 'empty' }] },
+  ];
+  const c = monitor.probeCompletion(summaries, monitor.STORES.length);
+  assert.equal(c.complete, false);
+  assert.equal(c.missingStores, monitor.STORES.length - 1);
+  assert.match(monitor.formatProbeCompletion(c), /記録が無い店/);
+});
+
+test('★CLI(探索): 完走マーカーがログの最後に1行だけ出る(ワークフローが検査する行)', () => {
+  const r = runProbeCliWithPosts([
+    { slug: 'OLDCAL', postedAt: '2026-07-10T10:00:00.000Z', rows: calendarRows('2026-06', [1, 5, 9, 13, 17]) },
+    { slug: 'REAL', postedAt: '2026-07-12T10:00:00.000Z', rows: calendarRows('2099-09', [1, 5, 9, 13, 17, 21, 25, 29]) },
+  ]);
+  assert.equal(r.status, 0, r.stderr);
+  const lines = r.stdout.split('\n').filter((l) => l.includes('探索の完了状態:'));
+  assert.equal(lines.length, 1, '完走マーカーは1行だけ出すこと(複数あると grep の判定が揺れる)');
+  assert.match(lines[0], /対象6店 = 観測できた6店 \+ 取得失敗0店/);
+  assert.match(lines[0], /★完走/);
+});
+
+test('★CLI(探索): 取得に失敗した店があると完走マーカーが「★不完全」になり、終了コードも2', () => {
+  const root = makeTempRepoRoot();
+  fs.writeFileSync(
+    path.join(root, 'tools', 'fetch-venue-posts-apify.js'),
+    `exports.fetchInstagramPosts = async (handle) => {
+       if (handle === 'triple_orio') throw new Error('模擬的なApify障害(テスト用)');
+       return [];
+     };\n`
+  );
+  fs.writeFileSync(path.join(root, 'tools', 'venue-schedule-vision.js'), calendarVisionStubSource('x'));
+  fs.writeFileSync(
+    path.join(root, 'stub-fetch.js'),
+    'globalThis.fetch = async (url) => ({ status: 200, arrayBuffer: async () => new TextEncoder().encode(String(url)).buffer });\n'
+  );
+  try {
+    const r = runCliArgs(root, ['--probe']);
+    assert.equal(r.status, 2, '一部の店を観測できていないので終了コードは2');
+    const line = r.stdout.split('\n').find((l) => l.includes('探索の完了状態:'));
+    assert.ok(line, '完走マーカーが出ていない');
+    assert.match(line, /★不完全/);
+    assert.match(line, /取得に失敗した店 1店/);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
