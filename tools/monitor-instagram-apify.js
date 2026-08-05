@@ -32,6 +32,27 @@
  *   node tools/monitor-instagram-apify.js --dry-run     … どちらも書き換えず、検知結果だけ表示する
  *   node tools/monitor-instagram-apify.js --probe       … 【探索専用】打ち切らずに全投稿を判定し、数えるだけ
  *                                                         (採用もマージもしない。README リスク台帳 #13 の測定用)
+ *   node tools/monitor-instagram-apify.js --recapture=v35,v40
+ *                                                       … 指定した店の【当月取得済みラッチ】をこの実行だけ解除する
+ *                                                         (店が月の途中で訂正版カレンダーを出したときの取り直し)
+ *
+ * 【★当月取得済みラッチ(2026-08-05・社長指示「その月取得できたら次の月までその店舗は取得しなくていい」)】
+ *   状態ファイルに `capturedMonth` / `capturedAt` / `capturedPermalink` を持ち、
+ *   その月のカレンダーを既に読めている店では【Vision を1回も呼ばない】。
+ *   ★スキップした店は必ず1行ログに出す(黙って0件にしない)。
+ *   ★スキップしても `lastPostedAt` は【前進させない】。これが安全の要 —
+ *     前進させると、ラッチ中に投稿された【翌月のカレンダー】が永久に未読になる
+ *     (実測: 6店中5店が翌月のカレンダーを前月のうちに出しており、最も早いのは25日)。
+ *     前進させなければ、ラッチが外れた時点で同じ投稿がもう一度「新着」として並ぶ。
+ *     つまりラッチは【捨てる】のではなく【後回しにする】。
+ *   ★毎月25日(JST)からはラッチを外して走査を再開する(`LOOK_AHEAD_DAY`)。
+ *     翌月ぶんの先出しを取りこぼさないため。根拠は実測(下記 LOOK_AHEAD_DAY のコメント)。
+ *
+ * 【★「取得できたのに全部失われた回」はジョブを赤くする(2026-08-05)】
+ *   2026-08-05 の run 30983688525 は【71投稿すべてが Vision 失敗(残高不足)】なのに
+ *   ジョブは success で終わった。`::error::` の注記は出ていたが、注記は終了コードを変えない。
+ *   無人運転では「毎朝グリーンのまま1件も取り込まれない」状態が誰にも気づかれずに続く。
+ *   そこで失われた割合を数え、閾値を超えたら【終了コード 3】で終わる(`lossAccounting`)。
  *
  *   ★知らない引数を渡したときは【何もせずに exit 1】する。`--dry-run` の打ち間違い
  *     (`--dryrun` `--dry_run` `--prob`)がそのまま【本番実行】になる経路を塞ぐため。
@@ -156,7 +177,11 @@ const STORES = [
 // 判定は main() の【いちばん最初】で行い、1バイトも書かずに exit 1 する。
 const ARGV = process.argv.slice(2);
 const KNOWN_FLAGS = ['--dry-run', '--probe'];
-const UNKNOWN_ARGS = ARGV.filter((a) => !KNOWN_FLAGS.includes(a));
+// 【値を取る引数は `--recapture=v35,v40` の1トークン形式にしてある】
+// `--recapture v35` のように分けると、上の「知らない引数は受け付けない」検査に
+// `v35` が引っかかるか、あるいは検査を緩めることになる。緩めると打ち間違いが本番に通る。
+const RECAPTURE_PREFIX = '--recapture=';
+const UNKNOWN_ARGS = ARGV.filter((a) => !KNOWN_FLAGS.includes(a) && !a.startsWith(RECAPTURE_PREFIX));
 
 // 【探索専用モード(--probe)】走査を打ち切らずに【全投稿】を判定し、数えるだけのモード。
 // 採用もマージもせず、data.js も状態ファイルも書かない(= lastPostedAt を前進させないので
@@ -173,6 +198,134 @@ const PROBE = ARGV.includes('--probe');
 // これに加えて main() では書き込み関数そのものを取り上げてある(forbidWrite)。
 const DRY_RUN = ARGV.includes('--dry-run') || PROBE;
 const REQUEST_TIMEOUT_MS = 20000;
+
+/**
+ * `--recapture=v35,v40` を venueId の集合にする。
+ *
+ * 【知らない venueId は受け付けない】打ち間違い(`--recapture=v53`)を黙って無視すると
+ * 「解除したつもりで解除されていない」実行になり、人は結果を見ても気づけない。
+ *
+ * @returns {{ ids: Set<string>, unknown: string[], empty: boolean }}
+ */
+function parseRecaptureArg(argv, stores) {
+  const known = new Set((stores || []).map((s) => s.venueId));
+  const ids = new Set();
+  const unknown = [];
+  let seen = false;
+  for (const a of argv || []) {
+    if (!a.startsWith(RECAPTURE_PREFIX)) continue;
+    seen = true;
+    for (const raw of a.slice(RECAPTURE_PREFIX.length).split(',')) {
+      const id = raw.trim();
+      if (!id) continue;
+      if (known.has(id)) ids.add(id);
+      else unknown.push(id);
+    }
+  }
+  return { ids, unknown, empty: seen && ids.size === 0 && unknown.length === 0 };
+}
+
+// ============================================================
+// 【当月取得済みラッチ】社長指示・2026-08-05
+// ============================================================
+/**
+ * 【★毎月この日(JST)からはラッチを外して走査を再開する★】
+ *
+ * 【根拠(実測・run 30963380537 の全71投稿)】各店が「月Mのカレンダー」を初めて出した日を
+ * 数えると、**20/31 が前月のうち**で、最も早いのは **前月25日**(v40 の 2026-02 ぶん=1/25、
+ * 2026-04 ぶん=3/25 の2件)だった。したがって25日から走査を再開すれば、
+ * 実測された先出しはすべて【出た翌朝には】読める。
+ *
+ * 【この値を上げてはいけない(=遅くしてはいけない)】26日にすると、上記2件は
+ * 翌月1日まで読まれない。**先出しは「来月の予定を今月のうちに見せる」ためのもの**なので、
+ * 月が変わってから読むのでは意味が半分になる。
+ *
+ * 【下げるぶんには安全(ただし無料ではない)】早く開けるほど、その店の新着投稿を
+ * 読む機会が増える = Vision 呼び出しが増える。24日以前に下げるなら実測を添えること。
+ *
+ * 【★取りこぼしは起きない(遅れるだけ)★】ラッチ中は `lastPostedAt` を前進させないので、
+ * 25日に開けた時点で「ラッチ中に投稿されたもの」がすべて新着として並ぶ。
+ * つまりこの値は【いつ読むか】を決めるだけで、【読むかどうか】は決めない。
+ */
+const LOOK_AHEAD_DAY = 25;
+
+/**
+ * 【ラッチしてよいカレンダーの完全性】広がり(日)がこの値以上のときだけ「その月は取得済み」とする。
+ *
+ * 【なぜ完全性を見るのか】ラッチは「その月はもう読まない」なので、**部分的なカレンダーで
+ * ラッチすると、その月は部分データのまま固定される**。これは実際に起きていた形である —
+ * v40 は 2026-03-25 に**4月の部分カレンダー(異なる日付18・広がり17日)**を出し、
+ * 6日後の 03-31 に**完全版(30日付・広がり29日)**を出している(実測・run 30963380537)。
+ * 完全性を見ないと、この店の4月は18日ぶんで固定されていた。
+ *
+ * 【閾値25日の根拠(実測)】run 30963380537 でカレンダーと判定された34投稿の広がりの分布:
+ *   17日 … 1件(上記の部分カレンダー)
+ *   25日 … 1件 / 26日 … 1件 / 27日 … 2件 / 28日 … 3件 / 29日 … 18件 / 30日 … 8件
+ * **17日と25日のあいだは空**(18〜24日が1件も無い)。
+ *
+ * 【誤りの向きは安全側】この条件を満たさなければ【ラッチしない】= 従来どおり走査する
+ * (費用が増えるだけで、データは失われない)。逆に緩めると部分データが固定される。
+ * ★`MIN_CALENDAR_SPAN_DAYS`(採用するかどうかの閾値・10日)とは別物。あちらを触っても
+ *   こちらは自動では動かない。両方の意味を読んでから触ること。
+ */
+const MIN_CAPTURE_SPAN_DAYS = 25;
+
+/**
+ * その店で【この実行では Vision を1回も呼ばない】かどうかを決める。
+ *
+ * 判定に使うのは状態ファイルの `capturedMonth` と実行日(JST)だけ。純関数なのでテストできる。
+ *
+ * @param {object|null} prev  状態ファイルのその店ぶん
+ * @param {string} today      実行日(JST・YYYY-MM-DD)
+ * @param {{ recapture?: boolean, probe?: boolean }} [opts]
+ * @returns {{ skip: boolean, reason: string, capturedMonth: string|null, capturedAt: string|null,
+ *             capturedPermalink: string|null, currentMonth: string, day: number }}
+ */
+function latchDecision(prev, today, opts) {
+  const o = opts || {};
+  const currentMonth = String(today).slice(0, 7);
+  const day = Number(String(today).slice(8, 10));
+  const capturedMonth = (prev && typeof prev.capturedMonth === 'string' && prev.capturedMonth) || null;
+  const base = {
+    capturedMonth,
+    capturedAt: (prev && prev.capturedAt) || null,
+    capturedPermalink: (prev && prev.capturedPermalink) || null,
+    currentMonth,
+    day,
+  };
+  // 【探索はラッチを使わない】測りたいのは取得窓の分布そのもので、スキップすると標本に穴が空く
+  // (判定キャッシュを使わないのと同じ理由)。費用は探索を回す人が引き受ける。
+  if (o.probe) return { ...base, skip: false, reason: 'probe' };
+  if (o.recapture) return { ...base, skip: false, reason: 'recapture' };
+  if (!capturedMonth) return { ...base, skip: false, reason: 'no-capture' };
+  if (capturedMonth < currentMonth) return { ...base, skip: false, reason: 'month-changed' };
+  // 翌月ぶんを既に取得済み = いま読む理由が無い(当月ぶんはその前に取得済み)。
+  if (capturedMonth > currentMonth) return { ...base, skip: true, reason: 'captured-ahead' };
+  // 当月ぶんを取得済み。ただし LOOK_AHEAD_DAY 以降は翌月の先出しを探すため走査する。
+  if (day >= LOOK_AHEAD_DAY) return { ...base, skip: false, reason: 'look-ahead' };
+  return { ...base, skip: true, reason: 'captured-current' };
+}
+
+/** ラッチの判定1件を1行にする。**スキップした店は必ずこれを出す**(黙って0件にしない)。 */
+function formatLatchLine(store, latch, newPostCount) {
+  const head = `[monitor-instagram-apify] ラッチ: 店=${store.label}(${store.venueId})`;
+  if (latch.skip) {
+    return (
+      `${head} / ★当月(${latch.currentMonth})ぶんは取得済みのため Vision を1回も呼びません` +
+      ` — 取得月=${latch.capturedMonth} / 取得日=${latch.capturedAt || '不明'} / 投稿=${latch.capturedPermalink || '不明'}` +
+      ` / 今回の新着 ${newPostCount}件は【捨てていません】(確認済み投稿日時を前進させないので、` +
+      `${LOOK_AHEAD_DAY}日以降か翌月に読み直します)`
+    );
+  }
+  const why = {
+    'no-capture': '取得済みの記録が無いので走査します',
+    'month-changed': `記録は${latch.capturedMonth}ぶんで当月(${latch.currentMonth})ではないので走査します`,
+    'look-ahead': `当月(${latch.currentMonth})ぶんは取得済みですが、${LOOK_AHEAD_DAY}日以降なので翌月の先出しを探します`,
+    recapture: '--recapture で解除されたので走査します(取得済みの記録があっても読み直します)',
+    probe: '探索モードはラッチを使いません(取得窓の全投稿を判定します)',
+  }[latch.reason] || `走査します(${latch.reason})`;
+  return `${head} / ${why} / 新着 ${newPostCount}件`;
+}
 
 function fail(msg) {
   console.error(`[monitor-instagram-apify] ERROR: ${msg}`);
@@ -855,6 +1008,9 @@ async function runMonitor(opts, libs) {
   // 機械が最後に書いた値の控え(id → エントリ)。無ければ空 = 全行が人のものとして扱われ、
   // この経路は【新しい枠に足すことしかしない】。安全側に倒れる既定値。
   const writeRecords = opts.writeRecords || {};
+  // 【当月取得済みラッチをこの実行だけ解除する店】(`--recapture=v35,v40`)。
+  // 空集合が既定 = 何も解除しない。
+  const recaptureIds = opts.recapture instanceof Set ? opts.recapture : new Set(opts.recapture || []);
   const { fetchLib, visionLib, mergeLib, downloadImage: download } = libs;
 
   let arr = before;
@@ -935,7 +1091,33 @@ async function runMonitor(opts, libs) {
     summary.alreadySeenCount = picked.alreadySeen;
     summary.newPostCount = newPosts.length;
 
+    // 【キーワード判定は廃止した(2026-08-04)】理由は calendarShape のコメント参照。
+    // 取得できた新着はすべて判定の対象になる(= 取込みレベルの保存則では filteredOut は常に0)。
+    // ★ラッチの判定より【前】に置く。ラッチでスキップした投稿も「判定対象だったが Vision を
+    //   呼ばなかった」ものとして投稿レベルの保存則に載せる必要があるため。
+    summary.scheduleLikeCount = newPosts.length;
+    summary.filteredOutCount = 0;
+
     if (newPosts.length === 0) {
+      summaries.push(summary);
+      continue;
+    }
+
+    // ============================================================
+    // 【当月取得済みラッチ】この店は今回 Vision を1回も呼ばない
+    // ============================================================
+    // ★スキップしても状態は1バイトも動かさない(nextState[venueId] を作らない)。
+    //   lastPostedAt が据え置かれるので、ラッチが外れた実行で同じ投稿がもう一度新着として並ぶ。
+    //   = 【捨てるのではなく後回しにする】。ここを「前進させる」に変えると、ラッチ中に出た
+    //   翌月のカレンダーが永久に未読になる(実測: 先出しは最も早くて前月25日)。
+    const latch = latchDecision(prev, today, { recapture: recaptureIds.has(store.venueId), probe });
+    summary.latch = latch;
+    console.log(formatLatchLine(store, latch, newPosts.length));
+    if (latch.skip) {
+      // 【正の述語で数える】「Vision を呼ばなかった投稿」をここで数えておかないと、
+      // 投稿レベルの保存則(checkPostAccounting)に残余が出て毎回誤報になる。
+      // また ここが 0 のまま Vision も 0 なら、それは「壊れて呼べなかった」側である。
+      summary.latchSkippedPostCount = newPosts.length;
       summaries.push(summary);
       continue;
     }
@@ -977,11 +1159,6 @@ async function runMonitor(opts, libs) {
     // 採用した投稿の行が消えても、この項に吸い込まれて表に出なくなる。
     // 不採用と判断したその場で rows.length を足す(= 正の述語で数える)。
     let notAdoptedRows = 0;
-
-    // 【キーワード判定は廃止した(2026-08-04)】理由は calendarShape のコメント参照。
-    // 取得できた新着はすべて判定の対象になる(= 取込みレベルの保存則では filteredOut は常に0)。
-    summary.scheduleLikeCount = newPosts.length;
-    summary.filteredOutCount = 0;
 
     // ============================================================
     // 走査フェーズ: 新しい順に見て「当月以降のカレンダー」を1枚だけ採用する
@@ -1148,6 +1325,25 @@ async function runMonitor(opts, libs) {
       detail.outcome = `採用(${shape.dominantMonth}のカレンダー)`;
       checkedPosts[post.permalink] = 'calendar';
       console.log(formatCalendarVerdict(store, post, shape, `★採用(${shape.dominantMonth}のカレンダー)`));
+      // 【ラッチを張ってよいか】= その月ぶんとして十分に完全なカレンダーか(MIN_CAPTURE_SPAN_DAYS)。
+      // ★満たさないときは【張らない】。部分カレンダーでラッチすると、その月は部分データのまま
+      //   1か月固定される(v40 が 2026-03-25 に出した4月の部分版がまさにこれ)。
+      // ★判断に使った値を必ずログに出す(後から閾値を較正できるようにする)。
+      summary.capture = {
+        month: shape.dominantMonth,
+        permalink: post.permalink,
+        spanDays: shape.spanDays,
+        distinctDates: shape.distinctDates,
+        latched: shape.spanDays >= MIN_CAPTURE_SPAN_DAYS,
+      };
+      console.log(
+        `[monitor-instagram-apify] ラッチ判定: 店=${store.label}(${store.venueId})` +
+          ` / 採用したカレンダー=${shape.dominantMonth}(広がり=${shape.spanDays}日 / 異なる日付=${shape.distinctDates})` +
+          ` / 必要な広がり=${MIN_CAPTURE_SPAN_DAYS}日以上 → ` +
+          (shape.spanDays >= MIN_CAPTURE_SPAN_DAYS
+            ? `★この月は取得済みとして記録します(${LOOK_AHEAD_DAY}日まで Vision を呼びません)`
+            : '部分的なカレンダーなので取得済みにはしません(次回も走査します)')
+      );
       stoppedAtIndex = i + 1;
       break;
     }
@@ -1435,6 +1631,24 @@ async function runMonitor(opts, libs) {
       nextState[store.venueId].checkedPosts = prev.checkedPosts;
     }
 
+    // 【当月取得済みラッチの記録】十分に完全なカレンダーを採用したときだけ更新する。
+    // ★満たさなかったとき(部分カレンダー)は【前回の記録をそのまま持ち越す】。
+    //   消すと、完全版を既に持っている月まで走査対象に戻ってしまう。
+    // ★`--recapture` で解除した実行でも、読み直した結果が完全なら普通に張り直す
+    //   (解除は「この実行だけ読む」であって「以後ずっと読む」ではない)。
+    if (summary.capture && summary.capture.latched) {
+      nextState[store.venueId].capturedMonth = summary.capture.month;
+      nextState[store.venueId].capturedAt = today;
+      nextState[store.venueId].capturedPermalink = summary.capture.permalink;
+      // 判断に使った値も残す(閾値を後から較正できるように。runログは既定90日で消える)。
+      nextState[store.venueId].capturedSpanDays = summary.capture.spanDays;
+    } else if (prev && prev.capturedMonth) {
+      nextState[store.venueId].capturedMonth = prev.capturedMonth;
+      if (prev.capturedAt) nextState[store.venueId].capturedAt = prev.capturedAt;
+      if (prev.capturedPermalink) nextState[store.venueId].capturedPermalink = prev.capturedPermalink;
+      if (prev.capturedSpanDays != null) nextState[store.venueId].capturedSpanDays = prev.capturedSpanDays;
+    }
+
     // 【マージを先に行う】行レベルの内訳(added/updated/unchanged/pastDated)は mergeStore が
     // 返すので、これを lastExtraction に書くにはマージが先に済んでいる必要がある。
     if (extracted.length > 0) {
@@ -1646,6 +1860,14 @@ function makeStoreSummary(store) {
     unexaminedPostCount: 0,
     cacheHitCount: 0,
     examinedPostCount: 0,
+    // 【当月取得済みラッチでVisionを呼ばなかった投稿】(社長指示・2026-08-05)
+    // ★0で初期化すること。ラッチに掛からなかった店はこの値を触らないので、
+    //   初期化しないと undefined のまま checkPostAccounting に渡って合計が NaN になる。
+    latchSkippedPostCount: 0,
+    // その店のラッチ判定(latchDecision の戻り値)。取得に失敗した店では null のまま。
+    latch: null,
+    // 採用したカレンダーでラッチを張ったか(張らなかった理由を含む)。
+    capture: null,
     // 【探索モード(--probe)専用】当月以降のカレンダーだと判定したが、採用しなかった投稿。
     // 本番では走査がそこで打ち切られて `importedPostCount` 側に入るので【常に0】。
     // 0のまま動かない項をわざわざ保存則に入れてあるのは、探索モードで投稿が
@@ -1752,6 +1974,12 @@ function checkIntakeAccounting(summary) {
 function checkPostAccounting(summary) {
   const actual =
     summary.importedPostCount +
+    // 【当月取得済みラッチでVisionを呼ばなかった投稿】この項が無いと、ラッチが効いた店では
+    // 対象N件に対し内訳0件となり【毎回「集計が合わない」と誤報する】。
+    // ★同時に、この項があることで「Vision 0回」の理由が機械的に読める —
+    //   latchSkipped が N なら【正常にスキップした】、0 のまま Vision も 0 なら
+    //   【呼べなかった(壊れている)】側である。ゼロを安全と読ませないための配線。
+    summary.latchSkippedPostCount +
     // 探索モードで「当月以降のカレンダーだが採用しない」と判断した投稿(本番では常に0)。
     summary.probeCalendarPostCount +
     summary.notCalendarPostCount +
@@ -2705,6 +2933,9 @@ function reportTotals(summaries, storeCount) {
   // 「投稿側は常に合っている」と誤読される)。
   console.log(
     `  投稿の行き先: 取り込めた ${sum((s) => s.importedPostCount)}件 / ` +
+      // 【当月取得済みラッチ】0でも出す。ここが消えると「Visionを呼ばなかった」理由が
+      // 合計から読めなくなり、正常なスキップと故障の区別が付かなくなる。
+      `当月取得済みでVisionを呼ばず ${sum((s) => s.latchSkippedPostCount)}件 / ` +
       // 探索モードでだけ動く項。本番では常に0なので、0のときは出さない。
       (sum((s) => s.probeCalendarPostCount) > 0
         ? `当月以降のカレンダー(探索・採用せず) ${sum((s) => s.probeCalendarPostCount)}件 / `
@@ -2719,6 +2950,20 @@ function reportTotals(summaries, storeCount) {
       `Vision抽出失敗 ${sum((s) => s.visionFailedCount)} / 全行不採用 ${sum((s) => s.unusablePostCount)}) / ` +
       `Vision抽出0件 ${sum((s) => s.emptyResultCount)}件${emptyCaveat(sum((s) => s.emptyResultCount))}` +
       `${postResidual === 0 ? ' / 残余なし' : ` ← 残余 ${postResidual}件`}`
+  );
+  // 【★「Vision 0回」の理由を、正の述語で説明する★】
+  // ゼロは (a)ラッチで正常にスキップした (b)新着が無かった (c)取得に失敗した
+  // (d)呼ぼうとしたのに呼べなかった のどれでも 0 になる。(d) だけが異常なので、
+  // 0 を見た人が (a)〜(c) を足し算で確かめられる形にしておく。
+  const examined = sum((s) => s.examinedPostCount);
+  const latchAcc = latchAccounting(summaries, storeCount);
+  console.log(
+    `  Vision実行 ${examined}回` +
+      `(ラッチでスキップ ${latchAcc.skipped}店 / 新着なし ${latchAcc.noNewPosts}店 / ` +
+      `取得失敗 ${latchAcc.failed}店 / 走査した ${latchAcc.scanned}店)` +
+      (examined === 0
+        ? ' ← 0回。上の内訳で説明が付かないなら【呼べなかった】側を疑うこと'
+        : '')
   );
   const rows = summaries.map(checkRowAccounting);
   const rsum = (f) => rows.reduce((a, r) => a + f(r), 0);
@@ -2737,6 +2982,218 @@ function reportTotals(summaries, storeCount) {
       `参加費を記録しなかった行 ${sum((s) => (s.buyinSuppressedCount || 0) + (s.buyinAbsentCount || 0))}行` +
       `(うち読み取れた参加費を捨てた ${sum((s) => s.buyinSuppressedCount || 0)}行)`
   );
+}
+
+// ============================================================
+// 【当月取得済みラッチ】の報告 — 0店でも必ず出す
+// ============================================================
+/**
+ * ラッチが今回の実行で何をしたかを、**スキップ0店でも必ず**報告する。
+ *
+ * 【★0でも出す理由(この案件で繰り返し潰してきた形)★】
+ *   ラッチが効いている月は、その店のログに Vision の行が1つも出ない。
+ *   件数が出るときだけ出力する形にすると、**ラッチでスキップした日と、
+ *   ラッチの判定そのものが壊れて素通りした日が同じ「何も出ない」になる**。
+ *
+ * 【★店レベルの保存則★】対象店は必ず「スキップ」「走査」「新着なし」「取得失敗」のどれか1つに入る。
+ *   残余が出たら、どこにも数えられていない店がある(バグ)。
+ *
+ * 【★「新着なし」を「走査」に混ぜない★】混ぜると、新着が無かっただけの店が
+ *   「走査したが Vision を呼ばなかった店」に見え、**ラッチが効いているのか投稿が無いのかを
+ *   合計から読めなくなる**。ラッチの判定(`summary.latch`)は新着が1件以上ある店にだけ付くので、
+ *   `latch === null` は「判定するまでもなかった」を意味する。
+ */
+function latchAccounting(summaries, storeCount) {
+  const list = Array.isArray(summaries) ? summaries : [];
+  const failed = list.filter((s) => s.fetchFailed).length;
+  const skipped = list.filter((s) => !s.fetchFailed && s.latch && s.latch.skip).length;
+  const scanned = list.filter((s) => !s.fetchFailed && s.latch && !s.latch.skip).length;
+  const noNewPosts = list.filter((s) => !s.fetchFailed && !s.latch).length;
+  const expected = typeof storeCount === 'number' ? storeCount : list.length;
+  const accounted = skipped + scanned + noNewPosts + failed;
+  return {
+    ok: accounted === expected,
+    expected,
+    skipped,
+    scanned,
+    noNewPosts,
+    failed,
+    residual: expected - accounted,
+    skippedPosts: list.reduce((a, s) => a + (s.latchSkippedPostCount || 0), 0),
+  };
+}
+
+function reportLatchState(summaries, storeCount, today) {
+  const list = Array.isArray(summaries) ? summaries : [];
+  const acc = latchAccounting(list, storeCount);
+  console.log('');
+  console.log('[monitor-instagram-apify] === 当月取得済みラッチ(社長指示・2026-08-05) ===');
+  console.log(
+    `  対象 ${acc.expected}店 = スキップ ${acc.skipped}店 + 走査 ${acc.scanned}店 + ` +
+      `新着なし ${acc.noNewPosts}店 + 取得失敗 ${acc.failed}店` +
+      `${acc.residual === 0 ? '(残余なし)' : ` ← 残余 ${acc.residual}店`}` +
+      ` / スキップした新着投稿 のべ${acc.skippedPosts}件(捨てていません。確認済み投稿日時は据え置きです)`
+  );
+  console.log(
+    `  ★${LOOK_AHEAD_DAY}日(JST)からは翌月の先出しを探すためラッチを外します。` +
+      `取り直したい店があるときは \`node tools/monitor-instagram-apify.js --recapture=<venueId>\`。`
+  );
+  for (const s of list) {
+    if (s.fetchFailed) {
+      console.log(`  ${s.store.venueId} ${s.store.label}: 取得失敗のため判定していません`);
+      continue;
+    }
+    const l = s.latch;
+    if (!l) {
+      console.log(`  ${s.store.venueId} ${s.store.label}: 新着0件のため判定していません`);
+      continue;
+    }
+    console.log(
+      `  ${s.store.venueId} ${s.store.label}: ${l.skip ? '★スキップ' : '走査'}(${l.reason})` +
+        ` / 取得済み月=${l.capturedMonth || 'なし'}` +
+        (l.capturedAt ? `(${l.capturedAt})` : '') +
+        ` / Vision実行 ${s.examinedPostCount}回 / ラッチでスキップ ${s.latchSkippedPostCount}件` +
+        (s.capture ? ` / 今回の採用=${s.capture.month}(広がり${s.capture.spanDays}日・${s.capture.latched ? '取得済みに記録' : '部分的なので記録しない'})` : '')
+    );
+  }
+  if (!acc.ok) {
+    console.log(
+      `::error title=Instagram監視 - ラッチの集計が合わない::対象${acc.expected}店に対し` +
+        `スキップ${acc.skipped}+走査${acc.scanned}+取得失敗${acc.failed}で${acc.residual}店が数えられていません(バグ)。`
+    );
+  }
+  return acc;
+}
+
+// ============================================================
+// 【取得できたのに全部失われた回】をジョブの失敗として扱う(2026-08-05)
+// ============================================================
+/**
+ * 【なぜ注記(`::error::`)だけでは足りないか — 実測】
+ *   2026-08-05 の run 30983688525 は **71投稿すべてが Vision 失敗(残高不足)** で、
+ *   `reportLostPosts` の `::error::` 注記も出ていた。**それでもジョブの結論は success だった**
+ *   (`gh run view 30983688525 --json conclusion` → `"conclusion":"success"`)。
+ *   GitHub Actions の注記は**終了コードを変えない**ためである。
+ *   無人運転では「毎朝グリーンのまま1件も取り込まれない」状態が誰にも気づかれずに続く。
+ *
+ * 【何を数えるか】
+ *   試行 = Vision を呼んだ投稿 + 画像DLに失敗した投稿(=読もうとした投稿)
+ *   失敗 = 画像DL失敗 + Vision抽出失敗 + 全行不採用(=内容がどこにも残らなかった投稿)
+ *   ★この3つは全店合計の表示 `【失われた N件】` と**同じ3項**である。
+ *     表示している数字と、ジョブを赤くする数字を別々に持つと、片方だけ壊れても気づけない。
+ *
+ * 【赤にする条件は2つ。どちらかが立てば赤】
+ *   (1) 全滅 … 読もうとした投稿の**全部**の内容が失われた(理由を問わない)
+ *   (2) 読めなかった割合 … `画像DL失敗 + Vision抽出失敗` が試行の `LOST_RATIO_RED` 以上
+ *
+ * 【★(2)の分子に「全行不採用」を入れない理由★】
+ *   全行不採用は**画像は読めている**(Visionは応答した)。行が1件も採用できなかったのは
+ *   抽出品質やデータの問題で、`reportAnomalies` が既に `::error::` を出している。
+ *   これを割合の分子に入れると、**新着が1〜2件しかない平常日に不採用が1件出ただけで赤**になり、
+ *   「この経路は止めない代わりに注記で見せる」という既存の設計判断(ヘッダ参照)を
+ *   この変更が黙って覆すことになる。**全部が不採用なら (1) で赤くなる**ので穴は空かない。
+ *
+ * 【閾値の根拠(実測)】平常時に失われた割合は **1/99 = 1.0%**:
+ *   run 30963380537(探索・71投稿を判定)… Vision抽出失敗 **1**(応答がJSONとして壊れていた)/ 画像DL失敗 0
+ *   run 30973996821(dry-run・28投稿を判定)… Vision抽出失敗 0 / 画像DL失敗 0
+ *   0.5(過半数)は観測された 1.0% の**50倍**上にあり、平常運転では鳴らない。
+ *   **これは較正した値ではなく方針を数にしたもの**である(「その回で読めた内容より
+ *   失った内容の方が多い」という、人が説明できる線)。99件という標本からは
+ *   「1%前後で推移している」以上のことは言えない。
+ *
+ * 【★分母が小さいときも同じ規則を当てる(最小件数を設けない)★】
+ *   試行2件・読めなかった1件は 50% で赤になる。これは意図した挙動 —
+ *   その1件は `lastPostedAt` が進むので**永久に失われる**からである。
+ *   「件数が少ないから緑」にすると、新着が少ない日ほど失敗が見えなくなる。
+ *
+ * @returns {{ attempted: number, lost: number, readFailed: number, ratio: number, red: boolean,
+ *             allLost: boolean, imageFailed: number, visionFailed: number, unusable: number,
+ *             threshold: number }}
+ */
+const LOST_RATIO_RED = 0.5;
+
+function lossAccounting(summaries) {
+  const list = Array.isArray(summaries) ? summaries : [];
+  const sum = (f) => list.reduce((a, s) => a + (f(s) || 0), 0);
+  const imageFailed = sum((s) => s.imageFailedCount);
+  const visionFailed = sum((s) => s.visionFailedCount);
+  const unusable = sum((s) => s.unusablePostCount);
+  // 【★残差にしない★】「読もうとした投稿」はその場で数えた examined と imageFailed の和。
+  //   `newPostCount - 何か` のような引き算にすると、ラッチ・キャッシュ・打ち切りで
+  //   読まなかった投稿が分母に入り、**全滅しても比率が下がって赤くならない**。
+  const attempted = sum((s) => s.examinedPostCount) + imageFailed;
+  // 【表示している 【失われた N件】 と同じ3項】表示とジョブの成否を別の数字で決めると、
+  // 片方だけ壊れても誰も気づけない。
+  const lost = imageFailed + visionFailed + unusable;
+  // 割合の分子は【画像そのものを読めなかった】ぶんだけ(上のコメント参照)。
+  const readFailed = imageFailed + visionFailed;
+  const ratio = attempted > 0 ? readFailed / attempted : 0;
+  const allLost = attempted > 0 && lost === attempted;
+  return {
+    attempted,
+    lost,
+    readFailed,
+    ratio,
+    allLost,
+    red: attempted > 0 && (allLost || (readFailed > 0 && ratio >= LOST_RATIO_RED)),
+    imageFailed,
+    visionFailed,
+    unusable,
+    threshold: LOST_RATIO_RED,
+  };
+}
+
+/**
+ * 失われた割合を**必ず1行**出し、閾値を超えていれば `::error::` も出す。
+ *
+ * 【0件でも出す】「今日は何も失わなかった」と「数える場所を通らなくなった」を
+ * 同じ無出力にしないため。件数だけでなく**分母(読もうとした投稿)**も必ず併記する
+ * (分母を書かない実測は、書いていないぶんだけ強く読まれる)。
+ */
+function reportLossVerdict(acc, opts) {
+  const dryRun = Boolean(opts && opts.dryRun);
+  const pct = acc.attempted > 0 ? `${Math.round(acc.ratio * 1000) / 10}%` : '—';
+  console.log('');
+  console.log(
+    `[monitor-instagram-apify] 失われた割合: 読もうとした投稿 ${acc.attempted}件 / 失われた ${acc.lost}件` +
+      `(画像DL失敗 ${acc.imageFailed} / Vision抽出失敗 ${acc.visionFailed} / 全行不採用 ${acc.unusable})` +
+      ` / 読めなかった割合 ${pct}` +
+      ` / 赤にする条件: 全滅(${acc.allLost ? '該当' : '非該当'})または読めなかった割合が${Math.round(acc.threshold * 100)}%以上` +
+      ` → ${acc.red ? `★赤(終了コード ${LOSS_FAILURE})` : '緑'}`
+  );
+  if (!acc.red) return;
+  console.log(
+    `::error title=Instagram監視 - 取得できたのに内容が失われました::` +
+      `読もうとした${acc.attempted}件のうち${acc.lost}件の内容が失われました` +
+      `(読めなかった割合 ${pct}${acc.allLost ? ' / 全滅' : ''})。` +
+      '**この回は取り込みが成立していません。** ' +
+      (dryRun
+        ? 'この実行は書き込みを行わないので、原因を直してから走らせ直せます。'
+        : 'これらの投稿は確認済み投稿日時が進むため【再試行されません】。') +
+      'まず ANTHROPIC_API_KEY の残高と tools/venue-schedule-vision.js のモデル名を確認してください' +
+      '(2026-08-05 の run 30983688525 は残高不足で71件すべてが失われ、それでもジョブは緑でした)。'
+  );
+}
+
+/**
+ * 【終了コードを決めるのはこの関数だけ】3つの return 地点(dry-run / 差分なし / 通常)で
+ * 同じ判断を書き写さないため。書き写すと、必ずどれか1つが古くなる。
+ *
+ *   0 … 正常
+ *   2 … 一部の店の取得に失敗した(書き込みは完了している)
+ *   3 … 取得できたのに内容の大半が失われた(緑にしてはいけない回)
+ *
+ * 【3 が 2 より優先】どちらも起きた回は、より広い異常(内容が入っていない)を見せる。
+ * 取得失敗は上のログに別途出るので、優先しても情報は失われない。
+ */
+const PARTIAL_FAILURE = 2;
+const LOSS_FAILURE = 3;
+
+function finalExitCode(opts) {
+  const o = opts || {};
+  if (o.lossRed) return LOSS_FAILURE;
+  if (o.partial) return PARTIAL_FAILURE;
+  return 0;
 }
 
 /**
@@ -2849,8 +3306,22 @@ async function main() {
   if (UNKNOWN_ARGS.length > 0) {
     fail(
       `知らない引数です: ${UNKNOWN_ARGS.map((a) => JSON.stringify(a)).join(', ')}。` +
-        `使えるのは ${KNOWN_FLAGS.join(' / ')} だけです。` +
+        `使えるのは ${KNOWN_FLAGS.join(' / ')} / ${RECAPTURE_PREFIX}<venueId[,venueId...]> だけです。` +
         '(打ち間違いをそのまま本番実行にしないため、ここで止めています)'
+    );
+    return;
+  }
+
+  // 【★知らない venueId も受け付けない★】`--recapture=v53` を黙って無視すると
+  // 「解除したつもりで解除されていない」実行になり、結果を見ても人には区別が付かない。
+  const recapture = parseRecaptureArg(ARGV, STORES);
+  if (recapture.unknown.length > 0 || recapture.empty) {
+    fail(
+      recapture.empty
+        ? `${RECAPTURE_PREFIX} に venueId が1つも指定されていません。` +
+          `例: ${RECAPTURE_PREFIX}${STORES[0].venueId}`
+        : `知らない venueId です: ${recapture.unknown.map((a) => JSON.stringify(a)).join(', ')}。` +
+          `監視対象は ${STORES.map((s) => s.venueId).join(' / ')} です。`
     );
     return;
   }
@@ -2899,10 +3370,25 @@ async function main() {
     console.log(`[monitor-instagram-apify] 機械が書いた値の控え: ${Object.keys(writeState.entries).length}件`);
   }
 
+  if (recapture.ids.size > 0) {
+    console.log(
+      `[monitor-instagram-apify] --recapture: ${[...recapture.ids].join(' / ')} の当月取得済みラッチを` +
+        'この実行だけ解除します(取得済みでも走査し、読み直した結果でラッチを張り直します)。'
+    );
+  }
+
   let result;
   try {
     result = await runMonitor(
-      { stores: STORES, before, today, state, writeRecords: writeState.entries, probe: PROBE },
+      {
+        stores: STORES,
+        before,
+        today,
+        state,
+        writeRecords: writeState.entries,
+        probe: PROBE,
+        recapture: recapture.ids,
+      },
       { fetchLib, visionLib, mergeLib, downloadImage }
     );
   } catch (e) {
@@ -3041,10 +3527,15 @@ async function main() {
   reportAcceptedRows(summaries);
   // 【0件でも必ず出す】規則が死んだ日と、対象が無かった日を同じ「無出力」にしないため。
   reportVenueListingRules(summaries);
+  // 【0店でも必ず出す】ラッチでスキップした日と、判定そのものが壊れた日を区別するため。
+  reportLatchState(summaries, storeCount, today);
   reportTotals(summaries, storeCount);
   reportLostPosts(lostPosts, { probe: PROBE });
   reportEmptyResults(emptyResults);
   reportAnomalies(anomalies);
+  // 【★取得できたのに内容が失われた回は緑で終わらせない★】0件でも1行出す。
+  const loss = lossAccounting(summaries);
+  reportLossVerdict(loss, { dryRun: DRY_RUN });
   if (PROBE) reportProbe(summaries, storeCount);
 
   // 対象外店舗・過去日が変化していないことの最終自己チェック(店舗ごとのassertOnlyTargetChangedに加えた二重チェック)。
@@ -3075,10 +3566,15 @@ async function main() {
   //          この実行の最後に書き直す)。理由は reportBrokenState のコメント。
   //   2 … 一部の店の取得に失敗した。【成功した店ぶんは書き込み済み】で、失敗店の
   //        確認済み投稿日時は前進していないので次回やり直せる。Actions は赤くする
+  //   3 … 取得はできたのに、読もうとした投稿の大半(または全部)の内容が失われた。
+  //        【書き込みは行う】(取り込めた分は残す)が、Actions は赤くする。
+  //        ★この経路が無かったせいで、71/71 が失敗した run 30983688525 が緑で終わった。
   // 2 を 1 と区別するのは、「何も書いていない」と「一部だけ書いた」では
   // 人がとるべき次の行動が違うため(前者は再実行、後者は失敗店だけの確認)。
-  const PARTIAL_FAILURE = 2;
+  // 【★終了コードの決定は finalExitCode の1箇所に集約する★】下に3つある return 地点で
+  // 同じ判断を書き写すと、必ずどれか1つが古くなる(この案件で繰り返し出た形)。
   const partial = storeFailures.length > 0;
+  const exitCode = finalExitCode({ partial, lossRed: loss.red });
 
   // 次の控え。今回この経路が触った店の記録は入れ替え、触っていない店の記録は残す。
   // 過去日と data.js から消えた行は刈る(控える意味が無く、放っておくと際限なく膨らむ)。
@@ -3098,7 +3594,9 @@ async function main() {
     );
     // 【dry-run でも終了コードは同じにする】そうしないと dry-run が緑のまま通り、
     // 本番で初めて赤くなる。dry-run は本番の予行なので挙動を揃える。
-    if (partial) process.exitCode = PARTIAL_FAILURE;
+    // ★2026-08-05 の run 30983688525(dry-run・71件すべて Vision 失敗)が緑だったのは、
+    //   ここに「失われた回」の判断が無かったため。
+    if (exitCode) process.exitCode = exitCode;
     return;
   }
 
@@ -3119,7 +3617,7 @@ async function main() {
     if (persistWriteState(WRITE_STATE_PATH, nextWriteEntries, { writtenBy: 'tools/monitor-instagram-apify.js' })) {
       console.log(`[monitor-instagram-apify] ${path.basename(WRITE_STATE_PATH)} を更新しました。`);
     }
-    if (partial) process.exitCode = PARTIAL_FAILURE;
+    if (exitCode) process.exitCode = exitCode;
     return;
   }
 
@@ -3134,10 +3632,19 @@ async function main() {
   // 「書き込みは完了した / ただし一部の店は観測できていない」の順で伝える。
   if (partial) {
     console.log(
-      `[monitor-instagram-apify] ${storeFailures.length}店の取得に失敗したため、終了コード ${PARTIAL_FAILURE} で終わります` +
-        '(書き込みは完了しています)。'
+      `[monitor-instagram-apify] ${storeFailures.length}店の取得に失敗しました` +
+        `(書き込みは完了しています)。`
     );
-    process.exitCode = PARTIAL_FAILURE;
+  }
+  if (loss.red) {
+    console.log(
+      `[monitor-instagram-apify] 読もうとした${loss.attempted}件のうち${loss.lost}件の内容が失われました` +
+        '(書き込みは完了しています。取り込めた分は残してあります)。'
+    );
+  }
+  if (exitCode) {
+    console.log(`[monitor-instagram-apify] 終了コード ${exitCode} で終わります。`);
+    process.exitCode = exitCode;
   }
 }
 
@@ -3197,6 +3704,21 @@ module.exports = {
   formatImportAges,
   daysBetween,
   forbidWrite,
+  // 【当月取得済みラッチ】
+  parseRecaptureArg,
+  latchDecision,
+  formatLatchLine,
+  latchAccounting,
+  reportLatchState,
+  LOOK_AHEAD_DAY,
+  MIN_CAPTURE_SPAN_DAYS,
+  // 【失われた回を赤くする】
+  lossAccounting,
+  reportLossVerdict,
+  finalExitCode,
+  LOST_RATIO_RED,
+  PARTIAL_FAILURE,
+  LOSS_FAILURE,
   runMonitor,
   loadState,
   reportBrokenState,

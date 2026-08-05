@@ -158,3 +158,190 @@ test('★スクリプト側: --probe は受け付ける引数として登録さ�
   assert.match(known[1], /'--probe'/, 'KNOWN_FLAGS に --probe が無い(渡した日から毎朝止まる)');
   assert.match(known[1], /'--dry-run'/);
 });
+
+// ============================================================
+// 【終了コードの配線】検知器ではなく、そこに値を渡す配線を試す(2026-08-05)
+// ============================================================
+// 【なぜこのブロックが要るか — この案件で5回目の同じ形】
+//   検知(`lossAccounting`)は tools/monitor-instagram-apify.test.js で両方向を固定してある。
+//   だが 2026-08-05 の run 30983688525 で実際に壊れていたのは【配線】だった —
+//   `::error::` の注記は正しく出ていたのに、ジョブの結論は success だった
+//   (`gh run view 30983688525 --json conclusion` → `"conclusion":"success"`)。
+//   注記は終了コードを変えないので、**検知器がいくら正しくても緑のまま**になる。
+//
+// 【やり方】ステップの `run:` 本文を YAML から取り出し、**そのままシェルで実行する**。
+//   本文を写したコピーではなく実物を動かすので、YAML 側を書き換えれば必ずここが動く。
+const { spawnSync } = require('node:child_process');
+const os = require('node:os');
+
+/** `- name: <名前>` のステップの `run: |` 本文を、インデントを外して取り出す。 */
+function stepRunScript(name) {
+  const at = src.indexOf(`- name: ${name}`);
+  assert.ok(at >= 0, `ステップが見つからない: ${name}(名前を変えたらこの検査も直すこと)`);
+  const after = src.slice(at);
+  const runAt = after.indexOf('run: |');
+  assert.ok(runAt >= 0, `${name} に run: | が無い`);
+  const body = after.slice(runAt + 'run: |'.length).split('\n').slice(1);
+  const out = [];
+  for (const line of body) {
+    if (line.trim() === '') {
+      out.push('');
+      continue;
+    }
+    const indent = line.match(/^\s*/)[0].length;
+    if (indent < 10) break; // ステップ本文のインデントより浅くなったら終わり
+    out.push(line.slice(10));
+  }
+  const script = out.join('\n');
+  assert.ok(script.trim().length > 0, `${name} の run: 本文が空`);
+  return script;
+}
+
+/** 取り出した本文を、rc ファイルの中身を差し替えて実行する。 */
+function runExitWiring(rcContent) {
+  const script = stepRunScript('取込みの終了コードをジョブに反映する(取得失敗 / 内容の消失)');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'monitor-exit-wiring-'));
+  try {
+    // 実物は /tmp/monitor-rc.txt を読む。テストでは同じパスを使わずに済むよう、
+    // 一時ディレクトリのファイルを指すように【パスだけ】置換する(判定ロジックは触らない)。
+    const rcPath = path.join(dir, 'monitor-rc.txt');
+    if (rcContent !== null) fs.writeFileSync(rcPath, rcContent);
+    const patched = script.split('/tmp/monitor-rc.txt').join(rcPath);
+    assert.ok(patched.includes(rcPath), 'ステップ本文が /tmp/monitor-rc.txt を読んでいない(配線が変わった)');
+    return spawnSync('bash', ['-c', patched], { encoding: 'utf8' });
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+test('★配線(実行): rc=3(内容が失われた)でステップが exit 3 し、注記も出す', () => {
+  const r = runExitWiring('3\n');
+  assert.equal(r.status, 3, `rc=3 は exit 3 になること(実際: ${r.status} / ${r.stdout}${r.stderr})`);
+  assert.match(r.stdout, /::error title=Instagram監視 - 取得できたのに内容が失われました/);
+});
+
+test('★配線(実行): rc=2(取得失敗)は従来どおり exit 2 のまま', () => {
+  const r = runExitWiring('2\n');
+  assert.equal(r.status, 2, `rc=2 は exit 2 のままであること(実際: ${r.status})`);
+  assert.match(r.stdout, /一部の店を取得できませんでした/);
+});
+
+test('★配線(実行): rc=0 と rc ファイル無しでは緑のまま(赤くなるべきでない回が赤くならない)', () => {
+  const zero = runExitWiring('0\n');
+  assert.equal(zero.status, 0, `rc=0 は緑であること(実際: ${zero.status} / ${zero.stdout})`);
+  assert.doesNotMatch(zero.stdout, /::error/);
+  const missing = runExitWiring(null); // 取込みステップが落ちてファイルが無い場合
+  assert.equal(missing.status, 0, 'rc ファイルが無い場合は 0 として扱う(前段の失敗はそのまま見せる)');
+});
+
+test('★★配線(実行): 【知らない終了コード】でも緑にならない — 2値の照合をしない★★', () => {
+  // 【なぜ2値(2/3)の照合では足りないか — 品質管理部の指摘(2026-08-05)】
+  //   ステップが 2 と 3 だけを名指しで見ていると、それ以外の非0 は素通りして exit 0 になり、
+  //   しかも「全店の取得に成功し…」という【事実でない成功メッセージ】まで出る。
+  //   このテストも 2/3 だけを照合していたら、その穴を素通りさせていた。
+  //   そこで【値を1つずつ確かめるのではなく、「非0はすべて非0で終わる」を確かめる】。
+  //
+  // ★1 は本来この位置まで来ない(取込みステップが即座に落とす)が、
+  //   来たときに緑にしてよい理由は無いので同じ扱いにする。
+  for (const rc of ['1', '4', '5', '42', '99', '128', '255']) {
+    const r = runExitWiring(`${rc}\n`);
+    assert.notEqual(r.status, 0, `rc=${rc} が緑になっている(未知のコードを通す穴): ${r.stdout}`);
+    assert.doesNotMatch(
+      r.stdout,
+      /全店の取得に成功し/,
+      `rc=${rc} なのに成功メッセージを出している(事実でない報告): ${r.stdout}`
+    );
+  }
+  // 知らないコードは、名指しの2つとは別の注記で見せる(人が「分岐を足す」と分かるように)
+  const unknown = runExitWiring('99\n');
+  assert.equal(unknown.status, 99, `終了コードはそのまま伝えること(実際: ${unknown.status})`);
+  assert.match(unknown.stdout, /::error title=Instagram監視 - 未知の終了コード/);
+});
+
+test('★配線(実行): rc ファイルが数値でなく壊れていても、緑にはならない', () => {
+  // `exit "$rc"` に数値でない値を渡すとシェル自身がエラーになる。どちらに転んでも
+  // 【緑にしない】ことだけは固定しておく(壊れた記録を「正常」と読ませない)。
+  for (const junk of ['garbage', '3x', '-1']) {
+    const r = runExitWiring(`${junk}\n`);
+    assert.notEqual(r.status, 0, `rc="${junk}" が緑になっている: ${r.stdout}${r.stderr}`);
+  }
+});
+
+test('★配線: 取込みステップは rc=1 だけ即座に落とし、2/3 は控えて後段に渡す', () => {
+  // ここが `if [ "$rc" != "0" ]` などに変わると、rc=2/3 の回で
+  // 【取り込めたぶんがコミットされない】(赤いが、データが残らない)。
+  const step = src.slice(
+    src.indexOf('- name: Instagram新着投稿をApifyで取得し'),
+    src.indexOf('- name: 探索が最後まで走ったかを確認')
+  );
+  assert.match(step, /if \[ "\$rc" = "1" \]; then/, 'rc=1 だけを即座に落とす形であること');
+  assert.match(step, /echo "\$rc" > \/tmp\/monitor-rc\.txt/, 'rc を後段に渡していること');
+});
+
+test('★配線: スクリプトが出す終了コードの定義と、ワークフローが分岐している値が一致する', () => {
+  // 【片方だけ動くのを防ぐ】スクリプトが 3 を返すのに YAML が 3 を見ていない、
+  // あるいはその逆になっていたら、検知器は正しいのにジョブは緑のまま。
+  const monitor = require('./monitor-instagram-apify');
+  const wiring = stepRunScript('取込みの終了コードをジョブに反映する(取得失敗 / 内容の消失)');
+  assert.match(wiring, new RegExp(`if \\[ "\\$rc" = "${monitor.LOSS_FAILURE}" \\]`), 'LOSS_FAILURE を見ていない');
+  assert.match(wiring, new RegExp(`if \\[ "\\$rc" = "${monitor.PARTIAL_FAILURE}" \\]`), 'PARTIAL_FAILURE を見ていない');
+  assert.match(wiring, new RegExp(`exit ${monitor.LOSS_FAILURE}`));
+  assert.match(wiring, new RegExp(`exit ${monitor.PARTIAL_FAILURE}`));
+  // 【catch-all が名指しの分岐の【後ろ】にあること】前に置くと 2/3 の注記に到達しない。
+  const catchAll = wiring.indexOf('if [ "$rc" != "0" ]');
+  assert.ok(catchAll >= 0, '知らない終了コードを拾う catch-all が無い');
+  assert.ok(catchAll > wiring.indexOf(`if [ "$rc" = "${monitor.PARTIAL_FAILURE}" ]`), 'catch-all は名指しの分岐より後ろに置くこと');
+});
+
+// ============================================================
+// 【実行スケジュール】月末・月初に寄せた cron(2026-08-05・社長指示)
+// ============================================================
+test('★スケジュール: JST 25日〜翌10日は毎日、期間外は週1回の cron が入っている', () => {
+  const crons = [...src.matchAll(/^\s*- cron: '([^']+)'/gm)].map((m) => m[1]);
+  assert.equal(crons.length, 3, `cron は3本(月末+月初+週1)であること: ${JSON.stringify(crons)}`);
+  // UTC 22:10 = JST 翌日07:10。したがって day-of-month は JST より1つ手前になる。
+  assert.ok(crons.includes('10 22 24-31 * *'), `JST 25日〜翌1日ぶんが無い: ${JSON.stringify(crons)}`);
+  assert.ok(crons.includes('10 22 1-9 * *'), `JST 2日〜10日ぶんが無い: ${JSON.stringify(crons)}`);
+  assert.ok(
+    crons.some((c) => /^10 22 \* \* [0-6]$/.test(c)),
+    `期間外の保険(週1)が無い: ${JSON.stringify(crons)}`
+  );
+  for (const c of crons) assert.match(c, /^10 22 /, `実行時刻は07:10 JST に揃えること: ${c}`);
+});
+
+test('★スケジュール: 実測した「カレンダーが出る日」を1日も取りこぼさない(境界)', () => {
+  // 実測(run 30963380537 の全71投稿): 月Mのカレンダーの初出は 前月25日 が最も早い。
+  // cron の day-of-month は UTC なので、JST の日から1を引いた値が含まれていること。
+  const crons = [...src.matchAll(/^\s*- cron: '([^']+)'/gm)].map((m) => m[1]);
+  /** その cron が UTC の day-of-month d にマッチするか(day-of-week は * のもののみ対象)。 */
+  const utcDays = new Set();
+  for (const c of crons) {
+    const [, , dom, , dow] = c.split(' ');
+    if (dow !== '*') continue; // 週1の保険は曜日で回るので日付判定の対象外
+    for (const part of dom.split(',')) {
+      const m = part.match(/^(\d+)-(\d+)$/);
+      if (m) for (let d = Number(m[1]); d <= Number(m[2]); d++) utcDays.add(d);
+      else if (/^\d+$/.test(part)) utcDays.add(Number(part));
+    }
+  }
+  // JST 25日 → UTC 24日、JST 10日 → UTC 9日
+  for (const jstDay of [25, 26, 27, 28, 29, 30, 31]) {
+    assert.ok(utcDays.has(jstDay - 1), `JST ${jstDay}日の実行が無い(UTC ${jstDay - 1}日)`);
+  }
+  for (const jstDay of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) {
+    const utcDay = jstDay === 1 ? 31 : jstDay - 1;
+    assert.ok(utcDays.has(utcDay), `JST ${jstDay}日の実行が無い(UTC ${utcDay}日)`);
+  }
+  // 【逆向き】期間外(JST 11〜24日)は日付指定では走らないこと(=間引けていること)
+  for (const jstDay of [12, 15, 20, 24]) {
+    assert.equal(utcDays.has(jstDay - 1), false, `JST ${jstDay}日は日付指定では走らないこと(週1の保険のみ)`);
+  }
+});
+
+test('★スクリプト側: --recapture は受け付ける引数として登録されている', () => {
+  // README が案内する解除手段が、スクリプト側で拒否されないこと。
+  const toolSrc = fs.readFileSync(path.join(__dirname, 'monitor-instagram-apify.js'), 'utf8');
+  assert.match(toolSrc, /const RECAPTURE_PREFIX = '--recapture='/);
+  const monitor = require('./monitor-instagram-apify');
+  assert.equal(monitor.parseRecaptureArg([`--recapture=${monitor.STORES[0].venueId}`], monitor.STORES).ids.size, 1);
+});

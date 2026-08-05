@@ -1427,10 +1427,17 @@ test('CLI: --dry-run では新着があってもdata.js/状態ファイルを書
     path.join(root, 'tools', 'venue-schedule-vision.js'),
     `exports.extractTournaments = async () => ([{ date: '2099-01-01', start: '19:00', name: 'DRY RUNテスト', buyin: 1000, tags: [] }]);\n`
   );
+  // 【画像ダウンロードは必ずスタブする】ここを実ネットワークに出すと 404 になり、
+  // 「読もうとした1件が失われた」= 全滅として【終了コード 3】で落ちる(2026-08-05〜)。
+  // dry-run が何も書かないことを見るテストなので、取得は成功させる。
+  fs.writeFileSync(
+    path.join(root, 'stub-fetch.js'),
+    'globalThis.fetch = async (url) => ({ status: 200, arrayBuffer: async () => new TextEncoder().encode(String(url)).buffer });\n'
+  );
   try {
     const beforeData = fs.readFileSync(path.join(root, 'data.js'), 'utf8');
     const beforeState = fs.readFileSync(path.join(root, 'apify-monitor-state.json'), 'utf8');
-    const out = execFileSync('node', ['tools/monitor-instagram-apify.js', '--dry-run'], {
+    const out = execFileSync('node', ['--require', './stub-fetch.js', 'tools/monitor-instagram-apify.js', '--dry-run'], {
       cwd: root,
       env: { ...process.env, APIFY_API_TOKEN: 'dummy-token-for-test' },
       encoding: 'utf8',
@@ -2018,6 +2025,10 @@ function emptyPostBuckets() {
     // 全行が【店ごとの掲載ルール】で除外された投稿。平常は0のまま動かないが、
     // これが無いとその投稿が「全行不採用」= ::error:: に落ちて空振りの赤になる。
     venueRuleOnlyPostCount: 0,
+    // 【当月取得済みラッチ】でVisionを呼ばなかった投稿(2026-08-05)。
+    // ラッチが効いた店は他のバケツがすべて0になるので、この項が無いと
+    // 「対象N件・内訳0件」で毎回 ::error:: が出る(空振りの赤)。
+    latchSkippedPostCount: 0,
   };
 }
 
@@ -6032,6 +6043,519 @@ test('★CLI(実データの形): v40の「大還元」が落ち、v35の参加�
     assert.doesNotMatch(r.stdout, /集計が合わない/);
     assert.doesNotMatch(r.stdout, /::error/);
     assert.match(r.stdout, /うち店ごとの掲載ルールで除外 2行/);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+// ============================================================
+// 【当月取得済みラッチ】社長指示・2026-08-05(Vision呼び出しの削減)
+// ============================================================
+// 【このブロックが守っているもの】
+//   (a) 取得済みの月は Vision を1回も呼ばない(削減の効果そのもの)
+//   (b) スキップしても【何も失われない】= lastPostedAt を前進させない(安全の要)
+//   (c) 「Vision 0回」が【正常なスキップ】なのか【呼べなかった】のかをログと保存則で区別できる
+//   (d) 部分的なカレンダーではラッチを張らない(部分データが1か月固定されるのを防ぐ)
+// (b) は変異(ラッチ時に lastPostedAt を進める)で落ちることを確かめてある。
+
+/** 投稿1件ぶんの fixture。既定はカレンダー(広がり11日)。 */
+function latchPost(permalink, postedAt, rows) {
+  return { permalink, postedAt, rows };
+}
+
+/** Vision の呼び出し回数を数える libs。削減の主張は「回数」なので、回数そのものを見る。 */
+function countingLibs(posts) {
+  const base = fakeLibsForBehaviour(posts);
+  const calls = [];
+  return {
+    calls,
+    libs: {
+      ...base,
+      visionLib: {
+        async extractTournaments(buffer, opts) {
+          calls.push(String(buffer));
+          return base.visionLib.extractTournaments(buffer, opts);
+        },
+      },
+    },
+  };
+}
+
+/** 広がり28日=ラッチできる完全なカレンダー(MIN_CAPTURE_SPAN_DAYS 以上)。 */
+function fullCalendarRows(month) {
+  return [2, 9, 16, 23, 30].map((d) => ({
+    date: `${month}-${String(d).padStart(2, '0')}`,
+    start: '19:00',
+    name: `完全カレンダー${d}`,
+    buyin: 3000,
+    tags: [],
+  }));
+}
+
+test('latchDecision: 当月ぶんを取得済みで、25日より前なら Vision を呼ばない', () => {
+  const d = monitor.latchDecision(
+    { capturedMonth: '2026-08', capturedAt: '2026-08-02', capturedPermalink: 'https://x/1' },
+    '2026-08-05'
+  );
+  assert.equal(d.skip, true);
+  assert.equal(d.reason, 'captured-current');
+  assert.equal(d.capturedMonth, '2026-08');
+});
+
+test('latchDecision: 25日(LOOK_AHEAD_DAY)からは翌月の先出しを探すためスキップしない', () => {
+  const before = monitor.latchDecision({ capturedMonth: '2026-08' }, '2026-08-24');
+  const on = monitor.latchDecision({ capturedMonth: '2026-08' }, '2026-08-25');
+  assert.equal(before.skip, true, '24日はまだスキップ');
+  assert.equal(on.skip, false, '25日から走査を再開する');
+  assert.equal(on.reason, 'look-ahead');
+  assert.equal(monitor.LOOK_AHEAD_DAY, 25, '境界を動かすときは実測(前月25日が最も早い先出し)を読み直すこと');
+});
+
+test('latchDecision: 翌月ぶんを取得済みならスキップし、月が変わったら自動的に解除される', () => {
+  // 8/28 に9月ぶんを取得 → 8月中も9月中(25日より前)もスキップ、10月に入れば解除
+  assert.equal(monitor.latchDecision({ capturedMonth: '2026-09' }, '2026-08-28').skip, true);
+  assert.equal(monitor.latchDecision({ capturedMonth: '2026-09' }, '2026-09-05').skip, true);
+  const next = monitor.latchDecision({ capturedMonth: '2026-09' }, '2026-10-01');
+  assert.equal(next.skip, false, '月が変われば自動的に解除される');
+  assert.equal(next.reason, 'month-changed');
+});
+
+test('latchDecision: 記録が無い / --recapture / 探索モード ではスキップしない', () => {
+  assert.equal(monitor.latchDecision(null, '2026-08-05').skip, false);
+  assert.equal(monitor.latchDecision({}, '2026-08-05').reason, 'no-capture');
+  assert.equal(monitor.latchDecision({ capturedMonth: '2026-08' }, '2026-08-05', { recapture: true }).skip, false);
+  assert.equal(monitor.latchDecision({ capturedMonth: '2026-08' }, '2026-08-05', { probe: true }).skip, false);
+});
+
+test('parseRecaptureArg: 知っている venueId だけ受け取り、知らないものは unknown で返す', () => {
+  const ok = monitor.parseRecaptureArg(['--recapture=v35,v40'], monitor.STORES);
+  assert.deepEqual([...ok.ids].sort(), ['v35', 'v40']);
+  assert.deepEqual(ok.unknown, []);
+  const ng = monitor.parseRecaptureArg(['--recapture=v53'], monitor.STORES);
+  assert.equal(ng.ids.size, 0);
+  assert.deepEqual(ng.unknown, ['v53'], '知らない venueId を黙って無視しない');
+  const empty = monitor.parseRecaptureArg(['--recapture='], monitor.STORES);
+  assert.equal(empty.empty, true, '値が空なら空として報告する(黙って全店解除にしない)');
+  assert.equal(monitor.parseRecaptureArg(['--dry-run'], monitor.STORES).empty, false);
+});
+
+test('ラッチ: 当月取得済みの店では Vision を1回も呼ばず、スキップした件数を保存則に載せる', async () => {
+  const { calls, libs } = countingLibs([
+    latchPost('https://www.instagram.com/p/NEW/', '2026-08-04T10:00:00.000Z', fullCalendarRows('2026-08')),
+  ]);
+  const result = await monitor.runMonitor(
+    {
+      stores: [monitor.STORES[0]],
+      before: [],
+      today: '2026-08-05',
+      state: {
+        [monitor.STORES[0].venueId]: {
+          handle: monitor.STORES[0].handle,
+          lastPostedAt: '2026-08-01T00:00:00.000Z',
+          capturedMonth: '2026-08',
+          capturedAt: '2026-08-01',
+          capturedPermalink: 'https://www.instagram.com/p/AUG/',
+        },
+      },
+    },
+    libs
+  );
+  assert.equal(calls.length, 0, 'ラッチが効いている店で Vision を呼んではいけない');
+  const s = result.summaries[0];
+  assert.equal(s.latch.skip, true);
+  assert.equal(s.latchSkippedPostCount, 1, 'スキップした投稿を【正の述語で】数えていること');
+  assert.equal(s.examinedPostCount, 0);
+  // 投稿レベルの保存則が成立する(= ラッチのぶんが「どこにも数えられていない投稿」にならない)
+  const acc = monitor.checkPostAccounting(s);
+  assert.equal(acc.ok, true, `保存則が破れている: ${JSON.stringify(acc)}`);
+  assert.equal(acc.expected, 1);
+});
+
+test('★ラッチ: スキップしても lastPostedAt を前進させない(捨てるのではなく後回しにする)', async () => {
+  // 【この主張が壊れると何が起きるか】ラッチ中に投稿された【翌月のカレンダー】が
+  // 既読扱いになり、月が変わっても二度と読まれない(静かな永久停止)。
+  // 変異(ラッチ時に nextState[venueId] を作って lastPostedAt を進める)で、このテストが落ちる。
+  const state = {
+    [monitor.STORES[0].venueId]: {
+      handle: monitor.STORES[0].handle,
+      lastPostedAt: '2026-08-01T00:00:00.000Z',
+      capturedMonth: '2026-08',
+      capturedAt: '2026-08-01',
+      capturedPermalink: 'https://www.instagram.com/p/AUG/',
+    },
+  };
+  const nextMonthPost = latchPost(
+    'https://www.instagram.com/p/SEP-CALENDAR/',
+    '2026-08-28T10:00:00.000Z',
+    fullCalendarRows('2026-09')
+  );
+  // (1) 8/20(ラッチ中)に走ると、9月カレンダーは読まれず、状態も1バイトも動かない
+  const latched = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-08-20', state },
+    countingLibs([nextMonthPost]).libs
+  );
+  assert.equal(
+    JSON.stringify(latched.state),
+    JSON.stringify(state),
+    'ラッチ中は状態を1バイトも動かさないこと(lastPostedAt が進むと翌月ぶんを失う)'
+  );
+  // (2) 解除後(9/1)に走ると、同じ投稿が新着として並び、9月カレンダーを取り込める
+  const { calls, libs } = countingLibs([nextMonthPost]);
+  const released = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-09-01', state: latched.state },
+    libs
+  );
+  assert.equal(calls.length, 1, '解除後には同じ投稿を読み直すこと(=後回しにしただけ)');
+  assert.equal(released.summaries[0].importedPostCount, 1);
+  assert.equal(released.state[monitor.STORES[0].venueId].capturedMonth, '2026-09');
+});
+
+test('ラッチ: 完全なカレンダーを採用したら capturedMonth / capturedAt / capturedPermalink を記録する', async () => {
+  const permalink = 'https://www.instagram.com/p/FULL/';
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-08-05', state: {} },
+    countingLibs([latchPost(permalink, '2026-08-02T10:00:00.000Z', fullCalendarRows('2026-08'))]).libs
+  );
+  const st = result.state[monitor.STORES[0].venueId];
+  assert.equal(st.capturedMonth, '2026-08');
+  assert.equal(st.capturedAt, '2026-08-05');
+  assert.equal(st.capturedPermalink, permalink);
+  assert.ok(st.capturedSpanDays >= monitor.MIN_CAPTURE_SPAN_DAYS, '判断に使った広がりも残すこと');
+});
+
+test('★ラッチ: 部分的なカレンダー(広がりが足りない)では取得済みにしない', async () => {
+  // 実測: v40 は 2026-03-25 に【4月の部分カレンダー(異なる日付18・広がり17日)】を出し、
+  // 6日後に完全版(30日付・広がり29日)を出した。部分版でラッチすると4月が18日ぶんで固定される。
+  const partial = fillerRows('2026-08'); // 異なる日付5・広がり11日 = 採用はされるがラッチはできない
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-08-05', state: {} },
+    countingLibs([latchPost('https://www.instagram.com/p/PARTIAL/', '2026-08-02T10:00:00.000Z', partial)]).libs
+  );
+  const s = result.summaries[0];
+  assert.equal(s.importedPostCount, 1, '採用そのものは従来どおり行う(取り込みは減らさない)');
+  assert.equal(s.capture.latched, false);
+  assert.ok(s.capture.spanDays < monitor.MIN_CAPTURE_SPAN_DAYS);
+  assert.equal(result.state[monitor.STORES[0].venueId].capturedMonth, undefined, '部分版でラッチを張らないこと');
+});
+
+test('ラッチ: 部分版を採用しても、既に持っている完全版の記録は消さない', async () => {
+  const state = {
+    [monitor.STORES[0].venueId]: {
+      handle: monitor.STORES[0].handle,
+      lastPostedAt: '2026-08-01T00:00:00.000Z',
+      capturedMonth: '2026-08',
+      capturedAt: '2026-08-01',
+      capturedPermalink: 'https://www.instagram.com/p/AUG/',
+      capturedSpanDays: 29,
+    },
+  };
+  // 8/26(look-ahead 期間)に部分的な9月カレンダーが出た場合
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-08-26', state },
+    countingLibs([latchPost('https://www.instagram.com/p/SEP-PARTIAL/', '2026-08-26T01:00:00.000Z', fillerRows('2026-09'))]).libs
+  );
+  const st = result.state[monitor.STORES[0].venueId];
+  assert.equal(st.capturedMonth, '2026-08', '前回の完全版の記録を持ち越すこと');
+  assert.equal(st.capturedSpanDays, 29);
+});
+
+test('ラッチ: --recapture に相当する解除で、取得済みでも読み直してラッチを張り直す', async () => {
+  const venueId = monitor.STORES[0].venueId;
+  const state = {
+    [venueId]: {
+      handle: monitor.STORES[0].handle,
+      lastPostedAt: '2026-08-01T00:00:00.000Z',
+      capturedMonth: '2026-08',
+      capturedAt: '2026-08-01',
+      capturedPermalink: 'https://www.instagram.com/p/OLD/',
+    },
+  };
+  const { calls, libs } = countingLibs([
+    latchPost('https://www.instagram.com/p/FIXED/', '2026-08-04T10:00:00.000Z', fullCalendarRows('2026-08')),
+  ]);
+  const result = await monitor.runMonitor(
+    { stores: [monitor.STORES[0]], before: [], today: '2026-08-05', state, recapture: new Set([venueId]) },
+    libs
+  );
+  assert.equal(calls.length, 1, '解除した店は読み直すこと');
+  assert.equal(result.summaries[0].latch.reason, 'recapture');
+  assert.equal(result.state[venueId].capturedPermalink, 'https://www.instagram.com/p/FIXED/');
+});
+
+test('ラッチ: 探索(--probe)はラッチを使わない(取得窓の分布に穴を空けない)', async () => {
+  const { calls, libs } = countingLibs([
+    latchPost('https://www.instagram.com/p/P1/', '2026-08-04T10:00:00.000Z', fullCalendarRows('2026-08')),
+  ]);
+  await monitor.runMonitor(
+    {
+      stores: [monitor.STORES[0]],
+      before: [],
+      today: '2026-08-05',
+      state: { [monitor.STORES[0].venueId]: { capturedMonth: '2026-08', lastPostedAt: '2026-08-01T00:00:00.000Z' } },
+      probe: true,
+    },
+    libs
+  );
+  assert.equal(calls.length, 1, '探索はラッチに関係なく全投稿を判定する');
+});
+
+test('ラッチ: スキップした店は【必ず】1行ログに出る(黙って0件にしない)', async () => {
+  const store = monitor.STORES[0];
+  const latch = monitor.latchDecision(
+    { capturedMonth: '2026-08', capturedAt: '2026-08-02', capturedPermalink: 'https://www.instagram.com/p/AUG/' },
+    '2026-08-05'
+  );
+  const line = monitor.formatLatchLine(store, latch, 3);
+  assert.match(line, new RegExp(store.venueId));
+  assert.match(line, /取得済み/);
+  assert.match(line, /2026-08-02/, '取得日を出すこと');
+  assert.match(line, /https:\/\/www\.instagram\.com\/p\/AUG\//, '投稿URLを出すこと');
+  assert.match(line, /捨てていません/, '「後回し」であることが読めること');
+  // 走査する側も必ず理由つきで1行出る(0件でも出す)
+  assert.match(monitor.formatLatchLine(store, monitor.latchDecision({}, '2026-08-05'), 0), /走査します/);
+});
+
+test('★ラッチ: 店レベルの保存則(スキップ+走査+取得失敗=対象店数)が成立し、残余は報告される', () => {
+  const mk = (venueId, over) => ({ store: { venueId, label: venueId }, fetchFailed: false, latch: null, latchSkippedPostCount: 0, examinedPostCount: 0, newPostCount: 0, capture: null, ...over });
+  const ok = monitor.latchAccounting(
+    [
+      mk('v1', { latch: { skip: true, reason: 'captured-current', capturedMonth: '2026-08' }, latchSkippedPostCount: 2 }),
+      mk('v2', { latch: { skip: false, reason: 'no-capture' } }),
+      mk('v3', { fetchFailed: true }),
+      // 新着0件の店は latch の判定まで進まない(latch === null)。
+      // 【★これを「走査」に混ぜないこと★】混ぜると「ラッチが効いた」と「投稿が無かった」が
+      //   同じ数字に見え、合計から区別できなくなる。
+      mk('v4', {}),
+    ],
+    4
+  );
+  assert.equal(ok.ok, true);
+  assert.deepEqual([ok.skipped, ok.scanned, ok.noNewPosts, ok.failed, ok.skippedPosts], [1, 1, 1, 1, 2]);
+  // 【★店数を summaries.length と比べない★】比べると恒等式になり、何も検査しなくなる
+  const missing = monitor.latchAccounting([mk('v1', { latch: { skip: true } })], 6);
+  assert.equal(missing.ok, false);
+  assert.equal(missing.residual, 5, 'summary が作られなかった店が残余として出ること');
+});
+
+// ============================================================
+// 【取得できたのに全部失われた回は緑にしない】2026-08-05
+// ============================================================
+// 実測: run 30983688525 は 71/71 が Vision 失敗(残高不足)で conclusion=success だった。
+// 検知(lossAccounting)と、そこから終了コードを決める配線(finalExitCode)と、
+// ワークフロー側の配線(workflow-monitor-wiring.test.js)の3つを別々に固定する。
+
+/** summary の最小形。損失の集計に必要な項だけ持つ。 */
+function lossSummary(over) {
+  return { examinedPostCount: 0, imageFailedCount: 0, visionFailedCount: 0, unusablePostCount: 0, ...over };
+}
+
+test('lossAccounting: 全件がVision失敗なら赤(run 30983688525 の再現)', () => {
+  const acc = monitor.lossAccounting([lossSummary({ examinedPostCount: 71, visionFailedCount: 71 })]);
+  assert.equal(acc.attempted, 71);
+  assert.equal(acc.lost, 71);
+  assert.equal(acc.allLost, true);
+  assert.equal(acc.red, true);
+});
+
+test('lossAccounting: 平常の実測(99件中1件失敗)では赤にしない', () => {
+  // run 30963380537(71件・Vision失敗1)+ run 30973996821(28件・失敗0)= 1/99 = 1.0%
+  const acc = monitor.lossAccounting([
+    lossSummary({ examinedPostCount: 71, visionFailedCount: 1 }),
+    lossSummary({ examinedPostCount: 28 }),
+  ]);
+  assert.equal(acc.attempted, 99);
+  assert.equal(acc.lost, 1);
+  assert.equal(acc.red, false, '平常運転で鳴る警報にしない');
+  assert.ok(acc.ratio < monitor.LOST_RATIO_RED);
+});
+
+test('lossAccounting: 読めなかった割合が閾値ちょうどでも赤(境界)', () => {
+  const at = monitor.lossAccounting([lossSummary({ examinedPostCount: 10, visionFailedCount: 5 })]);
+  const under = monitor.lossAccounting([lossSummary({ examinedPostCount: 10, visionFailedCount: 4 })]);
+  assert.equal(at.ratio, 0.5);
+  assert.equal(at.red, true, '閾値ちょうどは赤(50%以上)');
+  assert.equal(under.red, false);
+});
+
+test('lossAccounting: 画像ダウンロード失敗も分子・分母に入る(Vision以外の消失も見る)', () => {
+  const acc = monitor.lossAccounting([lossSummary({ examinedPostCount: 1, imageFailedCount: 1 })]);
+  assert.equal(acc.attempted, 2, '画像DLに失敗した投稿も「読もうとした」に数える');
+  assert.equal(acc.readFailed, 1);
+  assert.equal(acc.red, true, '2件中1件が読めていない = 50%');
+});
+
+test('lossAccounting: 全行不採用だけでは割合の分子に入れない(既存の設計判断を覆さない)', () => {
+  // 【なぜ入れないか】全行不採用は画像を読めている。新着1〜2件の平常日に1件出ただけで
+  // 赤になると、「止めずに注記で見せる」という既存の判断を黙って覆すことになる。
+  const acc = monitor.lossAccounting([lossSummary({ examinedPostCount: 2, unusablePostCount: 1 })]);
+  assert.equal(acc.lost, 1, '表示上は「失われた」に数える(3項は表示と同じ)');
+  assert.equal(acc.ratio, 0, '割合の分子には入れない');
+  assert.equal(acc.red, false);
+  // ただし【全部】が不採用なら「取得できたのに全部失われた」なので赤
+  const all = monitor.lossAccounting([lossSummary({ examinedPostCount: 2, unusablePostCount: 2 })]);
+  assert.equal(all.allLost, true);
+  assert.equal(all.red, true);
+});
+
+test('lossAccounting: 1件も読もうとしなかった回(ラッチ・新着なし)は赤にしない', () => {
+  const acc = monitor.lossAccounting([lossSummary({}), lossSummary({})]);
+  assert.equal(acc.attempted, 0);
+  assert.equal(acc.red, false, '0件を「全滅」と読んではいけない(0/0 は正常)');
+  assert.equal(monitor.lossAccounting([]).red, false);
+});
+
+test('★配線: finalExitCode が 3 > 2 > 0 の順で決まる(判断を1箇所に集約)', () => {
+  assert.equal(monitor.finalExitCode({}), 0);
+  assert.equal(monitor.finalExitCode({ partial: true }), monitor.PARTIAL_FAILURE);
+  assert.equal(monitor.finalExitCode({ lossRed: true }), monitor.LOSS_FAILURE);
+  assert.equal(monitor.finalExitCode({ partial: true, lossRed: true }), monitor.LOSS_FAILURE, '両方なら広い方を見せる');
+  assert.equal(monitor.LOSS_FAILURE, 3);
+});
+
+test('reportLossVerdict: 0件でも必ず1行出し、赤のときだけ ::error:: を足す', () => {
+  const lines = [];
+  const orig = console.log;
+  console.log = (...a) => lines.push(a.join(' '));
+  try {
+    monitor.reportLossVerdict(monitor.lossAccounting([lossSummary({ examinedPostCount: 3 })]), {});
+    monitor.reportLossVerdict(monitor.lossAccounting([lossSummary({ examinedPostCount: 3, visionFailedCount: 3 })]), {});
+  } finally {
+    console.log = orig;
+  }
+  const text = lines.join('\n');
+  assert.equal((text.match(/失われた割合:/g) || []).length, 2, '0件でも出すこと');
+  assert.equal((text.match(/::error title=Instagram監視 - 取得できたのに内容が失われました/g) || []).length, 1);
+  assert.match(text, /読もうとした投稿 3件/, '分母を必ず併記すること');
+});
+
+test('★CLI: 全投稿のVision抽出が失敗した回は終了コード 3 で終わる(緑にしない)', () => {
+  const root = makeTempRepoRoot();
+  fs.writeFileSync(
+    path.join(root, 'tools', 'fetch-venue-posts-apify.js'),
+    `exports.fetchInstagramPosts = async (handle) => {
+      if (handle === 'triple_orio') {
+        return [{ permalink: 'https://www.instagram.com/p/A/', imageUrl: 'https://example.com/a.jpg', postedAt: '2026-07-20T10:00:00.000Z', caption: '' }];
+      }
+      return [];
+    };\n`
+  );
+  fs.writeFileSync(
+    path.join(root, 'tools', 'venue-schedule-vision.js'),
+    `exports.extractTournaments = async () => { throw new Error('Visionモデル呼び出しに失敗: HTTP 400 credit balance is too low'); };\n`
+  );
+  fs.writeFileSync(
+    path.join(root, 'stub-fetch.js'),
+    'globalThis.fetch = async (url) => ({ status: 200, arrayBuffer: async () => new TextEncoder().encode(String(url)).buffer });\n'
+  );
+  try {
+    const r = runCliArgs(root, []);
+    assert.equal(r.status, 3, `終了コード3で終わること(実際: ${r.status} / ${r.stderr})`);
+    assert.match(r.stdout, /::error title=Instagram監視 - 取得できたのに内容が失われました/);
+    assert.match(r.stdout, /失われた割合: 読もうとした投稿 1件/);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('★CLI: 正常に読めた回は終了コード 0 のまま(赤くなるべきでない回が赤くならない)', () => {
+  const root = makeTempRepoRoot();
+  fs.writeFileSync(
+    path.join(root, 'tools', 'fetch-venue-posts-apify.js'),
+    `exports.fetchInstagramPosts = async (handle) => {
+      if (handle === 'triple_orio') {
+        return [{ permalink: 'https://www.instagram.com/p/A/', imageUrl: 'https://example.com/a.jpg', postedAt: '2026-07-20T10:00:00.000Z', caption: '' }];
+      }
+      return [];
+    };\n`
+  );
+  fs.writeFileSync(
+    path.join(root, 'tools', 'venue-schedule-vision.js'),
+    `exports.extractTournaments = async () => (${JSON.stringify(
+      [2, 9, 16, 23, 30].map((d) => ({ date: `2099-09-${String(d).padStart(2, '0')}`, start: '19:00', name: `正常${d}`, buyin: 3000, tags: [] }))
+    )});\n`
+  );
+  fs.writeFileSync(
+    path.join(root, 'stub-fetch.js'),
+    'globalThis.fetch = async (url) => ({ status: 200, arrayBuffer: async () => new TextEncoder().encode(String(url)).buffer });\n'
+  );
+  try {
+    const r = runCliArgs(root, []);
+    assert.equal(r.status, 0, `正常な回は緑のままであること(${r.stderr})`);
+    assert.match(r.stdout, /失われた割合: 読もうとした投稿 1件 \/ 失われた 0件/);
+    assert.doesNotMatch(r.stdout, /取得できたのに内容が失われました/);
+    // ラッチが張られ、次回のためにその根拠が状態ファイルに残る
+    const state = JSON.parse(fs.readFileSync(path.join(root, 'apify-monitor-state.json'), 'utf8'));
+    assert.equal(state.v40.capturedMonth, '2099-09');
+    assert.equal(state.v40.capturedPermalink, 'https://www.instagram.com/p/A/');
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('★CLI: --recapture に知らない venueId を渡したら1バイトも書かずに exit 1', () => {
+  const root = makeTempRepoRoot();
+  fs.writeFileSync(
+    path.join(root, 'stub-fetch.js'),
+    'globalThis.fetch = async () => { throw new Error("ここに到達してはいけない"); };\n'
+  );
+  try {
+    const beforeData = fs.readFileSync(path.join(root, 'data.js'), 'utf8');
+    const beforeState = fs.readFileSync(path.join(root, 'apify-monitor-state.json'), 'utf8');
+    const r = runCliArgs(root, ['--recapture=v53']);
+    assert.equal(r.status, 1);
+    assert.match(r.stderr, /知らない venueId/);
+    assert.equal(fs.readFileSync(path.join(root, 'data.js'), 'utf8'), beforeData);
+    assert.equal(fs.readFileSync(path.join(root, 'apify-monitor-state.json'), 'utf8'), beforeState);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('★CLI: ラッチが効いた回でも「Vision 0回」の理由が合計に出る(ゼロを安全と読ませない)', () => {
+  const root = makeTempRepoRoot();
+  fs.writeFileSync(
+    path.join(root, 'tools', 'fetch-venue-posts-apify.js'),
+    `exports.fetchInstagramPosts = async (handle) => {
+      if (handle === 'triple_orio') {
+        return [{ permalink: 'https://www.instagram.com/p/NEW/', imageUrl: 'https://example.com/a.jpg', postedAt: '2099-09-04T10:00:00.000Z', caption: '' }];
+      }
+      return [];
+    };\n`
+  );
+  fs.writeFileSync(
+    path.join(root, 'tools', 'venue-schedule-vision.js'),
+    `exports.extractTournaments = async () => { throw new Error('ラッチが効いていれば呼ばれない'); };\n`
+  );
+  fs.writeFileSync(
+    path.join(root, 'stub-fetch.js'),
+    'globalThis.fetch = async (url) => ({ status: 200, arrayBuffer: async () => new TextEncoder().encode(String(url)).buffer });\n'
+  );
+  // 【今日の日付に依存しないよう、取得済み月は「必ず未来」に置く】
+  fs.writeFileSync(
+    path.join(root, 'apify-monitor-state.json'),
+    JSON.stringify(
+      {
+        v40: {
+          handle: 'triple_orio',
+          lastPostedAt: '2099-09-01T00:00:00.000Z',
+          capturedMonth: '2099-09',
+          capturedAt: '2099-09-01',
+          capturedPermalink: 'https://www.instagram.com/p/SEP/',
+        },
+      },
+      null,
+      2
+    ) + '\n'
+  );
+  try {
+    const before = fs.readFileSync(path.join(root, 'apify-monitor-state.json'), 'utf8');
+    const r = runCliArgs(root, []);
+    assert.equal(r.status, 0, r.stderr);
+    assert.match(r.stdout, /当月\(.*\)ぶんは取得済みのため Vision を1回も呼びません/);
+    assert.match(r.stdout, /Vision実行 0回\(ラッチでスキップ 1店/);
+    assert.match(r.stdout, /当月取得済みでVisionを呼ばず 1件/);
+    assert.doesNotMatch(r.stdout, /集計が合わない/, 'ラッチのぶんが保存則の残余になってはいけない');
+    assert.equal(fs.readFileSync(path.join(root, 'apify-monitor-state.json'), 'utf8'), before, 'ラッチ中は状態を動かさない');
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
