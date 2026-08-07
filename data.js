@@ -12527,20 +12527,18 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
-    "id": "wl-01KYY0XNH6ZFGM6J069Q34GSV3",
+    "id": "wl-01KZDQZ68BRDRW1JMRGH8VDJDE",
     "venueId": "v19",
-    "name": "3000 Deep Stack",
+    "name": "🎊【周年】トリオトーナメント🎊",
     "date": "2026-08-08",
-    "start": "16:10",
-    "buyin": 3000,
-    "addon": 2000,
-    "stack": 40000,
+    "start": "16:30",
+    "buyin": 4000,
+    "addon": 4000,
+    "stack": 30000,
     "guarantee": null,
     "reentry": true,
     "prize": null,
-    "tags": [
-      "ディープ"
-    ],
+    "tags": [],
     "source": "auto",
     "verified": false
   },
