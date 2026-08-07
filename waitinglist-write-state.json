@@ -2,46 +2,12 @@
   "version": 1,
   "writtenBy": "tools/import-waitinglist.js",
   "entries": {
-    "wl-01KX30K4RR30YERP70AWXR69DW": {
-      "id": "wl-01KX30K4RR30YERP70AWXR69DW",
-      "venueId": "v19",
-      "name": "3000 Freeze Out",
-      "date": "2026-08-06",
-      "start": "18:30",
-      "buyin": 3000,
-      "addon": null,
-      "stack": 20000,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01KX6FVR28N8GADBGJ69WZ4KH6": {
       "id": "wl-01KX6FVR28N8GADBGJ69WZ4KH6",
       "venueId": "v3",
       "name": "VS m KANON",
       "date": "2026-08-28",
       "start": "17:30",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "特別開催"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01KXG4N9EM2Z6XWGGHY2Z3NVSW": {
-      "id": "wl-01KXG4N9EM2Z6XWGGHY2Z3NVSW",
-      "venueId": "v3",
-      "name": "m LIVE LEAGUE season1",
-      "date": "2026-08-06",
-      "start": "17:10",
       "buyin": 4000,
       "addon": null,
       "stack": 40000,
@@ -177,7 +143,7 @@
     "wl-01KXSJK2CHHQVVZ7MVWVB9DBS3": {
       "id": "wl-01KXSJK2CHHQVVZ7MVWVB9DBS3",
       "venueId": "v3",
-      "name": "【3.5K 飲み放題！】m Booze up",
+      "name": "【ｍ HOLD'EM西宮店オープン記念】m Booze up",
       "date": "2026-08-12",
       "start": "18:00",
       "buyin": 3500,
@@ -271,24 +237,6 @@
       "reentry": true,
       "prize": null,
       "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01KYMDET54VJXFP0ZJ890WJGDM": {
-      "id": "wl-01KYMDET54VJXFP0ZJ890WJGDM",
-      "venueId": "v3",
-      "name": "m Super Hold'em Turbo",
-      "date": "2026-08-06",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": 1000,
-      "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
       "source": "auto",
       "verified": false
     },

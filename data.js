@@ -11691,7 +11691,7 @@ const TOURNAMENTS = [
   {
     "id": "wl-01KXSJK2CHHQVVZ7MVWVB9DBS3",
     "venueId": "v3",
-    "name": "【3.5K 飲み放題！】m Booze up",
+    "name": "【ｍ HOLD'EM西宮店オープン記念】m Booze up",
     "date": "2026-08-12",
     "start": "18:00",
     "buyin": 3500,
