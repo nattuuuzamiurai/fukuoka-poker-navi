@@ -11865,18 +11865,36 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
-    "id": "wl-01KZ3R7YN4KYERJXZ4D88C851J",
+    "id": "wl-01KZGK3N6T2W9ZDA1BS1KX7ZFA",
     "venueId": "v3",
-    "name": "m FT Bounty",
+    "name": "じぇいそるCup",
     "date": "2026-08-16",
-    "start": "18:00",
-    "buyin": 4000,
+    "start": "17:00",
+    "buyin": 5000,
     "addon": null,
     "stack": 40000,
     "guarantee": null,
     "reentry": true,
     "prize": null,
     "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01KZFP0JMXGEP9FEBZ26315HGC",
+    "venueId": "v3",
+    "name": "m DICE Poker Turbo",
+    "date": "2026-08-16",
+    "start": "21:00",
+    "buyin": 2500,
+    "addon": 1000,
+    "stack": 25000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
     "source": "auto",
     "verified": false
   },
