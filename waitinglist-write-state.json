@@ -20,24 +20,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01KXJJTC1F64V904DRE2364EQY": {
-      "id": "wl-01KXJJTC1F64V904DRE2364EQY",
-      "venueId": "v19",
-      "name": "2000 Turbo",
-      "date": "2026-08-09",
-      "start": "16:10",
-      "buyin": 2000,
-      "addon": 1000,
-      "stack": 30000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01KXJJTC1FJFS6ZSQXQYC6AZS2": {
       "id": "wl-01KXJJTC1FJFS6ZSQXQYC6AZS2",
       "venueId": "v19",
@@ -204,25 +186,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01KYMDFVY0Y8ZZ9ZGH01CHR7B9": {
-      "id": "wl-01KYMDFVY0Y8ZZ9ZGH01CHR7B9",
-      "venueId": "v3",
-      "name": "m LIVE LEAGUE ~WEEKEND~",
-      "date": "2026-08-09",
-      "start": "13:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 60000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ディープ",
-        "特別開催"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01KYMDRNBR192FP5SJWSCN6MFG": {
       "id": "wl-01KYMDRNBR192FP5SJWSCN6MFG",
       "venueId": "v3",
@@ -291,40 +254,6 @@
       "prize": null,
       "tags": [
         "特別開催"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01KYMEHM1AQS71EH2ANZBQBZBE": {
-      "id": "wl-01KYMEHM1AQS71EH2ANZBQBZBE",
-      "venueId": "v3",
-      "name": "m VAULT",
-      "date": "2026-08-09",
-      "start": "17:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01KYMESTSF0N7FEMVVZSKK14T0": {
-      "id": "wl-01KYMESTSF0N7FEMVVZSKK14T0",
-      "venueId": "v3",
-      "name": "m DICE Poker Turbo",
-      "date": "2026-08-09",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": 1000,
-      "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
       ],
       "source": "auto",
       "verified": false
