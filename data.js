@@ -12631,6 +12631,22 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01KZNDXBV7J4TA1CTTNWD7VBSF",
+    "venueId": "v19",
+    "name": "Free Roll",
+    "date": "2026-08-17",
+    "start": "18:10",
+    "buyin": 0,
+    "addon": 1000,
+    "stack": 20000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "wl-01KYHHDAZE3HNWBZV7T55T4Q40",
     "venueId": "v19",
     "name": "FST Satellite",
@@ -12683,6 +12699,22 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01KZNDXBV7V4JHEVYAVNNRDHYG",
+    "venueId": "v19",
+    "name": "Free Roll",
+    "date": "2026-08-24",
+    "start": "18:10",
+    "buyin": 0,
+    "addon": 1000,
+    "stack": 20000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "wl-01KYHHDAZE7D0SPSQR9MTVGZPS",
     "venueId": "v19",
     "name": "FST Satellite",
@@ -12713,6 +12745,38 @@ const TOURNAMENTS = [
     "tags": [
       "ディープ"
     ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01KZNDXBV74FTT0R1JE2V129MK",
+    "venueId": "v19",
+    "name": "Free Roll",
+    "date": "2026-08-31",
+    "start": "18:10",
+    "buyin": 0,
+    "addon": 1000,
+    "stack": 20000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01KZNDXBV772FY6DQS7TR0NXKT",
+    "venueId": "v19",
+    "name": "Free Roll",
+    "date": "2026-09-07",
+    "start": "18:10",
+    "buyin": 0,
+    "addon": 1000,
+    "stack": 20000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
     "source": "auto",
     "verified": false
   }
