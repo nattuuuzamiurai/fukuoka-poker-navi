@@ -154,24 +154,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01KYMDRNBR192FP5SJWSCN6MFG": {
-      "id": "wl-01KYMDRNBR192FP5SJWSCN6MFG",
-      "venueId": "v3",
-      "name": "m LIVE LEAGUE season1",
-      "date": "2026-08-13",
-      "start": "17:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "特別開催"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01KYME4PCTP8RDWVZ046JPVQE1": {
       "id": "wl-01KYME4PCTP8RDWVZ046JPVQE1",
       "venueId": "v3",
@@ -270,24 +252,6 @@
       "start": "21:00",
       "buyin": 2500,
       "addon": null,
-      "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01KZ3QTBZKBCXHY87QF0J69BM5": {
-      "id": "wl-01KZ3QTBZKBCXHY87QF0J69BM5",
-      "venueId": "v3",
-      "name": "m Super Hold'em Turbo",
-      "date": "2026-08-13",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": 1000,
       "stack": 25000,
       "guarantee": null,
       "reentry": true,
@@ -1173,6 +1137,70 @@
       "tags": [
         "ディープ"
       ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01KZX5JC4X07X651QXPCMCJQ56": {
+      "id": "wl-01KZX5JC4X07X651QXPCMCJQ56",
+      "venueId": "v19",
+      "name": "3000 Freeze Out",
+      "date": "2026-08-27",
+      "start": "18:30",
+      "buyin": 3000,
+      "addon": null,
+      "stack": 20000,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01KZX5JC4XCYE7GJ7A701EN2P9": {
+      "id": "wl-01KZX5JC4XCYE7GJ7A701EN2P9",
+      "venueId": "v19",
+      "name": "3000 Freeze Out",
+      "date": "2026-09-10",
+      "start": "18:30",
+      "buyin": 3000,
+      "addon": null,
+      "stack": 20000,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01KZX5JC4XT7A5KRJF8Z3NTZTQ": {
+      "id": "wl-01KZX5JC4XT7A5KRJF8Z3NTZTQ",
+      "venueId": "v19",
+      "name": "3000 Freeze Out",
+      "date": "2026-08-20",
+      "start": "18:30",
+      "buyin": 3000,
+      "addon": null,
+      "stack": 20000,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01KZX5JC4XZ7EXNCWDAFR1JTBB": {
+      "id": "wl-01KZX5JC4XZ7EXNCWDAFR1JTBB",
+      "venueId": "v19",
+      "name": "3000 Freeze Out",
+      "date": "2026-09-03",
+      "start": "18:30",
+      "buyin": 3000,
+      "addon": null,
+      "stack": 20000,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [],
       "source": "auto",
       "verified": false
     }

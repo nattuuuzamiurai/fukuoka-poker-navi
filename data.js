@@ -13355,6 +13355,22 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01KZX5JC4XT7A5KRJF8Z3NTZTQ",
+    "venueId": "v19",
+    "name": "3000 Freeze Out",
+    "date": "2026-08-20",
+    "start": "18:30",
+    "buyin": 3000,
+    "addon": null,
+    "stack": 20000,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "wl-01KYY0XNH6AWZZF4PC85DNVTJJ",
     "venueId": "v19",
     "name": "3000 Deep Stack",
@@ -13423,6 +13439,22 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01KZX5JC4X07X651QXPCMCJQ56",
+    "venueId": "v19",
+    "name": "3000 Freeze Out",
+    "date": "2026-08-27",
+    "start": "18:30",
+    "buyin": 3000,
+    "addon": null,
+    "stack": 20000,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "wl-01KYY0XNH6Y8AB70NQ0H3ED04V",
     "venueId": "v19",
     "name": "3000 Deep Stack",
@@ -13457,6 +13489,22 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01KZX5JC4XZ7EXNCWDAFR1JTBB",
+    "venueId": "v19",
+    "name": "3000 Freeze Out",
+    "date": "2026-09-03",
+    "start": "18:30",
+    "buyin": 3000,
+    "addon": null,
+    "stack": 20000,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "wl-01KZNDXBV772FY6DQS7TR0NXKT",
     "venueId": "v19",
     "name": "Free Roll",
@@ -13467,6 +13515,22 @@ const TOURNAMENTS = [
     "stack": 20000,
     "guarantee": null,
     "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01KZX5JC4XCYE7GJ7A701EN2P9",
+    "venueId": "v19",
+    "name": "3000 Freeze Out",
+    "date": "2026-09-10",
+    "start": "18:30",
+    "buyin": 3000,
+    "addon": null,
+    "stack": 20000,
+    "guarantee": null,
+    "reentry": false,
     "prize": null,
     "tags": [],
     "source": "auto",
