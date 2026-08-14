@@ -154,24 +154,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01KYME4PCTP8RDWVZ046JPVQE1": {
-      "id": "wl-01KYME4PCTP8RDWVZ046JPVQE1",
-      "venueId": "v3",
-      "name": "VS m HANNA",
-      "date": "2026-08-14",
-      "start": "17:30",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "特別開催"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01KYMMQWQGSW86X4NFN7BFQH8K": {
       "id": "wl-01KYMMQWQGSW86X4NFN7BFQH8K",
       "venueId": "v3",
@@ -276,24 +258,6 @@
       "prize": null,
       "tags": [
         "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01KZ3R2A4YZ1W94TSB1CF1WQQB": {
-      "id": "wl-01KZ3R2A4YZ1W94TSB1CF1WQQB",
-      "venueId": "v3",
-      "name": "m Bounty Turbo",
-      "date": "2026-08-14",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": 1000,
-      "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
       ],
       "source": "auto",
       "verified": false
