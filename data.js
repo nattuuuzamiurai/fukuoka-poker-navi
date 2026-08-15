@@ -13305,20 +13305,18 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
-    "id": "wl-01KXJJTC1FKS790PW2VZPNMGMF",
+    "id": "wl-01M01M2T3TBX0EM177MVY4RHS8",
     "venueId": "v19",
-    "name": "2000 Turbo",
+    "name": "🏹Arrows1周年　Deep Stack 🏹",
     "date": "2026-08-16",
-    "start": "16:10",
-    "buyin": 2000,
-    "addon": 1000,
-    "stack": 30000,
+    "start": "16:30",
+    "buyin": 5000,
+    "addon": 3000,
+    "stack": 40000,
     "guarantee": null,
     "reentry": true,
     "prize": null,
-    "tags": [
-      "ターボ"
-    ],
+    "tags": [],
     "source": "auto",
     "verified": false
   },

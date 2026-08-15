@@ -38,24 +38,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01KXJJTC1FKS790PW2VZPNMGMF": {
-      "id": "wl-01KXJJTC1FKS790PW2VZPNMGMF",
-      "venueId": "v19",
-      "name": "2000 Turbo",
-      "date": "2026-08-16",
-      "start": "16:10",
-      "buyin": 2000,
-      "addon": 1000,
-      "stack": 30000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01KXSJK2CH0ZX4D3EPBZY5SJEB": {
       "id": "wl-01KXSJK2CH0ZX4D3EPBZY5SJEB",
       "venueId": "v3",
@@ -190,24 +172,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01KYY0XNH6B5EEMGFQ0XQJYSYQ": {
-      "id": "wl-01KYY0XNH6B5EEMGFQ0XQJYSYQ",
-      "venueId": "v19",
-      "name": "3000 Deep Stack",
-      "date": "2026-08-15",
-      "start": "16:10",
-      "buyin": 3000,
-      "addon": 2000,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01KYY0XNH6Y8AB70NQ0H3ED04V": {
       "id": "wl-01KYY0XNH6Y8AB70NQ0H3ED04V",
       "venueId": "v19",
@@ -259,22 +223,6 @@
       "tags": [
         "ディープ"
       ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01KZ3R4S1TVD2XBH6GPBHS8B3S": {
-      "id": "wl-01KZ3R4S1TVD2XBH6GPBHS8B3S",
-      "venueId": "v3",
-      "name": "m VAULT",
-      "date": "2026-08-15",
-      "start": "17:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
       "source": "auto",
       "verified": false
     },
@@ -373,24 +321,6 @@
       "reentry": true,
       "prize": null,
       "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01KZQR1PMB6BCV7XTSKGX7Q7ZD": {
-      "id": "wl-01KZQR1PMB6BCV7XTSKGX7Q7ZD",
-      "venueId": "v3",
-      "name": "m Super Hold'em Turbo",
-      "date": "2026-08-15",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": 1000,
-      "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
       "source": "auto",
       "verified": false
     },
@@ -762,24 +692,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01KZRARD0DFMMXRSFM9C81YD71": {
-      "id": "wl-01KZRARD0DFMMXRSFM9C81YD71",
-      "venueId": "v3",
-      "name": "m LEGACY",
-      "date": "2026-08-15",
-      "start": "15:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 50000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01KZTN7DAWMAWKZ61PXENWBNXE": {
       "id": "wl-01KZTN7DAWMAWKZ61PXENWBNXE",
       "venueId": "v3",
@@ -809,24 +721,6 @@
       "reentry": true,
       "prize": null,
       "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01KZTNRW5TPWAZ17REJ83PTHC8": {
-      "id": "wl-01KZTNRW5TPWAZ17REJ83PTHC8",
-      "venueId": "v3",
-      "name": "PPS season５開催記念フリーロール",
-      "date": "2026-08-15",
-      "start": "11:00",
-      "buyin": 0,
-      "addon": null,
-      "stack": 25000,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
       "source": "auto",
       "verified": false
     },
@@ -1163,6 +1057,22 @@
       "stack": 20000,
       "guarantee": null,
       "reentry": false,
+      "prize": null,
+      "tags": [],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M01M2T3TBX0EM177MVY4RHS8": {
+      "id": "wl-01M01M2T3TBX0EM177MVY4RHS8",
+      "venueId": "v19",
+      "name": "🏹Arrows1周年　Deep Stack 🏹",
+      "date": "2026-08-16",
+      "start": "16:30",
+      "buyin": 5000,
+      "addon": 3000,
+      "stack": 40000,
+      "guarantee": null,
+      "reentry": true,
       "prize": null,
       "tags": [],
       "source": "auto",
