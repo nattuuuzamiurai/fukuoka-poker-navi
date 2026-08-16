@@ -208,58 +208,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01KZ3R0WS5EHR5CVP2KJXD5PCE": {
-      "id": "wl-01KZ3R0WS5EHR5CVP2KJXD5PCE",
-      "venueId": "v3",
-      "name": "m LIVE LEAGUE ~WEEKEND~",
-      "date": "2026-08-16",
-      "start": "13:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 60000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01KZFP0JMXGEP9FEBZ26315HGC": {
-      "id": "wl-01KZFP0JMXGEP9FEBZ26315HGC",
-      "venueId": "v3",
-      "name": "m DICE Poker Turbo",
-      "date": "2026-08-16",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": 1000,
-      "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01KZGK3N6T2W9ZDA1BS1KX7ZFA": {
-      "id": "wl-01KZGK3N6T2W9ZDA1BS1KX7ZFA",
-      "venueId": "v3",
-      "name": "じぇいそるCup",
-      "date": "2026-08-16",
-      "start": "17:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01KZNDXBV74FTT0R1JE2V129MK": {
       "id": "wl-01KZNDXBV74FTT0R1JE2V129MK",
       "venueId": "v19",
@@ -1057,22 +1005,6 @@
       "stack": 20000,
       "guarantee": null,
       "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M01M2T3TBX0EM177MVY4RHS8": {
-      "id": "wl-01M01M2T3TBX0EM177MVY4RHS8",
-      "venueId": "v19",
-      "name": "🏹Arrows1周年　Deep Stack 🏹",
-      "date": "2026-08-16",
-      "start": "16:30",
-      "buyin": 5000,
-      "addon": 3000,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
       "prize": null,
       "tags": [],
       "source": "auto",
