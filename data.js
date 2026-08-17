@@ -501,7 +501,7 @@ const VENUES = [
     "website": "",
     "tel": "",
     "featured": false,
-    "note": "直方店の系列店。4卓でXPT等サテライトを頻繁に開催。水休。火・木=フリロ/金=1Kトナメ/土=フリーズアウト/日=ディープスタックが毎週固定。月は月替わり(チップエントリー/FSTサテライト等)。",
+    "note": "直方店の系列店。4卓でXPT等サテライトを頻繁に開催。水休。月=FSTサテライト/火=フリロ/木=ディープフリロ/金=1Kトナメ/土=ディープスタック/日=PKOバウンティが毎週固定(2026年8月のチラシで確認。旧パターンから土日・木・月を更新)。",
     "sourceLabel": "Instagram",
     "sourceUrl": "https://www.instagram.com/king806queenkurosaki/"
   },
@@ -6283,80 +6283,6 @@ const TOURNAMENTS = [
     "tags": [],
     "source": "semi",
     "verified": false
-  },
-  {
-    "id": "kq2_0706",
-    "venueId": "v34",
-    "name": "チップエントリートーナメント",
-    "date": "2026-07-06",
-    "start": "",
-    "buyin": 0,
-    "addon": null,
-    "stack": 0,
-    "guarantee": null,
-    "reentry": false,
-    "prize": null,
-    "tags": [],
-    "source": "semi",
-    "verified": false,
-    "lowConfidence": true
-  },
-  {
-    "id": "kq2_0713",
-    "venueId": "v34",
-    "name": "FSTサテライト",
-    "date": "2026-07-13",
-    "start": "",
-    "buyin": 0,
-    "addon": null,
-    "stack": 0,
-    "guarantee": null,
-    "reentry": false,
-    "prize": null,
-    "tags": [
-      "サテライト",
-      "FST"
-    ],
-    "source": "semi",
-    "verified": false,
-    "lowConfidence": true
-  },
-  {
-    "id": "kq2_0720",
-    "venueId": "v34",
-    "name": "チップエントリートーナメント",
-    "date": "2026-07-20",
-    "start": "",
-    "buyin": 0,
-    "addon": null,
-    "stack": 0,
-    "guarantee": null,
-    "reentry": false,
-    "prize": null,
-    "tags": [],
-    "source": "semi",
-    "verified": false,
-    "lowConfidence": true
-  },
-  {
-    "id": "kq2_0727",
-    "venueId": "v34",
-    "name": "FSTサテライト",
-    "date": "2026-07-27",
-    "start": "",
-    "buyin": 0,
-    "addon": null,
-    "stack": 0,
-    "guarantee": null,
-    "reentry": false,
-    "prize": null,
-    "tags": [
-      "サテライト",
-      "FST"
-    ],
-    "source": "semi",
-    "verified": false,
-    "lowConfidence": true
   },
   {
     "id": "ak0701",
@@ -15976,7 +15902,8 @@ const TOURNAMENTS = [
       "FST"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "fx0822",
@@ -16011,7 +15938,8 @@ const TOURNAMENTS = [
       "FST"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "nw0817",
