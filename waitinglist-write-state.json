@@ -240,22 +240,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01KZNDXBV7J4TA1CTTNWD7VBSF": {
-      "id": "wl-01KZNDXBV7J4TA1CTTNWD7VBSF",
-      "venueId": "v19",
-      "name": "Free Roll",
-      "date": "2026-08-17",
-      "start": "18:10",
-      "buyin": 0,
-      "addon": 1000,
-      "stack": 20000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01KZNDXBV7V4JHEVYAVNNRDHYG": {
       "id": "wl-01KZNDXBV7V4JHEVYAVNNRDHYG",
       "venueId": "v19",
@@ -502,24 +486,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01KZR8JCQSESW5BR8KDK462TX1": {
-      "id": "wl-01KZR8JCQSESW5BR8KDK462TX1",
-      "venueId": "v3",
-      "name": "ｍ Hyper Deep Turbo",
-      "date": "2026-08-17",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": null,
-      "stack": 100000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01KZR8MT3VAEB3RJV0D4A87435": {
       "id": "wl-01KZR8MT3VAEB3RJV0D4A87435",
       "venueId": "v3",
@@ -637,22 +603,6 @@
       "tags": [
         "ターボ"
       ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01KZTN7DAWMAWKZ61PXENWBNXE": {
-      "id": "wl-01KZTN7DAWMAWKZ61PXENWBNXE",
-      "venueId": "v3",
-      "name": "m FT Bounty",
-      "date": "2026-08-17",
-      "start": "18:00",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
       "source": "auto",
       "verified": false
     },
