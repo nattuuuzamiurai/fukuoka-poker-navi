@@ -61,6 +61,8 @@ AdSense/PR枠が埋まるまでの間、自社アプリの導線を3か所に置
 | `tools/gen-event-pages.js` | 上記イベント静的ページと**トップの恒久リンク行（`index.html` の `#evtLinks` 1行）**の**生成スクリプト**。データは `jopt-data.js` と `index.html` の `const WJPT` からそのまま読み込む（数値を手打ちしない=転記ミス防止）。実行: `node tools/gen-event-pages.js <リポジトリのパス>`（`--check` を付けると書き込まずに一致確認だけ行い、ズレていれば非ゼロ終了）。**JOPT等のデータや `big-events.js` を更新したら必ず再実行すること**（静的ページはデータのスナップショットのため） |
 | `tools/gen-venue-pages.js` | 店舗静的ページと**トップの店舗リンク行（`index.html` の `#venueLinks` 1行）**の**生成スクリプト**。データは `data.js` の `VENUES` / `TOURNAMENTS` / `RECURRING` からそのまま読み込む。実行: `node tools/gen-venue-pages.js <リポジトリのパス>`（`--check` あり）。**`data.js` を更新したら必ず再実行すること**（下記「`data.js` を更新したら」。自動取込ぶん（Waitinglist / Instagram監視）は各日次ワークフローが自動で再生成する） |
 | `tools/venue-schedule.js` | 店舗ページの日程表を組み立てるコードの**唯一の所有者**。生成時（Node）と閲覧時（ブラウザに埋め込む `SCHEDULE_JS`）で同じ1本を共有する。**焼き込む期間を店舗別に決める `venueRange()`** もここが持つ（`gen-venue-pages.js` の見出しと `gen-sitemap.js` の掲載判定が同じ基準を使うため）。ただし**定期開催の重複判定だけは持たない**（トップのSPAも同じ判定を必要とするため `recurring-dedupe.js` に外出しし、こちらは `require` して呼ぶだけ）。テスト: `node tools/venue-schedule.test.js` |
+| `tools/gen-area-pages.js` | エリア静的ページ（`/areas/<slug>/`）と**トップのエリアリンク行（`index.html` の `#areaLinks` 1行）**の**生成スクリプト**。狙う検索が店舗ページと違い、「天神 ポーカー」「小倉 ポーカー」のように**店名を知らない人が地名だけで探す**入口を受ける。実行: `node tools/gen-area-pages.js <リポジトリのパス>`（`--check` あり）。**`data.js` を更新したら店舗ページと一緒に必ず再実行すること**（自動取込ぶんは両日次ワークフローが自動で再生成する） |
+| `tools/area-schedule.js` | **エリアページを作るエリアの決め方（2店舗以上）とエリア日程表の唯一の所有者**。`AREA_SLUGS`（エリア名→URL）もここが持つ。`gen-area-pages.js`（生成対象）と `gen-sitemap.js`（sitemap 掲載判定）が同じ基準を使う。**行の取得そのものは持たない** — 定期開催の展開・自動取込との重複の間引きは `venue-schedule.js` の `vpRows` を店ごとに呼んで束ねる（判定を書き写すと店舗ページとズレて、同じ大会がエリアページにだけ二重に出る）。テスト: `node tools/area-schedule.test.js` |
 | `tools/machine-write-state.js` | **「機械が最後に書いた値」の控えと、そこから導く【所有】の判定の唯一の所有者**。`data.js` の1行が「機械が書いたままの行」なのか「人が作った行・人が直した行」なのかを、印を増やさずに見分ける。3つの書き込み経路（Waitinglist取込み / Instagram監視 / 店舗画像の取込み）が同じ1本を使う。詳細は下記「人が入力した値を機械が壊さない仕組み」。テスト: `node tools/machine-write-state.test.js`（守る／守らないの**両方向**を固定してある） |
 | `tools/validate-data.js` | **`data.js` をコミットしてよいかを判定する共通ゲート**（構文 / `TOURNAMENTS` の件数 / `id` 重複 / **日付書式 `YYYY-MM-DD`（実在する日付か）**）。落ちたときは**不正値と該当トーナメント（venueId・id・name）**を出す。実行: `node tools/validate-data.js .`。2つの日次ワークフロー（Waitinglist取込み / Instagram監視）が**コミット前と `git pull --rebase` の後**にこれを呼ぶ。**取込んでよい行かの判定（`dateProblem` / `extractedRowProblem` / `duplicateIdProblem`）と、その前段の正規化（`normalizeExtractedRow` … `9:00`→`09:00`・全角コロン・読めない金額をその項目だけ `null` に）もこのファイルが持ち**、取込み側（`monitor-instagram-apify.js` / `import-venue-image.js`）が `require` して使う（同じ規則を2箇所に書くと必ず片方が古くなり、「取込み側は通すのにゲートで落ちる＝毎朝ジョブが止まる」ズレが生じるため）。**ゲート側にしか無い検査（件数）もあるので「取込み側を通れば必ずゲートも通る」ではない**点に注意。テスト: `node tools/validate-data.test.js` |
 | `tools/venue-listing-rules.js` | **店ごとの掲載ルールの唯一の所有者**（社長指示・2026-08-05）。「A&K（`v35`）は参加費を一切記録しない」「TripleBarrel 折尾店（`v40`）は `大還元` を含む行を除外」「KING&QUEEN SUITED 直方店（`v20`）は `華金` を含む行を除外」の3件と、その**理由**（なぜそうするのか）を持つ。`tools/monitor-instagram-apify.js`（自動）と `tools/import-venue-image.js`（手動）の**両方が `require` する**（判定を書き分けない）。**行そのものの性質で決まる `isClosureRow` などとは種類が違い、その店の実態を人が知っていないと決められない規則**なのでファイルを分けてある。名前の正規化（`normalizeName`）の実体もここ。**除外は必ず `venueId` で絞る**（`大還元` は他店の正当な大会名にも実在する）。詳細は下記「店ごとの掲載ルール」。テスト: `node tools/venue-listing-rules.test.js`（**両方向**＋実データ全大会名への誤ヒット走査） |
@@ -81,6 +83,7 @@ AdSense/PR枠が埋まるまでの間、自社アプリの導線を3か所に置
 ```
 node tools/validate-data.js .            # data.js 自体の検査（日付書式・件数・id重複・構文）
 node tools/gen-venue-pages.js .          # 店舗ページ35枚 + トップの店舗リンク行 + sitemap.xml
+node tools/gen-area-pages.js .           # エリアページ7枚 + トップのエリアリンク行 + sitemap.xml
 ```
 
 をリポジトリのルートで実行し、**生成物もコミットする**（GitHub Pages は静的配信なので生成物が必要）。
@@ -136,7 +139,7 @@ node tools/gen-venue-pages.js .          # 店舗ページ35枚 + トップの�
 `sitemap.xml` に載るURLは **`big-events.js`（イベントページ）と `data.js`（店舗ページ）の2つ**にまたがる。
 両方の生成スクリプトがそれぞれ自前で組み立てると「後に実行したほうが相手のURLを消す」奪い合いになるため、
 **中身を決める場所は `tools/gen-sitemap.js` だけ**にしてある。
-`gen-event-pages.js` と `gen-venue-pages.js` は `sitemapFile()` を呼んで返ってきた文字列をそのまま書くだけで、1行も組み立てない。
+`gen-event-pages.js` / `gen-venue-pages.js` / `gen-area-pages.js` は `sitemapFile()` を呼んで返ってきた文字列をそのまま書くだけで、1行も組み立てない。
 
 - 入力が同じなら出力は同じ文字列なので、**どちらをどの順に何回実行しても内容は変わらない**
 - **片方を実行し忘れてsitemapが古くなることもない**（どちらを実行しても全URLが揃う）
@@ -452,9 +455,9 @@ python3 dev-server.py
 3. 告知画像をドラッグ&ドロップ／貼り付け（⌘V）／ファイル選択で追加する（テキストしかない場合は「画像がない場合は代わりにテキストを貼り付け」を開いて貼る）。
 4. 「この店舗として登録する」を押す。抽出→登録までこの1クリックで完了し、変更は自動で `data.js` に保存される（ブラウザの操作だけでよく、ダウンロード→手動コピーは不要）。
 5. 登録済みの店舗は一覧の下側（✓済み）に移動する。全店舗が済みになるまで2〜4を繰り返す。
-6. **入力し終わったら `node tools/gen-venue-pages.js .` を実行して店舗ページを再生成し、生成物もコミットする。**
+6. **入力し終わったら `node tools/gen-venue-pages.js .` と `node tools/gen-area-pages.js .` を実行して店舗ページ・エリアページを再生成し、生成物もコミットする。**
    忘れると、画面（閲覧者）には最新が出るのに**クローラにだけ古い日程が見え続ける**という、目視では気づけない壊れ方をする。
-   `node tools/gen-venue-pages.js . --check` で確認できる（詳細は上記「`data.js` を更新したら」）。
+   `--check` を付けた実行で確認できる（詳細は上記「`data.js` を更新したら」）。
 
 Claude APIキーは初回だけ「詳細設定」で登録すればよい（このブラウザにのみ保存）。`dev-server.py` を使わずに `admin.html` を直接開いた場合（GitHub Pages上など）は自動保存が効かないため、「詳細設定→手動エクスポート」からダウンロードして手動で差し替える。
 
@@ -2971,8 +2974,8 @@ node tools/workflow-audit.js amend24     … リスク台帳 #24 を再現し、
 
 | ワークフロー | `node` | `git` | `grep` | `sed` | `tee` | `cat` | `date` |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| `import-waitinglist.yml` | 5 | 12 | 0 | 0 | 0 | 0 | 2 |
-| `monitor-instagram-apify.yml` | 13 | 16 | 5 | 4 | 3 | 1 | 2 |
+| `import-waitinglist.yml` | 7 | 12 | 0 | 0 | 0 | 0 | 2 |
+| `monitor-instagram-apify.yml` | 15 | 16 | 5 | 4 | 3 | 1 | 2 |
 
 （数え方＝**コメント行を除いた `run:` 本文に現れる「コマンド名＋空白」の出現数**。`$( )` の中や `if`・`|` の後ろも数える — `bash -e` ではそこも失敗しうる位置なので、停止点の候補として同じ土俵に載せる。`node tools/workflow-audit.js inventory` の出力）
 
@@ -3000,6 +3003,7 @@ node tools/workflow-audit.js amend24     … リスク台帳 #24 を再現し、
 | WF-W4 | ステップ5 L150 `node tools/validate-data.js .`（rebase 後の再検査） | WF-W2 と同じ | WF-W2 と同じ | rebase で取り込んだ他ジョブぶんが原因のこともある |
 | WF-W5 | ステップ5 L153 `node tools/gen-venue-pages.js .` | **鳴る**。`VENUES` の「未確認」の印（`addressUnverified` / `telUnverified`）が `note` と食い違うと毎朝鳴る | **回復しない**（★実測: 1日目・2日目とも `commit` で `exit=1`・bot コミット0件） | **★L114 の `validate-data.js` はこれを見ていない**（実測: 印を1件外した `data.js` で `validate-data` は `exit=0`、`gen-venue-pages` は `exit=1`）。bot コミットはローカルには出来るが push されず、毎朝赤くなる |
 | WF-W6 | ステップ5 L154 `node tools/gen-venue-pages.js . --check` | **鳴らない**（直前の L153 が成功していれば生成物は一致する。全シナリオの基準実行で `exit=0`） | **回復しない** | **自分のバグを検出する恒久停止装置**。生成が中途半端に終わった＝コミットしてはいけない状態 |
+| WF-W6a | ステップ5 L158/L159 `node tools/gen-area-pages.js .` と `--check`（2026-08-18 追加） | **WF-W5/W6 と同じ性質**。エリアのURL（`AREA_SLUGS`）が欠けたエリアが2店舗に達すると鳴る（`validate-data.js` はこれを見ない） | **回復しない**（`data.js` を直すか slug を足すまで毎朝同じ所で落ちる） | 店舗ページ側と同じで、bot コミットはローカルに出来るが push されない。**エリアページは店舗ページと同じ位置・同じ順で再生成する**ので、片方だけ古いという状態は作らない |
 | WF-W7 | ステップ5 L171 `git push` の拒否 | **鳴る**（rebase から push までの間に `main` が進んだ競合） | **回復する**（★実測: 1日目だけ push を失敗させると `commit` で `exit=1`・bot コミット0件 → 2日目 成功・1件） | その日のぶんは push されない |
 | WF-W8 | ステップ6 L182 `exit 1`（`steps.import.outputs.rc == '2'`） | **鳴る**（月初に1店が0件を返す。現に起こりうる） | **回復する**（★実測: 1日目 `[rc=2 / validate 0 / commit 0 / red exit=1]`・origin は進んでいる → 2日目 成功） | **★何も止まらない。** ここに来た時点で**成功した店のデータは push 済み**。赤は通知が目的で、当番は失敗した店だけを見ればよい |
 | WF-W9 | ステップ5 の git 操作（L120/121 `config` / L124・L156 `add -A` / L125・L163 `commit -m` / L159 `commit --amend`） | 鳴らない | 原因による | push されない。**すべて停止点であることを実測済み**（1つずつシムで失敗させて確認） |
@@ -3029,7 +3033,7 @@ node tools/workflow-audit.js amend24     … リスク台帳 #24 を再現し、
 | WF-M5 | ステップ7 L615 `exit 1`（dry-run なのに作業ツリーが変化） | **鳴らない** | — | **定期実行では `if: steps.mode.outputs.dry_run != 'false'` が偽なのでステップ自体が動かない。** cron の可否には影響しない（実測: 汚れた作業ツリーで `exit=1`・綺麗なら `exit=0`） |
 | WF-M6 | ステップ8 L629 `stores=$(node -e '…Object.keys(s).length')` | **鳴らない** | **回復しない** | **★このステップの目的は「記録する」ことなのに、コミットステップの手前にあって落ちる。** ここで落ちるとその回の取込みごと捨てる。ただし `lastPostedAt` も push されないのでやり直せる |
 | WF-M7 | ステップ9 L660 `exit 1`（`DRY_RUN` が `false` 以外） | **鳴らない** | — | 二重の安全弁。実行モード判定が壊れたときだけ鳴る（実測: `DRY_RUN=true` で `exit=1`・push なし） |
-| WF-M8 | ステップ9 L674/689/690/691/708（`git pull --rebase` / `validate-data` / `gen-venue-pages` / `--check` / `git push`） | WF-W3〜W7 と同じ | 同じ | コミットステップは Waitinglist 側と同じ構造で、**同じ停止点・同じマスクを持つ**（両方を同じ手順で測って一致を確認） |
+| WF-M8 | ステップ9 L674/689/690/691/694/695/708（`git pull --rebase` / `validate-data` / `gen-venue-pages` / `--check` / `gen-area-pages` / `--check` / `git push`） | WF-W3〜W7・W6a と同じ | 同じ | コミットステップは Waitinglist 側と同じ構造で、**同じ停止点・同じマスクを持つ**（両方を同じ手順で測って一致を確認） |
 | WF-M9 | ステップ10 L736 `exit 2`（rc=2） | **鳴る** | **回復する** | **何も止まらない。** 取得できた店のデータは push 済み。失敗した店の `lastPostedAt` は進んでいないので次回やり直せる（実測: step `exit=2`） |
 | **WF-M10** | **ステップ10 L732 `exit 3`（rc=3＝取得できたのに内容の大半が失われた）**（2026-08-05 追加） | **鳴る**（残高不足・API障害・画像取得の失敗。実測: run `30983688525` は 71/71 が Vision 失敗） | **回復する**（原因を直せば通る。ただし**その回の投稿は `lastPostedAt` が進むので戻らない**） | **何も止まらない。** 取り込めたぶんは push 済み。**この行が無かったせいで、71件すべてを失った run が `conclusion=success` で終わっていた**（`gh run view 30983688525 --json conclusion` の実測）。注記は終了コードを変えないので、**検知器ではなくこの配線が本体**（`tools/workflow-monitor-wiring.test.js` が run: 本文を取り出して bash で実行し、rc=0/2/3 → exit 0/2/3 を確かめている） |
 

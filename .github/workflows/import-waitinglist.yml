@@ -152,6 +152,11 @@ jobs:
           # 生成が中途半端に終わった場合(=コミットしてはいけない状態)。
           node tools/gen-venue-pages.js .
           node tools/gen-venue-pages.js . --check
+          # エリアページ(/areas/<slug>/)も日程を静的に焼き込んでいるので、店舗ページと同じく
+          # 取込みのたびに再生成する。忘れるとクローラが見る静的HTMLだけが古いまま残る
+          # (閲覧者にはブラウザ側の描き直しで最新が出るため、画面を見ても気づけない)。
+          node tools/gen-area-pages.js .
+          node tools/gen-area-pages.js . --check
           if test -n "$(git status --porcelain)"; then
             git add -A
             if test "$committed" = "1"; then
