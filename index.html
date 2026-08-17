@@ -698,6 +698,14 @@
          フッターは掲載ウィンドウ(初日−14日〜最終日+1日)に縛られず、
          バナーが0件の期間でも「次の大会」を出し続ける(big-events.js の footerBigEvent を参照)。 -->
   <div id="evtFeature" style="display:none"></div>
+  <!-- 【エリアリンク行】エリアの静的ページ(areas/<slug>/)への内部リンク。
+       ★下の #venueLinks(店舗)と同じ理由・同じ作りで、エリアについて同じことをしている。
+         狙う検索が違う: 店舗ページは「店名+日程」、エリアページは「天神 ポーカー」のように
+         店名を知らない人が地名だけで探す検索。
+       ★★ 中身は【自動生成】。手で書き換えないこと。★★
+         `node tools/gen-area-pages.js <repo>` を実行するとこの1行だけが差し替わる。
+         2店舗以上あるエリアが自動で並ぶ。ズレは `--check` を付けた実行で検出できる。 -->
+  <div id="areaLinks" style="margin-top:6px;line-height:2">エリア別: <a href="/areas/tenjin/">天神</a>・<a href="/areas/nakasu/">中洲</a>・<a href="/areas/daimyo/">大名</a>・<a href="/areas/imaizumi/">今泉</a>・<a href="/areas/ohashi/">大橋</a>・<a href="/areas/kitakyushu/">北九州</a>・<a href="/areas/kurume/">久留米</a></div>
   <!-- 【店舗リンク行】掲載店舗の静的ページ(venues/<slug>/)への内部リンク。
        ★JSを実行しないクローラにも拾わせるため、ここに静的リンクを直接書いてある。
          上の「掲載店舗」カードは renderVenues() がJSで描いているので、JS無しでは

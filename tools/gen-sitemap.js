@@ -35,11 +35,18 @@ const { SITE } = shell;
 // 「その店に掲載中の日程があるか」の判定は venue-schedule.js が所有する。
 // gen-venue-pages.js の title/description の分岐と同じ基準を使うため。
 const { hasSchedule } = require('./venue-schedule.js');
+// 「どのエリアにページがあるか」「そのエリアに掲載中の日程があるか」の判定は
+// area-schedule.js が所有する。gen-area-pages.js の生成対象と同じ基準を使うため
+// (基準が2箇所に分かれると「sitemapには載っているのにページが無い」が起きる)。
+const { AREA_SLUGS, areaVenues, areaList, hasAreaSchedule } = require('./area-schedule.js');
 
 // URLごとの changefreq / priority。日付には依存させない(上記の理由)。
 const HOME = { freq: 'daily', pri: '1.0' };
 const EVENT = { freq: 'weekly', pri: '0.8' };
 const VENUE = { freq: 'weekly', pri: '0.7' };
+// エリアページは複数店を束ねるので、単独の店舗ページより上位の受け皿にあたる。
+// ただし priority は Google がほぼ見ないヒントなので、序列の宣言以上の意味は持たせない。
+const AREA = { freq: 'weekly', pri: '0.8' };
 
 /** sitemap.xml の中身(文字列)を組み立てる。REPO は絶対パスで渡すこと。 */
 function buildSitemap(REPO) {
@@ -74,6 +81,13 @@ function buildSitemap(REPO) {
   DATA.VENUES
     .filter(v => hasSchedule(DATA.TOURNAMENTS, DATA.RECURRING, v.id))
     .forEach(v => urls.push({ loc: `${SITE}/venues/${v.slug}/`, ...VENUE }));
+
+  // エリアページ: 2店舗以上あり(=ページが存在する)、かつ掲載中の日程が1件以上あるエリアだけ。
+  // 店舗ページと同じ考え方で、日程0件のページを審査対象の全URLに混ぜない[社長判断・2026-07-30]。
+  // ページ自体は生成され、トップのエリアリンク行(#areaLinks)から辿れる。
+  areaList(DATA.VENUES, DATA.AREAS)
+    .filter(a => hasAreaSchedule(DATA.TOURNAMENTS, DATA.RECURRING, areaVenues(DATA.VENUES, a)))
+    .forEach(a => urls.push({ loc: `${SITE}/areas/${AREA_SLUGS[a]}/`, ...AREA }));
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

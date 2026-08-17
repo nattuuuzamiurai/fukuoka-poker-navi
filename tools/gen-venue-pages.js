@@ -116,6 +116,11 @@ validateUnverifiedFlags(VENUES);
 //   あるいはその逆が起きるため、判定を1箇所に寄せた。
 const { SCHEDULE_JS, SCHED, venueRange, RecurringDedupe } = require('./venue-schedule.js');
 
+// エリアページ(/areas/<slug>/)への導線を出すため、どのエリアにページがあるかを聞く。
+// 判定そのものは area-schedule.js が所有する(こちらは結果を使うだけ)。
+const { AREA_SLUGS, areaList } = require('./area-schedule.js');
+const AREA_PAGES = new Set(areaList(VENUES, AREAS));
+
 // ---- 店舗ページ本体 ----
 const VENUE_CSS = `  .vp-sub{font-size:.9em;color:var(--mut);margin-bottom:14px}
   h2.vp-sec{font-size:1.05em;font-weight:800;color:var(--felt);margin:26px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--gold)}
@@ -244,11 +249,16 @@ function buildVenue(v) {
 
   // 同じエリアの他店。内部リンクを増やしつつ、読者にとっても「近くの別の店」になる。
   const sameArea = VENUES.filter(x => x.area === v.area && x.id !== v.id);
+  // そのエリアにエリアページ(/areas/<slug>/)があるなら、まとめページへの導線も足す。
+  // 【判定を書き写さない】どのエリアにページがあるかは area-schedule.js が所有する
+  // (2店舗以上、という条件をここに複製すると、条件を変えたときに片方が古くなる)。
+  const areaHref = AREA_PAGES.has(v.area) ? `/areas/${AREA_SLUGS[v.area]}/` : null;
   const areaBlock = sameArea.length ? `
 <h2 class="vp-sec">同じエリア（${esc(v.area)}）の他のポーカー店</h2>
 <ul class="vp-list">
 ${sameArea.map(x => `  <li><a href="/venues/${x.slug}/">${esc(x.name)}</a></li>`).join('\n')}
-</ul>` : '';
+</ul>${areaHref ? `
+<p class="lead">▶ <a href="${areaHref}">${esc(v.area)}のポーカー店${VENUES.filter(x => x.area === v.area).length}店舗の日程をまとめて見る</a></p>` : ''}` : '';
 
   // ★ note は data.js の文面をそのまま出す。
   //   「住所は第三者情報のため要確認。」のような留保はREADMEの編集方針に沿って

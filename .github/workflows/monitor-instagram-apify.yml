@@ -689,6 +689,10 @@ jobs:
           node tools/validate-data.js .
           node tools/gen-venue-pages.js .
           node tools/gen-venue-pages.js . --check
+          # エリアページ(/areas/<slug>/)も日程を静的に焼き込んでいるので、店舗ページと同じく
+          # 取込みのたびに再生成する(忘れるとクローラが見る静的HTMLだけが古いまま残る)。
+          node tools/gen-area-pages.js .
+          node tools/gen-area-pages.js . --check
           if test -n "$(git status --porcelain)"; then
             git add -A
             if test "$committed" = "1"; then
