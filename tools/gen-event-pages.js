@@ -70,6 +70,31 @@ const INDEX_SRC = fs.readFileSync(path.join(REPO, 'index.html'), 'utf8');
 const WJPT = extractConst(INDEX_SRC, 'WJPT');
 const FST = extractConst(INDEX_SRC, 'FST');
 
+// ---- 大会ページ → 店舗のトーナメント日程への導線 ----
+// 【なぜ必要か】Search Console 実測(2026-08-18・直近28日)では、検索からのクリック87件のうち
+//   54件が大会ページ(/events/)に着地している。ところが大会ページから外に出るリンクは
+//   他の大会ページと「/」への1行だけで、【当サイトの本体である店舗のトーナメント日程に
+//   人が流れていない】。大型大会は年に数回しかないので、大会ページを増やす方向に寄せると
+//   サイトの趣旨(店舗のトーナメントを調べる)から外れる。そこで逆に、大会ページを
+//   本体への入口として使う。
+// 【終了した大会でも効く】JOPT(会期 7/30〜8/2)は終了後も毎日3〜9回表示され続けていて
+//   クリックはほぼ0。「終わった大会を見に来た人がそのまま帰る」状態なので、
+//   その人たちに「福岡では毎日どこかの店でやっている」を見せる。
+// 【日付に依存させない】件数・エリアは data.js から決まるので、実行日が変わっても出力は同じ
+//   (このリポジトリの生成物の原則。gen-venue-pages.js の同じ箇所のコメントを参照)。
+const DATA = require(path.join(REPO, 'data.js'));
+const { AREA_SLUGS, areaVenues, areaList } = require('./area-schedule.js');
+
+function venueScheduleBlock() {
+  const areas = areaList(DATA.VENUES, DATA.AREAS);
+  return `
+<h2 class="day">福岡の店舗で開催されているポーカートーナメント</h2>
+<p class="lead">大型大会の期間外も、福岡県内のアミューズメントポーカー店では日々トーナメントが開催されています（当サイト掲載: ${DATA.VENUES.length}店舗）。エリアごとの日程はこちらから確認できます。</p>
+<ul class="evt-areas">
+${areas.map(a => `  <li><a href="/areas/${AREA_SLUGS[a]}/">${esc(a)}（${areaVenues(DATA.VENUES, a).length}店舗）</a></li>`).join('\n')}
+</ul>`;
+}
+
 // ---- ページの骨格・恒久リンク行(site-shell.js) ----
 // pageHead / pageFoot / permanentEventLinks の実体は tools/site-shell.js にある。
 // 呼び出し側の書き方を変えずに済むよう、BIG(レジストリ)を束ねただけの薄いラッパを置く。
@@ -267,6 +292,7 @@ function buildJopt() {
 <div class="disclaimer">当サイトはJOPTの主催者・公式媒体ではありません。公開情報をもとに当サイトが独自に集約した<b>非公式のまとめ</b>です。掲載内容は2026年7月時点の公式情報にもとづきますが、当サイトによる転記の誤りが含まれる可能性があります。プライズ額は主催者発表で、JOPTではプライズは賞金ではなく選手契約として扱われます。参加前に必ず<a href="${esc(JOPT.guideUrl)}" target="_blank" rel="noopener">公式サイト</a>をご確認ください。<br>${POSITIONING}</div>
 <a class="cta" href="/#jopt">▶ 各トーナメントのブラインドストラクチャーを見る／日付で絞り込む<small>インタラクティブ版(全ストラクチャー表つき)</small></a>
 ${schedTable(JOPT.tournaments)}
+${venueScheduleBlock()}
 <div class="links">
   ▶ <a href="${esc(JOPT.guideUrl)}" target="_blank" rel="noopener">JOPT公式サイト</a>${JOPT.scheduleUrl ? `　／　<a href="${esc(JOPT.scheduleUrl)}" target="_blank" rel="noopener">公式スケジュール</a>` : ''}<br>
   ▶ <a href="/">福岡の他のポーカートーナメント日程を見る</a>
@@ -312,6 +338,7 @@ function buildWjpt() {
 <div class="disclaimer">当サイトはWJPTの主催者・公式媒体ではありません。公開情報をもとに当サイトが独自に集約した<b>非公式のまとめ</b>です。掲載内容は開催当時の公式情報にもとづきますが、当サイトによる転記の誤りが含まれる可能性があります。イベント終了後は内容を更新していません。掲載元: <a href="${esc(WJPT.guideUrl)}" target="_blank" rel="noopener">公式プレイヤーズガイド</a>（開催当時）。<br>${POSITIONING}</div>
 <a class="cta" href="/#wjpt">▶ 各トーナメントの公式ストラクチャー画像を見る<small>インタラクティブ版(告知シート画像つき)</small></a>
 ${schedTable(WJPT.tournaments)}
+${venueScheduleBlock()}
 <div class="links">
   ▶ <a href="/">福岡の今後のポーカートーナメント日程を見る</a>
 </div>`;
@@ -396,6 +423,7 @@ function buildNippon() {
 <a class="cta" href="/#nippon">▶ 日付で絞り込んで見る<small>インタラクティブ版（日別タブ・各イベントの公式ストラクチャーへのリンクつき）</small></a>
 ${schedTableNippon(NIPPON.events)}
 <p class="lead" style="margin-top:14px">※ MAIN EVENT（#17）は Day 1A〜Day 1D Last Chance と Day 2 &amp; FINAL に分かれているため、同じ番号が複数の日に登場します。ブラインドストラクチャーは公式の各トーナメントページをご確認ください。</p>
+${venueScheduleBlock()}
 <div class="links">
   ▶ <a href="${esc(NIPPON.siteUrl)}" target="_blank" rel="noopener">NIPPON SERIES 公式イベントページ</a>　／　<a href="${esc(NIPPON.guidePdfUrl)}" target="_blank" rel="noopener">公式Players Guide(PDF)</a><br>
   ▶ <a href="/">福岡の他のポーカートーナメント日程を見る</a>
@@ -471,6 +499,7 @@ ${e.sched.map(([k, v]) => `    <tr><th>${esc(k)}</th><td class="start">${esc(v)}
 <a class="cta" href="/#fst">▶ サイト内のFSTサテライト（チケット獲得トーナメント）を見る<small>インタラクティブ版（日付・店舗つきで直近の開催予定を表示）</small></a>
 ${tables}
 <p class="lead" style="margin-top:14px">※ エントリー方法の「FSTチケット」は、県内各店で開催されるサテライトで獲得できるチケットを指します。サテライトの開催予定は<a href="/#fst">トップページのFSTページ</a>に掲載しています。</p>
+${venueScheduleBlock()}
 <div class="links">
   ▶ <a href="${esc(FST.x)}" target="_blank" rel="noopener">公式X（@fst_202408）</a>　／　<a href="${esc(FST.linktree)}" target="_blank" rel="noopener">公式Linktree</a>　／　<a href="${esc(FST.instagram)}" target="_blank" rel="noopener">公式Instagram</a><br>
   ▶ <a href="/">福岡の他のポーカートーナメント日程を見る</a>

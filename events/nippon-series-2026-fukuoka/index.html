@@ -104,6 +104,9 @@
   .sched-wrap{overflow-x:auto}
   .links{font-size:.88em;line-height:2;margin:18px 0 8px}
   .links a{color:#0e6a72;font-weight:700}
+  /* 大会ページ末尾の「エリア別の店舗トーナメント」への導線。店舗ページの .vp-list と同じ見た目。 */
+  ul.evt-areas{list-style:none;display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 6px;padding:0}
+  ul.evt-areas a{display:inline-block;background:var(--sur);border:1px solid var(--bor);border-radius:20px;padding:6px 13px;font-size:.85em;font-weight:700;color:var(--felt);text-decoration:none;box-shadow:var(--sha)}
   footer{background:#1b2320;color:#9aa39d;padding:22px 16px;font-size:.8em;text-align:center;line-height:1.9}
   footer a{color:var(--gold2)}
   .stickyAd{position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;align-items:center;gap:10px;padding:9px 12px calc(9px + env(safe-area-inset-bottom));background:radial-gradient(120% 220% at 6% 0%,rgba(96,214,255,.20),transparent 55%),radial-gradient(120% 220% at 100% 100%,rgba(200,110,255,.16),transparent 55%),linear-gradient(160deg,#12101d,#191325 60%,#140f1e);border-top:1px solid rgba(255,255,255,.08);box-shadow:0 -4px 18px rgba(5,0,15,.35)}
@@ -506,6 +509,18 @@
   </tbody>
 </table></div>
 <p class="lead" style="margin-top:14px">※ MAIN EVENT（#17）は Day 1A〜Day 1D Last Chance と Day 2 &amp; FINAL に分かれているため、同じ番号が複数の日に登場します。ブラインドストラクチャーは公式の各トーナメントページをご確認ください。</p>
+
+<h2 class="day">福岡の店舗で開催されているポーカートーナメント</h2>
+<p class="lead">大型大会の期間外も、福岡県内のアミューズメントポーカー店では日々トーナメントが開催されています（当サイト掲載: 35店舗）。エリアごとの日程はこちらから確認できます。</p>
+<ul class="evt-areas">
+  <li><a href="/areas/tenjin/">天神（7店舗）</a></li>
+  <li><a href="/areas/nakasu/">中洲（7店舗）</a></li>
+  <li><a href="/areas/daimyo/">大名（2店舗）</a></li>
+  <li><a href="/areas/imaizumi/">今泉（2店舗）</a></li>
+  <li><a href="/areas/ohashi/">大橋（2店舗）</a></li>
+  <li><a href="/areas/kitakyushu/">北九州（9店舗）</a></li>
+  <li><a href="/areas/kurume/">久留米（2店舗）</a></li>
+</ul>
 <div class="links">
   ▶ <a href="https://nippon-series.jp/event-nippon-series-fukuoka-2026" target="_blank" rel="noopener">NIPPON SERIES 公式イベントページ</a>　／　<a href="https://nippon-series.jp/assets/players-guide-nippon-series-fukuoka-2026.pdf" target="_blank" rel="noopener">公式Players Guide(PDF)</a><br>
   ▶ <a href="/">福岡の他のポーカートーナメント日程を見る</a>
