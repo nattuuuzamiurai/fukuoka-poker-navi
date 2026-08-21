@@ -70,24 +70,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01KY554GQXFGT8KMP3R6WKWNHG": {
-      "id": "wl-01KY554GQXFGT8KMP3R6WKWNHG",
-      "venueId": "v3",
-      "name": "VS m FURIN",
-      "date": "2026-08-21",
-      "start": "17:30",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "特別開催"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01KYHHDAZE7D0SPSQR9MTVGZPS": {
       "id": "wl-01KYHHDAZE7D0SPSQR9MTVGZPS",
       "venueId": "v19",
@@ -366,40 +348,6 @@
       "prize": null,
       "tags": [
         "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01KZR88C81CPNFHN9MT2TGWHTC": {
-      "id": "wl-01KZR88C81CPNFHN9MT2TGWHTC",
-      "venueId": "v3",
-      "name": "m Limited",
-      "date": "2026-08-24",
-      "start": "17:10",
-      "buyin": 3500,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01KZR8PZECFRHF9R84TZYEJG8J": {
-      "id": "wl-01KZR8PZECFRHF9R84TZYEJG8J",
-      "venueId": "v3",
-      "name": "ｍ Hyper Deep Turbo",
-      "date": "2026-08-21",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": null,
-      "stack": 100000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
       ],
       "source": "auto",
       "verified": false
@@ -821,6 +769,54 @@
       "stack": 20000,
       "guarantee": null,
       "reentry": false,
+      "prize": null,
+      "tags": [],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M0JFM2TSWXJCYFF9V6FT4F6Y": {
+      "id": "wl-01M0JFM2TSWXJCYFF9V6FT4F6Y",
+      "venueId": "v3",
+      "name": "m LIVE LEAGUE season1",
+      "date": "2026-09-13",
+      "start": "17:10",
+      "buyin": 4000,
+      "addon": null,
+      "stack": 40000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M0JHXYRKRR6TA1AX11J291QZ": {
+      "id": "wl-01M0JHXYRKRR6TA1AX11J291QZ",
+      "venueId": "v3",
+      "name": "m Limited",
+      "date": "2026-08-24",
+      "start": "17:10",
+      "buyin": 4000,
+      "addon": null,
+      "stack": 40000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M0JHZSE4RRY4VKNQ0G81GWY6": {
+      "id": "wl-01M0JHZSE4RRY4VKNQ0G81GWY6",
+      "venueId": "v3",
+      "name": "m Limited",
+      "date": "2026-09-04",
+      "start": "17:10",
+      "buyin": 4000,
+      "addon": null,
+      "stack": 40000,
+      "guarantee": null,
+      "reentry": true,
       "prize": null,
       "tags": [],
       "source": "auto",
