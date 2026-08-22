@@ -6175,25 +6175,6 @@ const TOURNAMENTS = [
     "lowConfidence": true
   },
   {
-    "id": "cx0726",
-    "venueId": "v28",
-    "name": "ハイパーターボトナメ",
-    "date": "2026-07-26",
-    "start": "",
-    "buyin": 0,
-    "addon": null,
-    "stack": 0,
-    "guarantee": null,
-    "reentry": false,
-    "prize": null,
-    "tags": [
-      "ターボ"
-    ],
-    "source": "semi",
-    "verified": false,
-    "lowConfidence": true
-  },
-  {
     "id": "sk0704",
     "venueId": "v33",
     "name": "FPC DAY1 C",
