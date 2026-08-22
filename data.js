@@ -6175,25 +6175,6 @@ const TOURNAMENTS = [
     "lowConfidence": true
   },
   {
-    "id": "cx0726",
-    "venueId": "v28",
-    "name": "ハイパーターボトナメ",
-    "date": "2026-07-26",
-    "start": "",
-    "buyin": 0,
-    "addon": null,
-    "stack": 0,
-    "guarantee": null,
-    "reentry": false,
-    "prize": null,
-    "tags": [
-      "ターボ"
-    ],
-    "source": "semi",
-    "verified": false,
-    "lowConfidence": true
-  },
-  {
     "id": "sk0704",
     "venueId": "v33",
     "name": "FPC DAY1 C",
@@ -16932,6 +16913,206 @@ const TOURNAMENTS = [
     "tags": [],
     "source": "semi",
     "verified": false
+  },
+  {
+    "id": "jk0817a",
+    "venueId": "v26",
+    "name": "FSTサテライト",
+    "date": "2026-08-17",
+    "start": "19:00",
+    "buyin": 3000,
+    "addon": 3000,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "サテライト",
+      "FST"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "jk0818a",
+    "venueId": "v26",
+    "name": "フリロ",
+    "date": "2026-08-18",
+    "start": "15:00",
+    "buyin": 0,
+    "addon": 1000,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "フリーロール"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "jk0818b",
+    "venueId": "v26",
+    "name": "FREEZE OUT",
+    "date": "2026-08-18",
+    "start": "18:00",
+    "buyin": 5000,
+    "addon": null,
+    "stack": 40000,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "jk0819a",
+    "venueId": "v26",
+    "name": "JOKER RINGレース（純増1位にJPT）",
+    "date": "2026-08-19",
+    "start": "",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": "純増1位にJPT",
+    "tags": [
+      "特別開催"
+    ],
+    "source": "semi",
+    "verified": false,
+    "lowConfidence": true
+  },
+  {
+    "id": "jk0820a",
+    "venueId": "v26",
+    "name": "フリロ",
+    "date": "2026-08-20",
+    "start": "15:00",
+    "buyin": 0,
+    "addon": 1000,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "フリーロール"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "jk0820b",
+    "venueId": "v26",
+    "name": "Deepトナメ",
+    "date": "2026-08-20",
+    "start": "18:00",
+    "buyin": 3000,
+    "addon": 3000,
+    "stack": 40000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ディープ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "jk0821a",
+    "venueId": "v26",
+    "name": "初心者トナメ",
+    "date": "2026-08-21",
+    "start": "19:00",
+    "buyin": 1000,
+    "addon": 1000,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "初心者"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "jk0822a",
+    "venueId": "v26",
+    "name": "フリロ",
+    "date": "2026-08-22",
+    "start": "12:00",
+    "buyin": 0,
+    "addon": 1000,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "フリーロール"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "jk0822b",
+    "venueId": "v26",
+    "name": "FSTサテライト",
+    "date": "2026-08-22",
+    "start": "19:00",
+    "buyin": 3000,
+    "addon": 3000,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "サテライト",
+      "FST"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "jk0823a",
+    "venueId": "v26",
+    "name": "フリロ",
+    "date": "2026-08-23",
+    "start": "12:00",
+    "buyin": 0,
+    "addon": 1000,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "フリーロール"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "jk0823b",
+    "venueId": "v26",
+    "name": "FSTサテライト",
+    "date": "2026-08-23",
+    "start": "19:00",
+    "buyin": 3000,
+    "addon": 3000,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "サテライト",
+      "FST"
+    ],
+    "source": "semi",
+    "verified": false
   }
 ];
 
@@ -16972,6 +17153,7 @@ const RECURRING = [
   { id: "rec_v19_sat", venueId: "v19", weekday: 6, name: "Deep Stack", start: "16:10", lateReg: "18:50", buyin: 3000, buyinStack: 40000, reentryFee: null, reentryStack: null, addon: null, addonStack: null, blindTime: null, tags: ["ディープ"] },
   { id: "rec_v19_sun", venueId: "v19", weekday: 0, name: "Turbo", start: "16:10", lateReg: "18:20", buyin: 2000, buyinStack: 30000, reentryFee: null, reentryStack: null, addon: null, addonStack: null, blindTime: null, tags: ["ターボ"] },
   { id: "rec_v28_wed", venueId: "v28", weekday: 3, name: "FSTサテライト", start: "", lateReg: "", buyin: 0, buyinStack: null, reentryFee: null, reentryStack: null, addon: null, addonStack: null, blindTime: null, tags: ["サテライト", "FST"] },
+  { id: "rec_v28_sun", venueId: "v28", weekday: 0, name: "ハイパーターボトナメ", start: "", lateReg: "", buyin: 0, buyinStack: null, reentryFee: null, reentryStack: null, addon: null, addonStack: null, blindTime: null, tags: ["ターボ"] },
   { id: "rec_v33_mon", venueId: "v33", weekday: 1, name: "フリーロール", start: "19:00", lateReg: "21:30", buyin: 0, buyinStack: null, reentryFee: 1000, reentryStack: null, addon: 1000, addonStack: null, blindTime: null, tags: ["フリーロール"] },
   { id: "rec_v33_tue", venueId: "v33", weekday: 2, name: "FREEZE OUT", start: "12:30", lateReg: "14:00", buyin: 5000, buyinStack: null, reentryFee: null, reentryStack: null, addon: null, addonStack: null, blindTime: null, tags: [] },
   { id: "rec_v33_fri", venueId: "v33", weekday: 5, name: "JOPT福岡サテライト", start: "19:00", lateReg: "21:30", buyin: 4000, buyinStack: null, reentryFee: 4000, reentryStack: null, addon: 4000, addonStack: null, blindTime: null, tags: ["サテライト", "JOPT"] },
