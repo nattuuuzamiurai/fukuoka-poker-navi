@@ -20,24 +20,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01KXJJTC1FJFS6ZSQXQYC6AZS2": {
-      "id": "wl-01KXJJTC1FJFS6ZSQXQYC6AZS2",
-      "venueId": "v19",
-      "name": "2000 Turbo",
-      "date": "2026-08-23",
-      "start": "16:10",
-      "buyin": 2000,
-      "addon": 1000,
-      "stack": 30000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01KXSJK2CH0ZX4D3EPBZY5SJEB": {
       "id": "wl-01KXSJK2CH0ZX4D3EPBZY5SJEB",
       "venueId": "v3",
@@ -312,40 +294,6 @@
       "prize": null,
       "tags": [
         "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01KZR9DH6XBC97ZAHHEGKS9R8B": {
-      "id": "wl-01KZR9DH6XBC97ZAHHEGKS9R8B",
-      "venueId": "v3",
-      "name": "m LIVE LEAGUE season1",
-      "date": "2026-08-23",
-      "start": "17:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01KZR9GHSTF4N4SWW9Z2H1D9SM": {
-      "id": "wl-01KZR9GHSTF4N4SWW9Z2H1D9SM",
-      "venueId": "v3",
-      "name": "m Super Hold'em Turbo",
-      "date": "2026-08-23",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": 1000,
-      "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
       ],
       "source": "auto",
       "verified": false
@@ -635,24 +583,6 @@
       "reentry": true,
       "prize": null,
       "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01KZTYP1HBF672A1JDMGD8HMCP": {
-      "id": "wl-01KZTYP1HBF672A1JDMGD8HMCP",
-      "venueId": "v3",
-      "name": "m ULTRA STACK FREEZE OUT",
-      "date": "2026-08-23",
-      "start": "13:10",
-      "buyin": 4500,
-      "addon": null,
-      "stack": 100000,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
       "source": "auto",
       "verified": false
     },
