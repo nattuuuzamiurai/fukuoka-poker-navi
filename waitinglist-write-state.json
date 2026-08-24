@@ -136,22 +136,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01KZNDXBV7V4JHEVYAVNNRDHYG": {
-      "id": "wl-01KZNDXBV7V4JHEVYAVNNRDHYG",
-      "venueId": "v19",
-      "name": "Free Roll",
-      "date": "2026-08-24",
-      "start": "18:10",
-      "buyin": 0,
-      "addon": 1000,
-      "stack": 20000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01KZQR328BDGQCCY9JEJT7YXV7": {
       "id": "wl-01KZQR328BDGQCCY9JEJT7YXV7",
       "venueId": "v3",
@@ -343,24 +327,6 @@
       "reentry": true,
       "prize": null,
       "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01KZTQ7B53QMXZDXY0QYBC6ABV": {
-      "id": "wl-01KZTQ7B53QMXZDXY0QYBC6ABV",
-      "venueId": "v3",
-      "name": "m MAD shuffle Turbo",
-      "date": "2026-08-24",
-      "start": "21:00",
-      "buyin": 2000,
-      "addon": 1000,
-      "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
       "source": "auto",
       "verified": false
     },
@@ -639,22 +605,6 @@
       "venueId": "v3",
       "name": "m LIVE LEAGUE season1",
       "date": "2026-09-13",
-      "start": "17:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M0JHXYRKRR6TA1AX11J291QZ": {
-      "id": "wl-01M0JHXYRKRR6TA1AX11J291QZ",
-      "venueId": "v3",
-      "name": "m Limited",
-      "date": "2026-08-24",
       "start": "17:10",
       "buyin": 4000,
       "addon": null,
