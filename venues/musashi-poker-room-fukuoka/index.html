@@ -7,8 +7,14 @@
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-L7091YHTFH');
+  // 本番ドメイン以外(GitHub Pagesのリダイレクト元・ローカル確認・プレビュー環境等)からの
+  // アクセスをGA4に計測させない。config を呼ばない限りGA4側にヒットは送られないため、
+  // ここでホストを絞る(GA4実測: /index.html や存在しない /_baseline-index.html に
+  // 人手とは考えにくい偏ったPVが計測されていたことへの対応)。
+  if (location.hostname === 'fukuokapoker.com') {
+    gtag('js', new Date());
+    gtag('config', 'G-L7091YHTFH');
+  }
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>むさぽ福岡（MUSASHI POKER ROOM 福岡店）（大名）｜住所・アクセス・トーナメント開催情報 | ふくおかポーカーナビ</title>

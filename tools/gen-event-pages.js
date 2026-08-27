@@ -251,11 +251,27 @@ ${rows}
 }
 
 // ---- JOPTページ ----
+// ---- JOPT 2026 Fukuoka #01 の結果(終了済み大会。数値は一次情報ではなく出典記事からの転記) ----
+// 【なぜここに定数を置くか】この大会はすでに終了しており、結果は当サイトの集計元(data.js/jopt-data.js)
+// には無い外部情報(下記出典)。他のデータのように「値を手打ちしない」原則を保てないため、
+// 唯一の出どころをこの定数にまとめ、本文・title・meta・JSON-LDへの転記をここから行う
+// (コピーを複数箇所に手で書くと、この後の事故(恒久リンク行など)と同じ「片方だけ直す」を繰り返す)。
+const JOPT_RESULT = {
+  winner: 'Koheiさん',
+  runnerUp: 'TSUNEさん',
+  totalEntries: '1,179人',
+  sourceUrl: 'https://light-three.com/jopt-fukuoka-result/',
+  sourceLabel: 'ポーカーマガジン LightTHREE「【JOPT 2026 Fukuoka #01リザルト】初代Main Event王者はKoheiさん！注目イベントの結果も紹介」',
+  sourceDate: '（2026年8月7日公開・2026年8月27日確認）',
+  notable: '主な注目トーナメントの優勝者　NLH Fukuoka（128エントリー）：ぽんたろうさん／NLH Platinum Sponsored by APT（72エントリー）：Sugarさん／PLO Prime（66エントリー）：こすもんさん／FL 2-7 TD &amp; Badugi #03（49エントリー）：きりんさん／FL 2-7 TD &amp; Badugi #26（75エントリー）：Takumaruさん。JOPT 2026 Fukuoka #01 全体（全トーナメント合算）の総エントリー数は6,045。'
+};
+
 function buildJopt() {
   const canonical = `${SITE}/events/jopt-2026-fukuoka-01/`;
   const image = 'img/jopt/jopt-banner.jpg';
-  const title = 'JOPT 2026 Fukuoka #01 タイムスケジュール（7/30〜8/2 福岡・大名）| ふくおかポーカーナビ';
-  const desc = 'JOPT 2026 Fukuoka #01（2026年7月30日〜8月2日・UNITEDLAB 福岡市中央区大名）の全' + JOPT.tournaments.length + 'トーナメントのタイムスケジュール・バイイン・スタックを一覧掲載。メインイベントはプライズ保証1,500万円。';
+  const title = `JOPT 2026 Fukuoka #01 結果・優勝者は誰？（7/30〜8/2 福岡・大名）| ふくおかポーカーナビ`;
+  const desc = `JOPT 2026 Fukuoka #01（2026年7月30日〜8月2日・UNITEDLAB 福岡市中央区大名）の結果まとめ。Main Event優勝は${JOPT_RESULT.winner}（エントリー${JOPT_RESULT.totalEntries}／プライズ保証1,500万円）。全${JOPT.tournaments.length}トーナメントのタイムスケジュール・バイインも掲載。`;
+  const descLd = `JOPT 2026 Fukuoka #01（2026年7月30日〜8月2日・UNITEDLAB 福岡市中央区大名）の結果まとめ。Main Event優勝は${JOPT_RESULT.winner}（エントリー${JOPT_RESULT.totalEntries}／プライズ保証1,500万円）。全${JOPT.tournaments.length}トーナメントのタイムスケジュール・バイイン・スタックも一覧掲載。`;
   // 各トーナメントのバイインを Offer にする(1トーナメント=1エントリー商品)。
   // 現金だけの金額が定まらないもの(サテライト通過者限定・Day2など)は落ちる。
   const offers = JOPT.tournaments
@@ -277,20 +293,33 @@ function buildJopt() {
     },
     "organizer": { "@type": "Organization", "name": "Japan Open Poker Tour", "url": "https://japanopenpoker.com/" },
     "offers": offers,
-    "description": desc,
+    "description": descLd,
     "url": canonical,
     "isAccessibleForFree": false
   };
   const body = `
-<h1>JOPT 2026 Fukuoka #01 タイムスケジュール</h1>
-<p class="lead">Japan Open Poker Tour 2026 福岡 #01 の全${JOPT.tournaments.length}トーナメント日程</p>
+<h1>JOPT 2026 Fukuoka #01 結果・優勝者 ＆ タイムスケジュール</h1>
+<p class="lead">Japan Open Poker Tour 2026 福岡 #01（2026年7月30日〜8月2日）の結果まとめと、全${JOPT.tournaments.length}トーナメントの日程</p>
+<div class="archived"><b>このイベントは終了しました。</b>Main Event優勝は<b>${esc(JOPT_RESULT.winner)}</b>（エントリー${esc(JOPT_RESULT.totalEntries)}）でした。詳しい結果は下記「結果・優勝者」をご覧ください。以下は開催当時のタイムスケジュールの記録です。今後のトーナメントは<a href="/">トップページ</a>をご確認ください。</div>
 <div class="evt-meta">
   <b>会期</b>　2026年7月30日（木）〜8月2日（日）<br>
   <b>会場</b>　${esc(JOPT.venue || 'UNITEDLAB')}（${esc(JOPT.address || '福岡県福岡市中央区大名1-3-36')}）<br>
   <b>メインイベント</b>　<span class="prize">プライズ保証 ¥15,000,000</span>
 </div>
 <div class="disclaimer">当サイトはJOPTの主催者・公式媒体ではありません。公開情報をもとに当サイトが独自に集約した<b>非公式のまとめ</b>です。掲載内容は2026年7月時点の公式情報にもとづきますが、当サイトによる転記の誤りが含まれる可能性があります。プライズ額は主催者発表で、JOPTではプライズは賞金ではなく選手契約として扱われます。参加前に必ず<a href="${esc(JOPT.guideUrl)}" target="_blank" rel="noopener">公式サイト</a>をご確認ください。<br>${POSITIONING}</div>
+<h2 class="day">結果・優勝者（Main Event）</h2>
+<div class="sched-wrap"><table class="sched">
+  <tbody>
+    <tr><th>優勝</th><td class="fst-prize">${esc(JOPT_RESULT.winner)}</td></tr>
+    <tr><th>準優勝</th><td>${esc(JOPT_RESULT.runnerUp)}</td></tr>
+    <tr><th>総エントリー数</th><td>${esc(JOPT_RESULT.totalEntries)}</td></tr>
+    <tr><th>プライズ保証</th><td>¥15,000,000</td></tr>
+  </tbody>
+</table></div>
+<p class="lead" style="margin-top:10px">${JOPT_RESULT.notable}</p>
+<p class="lead" style="margin-top:-6px">出典：<a href="${esc(JOPT_RESULT.sourceUrl)}" target="_blank" rel="noopener">${esc(JOPT_RESULT.sourceLabel)}</a>${esc(JOPT_RESULT.sourceDate)}</p>
 <a class="cta" href="/#jopt">▶ 各トーナメントのブラインドストラクチャーを見る／日付で絞り込む<small>インタラクティブ版(全ストラクチャー表つき)</small></a>
+<p class="lead" style="margin:18px 0 -4px">以下は開催当時の全${JOPT.tournaments.length}トーナメントのタイムスケジュールの記録です。</p>
 ${schedTable(JOPT.tournaments)}
 ${venueScheduleBlock()}
 <div class="links">

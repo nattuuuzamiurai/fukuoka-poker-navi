@@ -28,7 +28,10 @@
  *
  * 生成物:
  *   - areas/<slug>/index.html
- *   - index.html の【エリアリンク行(#areaLinks)だけ】を上書き同期する
+ *   - index.html の【エリアリンク行(#areaLinks・フッター)だけ】を上書き同期する
+ *   - index.html の【エリアから探すナビ(#areaNav-list・ヒーロー直下)だけ】を上書き同期する
+ *       … 狙いは同じ(/areas/<slug>/ へのクローラブルな内部リンク)だが、置き場所が違う2箇所。
+ *         なぜ2箇所あるか・なぜ手で二重管理しないかは index.html の該当コメントを参照。
  *   - sitemap.xml … 中身は tools/gen-sitemap.js が決める。ここでは組み立てず、そのまま書くだけ。
  *
  * 使い方:
@@ -213,7 +216,7 @@ ${SCHEDULE_JS}${AREA_SCHEDULE_JS}
   }) + body + pageFoot(BIG, null, scripts);
 }
 
-// ---- トップページ(index.html)のエリアリンク行(#areaLinks)を同期する ----
+// ---- トップページ(index.html)のエリアリンク行(#areaLinks・フッター)を同期する ----
 // 【なぜ必要か】店舗リンク行(#venueLinks)と同じ理由。JSを実行しないクローラに
 //   /areas/<slug>/ へのリンクが見えないと、クロール経路が sitemap だけになる。
 //   ★ 中身は自動生成。エリアが2店舗に達すれば自動で増える。
@@ -230,6 +233,22 @@ function areaLinksRow() {
     .join('・');
 }
 
+// ---- トップページ(index.html)の「エリアから探す」ナビ(#areaNav-list・ヒーロー直下)を同期する ----
+// 【なぜ #areaLinks と別にあるか】#areaLinks はフッターの小さな1行(クローラ向けの保険)。
+//   こちらは閲覧者にも見える目立つ位置(ヒーロー直下)に置いた導線で、
+//   静的ページ(events/<slug>/・areas/<slug>/)の ul.evt-areas / ul.vp-list と同じ
+//   「チップ+店舗数」の見た目にしてある。データの出どころ(PAGE_AREAS/AREA_SLUGS/areaVenues)は
+//   #areaLinks と同じにして、値のズレが起きないようにする。
+// 対象は「<ul id="areaNav-list" …> … </ul>」(複数行)。行頭アンカーではなく非貪欲マッチで囲む。
+const NAV_LIST_RE = /(<ul id="areaNav-list"[^>]*>)([\s\S]*?)(\n\s*<\/ul>)/;
+const NAV_LIST_RE_G = new RegExp(NAV_LIST_RE.source, 'g');
+
+function areaNavItems() {
+  return PAGE_AREAS
+    .map(a => `      <li><a href="/areas/${AREA_SLUGS[a]}/">${esc(a)}（${areaVenues(VENUES, a).length}店舗）</a></li>`)
+    .join('\n');
+}
+
 function buildIndexHtml() {
   const src = fs.readFileSync(path.join(REPO, 'index.html'), 'utf8');
   const hits = src.match(INDEX_LINKS_RE_G) || [];
@@ -237,8 +256,16 @@ function buildIndexHtml() {
     throw new Error(`index.html のエリアリンク行(<div id="areaLinks">…</div>)が ${hits.length} 件見つかりました。`
       + '1件だけ、独立した1行として置いてください（トップのエリアリンク行を同期できません）。');
   }
-  return src.replace(INDEX_LINKS_RE, (_m, open, _inner, close) =>
+  let out = src.replace(INDEX_LINKS_RE, (_m, open, _inner, close) =>
     open + INDEX_LINKS_PREFIX + areaLinksRow() + close);
+
+  const navHits = out.match(NAV_LIST_RE_G) || [];
+  if (navHits.length !== 1) {
+    throw new Error(`index.html の「エリアから探す」ナビ(<ul id="areaNav-list">…</ul>)が ${navHits.length} 件見つかりました。`
+      + '1件だけ置いてください（トップのエリアナビを同期できません）。');
+  }
+  out = out.replace(NAV_LIST_RE, (_m, open, _inner, close) => `${open}\n${areaNavItems()}${close}`);
+  return out;
 }
 
 // ---- 検査 ----
@@ -256,6 +283,14 @@ function verify(files) {
     const linked = (inner.match(/href="\/areas\/[^"]+\/"/g) || []).length;
     if (linked !== PAGE_AREAS.length) {
       problems.push(`index.html #areaLinks のリンク数が ${linked} 件（対象エリアは ${PAGE_AREAS.length} 件）`);
+    }
+  }
+  const nm = files['index.html'].match(NAV_LIST_RE);
+  if (!nm) problems.push('index.html: #areaNav-list が見つからない');
+  else {
+    const linked = (nm[2].match(/href="\/areas\/[^"]+\/"/g) || []).length;
+    if (linked !== PAGE_AREAS.length) {
+      problems.push(`index.html #areaNav-list のリンク数が ${linked} 件（対象エリアは ${PAGE_AREAS.length} 件）`);
     }
   }
   if (problems.length) {

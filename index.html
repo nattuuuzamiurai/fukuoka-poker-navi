@@ -7,8 +7,14 @@
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-L7091YHTFH', { send_page_view: false });
+  // 本番ドメイン以外(GitHub Pagesのリダイレクト元・ローカル確認・プレビュー環境等)からの
+  // アクセスをGA4に計測させない。config を呼ばない限りGA4側にヒットは送られないため、
+  // ここでホストを絞る(GA4実測: /index.html や存在しない /_baseline-index.html に
+  // 人手とは考えにくい偏ったPVが計測されていたことへの対応)。
+  if (location.hostname === 'fukuokapoker.com') {
+    gtag('js', new Date());
+    gtag('config', 'G-L7091YHTFH', { send_page_view: false });
+  }
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- 【title / description の語彙について】検索する人は「トーナメント」ではなく「大会」と打つ
@@ -79,6 +85,16 @@
   .hero .stat{text-align:center}
   .hero .stat b{display:block;font-size:1.3em;color:var(--gold2);font-weight:800;line-height:1}
   .hero .stat span{font-size:.7em;color:#c3d6cd}
+
+  /* エリアから探す(目立つ内部リンク。エリア別の静的ページへの導線)。
+     見た目は静的ページ(events/<slug>/・areas/<slug>/)のチップリストと揃えてある
+     (tools/site-shell.js の BASE_CSS 参照)。中身は自動生成。手で書き換えないこと
+     (同期のしくみは tools/gen-area-pages.js を参照)。 */
+  .areaNav{background:var(--felt2);padding:10px 16px}
+  .areaNav .an-inner{max-width:1000px;margin:0 auto}
+  .areaNav .an-label{font-size:.78em;font-weight:800;color:#cfe3dd;margin-bottom:7px}
+  .areaNav ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px;padding:0;margin:0}
+  .areaNav ul a{display:inline-block;background:var(--sur);border:1px solid var(--bor);border-radius:20px;padding:6px 13px;font-size:.85em;font-weight:700;color:var(--felt);text-decoration:none;box-shadow:var(--sha)}
 
   /* FILTER BAR */
   .filters{background:var(--sur);border-bottom:1px solid var(--bor);box-shadow:var(--sha)}
@@ -599,6 +615,29 @@
     <div class="stat"><b id="stat-today">–</b><span>本日開催</span></div>
   </div>
 </section>
+
+<!-- 【エリアから探す】エリア別の静的ページ(/areas/配下)への目立つ内部リンク。
+     フッターの店舗別・エリア別リンク行と同じ理由(JSを実行しないクローラにも拾わせる静的リンク)だが、
+     こちらは閲覧者にも見える位置(ヒーロー直下)に置いた導線
+     (Search Console実測でエリアページへのクロール経路が薄いため、フッターの1行だけでなく
+     ヒーロー直下にも導線を足す)。
+     ★★ 中身は自動生成。手で書き換えないこと。★★
+       同期のしくみ・実行コマンドは tools/gen-area-pages.js のコメントを参照。
+       2店舗以上あるエリアが自動で並ぶ。ズレは --check を付けた実行で検出できる。 -->
+<div class="areaNav">
+  <div class="an-inner">
+    <div class="an-label">エリアから探す</div>
+    <ul id="areaNav-list">
+      <li><a href="/areas/tenjin/">天神（7店舗）</a></li>
+      <li><a href="/areas/nakasu/">中洲（7店舗）</a></li>
+      <li><a href="/areas/daimyo/">大名（2店舗）</a></li>
+      <li><a href="/areas/imaizumi/">今泉（2店舗）</a></li>
+      <li><a href="/areas/ohashi/">大橋（2店舗）</a></li>
+      <li><a href="/areas/kitakyushu/">北九州（9店舗）</a></li>
+      <li><a href="/areas/kurume/">久留米（2店舗）</a></li>
+    </ul>
+  </div>
+</div>
 
 <div class="filters">
   <div class="dstrip-row">
