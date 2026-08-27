@@ -442,23 +442,65 @@ CSS `scroll-snap` だけで作ってあり、レジストリに大会を足せ�
 **やってはいけないこと**: そのイベント専用の表示期間ロジックを `index.html` に書くこと。
 （過去にWJPT＝最終日まで／JOPT＝初日の2週間前から、と判定が分裂して二重に出る一歩手前だった。2026-07-29に共通化済み）
 
-### サテライト開催店舗（`satelliteVenueIds`。社長方針・2026-08-27〜）
+### サテライト開催店舗（`satelliteVenueIds` / `pastSatelliteVenueIds`。社長方針・2026-08-27〜）
 
-県内各店でチケット獲得トーナメント（サテライト）が開催される大会（現在はFST）には、
-`BIG_EVENTS` のエントリに任意で `satelliteVenueIds: ['v2', 'v7', …]` を持たせられる。
+県内各店でチケット獲得トーナメント（サテライト）が開催される大会には、`BIG_EVENTS` のエントリに
+任意で2種類のリストを持たせられる。**開催中の大会か、終了済みの大会かで使い分ける**。
 
-- **手打ちしない。** 一覧は `data.js` の `TOURNAMENTS` / `RECURRING` を機械的に走査して作る。
+| フィールド | 対象 | 表現 | 判定 |
+|---|---|---|---|
+| `satelliteVenueIds` | 現在進行中〜これから開催の大会（現在はFST） | 現在形（「開催中です」） | 動的（`venueHasCurrentFstSatellite()`。下記） |
+| `pastSatelliteVenueIds` | 終了済みの大会（WJPT・JOPT・日本シリーズ） | 過去形（「開催していました」） | 静的（機械走査した結果をそのまま配列で持つ） |
+
+- **どちらも手打ちしない。** 一覧は `data.js` の `TOURNAMENTS` / `RECURRING` を機械的に走査して作る。
   判定基準は「大会名(`name`)またはタグ(`tags`)に『サテライト』『satellite』を含み、かつ
-  大会名またはタグに大会略称（FSTなら`FST`）を含む」こと。再集計用のワンライナーは
-  `big-events.js` の `satelliteVenueIds` 定義の直前コメントに書いてある（コピペで再実行できる）。
-- 用途は2つ:
+  大会名またはタグに大会略称（FSTなら`FST`・WJPTなら`WJPT`等）を含む」こと。再集計用のワンライナーは
+  `big-events.js` の各エントリの直前コメントに書いてある（正規表現を大会名に読み替えてコピペで再実行できる）。
+  該当が0件だった大会（2026-08-28時点の日本シリーズ）も `pastSatelliteVenueIds: []` と明示し、
+  「集計して0件だった」ことを「まだ集計していない」と区別できるようにしてある。
+- `satelliteVenueIds`(現在形)の用途は2つ:
   - `tools/gen-event-pages.js` の大会ページに「サテライト開催店舗」カード（`satelliteVenuesBlock()`）
-  - `tools/gen-venue-pages.js` の各店舗ページの「現在サテライトを開催中です」告知
-    （こちらは `satelliteVenueIds` を直接は見ず、`venueHasCurrentFstSatellite()` が
-    その店の `TOURNAMENTS`/`RECURRING` を都度読み直して判定する。店が開催をやめても
-    人がリストを書き換え忘れて「開催中」のまま残る、という事故を避けるため）
-- 月次で `data.js` を更新したら、`satelliteVenueIds` も上記ワンライナーで再集計し、
-  変わっていたら書き直して `tools/gen-event-pages.js` を再実行すること。
+  - `tools/gen-venue-pages.js` の各店舗ページの「現在サテライトを開催中です」告知、
+    `tools/gen-area-pages.js` の各エリアページの「エリアで現在FST 5.0のサテライトが開催されています」告知
+    （こちらは `satelliteVenueIds` を直接は見ず、`tools/venue-schedule.js` の `venueHasCurrentFstSatellite()`
+    が店の `TOURNAMENTS`/`RECURRING` を都度読み直して判定する。店が開催をやめても
+    人がリストを書き換え忘れて「開催中」のまま残る、という事故を避けるため。2026-08-28に
+    店舗ページ・エリアページの両方で使うため `tools/gen-venue-pages.js` から `tools/venue-schedule.js` へ移設した）
+  - **終了済み大会には使わない。** 会期が終わった大会に「現在開催中」の現在形は成立しないため
+    （WJPT/JOPTは `pastSatelliteVenueIds` 側で扱う）。
+- `pastSatelliteVenueIds`(過去形)の用途は2つ:
+  - `tools/gen-event-pages.js` の大会ページに「サテライト開催店舗（開催実績）」カード
+    （`pastSatelliteVenuesBlock()`。`satelliteVenuesBlock()` を過去形の見出し・文言でラップしたもの）
+  - `tools/gen-venue-pages.js` の各店舗ページの「◯◯のサテライトを開催していました」告知
+    （`.archived` を流用。動的判定はしない＝静的リストのまま。終了済み大会の記録なので、
+    店の現在のデータが変わっても表示を変える理由が無いため）
+- 月次で `data.js` を更新したら、両方のリストを上記ワンライナーで再集計し、
+  変わっていたら書き直して該当の生成スクリプトを再実行すること。
+
+### パンくずリスト・フッターのエリアリンク・OGP画像（2026-08-28〜）
+
+`tools/site-shell.js` にさらに3つの共通部品を集約してある(events/venues/areas の全静的ページに反映)。
+
+- **パンくずリスト**（表示用nav + JSON-LD `BreadcrumbList`）
+  `pageHead({ breadcrumb: items })` の `items` は `[{ name, url }, …]`（トップ→現在地の順、
+  最後の要素がそのページ自身）。表示・JSON-LDとも `breadcrumbJsonLd()` / `breadcrumbNavHtml()`
+  1組の入力から作るので2箇所がズレない。専用ページを持たない中間階層（「エリアから探す」
+  「大会」）は index.html 内のセクションへのアンカー（`/#areaNav`・`/#majors`）を指す。
+  店舗のエリアにエリアページが無い（1店舗しか無いエリア）場合は、その段を作らずに省く
+  （無い物のURLをでっち上げない）。
+  - 店舗ページ: トップ ＞ エリアから探す ＞ 〇〇エリア（無ければ省略） ＞ 店舗名
+  - 大会ページ: トップ ＞ 大会 ＞ 大会名
+  - エリアページ: トップ ＞ エリアから探す ＞ エリア名
+- **フッターのエリアリンク行**（`pageFoot(BIG, currentPath, extraScripts, areaLinksHtml)` の第4引数）
+  下層ページ（events/venues/areas）の共通フッターに全エリアへのテキストリンクを追加した。
+  以前はトップページ（index.html）の `#areaLinks` にしか無く、下層ページを読み終えて離脱しかけた
+  読者の受け皿が無かった。中身は `area-schedule.js` の `footerAreaLinksHtml()`（トップの
+  `#areaLinks` と同じデータソース）。
+- **OGP画像**（1200×630・全ページ共通サイズ）
+  `pageHead({ image })` を省略するとサイト共通OGP（`img/ogp/common-og.jpg`）が既定値になる
+  （店舗・エリアページはこれを使う）。大会ページ4件は各大会専用の画像（`img/<id>/<id>-og.jpg`）。
+  生成は `tools/gen-ogp-images.js`（Playwright依存の開発時ツール。通常の生成スクリプト・
+  `node --test`・`validate-data.js` は使わない。詳細・依存の扱いはファイル冒頭のコメントを参照）。
 
 ## 管理コンソールの使い方（月末の更新作業）
 

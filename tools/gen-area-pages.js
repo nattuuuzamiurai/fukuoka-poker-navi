@@ -51,10 +51,10 @@ const REPO = path.resolve(REPO_ARG);
 const shell = require('./site-shell.js');
 const { SITE, POSITIONING, esc, pageHead, pageFoot } = shell;
 const { sitemapFile } = require('./gen-sitemap.js');
-const { SCHEDULE_JS } = require('./venue-schedule.js');
+const { SCHEDULE_JS, venueHasCurrentFstSatellite } = require('./venue-schedule.js');
 const {
   AREA_SLUGS, AREA_SCHEDULE_JS, AREA_SCHED,
-  areaVenues, areaList, validateAreaSlugs, areaRange
+  areaVenues, areaList, validateAreaSlugs, areaRange, footerAreaLinksHtml
 } = require('./area-schedule.js');
 
 // ---- データ読み込み ----
@@ -67,6 +67,10 @@ shell.validateVenueSlugs(VENUES);
 validateAreaSlugs(VENUES, AREAS);
 
 const PAGE_AREAS = areaList(VENUES, AREAS);
+// フッターの「エリアから探す」リンク行(依頼3)。全エリアページで内容は共通なので1回だけ組み立てる。
+const FOOTER_AREA_LINKS = footerAreaLinksHtml(VENUES, AREAS);
+// FST 5.0 サテライトを現在開催中の店舗があるかの判定に使うレジストリ(依頼1)。
+const FST_REG = BIG.bigEventById('fst');
 
 const AREA_CSS = `  .vp-sub{font-size:.9em;color:var(--mut);margin-bottom:14px}
   h2.vp-sec{font-size:1.05em;font-weight:800;color:var(--felt);margin:26px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--gold)}
@@ -86,20 +90,20 @@ const AREA_CSS = `  .vp-sub{font-size:.9em;color:var(--mut);margin-bottom:14px}
 `;
 
 /**
- * パンくずの構造化データ。
- * 【LocalBusiness を出さない理由】このページは特定の事業所ではなく複数店の集約で、
- *   ItemList で店を並べることもできるが、当サイトは各店の運営者ではないため
- *   店の情報の断定は店舗ページ(1店1ページ)側に集約しておく。ここは階層だけを伝える。
+ * パンくずリスト(依頼2・2026-08-28): トップ > エリアから探す > エリア名。
+ * 表示用HTML・JSON-LD(BreadcrumbList)とも tools/site-shell.js の pageHead({ breadcrumb }) に
+ * items 配列を渡すだけで両方組み立たる(2箇所を別々に書かない)。
+ * 「エリアから探す」はトップページのヒーロー直下のナビ(index.html #areaNav)へのアンカー
+ * (専用ページを持たないため)。
+ * 【LocalBusiness を出さない理由(従来通り)】このページは特定の事業所ではなく複数店の集約で、
+ *   当サイトは各店の運営者ではないため、店の情報の断定は店舗ページ(1店1ページ)側に集約しておく。
  */
-function breadcrumbJsonLd(area, canonical) {
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'ふくおかポーカーナビ', item: `${SITE}/` },
-      { '@type': 'ListItem', position: 2, name: `${area}のポーカー店`, item: canonical }
-    ]
-  };
+function areaBreadcrumb(area, canonical) {
+  return [
+    { name: 'ふくおかポーカーナビ', url: `${SITE}/` },
+    { name: 'エリアから探す', url: `${SITE}/#areaNav` },
+    { name: area, url: canonical }
+  ];
 }
 
 function venueCards(venues) {
@@ -116,6 +120,43 @@ function venueCards(venues) {
   }).join('\n');
 }
 
+// ---- title/description 差別化(依頼1: エリアページ・マーケティング部提案 2026-08-28) ----
+// 【背景】全エリアページ(7件)のtitle/descriptionがエリア名以外まったく同じ文言で、
+//   特に「北九州」のように1エリアが複数の町(小倉・黒崎・折尾…)にまたがる場合、
+//   検索意図(「小倉 ポーカー」等)との一致が見えにくくCTR0%になりやすい(実測)。
+//   店舗ページ(gen-venue-pages.js)と同じ考え方で、data.js の access(最寄駅)から
+//   実際にそのエリアに含まれる町(駅)の名前を集めてtitle/descriptionの前寄りに反映する。
+//   店舗を追加・削除してもエリア内の駅の集合が自動で変わるので、手作業で書き直さない。
+// 【1駅しか無い街(天神・大橋等)では無意味な重複を出さない】拾えた駅名がエリア名と同じ場合
+//   (例:「大橋（大橋）」)は情報として意味が無いため除外する。全店除外された結果0件になった
+//   エリアでは、この差別化を出さず従来通りの文面にフォールバックする。
+
+// 「JR小倉駅 徒歩2分」のような access 文字列から、地名(駅名から「駅」を除いたもの)だけを取り出す。
+// 【店舗ページのshortStationと役割が違うので共有しない】あちらは「駅 徒歩◯分」まで残して
+//   1店の差別化に使うのに対し、こちらは複数店をまたいで駅名だけを集めてエリアの広さを示すのに使う。
+//   出力の形が違う別物のため、無理に1つの関数にまとめない。
+// 【安全側に倒す】接頭辞(JR/西鉄/地下鉄◯◯線/モノレール等)以外の位置に括弧が来る駅名
+//   (例:「西鉄福岡（天神）駅」)は、機械的に短縮すると実際の駅名と違う文字列になるため
+//   対象外にする(null を返す)。
+function townHint(access) {
+  if (!access) return null;
+  const stripped = access.replace(/^(?:JR|西鉄|地下鉄(?:空港線)?|北九州モノレール|モノレール)\s*/, '');
+  const m = stripped.match(/^([^\s（(]+)駅/);
+  return m ? m[1] : null;
+}
+
+// そのエリアの店舗群から、重複・エリア名と同じものを除いた駅名を先頭4件まで返す
+// (順序はVENUESの並び順=初出順。多すぎると読みにくいのでtitleの見やすさを優先して4件に絞る)。
+function areaTownHints(venues, areaName) {
+  const seen = new Set();
+  const hints = [];
+  venues.forEach(v => {
+    const h = townHint(v.access);
+    if (h && h !== areaName && !seen.has(h)) { seen.add(h); hints.push(h); }
+  });
+  return hints.slice(0, 4);
+}
+
 function buildArea(area) {
   const slug = AREA_SLUGS[area];
   const canonical = `${SITE}/areas/${slug}/`;
@@ -125,18 +166,26 @@ function buildArea(area) {
   const rows = RANGE ? AREA_SCHED.apRows(TOURNAMENTS, RECURRING, venues, RANGE.from, RANGE.to) : [];
   const schedHtml = AREA_SCHED.apScheduleHtml(rows);
 
+  // title/descriptionの前寄りに出す差別化ラベル。駅が1つだけ拾えたときは「◯◯駅周辺」、
+  // 複数拾えたときは列挙する。該当が無いエリア(天神・大橋・久留米など、店がすべて同じ場所に
+  // ある)では area をそのまま使う(従来通りの文面にフォールバック)。
+  const hints = areaTownHints(venues, area);
+  const areaLabel = hints.length === 0 ? area
+    : hints.length === 1 ? `${area}（${hints[0]}駅周辺）`
+    : `${area}（${hints.join('・')}）`;
+
   // ★ title / description は「掲載日程があるか」で切り替える(店舗ページと同じ理由)。
   //   0件のエリアで「日程を日付順に掲載」と書くと、検索結果に出る文が中身と一致しない。
   //   判定に「今日」を使わないのも同じ理由(実行日で分岐すると翌日に --check が落ちる)。
   let title, desc, sub;
   if (rows.length) {
-    title = `${area}のポーカートーナメント日程・ポーカー店一覧（${venues.length}店舗） | ふくおかポーカーナビ`;
-    desc = `${area}のアミューズメントポーカー${venues.length}店舗のトーナメント日程を、店舗をまたいで日付順にまとめています。`
+    title = `${areaLabel}のポーカートーナメント日程・店舗一覧（${venues.length}店舗） | ふくおかポーカーナビ`;
+    desc = `${areaLabel}のアミューズメントポーカー${venues.length}店舗のトーナメント日程を、店舗をまたいで日付順にまとめています。`
       + `開始時刻・バイイン・各店のアクセスをまとめて確認できます。`;
     sub = `${esc(area)}のポーカー店${venues.length}店舗 — トーナメント日程・バイイン・アクセス`;
   } else {
-    title = `${area}のポーカー店一覧（${venues.length}店舗） | ふくおかポーカーナビ`;
-    desc = `${area}のアミューズメントポーカー${venues.length}店舗の所在地・アクセス・公式SNSをまとめています。`
+    title = `${areaLabel}のポーカー店一覧（${venues.length}店舗） | ふくおかポーカーナビ`;
+    desc = `${areaLabel}のアミューズメントポーカー${venues.length}店舗の所在地・アクセス・公式SNSをまとめています。`
       + `現時点で当サイトに掲載中の開催予定はありません。最新の開催情報は各店舗の公式情報・SNSをご確認ください。`;
     sub = `${esc(area)}のポーカー店${venues.length}店舗 — 所在地・アクセス・開催情報`;
   }
@@ -149,6 +198,14 @@ function buildArea(area) {
 ${others.map(a => `  <li><a href="/areas/${AREA_SLUGS[a]}/">${esc(a)}（${areaVenues(VENUES, a).length}店舗）</a></li>`).join('\n')}
 </ul>` : '';
 
+  // 「掲載中の大会」バナー(依頼1・2026-08-28)。エリア内のいずれかの店舗が現在FST 5.0の
+  // サテライトを開催中なら告知を出す。判定は venueHasCurrentFstSatellite(店舗ページ・PR#50と同じ
+  // 判定関数。2026-08-28に venue-schedule.js へ移設して共有)をエリア内の各店舗に対して都度行う。
+  // 【FST専用】終了済み大会(WJPT/JOPT)は「現在開催中」という現在形の告知にはしない
+  // (big-events.js の pastSatelliteVenueIds を使った店舗ページ側の過去形表示(依頼4)で別途対応)。
+  const fstAreaBlock = (FST_REG && venues.some(v => venueHasCurrentFstSatellite(TOURNAMENTS, RECURRING, v.id))) ? `
+<div class="vp-fst"><b>${esc(area)}エリアで現在FST 5.0のサテライトが開催されています。</b>FSTチケット（獲得すると本大会にエントリーできます）を賭けたトーナメントを開催している店舗があります。詳細は<a href="${esc(FST_REG.featureUrl)}">FST 5.0 大会ページ</a>をご確認ください。</div>` : '';
+
   // 日程表の見出しと但し書き。静的HTMLは再生成しない限り残るので、時間が経っても嘘にならない文にする
   // (gen-venue-pages.js の同じ箇所の原則にそろえてある)。
   const NOTE_JS_TAIL = 'JavaScriptが有効な環境では、読み込み時に最新の掲載データから<b>今日以降</b>の日程に差し替わります。';
@@ -159,7 +216,7 @@ ${others.map(a => `  <li><a href="/areas/${AREA_SLUGS[a]}/">${esc(a)}（${areaVe
 
   const body = `
 <h1>${esc(area)}のポーカートーナメント日程</h1>
-<p class="vp-sub">${sub}</p>
+<p class="vp-sub">${sub}</p>${fstAreaBlock}
 <div class="disclaimer">当サイトは店舗が公開している情報を集約している媒体で、掲載店舗の運営者ではありません。日程・料金・営業状況は変更されることがあるため、参加前に必ず各店舗の公式情報・SNSをご確認ください。<br>${POSITIONING}</div>
 <h2 class="vp-sec">${esc(area)}のポーカー店（${venues.length}店舗）</h2>
 <div class="ap-cards">
@@ -208,12 +265,13 @@ ${SCHEDULE_JS}${AREA_SCHEDULE_JS}
 
   return pageHead({
     title, desc, canonical,
-    jsonld: breadcrumbJsonLd(area, canonical),
-    noImage: true,
+    breadcrumb: areaBreadcrumb(area, canonical),
+    // OGP画像(依頼5・2026-08-28)。エリアごとの専用画像は持たないため、image を省略して
+    // pageHead の既定値(サイト共通OGP・img/ogp/common-og.jpg)に任せる。
     ogType: 'website',
-    twitterCard: 'summary',
+    twitterCard: 'summary_large_image',
     extraCss: AREA_CSS
-  }) + body + pageFoot(BIG, null, scripts);
+  }) + body + pageFoot(BIG, null, scripts, FOOTER_AREA_LINKS);
 }
 
 // ---- トップページ(index.html)のエリアリンク行(#areaLinks・フッター)を同期する ----

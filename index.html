@@ -33,10 +33,17 @@
 <meta property="og:title" content="福岡のポーカー大会・トーナメント日程｜今日の開催も一覧 | ふくおかポーカーナビ">
 <meta property="og:description" content="福岡県内（天神・中洲・北九州・久留米・筑豊）のアミューズメントポーカー店で開催されるポーカー大会・トーナメントの日程を一括で確認。今日・今週どの店で開催されるかがすぐ分かります。">
 <meta property="og:url" content="https://fukuokapoker.com/">
+<!-- OGP画像(依頼5・2026-08-28。マーケティング部調査: トップ・エリア・店舗ページにog:imageが
+     一切無かった)。サイト共通OGP(1200×630)。tools/gen-ogp-images.js が data.js の掲載店舗数を
+     焼き込んで生成する。events/venues/areas 側の同じ画像は tools/site-shell.js の pageHead 既定値。 -->
+<meta property="og:image" content="https://fukuokapoker.com/img/ogp/common-og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <meta property="og:locale" content="ja_JP">
-<meta name="twitter:card" content="summary">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="福岡のポーカー大会・トーナメント日程｜今日の開催も一覧 | ふくおかポーカーナビ">
 <meta name="twitter:description" content="福岡県内（天神・中洲・北九州・久留米・筑豊）のアミューズメントポーカー店で開催されるポーカー大会・トーナメントの日程を一括で確認。今日・今週の開催もすぐ分かります。">
+<meta name="twitter:image" content="https://fukuokapoker.com/img/ogp/common-og.jpg">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6349478743429747"
      crossorigin="anonymous"></script>
 <script type="application/ld+json">
@@ -629,8 +636,11 @@
      ヒーロー直下にも導線を足す)。
      ★★ 中身は自動生成。手で書き換えないこと。★★
        同期のしくみ・実行コマンドは tools/gen-area-pages.js のコメントを参照。
-       2店舗以上あるエリアが自動で並ぶ。ズレは --check を付けた実行で検出できる。 -->
-<div class="areaNav">
+       2店舗以上あるエリアが自動で並ぶ。ズレは --check を付けた実行で検出できる。
+     id="areaNav" は他の静的ページ(events/venues/areas)のパンくずリスト「エリアから探す」の
+     リンク先(/#areaNav)として使う(依頼2・2026-08-28。専用ページを持たない中間階層のため、
+     このセクションへのアンカーにしている。tools/site-shell.js の breadcrumb コメントを参照)。 -->
+<div class="areaNav" id="areaNav">
   <div class="an-inner">
     <div class="an-label">エリアから探す</div>
     <ul id="areaNav-list">

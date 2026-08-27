@@ -13,7 +13,11 @@
  * 使う側:
  *   - tools/gen-event-pages.js  … 大型イベントの静的ページ
  *   - tools/gen-venue-pages.js  … 店舗の静的ページ
+ *   - tools/gen-area-pages.js   … エリアの静的ページ
  *   - tools/gen-sitemap.js      … esc/SITE/店舗slugの検査だけ使う
+ *
+ * パンくずリスト(pageHead の breadcrumb オプション)・フッターのエリアリンク行(pageFoot の
+ * areaLinksHtml オプション)も同じ理由でここに集約している(依頼2・3・2026-08-28)。
  */
 
 const SITE = 'https://fukuokapoker.com';
@@ -81,6 +85,39 @@ function permanentEventLinks(BIG, currentPath) {
     .join(LINK_SEP);
 }
 
+// ---- パンくずリスト(依頼2・2026-08-28) ----
+// 表示用のHTML(nav.breadcrumb)と、SEO用のJSON-LD(BreadcrumbList)を同じ items 配列から作る。
+// 2つを別々のロジックで組み立てると、片方だけ直して片方が実際のページ階層とズレる事故が
+// 起きうる(このファイルの他の箇所と同じ教訓)ため、items(name・urlの配列)を唯一の入力にする。
+//
+// items の並びはトップ→現在地の順。【最後の要素がそのページ自身】で、表示側はリンクにせず
+// aria-current="page" にする(下の恒久リンク行の自己リンク処理と同じ考え方)。JSON-LD側は
+// 最後の要素にも item(canonical URL)を入れる(area ページの旧実装を踏襲。Googleの構造化データ
+// ガイドラインは各階層にURLを持たせることを推奨している)。
+// 「エリアから探す」「大会」のように専用ページを持たない中間階層は、対応するセクションへの
+// アンカーURL(例: /#areaNav、/#majors)を渡す(index.html 側に同名のidを用意してある)。
+// 対応する実ページが無い階層(店舗の所属エリアにエリアページが無い場合など)は、
+// 呼び出し側が items にその階層を含めないこと(無い物のURLをでっち上げない)。
+function breadcrumbJsonLd(items) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((it, i) => ({
+      '@type': 'ListItem', position: i + 1, name: it.name, item: it.url
+    }))
+  };
+}
+function breadcrumbNavHtml(items) {
+  const lis = items.map((it, i) => {
+    const isLast = i === items.length - 1;
+    const inner = isLast
+      ? `<span aria-current="page">${esc(it.name)}</span>`
+      : `<a href="${esc(it.url)}">${esc(it.name)}</a>`;
+    return `<li>${inner}</li>`;
+  }).join('');
+  return `<nav class="breadcrumb" aria-label="パンくずリスト"><ol>${lis}</ol></nav>`;
+}
+
 // ---- 共通CSS ----
 // 静的ページ共通の見た目。トップページ(index.html)の配色・角丸・影に合わせてある。
 // 店舗ページだけで必要になるものは pageHead({ extraCss }) で足す(ここを膨らませない)。
@@ -108,6 +145,15 @@ const BASE_CSS = `  *,*::before,*::after{box-sizing:border-box;margin:0;padding:
   /* 「まだ発表されていない」ことの告知(FST)。終了(.archived)と区別できる色にする */
   .tba{font-size:.86em;line-height:1.7;color:#26424e;background:#eef6f8;border:1px solid #cfe3e9;border-radius:10px;padding:11px 13px;margin-bottom:14px}
   .tba b{color:#14333d}
+  /* パンくずリスト(依頼2・2026-08-28)。events/venues/areas の全静的ページ共通。
+     横に長くなる店舗名・大会名でも折り返さず、必要なら横スクロールで逃がす(狭い画面での実装コストを避けるため)。 */
+  nav.breadcrumb{font-size:.78em;color:var(--mut);margin:0 0 12px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  nav.breadcrumb ol{list-style:none;display:flex;align-items:center;flex-wrap:nowrap;padding:0;margin:0;white-space:nowrap}
+  nav.breadcrumb li{display:flex;align-items:center}
+  nav.breadcrumb li:not(:last-child)::after{content:'›';margin:0 6px;color:var(--mut)}
+  nav.breadcrumb a{color:#0e6a72;font-weight:700;text-decoration:none}
+  nav.breadcrumb a:hover{text-decoration:underline}
+  nav.breadcrumb [aria-current="page"]{color:var(--txt);font-weight:700}
   /* 大会バナー(当サイト作成)。狭い画面でも横幅いっぱいに収め、読み込み前後で高さが動かないようにする */
   .evt-banner{display:block;width:100%;height:auto;aspect-ratio:1024/412;border-radius:var(--r);box-shadow:var(--sha);margin-bottom:14px}
   .cta{display:block;text-align:center;background:linear-gradient(135deg,var(--felt),var(--felt2));color:#fff;font-weight:800;text-decoration:none;border-radius:var(--r);padding:13px 16px;margin:6px 0 20px;box-shadow:var(--sha)}
@@ -138,6 +184,12 @@ const BASE_CSS = `  *,*::before,*::after{box-sizing:border-box;margin:0;padding:
   .vp-card:hover{border-color:var(--gold)}
   .vp-card-name{font-weight:800;font-size:.92em;color:var(--felt);line-height:1.3}
   .vp-card-sub{font-size:.78em;color:var(--mut);margin-top:4px}
+  /* 「現在サテライトを開催中」の告知。店舗ページ(gen-venue-pages.js)とエリアページ(gen-area-pages.js)の
+     両方で使うため、ここに1つだけ置く(.vp-cards と同じ理由。複製すると片方だけ直して片方を忘れる)。
+     見た目は .tba(FSTページの「未発表」告知)と同じ配色にそろえてある。 */
+  .vp-fst{font-size:.86em;line-height:1.7;color:#26424e;background:#eef6f8;border:1px solid #cfe3e9;border-radius:10px;padding:11px 13px;margin-bottom:14px}
+  .vp-fst b{color:#14333d}
+  .vp-fst a{color:#0e6a72;font-weight:700}
   footer{background:#1b2320;color:#9aa39d;padding:22px 16px;font-size:.8em;text-align:center;line-height:1.9}
   footer a{color:var(--gold2)}
   .stickyAd{position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;align-items:center;gap:10px;padding:9px 12px calc(9px + env(safe-area-inset-bottom));background:radial-gradient(120% 220% at 6% 0%,rgba(96,214,255,.20),transparent 55%),radial-gradient(120% 220% at 100% 100%,rgba(200,110,255,.16),transparent 55%),linear-gradient(160deg,#12101d,#191325 60%,#140f1e);border-top:1px solid rgba(255,255,255,.08);box-shadow:0 -4px 18px rgba(5,0,15,.35)}
@@ -154,17 +206,30 @@ const BASE_CSS = `  *,*::before,*::after{box-sizing:border-box;margin:0;padding:
  *
  * オプションの既定値は【イベントページの現状の出力そのまま】にしてある。
  * ここを変えると gen-event-pages.js --check が落ちる(=気づける)。
- *   image      … OGP画像のパス(SITE基準の相対)。省略時はJOPTバナー
- *   noImage    … true にすると og:image/twitter:image を出さない(店舗ページ用)。
- *                 店舗ページで他社イベントのバナーを出すのは不適切なため、
- *                 トップページと同じ「画像なし・summaryカード」に合わせる
+ *   image      … OGP画像のパス(SITE基準の相対)。省略時はサイト共通OGP(img/ogp/common-og.jpg)。
+ *                 【2026-08-28変更】以前の既定値はJOPTバナーだった(店舗ページ等は noImage:true で
+ *                 隠して回避していた)。他社イベントの画像を無関係なページの既定値にしていたのが
+ *                 そもそもの歪みで、サイト自身の共通OGP画像を作った(依頼5)ことで解消した。
+ *                 各画像とも1200×630(OGP推奨比率1.91:1)。tools/gen-ogp-images.js が生成する。
+ *   noImage    … true にすると og:image/twitter:image を出さない。今は使う場面が無いが、
+ *                 画像を出したくない特殊なページのための逃げ道として残してある。
  *   ogType     … og:type。既定 'article'
  *   twitterCard… 既定 'summary_large_image'
  *   extraCss   … 共通CSSの後ろに足すページ固有のCSS
+ *   breadcrumb … パンくずリストの items 配列(name・urlの配列。上の breadcrumbJsonLd/breadcrumbNavHtml
+ *                 を参照)。渡すと <main> の先頭に表示用navを差し込み、jsonld とは別に
+ *                 BreadcrumbList の <script type="application/ld+json"> をもう1本追加する
+ *                 (jsonld と統合しないのは、店舗ページのLocalBusiness等と役割が違うものを
+ *                 1つのオブジェクトに無理に混ぜたくないため。別スクリプトタグで問題ない)。
  */
-function pageHead({ title, desc, canonical, jsonld, image, noImage, ogType, twitterCard, extraCss }) {
-  const ogimg = `${SITE}/${image || 'img/jopt/jopt-banner.jpg'}`;
+// OGP画像は全ページ共通で1200×630(1.91:1)に統一してある(依頼5・2026-08-28)。
+// サイズを画像ごとに分岐させる必要が無いので、og:image:width/height は固定値で出す。
+const OG_IMG_W = 1200, OG_IMG_H = 630;
+function pageHead({ title, desc, canonical, jsonld, breadcrumb, image, noImage, ogType, twitterCard, extraCss }) {
+  const ogimg = `${SITE}/${image || 'img/ogp/common-og.jpg'}`;
   const imgTags = noImage ? '' : `<meta property="og:image" content="${esc(ogimg)}">
+<meta property="og:image:width" content="${OG_IMG_W}">
+<meta property="og:image:height" content="${OG_IMG_H}">
 `;
   const twImgTag = noImage ? '' : `<meta name="twitter:image" content="${esc(ogimg)}">
 `;
@@ -177,6 +242,11 @@ function pageHead({ title, desc, canonical, jsonld, image, noImage, ogType, twit
 ${JSON.stringify(jsonld, null, 2)}
 </script>
 ` : '';
+  const bcLdTag = breadcrumb ? `<script type="application/ld+json">
+${JSON.stringify(breadcrumbJsonLd(breadcrumb), null, 2)}
+</script>
+` : '';
+  const bcNav = breadcrumb ? breadcrumbNavHtml(breadcrumb) : '';
   return `<!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -211,7 +281,7 @@ ${imgTags}<meta property="og:locale" content="ja_JP">
 <meta name="twitter:card" content="${twitterCard || 'summary_large_image'}">
 ${twImgTag}<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6349478743429747"
      crossorigin="anonymous"></script>
-${ldTag}<style>
+${ldTag}${bcLdTag}<style>
 ${BASE_CSS}${extraCss || ''}</style>
 </head>
 <body>
@@ -221,23 +291,34 @@ ${BASE_CSS}${extraCss || ''}</style>
     <a class="back-link" href="/">← トップへ</a>
   </div>
 </header>
-<main class="wrap">`;
+<main class="wrap">${bcNav}`;
 }
 
 /**
  * </main> 〜 </html>。
- *   BIG         … big-events.js のエクスポート(恒久リンク行を作るのに使う)
- *   currentPath … そのページ自身のパス(自己リンクを避けるため)。null なら全件リンクになる
- *   extraScripts… </body> の直前に足すスクリプト(店舗ページの日程再描画など)
+ *   BIG          … big-events.js のエクスポート(恒久リンク行を作るのに使う)
+ *   currentPath  … そのページ自身のパス(自己リンクを避けるため)。null なら全件リンクになる
+ *   extraScripts … </body> の直前に足すスクリプト(店舗ページの日程再描画など)
+ *   areaLinksHtml… 全エリアへのテキストリンク一覧(依頼3・2026-08-28)。中身は呼び出し側が
+ *                   area-schedule.js の footerAreaLinksHtml() で組み立てて渡す(このファイルは
+ *                   data.js を読まないので、エリア一覧そのものはここでは作らない)。
+ *                   渡さなければ行ごと出さない(index.html 自身はこの pageFoot を使わず、
+ *                   #areaLinks を自前で持っているため、渡さない使い方も想定する)。
  */
-function pageFoot(BIG, currentPath, extraScripts) {
+function pageFoot(BIG, currentPath, extraScripts, areaLinksHtml) {
   // 恒久リンク行(全大会・日付に関係なく常に出す)と、
   // 「大会特集」(掲載中の1件だけ・日によって変わるのでブラウザ側で判定)は【両方】出す。
   // 後者は生成時に焼き込まない(静的ページは再生成しない限り更新されず、古い大会が残り続けるため)。
+  //
+  // 【エリアリンク行(依頼3)】トップページ(index.html)のフッターには元々 #areaLinks があるが、
+  //   events/venues/areas の下層ページの共通フッター(=このpageFoot)には無かった。下層ページを
+  //   読み終えて離脱しかけたユーザーに、店舗の集約ページ(エリアページ)への行き先を1つ増やす。
+  const areaLinksRow = areaLinksHtml ? `
+  <div style="margin-top:6px">エリアから探す: ${areaLinksHtml}</div>` : '';
   return `</main>
 <footer>
   <div><b style="color:#fff">ふくおかポーカーナビ</b> — 福岡ポーカートーナメント日程アグリゲーター</div>
-  <div style="margin-top:6px"><a href="/">トップ</a>　|　${permanentEventLinks(BIG, currentPath)}</div>
+  <div style="margin-top:6px"><a href="/">トップ</a>　|　${permanentEventLinks(BIG, currentPath)}</div>${areaLinksRow}
   <div style="margin-top:6px"><a href="/contact.html">お問い合わせ</a>　|　<a href="/privacy.html">プライバシーポリシー</a></div>
   <div id="evtFeature" style="display:none"></div>
 </footer>
@@ -262,6 +343,7 @@ ${extraScripts || ''}</body>
 module.exports = {
   SITE, POSITIONING, esc, WD, fmtDate,
   LINK_SEP, permanentEventLinks, permanentEventLinksList,
+  breadcrumbJsonLd, breadcrumbNavHtml,
   BASE_CSS, pageHead, pageFoot,
   validateVenueSlugs
 };
