@@ -44,6 +44,8 @@ const path = require('path');
 // 行の取得(定期開催の展開・自動取込との重複の間引き)は店舗ページと同じ1本を使う。
 const { SCHEDULE_JS, SCHED, monthRange } = require(path.join(__dirname, 'venue-schedule.js'));
 const RecurringDedupe = require(path.join(__dirname, '..', 'recurring-dedupe.js'));
+// HTMLエスケープは site-shell.js の esc() をそのまま使う(同じ規則を2箇所に書かない)。
+const { esc } = require(path.join(__dirname, 'site-shell.js'));
 
 // ---- エリア名 → URLのslug ----
 // 【なぜ data.js ではなくここに置くか】
@@ -116,6 +118,20 @@ function validateAreaSlugs(VENUES, AREAS) {
   if (dup.length) {
     throw new Error('エリアのslugが重複しています:\n  - ' + dup.join('\n  - '));
   }
+}
+
+/**
+ * フッターの「エリアから探す」テキストリンク一覧(依頼3・2026-08-28)。
+ * トップページ(index.html)の #areaLinks と同じデータソース(areaList/AREA_SLUGS)で、
+ * events/venues/areas の下層ページ共通フッター(tools/site-shell.js の pageFoot)に渡す。
+ * 【なぜここに置くか】このファイルが「エリアページを作る条件・そのURL」の唯一の所有者なので、
+ * 一覧の中身(どのエリアを何件、どのURLで出すか)もここが決める。呼び出し側(3つの生成スクリプト)
+ * は結果の文字列を pageFoot() に渡すだけで、条件そのものを書き写さない。
+ */
+function footerAreaLinksHtml(VENUES, AREAS) {
+  return areaList(VENUES, AREAS)
+    .map(a => `<a href="/areas/${AREA_SLUGS[a]}/">${esc(a)}</a>`)
+    .join('・');
 }
 
 // ============================================================
@@ -221,6 +237,7 @@ module.exports = {
   areaVenues,
   areaList,
   validateAreaSlugs,
+  footerAreaLinksHtml,
   areaRange,
   hasAreaSchedule
 };

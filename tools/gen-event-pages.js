@@ -83,7 +83,9 @@ const FST = extractConst(INDEX_SRC, 'FST');
 // 【日付に依存させない】件数・エリアは data.js から決まるので、実行日が変わっても出力は同じ
 //   (このリポジトリの生成物の原則。gen-venue-pages.js の同じ箇所のコメントを参照)。
 const DATA = require(path.join(REPO, 'data.js'));
-const { AREA_SLUGS, areaVenues, areaList } = require('./area-schedule.js');
+const { AREA_SLUGS, areaVenues, areaList, footerAreaLinksHtml } = require('./area-schedule.js');
+// フッターの「エリアから探す」リンク行(依頼3・2026-08-28)。全大会ページで内容は共通なので1回だけ組み立てる。
+const FOOTER_AREA_LINKS = footerAreaLinksHtml(DATA.VENUES, DATA.AREAS);
 
 function venueScheduleBlock() {
   const areas = areaList(DATA.VENUES, DATA.AREAS);
@@ -101,7 +103,16 @@ ${areas.map(a => `  <li><a href="/areas/${AREA_SLUGS[a]}/">${esc(a)}（${areaVen
 const permanentEventLinksList = () => shell.permanentEventLinksList(BIG);
 const permanentEventLinks = currentPath => shell.permanentEventLinks(BIG, currentPath);
 // currentPath: そのページ自身のパス(自己リンクを避けるため)。省略すると全件がリンクになる。
-const pageFoot = currentPath => shell.pageFoot(BIG, currentPath);
+const pageFoot = currentPath => shell.pageFoot(BIG, currentPath, null, FOOTER_AREA_LINKS);
+
+// パンくずリスト(依頼2・2026-08-28): トップ > 大会 > 大会名。
+// 「大会」はトップページ内の大型一覧(#majors)へのアンカー(専用ページを持たないため)。
+// label は各大会のレジストリ表示名(big-events.js の BIG_EVENTS.label。恒久リンク行と同じ出どころ)。
+const pageBreadcrumb = (id, canonical) => [
+  { name: 'ふくおかポーカーナビ', url: `${SITE}/` },
+  { name: '大会', url: `${SITE}/#majors` },
+  { name: BIG.bigEventById(id).label, url: canonical }
+];
 
 // ---- トップページ(index.html)の恒久リンク行(#evtLinks)を同期する ----
 // 【なぜスクリプト側でやるのか】
@@ -251,27 +262,26 @@ ${rows}
 }
 
 // ---- JOPTページ ----
-// ---- JOPT 2026 Fukuoka #01 の結果(終了済み大会。数値は一次情報ではなく出典記事からの転記) ----
-// 【なぜここに定数を置くか】この大会はすでに終了しており、結果は当サイトの集計元(data.js/jopt-data.js)
-// には無い外部情報(下記出典)。他のデータのように「値を手打ちしない」原則を保てないため、
-// 唯一の出どころをこの定数にまとめ、本文・title・meta・JSON-LDへの転記をここから行う
-// (コピーを複数箇所に手で書くと、この後の事故(恒久リンク行など)と同じ「片方だけ直す」を繰り返す)。
-const JOPT_RESULT = {
-  winner: 'Koheiさん',
-  runnerUp: 'TSUNEさん',
-  totalEntries: '1,179人',
-  sourceUrl: 'https://light-three.com/jopt-fukuoka-result/',
-  sourceLabel: 'ポーカーマガジン LightTHREE「【JOPT 2026 Fukuoka #01リザルト】初代Main Event王者はKoheiさん！注目イベントの結果も紹介」',
-  sourceDate: '（2026年8月7日公開・2026年8月27日確認）',
-  notable: '主な注目トーナメントの優勝者　NLH Fukuoka（128エントリー）：ぽんたろうさん／NLH Platinum Sponsored by APT（72エントリー）：Sugarさん／PLO Prime（66エントリー）：こすもんさん／FL 2-7 TD &amp; Badugi #03（49エントリー）：きりんさん／FL 2-7 TD &amp; Badugi #26（75エントリー）：Takumaruさん。JOPT 2026 Fukuoka #01 全体（全トーナメント合算）の総エントリー数は6,045。'
-};
+// JOPT 2026 Fukuoka #01 の結果(終了済み大会。数値は一次情報ではなく出典記事からの転記)。
+// 値の実体は jopt-result-data.js に切り出してある(2026-08-28。tools/gen-ogp-images.js でも
+// 同じ値を使うため。詳しい理由はそちらのファイル冒頭のコメントを参照)。
+const JOPT_RESULT = require(path.join(REPO, 'jopt-result-data.js'));
 
 function buildJopt() {
   const canonical = `${SITE}/events/jopt-2026-fukuoka-01/`;
-  const image = 'img/jopt/jopt-banner.jpg';
-  const title = `JOPT 2026 Fukuoka #01 結果・優勝者は誰？（7/30〜8/2 福岡・大名）| ふくおかポーカーナビ`;
-  const desc = `JOPT 2026 Fukuoka #01（2026年7月30日〜8月2日・UNITEDLAB 福岡市中央区大名）の結果まとめ。Main Event優勝は${JOPT_RESULT.winner}（エントリー${JOPT_RESULT.totalEntries}／プライズ保証1,500万円）。全${JOPT.tournaments.length}トーナメントのタイムスケジュール・バイインも掲載。`;
-  const descLd = `JOPT 2026 Fukuoka #01（2026年7月30日〜8月2日・UNITEDLAB 福岡市中央区大名）の結果まとめ。Main Event優勝は${JOPT_RESULT.winner}（エントリー${JOPT_RESULT.totalEntries}／プライズ保証1,500万円）。全${JOPT.tournaments.length}トーナメントのタイムスケジュール・バイイン・スタックも一覧掲載。`;
+  // OGP専用画像(1200x630。依頼5・2026-08-28)。本文中のバナー(.evt-banner、1024x412)とは別物。
+  const image = 'img/jopt/jopt-og.jpg';
+  // ★ title/description微調整(依頼2・マーケティング部提案 2026-08-28)
+  //   Search Console実測で「会場」「賞金」を知りたい検索クエリが強いことが分かっている一方、
+  //   旧titleは59文字で「会場」ワードを含まず切れやすかった。「会場」をtitle冒頭30文字以内に足し、
+  //   60文字以内に収める。descriptionも前方100文字以内で会場情報の露出を強化する。
+  //   ★ここは文言の並べ替え・追記のみで、結果コンテンツ(JOPT_RESULT)自体は増やさない
+  //   (社長方針: WJPT・日本シリーズには結果調査を追加しないが、JOPTは既に結果コンテンツ追加済みで対象外)。
+  const title = `JOPT 2026 Fukuoka #01 結果・会場（7/30〜8/2 福岡・大名）| ふくおかポーカーナビ`;
+  const desc = `JOPT 2026 Fukuoka #01の結果・会場まとめ。会場は${JOPT.venue}（${JOPT.area}）、開催日は2026年7月30日〜8月2日。`
+    + `Main Event優勝は${JOPT_RESULT.winner}（エントリー${JOPT_RESULT.totalEntries}／プライズ保証1,500万円）。全${JOPT.tournaments.length}トーナメントのタイムスケジュール・バイインも掲載。`;
+  const descLd = `JOPT 2026 Fukuoka #01の結果・会場まとめ。会場は${JOPT.venue}（2026年7月30日〜8月2日・${JOPT.address || '福岡県福岡市中央区大名1-3-36'}）。`
+    + `Main Event優勝は${JOPT_RESULT.winner}（エントリー${JOPT_RESULT.totalEntries}／プライズ保証1,500万円）。全${JOPT.tournaments.length}トーナメントのタイムスケジュール・バイイン・スタックも一覧掲載。`;
   // 各トーナメントのバイインを Offer にする(1トーナメント=1エントリー商品)。
   // 現金だけの金額が定まらないもの(サテライト通過者限定・Day2など)は落ちる。
   const offers = JOPT.tournaments
@@ -321,18 +331,20 @@ function buildJopt() {
 <a class="cta" href="/#jopt">▶ 各トーナメントのブラインドストラクチャーを見る／日付で絞り込む<small>インタラクティブ版(全ストラクチャー表つき)</small></a>
 <p class="lead" style="margin:18px 0 -4px">以下は開催当時の全${JOPT.tournaments.length}トーナメントのタイムスケジュールの記録です。</p>
 ${schedTable(JOPT.tournaments)}
+${pastSatelliteVenuesBlock(BIG.bigEventById('jopt'), 'JOPT 2026 Fukuoka #01')}
 ${venueScheduleBlock()}
 <div class="links">
   ▶ <a href="${esc(JOPT.guideUrl)}" target="_blank" rel="noopener">JOPT公式サイト</a>${JOPT.scheduleUrl ? `　／　<a href="${esc(JOPT.scheduleUrl)}" target="_blank" rel="noopener">公式スケジュール</a>` : ''}<br>
   ▶ <a href="/">福岡の他のポーカートーナメント日程を見る</a>
 </div>`;
-  return pageHead({ title, desc, canonical, jsonld, image }) + body + pageFoot('/events/jopt-2026-fukuoka-01/');
+  return pageHead({ title, desc, canonical, jsonld, image, breadcrumb: pageBreadcrumb('jopt', canonical) }) + body + pageFoot('/events/jopt-2026-fukuoka-01/');
 }
 
 // ---- WJPTページ(終了済み=アーカイブ) ----
 function buildWjpt() {
   const canonical = `${SITE}/events/wjpt-2026/`;
-  const image = WJPT.banner || 'img/wjpt/wjpt-banner.jpg';
+  // OGP専用画像(1200x630。依頼5・2026-08-28)。本文中のバナー(1024x412)とは別物。
+  const image = 'img/wjpt/wjpt-og.jpg';
   const title = 'WJPT 2026（West Japan Poker Tour 7/18〜7/20 北九州）タイムスケジュール | ふくおかポーカーナビ';
   const desc = 'WJPT（West Japan Poker Tour）2026年7月18日〜20日・北九州で開催された全' + WJPT.tournaments.length + 'トーナメントのタイムスケジュール・バイイン・スタックの記録。';
   // ★ この大会は終了済み(アーカイブ)。
@@ -367,11 +379,12 @@ function buildWjpt() {
 <div class="disclaimer">当サイトはWJPTの主催者・公式媒体ではありません。公開情報をもとに当サイトが独自に集約した<b>非公式のまとめ</b>です。掲載内容は開催当時の公式情報にもとづきますが、当サイトによる転記の誤りが含まれる可能性があります。イベント終了後は内容を更新していません。掲載元: <a href="${esc(WJPT.guideUrl)}" target="_blank" rel="noopener">公式プレイヤーズガイド</a>（開催当時）。<br>${POSITIONING}</div>
 <a class="cta" href="/#wjpt">▶ 各トーナメントの公式ストラクチャー画像を見る<small>インタラクティブ版(告知シート画像つき)</small></a>
 ${schedTable(WJPT.tournaments)}
+${pastSatelliteVenuesBlock(BIG.bigEventById('wjpt'), 'WJPT 2026')}
 ${venueScheduleBlock()}
 <div class="links">
   ▶ <a href="/">福岡の今後のポーカートーナメント日程を見る</a>
 </div>`;
-  return pageHead({ title, desc, canonical, jsonld, image }) + body + pageFoot('/events/wjpt-2026/');
+  return pageHead({ title, desc, canonical, jsonld, image, breadcrumb: pageBreadcrumb('wjpt', canonical) }) + body + pageFoot('/events/wjpt-2026/');
 }
 
 // ---- NIPPON SERIES ページ ----
@@ -407,9 +420,18 @@ ${rows}
 
 function buildNippon() {
   const canonical = `${SITE}/events/nippon-series-2026-fukuoka/`;
-  const image = 'img/nippon-series/nippon-series-banner.jpg';
-  const title = 'NIPPON SERIES FUKUOKA 2026 タイムスケジュール（8/11〜8/16 福岡・渡辺通）| ふくおかポーカーナビ';
-  const desc = `NIPPON SERIES FUKUOKA 2026（2026年8月11日〜16日・福岡 トヨタホールスカラエスパシオ）の全${NIPPON.eventCount}イベントのタイムスケジュール・Fee・登録締切・Prizeを一覧掲載。MAIN EVENT（#17）は Prize 5,000,000。`;
+  // OGP専用画像(1200x630。依頼5・2026-08-28)。本文中のバナー(.evt-banner、1024x412)とは別物。
+  const image = 'img/nippon-series/nippon-series-og.jpg';
+  // ★ title/description文言調整(依頼3・マーケティング部提案 2026-08-28)
+  //   会期(8/11〜8/16)は既に終了しているのに、旧titleの「タイムスケジュール」表記が開催前提の
+  //   ままで検索意図とズレていた。結果情報は追加しない(社長方針・2026-08-28: WJPT・日本シリーズの
+  //   大会結果調査は需要がないと判断済み)。ここでの調整は文言のみ:
+  //   ①「タイムスケジュール」を、結果を書かなくても成立する中立的な表記(「大会情報」)に変更
+  //   ②検索クエリに含まれる和文「日本シリーズ」をtitleに追加
+  //   ③66文字→60文字以内に短縮
+  const title = 'NIPPON SERIES（日本シリーズ）福岡2026 大会情報（8/11〜8/16）| ふくおかポーカーナビ';
+  const desc = `NIPPON SERIES FUKUOKA 2026（日本シリーズ／2026年8月11日〜16日・福岡 トヨタホールスカラエスパシオ）の大会情報。`
+    + `全${NIPPON.eventCount}イベントのFee・登録締切・Prizeを一覧掲載。MAIN EVENT（#17）は Prize 5,000,000。`;
   // ★ offers は入れない。
   //   公式の Fee 表記は「5,000 + 1,000」の形で、内訳(何に対する +1,000 か)は公式に明記がない。
   //   Offer.price は単一の数値なので、5,000 と 6,000 のどちらを出すにしても当サイトが
@@ -452,12 +474,13 @@ function buildNippon() {
 <a class="cta" href="/#nippon">▶ 日付で絞り込んで見る<small>インタラクティブ版（日別タブ・各イベントの公式ストラクチャーへのリンクつき）</small></a>
 ${schedTableNippon(NIPPON.events)}
 <p class="lead" style="margin-top:14px">※ MAIN EVENT（#17）は Day 1A〜Day 1D Last Chance と Day 2 &amp; FINAL に分かれているため、同じ番号が複数の日に登場します。ブラインドストラクチャーは公式の各トーナメントページをご確認ください。</p>
+${pastSatelliteVenuesBlock(BIG.bigEventById('nippon'), 'NIPPON SERIES FUKUOKA 2026')}
 ${venueScheduleBlock()}
 <div class="links">
   ▶ <a href="${esc(NIPPON.siteUrl)}" target="_blank" rel="noopener">NIPPON SERIES 公式イベントページ</a>　／　<a href="${esc(NIPPON.guidePdfUrl)}" target="_blank" rel="noopener">公式Players Guide(PDF)</a><br>
   ▶ <a href="/">福岡の他のポーカートーナメント日程を見る</a>
 </div>`;
-  return pageHead({ title, desc, canonical, jsonld, image }) + body + pageFoot('/events/nippon-series-2026-fukuoka/');
+  return pageHead({ title, desc, canonical, jsonld, image, breadcrumb: pageBreadcrumb('nippon', canonical) }) + body + pageFoot('/events/nippon-series-2026-fukuoka/');
 }
 
 // ---- FST 5.0 ページ「よくある質問」(FAQ) ----
@@ -523,23 +546,32 @@ ${JSON.stringify(jsonld, null, 2)}
   return { html, script };
 }
 
-// ---- FST 5.0 サテライト開催店舗(依頼2・社長方針2026-08-27) ----
-// big-events.js の FST エントリの satelliteVenueIds(data.js を機械走査して集計した結果。
-// 集計手順はそちらのコメントを参照)を店舗データと突き合わせてカードにする。
+// ---- サテライト開催店舗カード(依頼2・社長方針2026-08-27 / 依頼4・2026-08-28で過去形にも対応) ----
+// big-events.js の各大会エントリが持つ venueId のリストを店舗データと突き合わせてカードにする。
 // ここでは venueId のリストを信じるだけで、判定ロジック自体は複製しない。
-function satelliteVenuesBlock(reg) {
-  const ids = (reg && reg.satelliteVenueIds) || [];
-  if (!ids.length) return '';
+//   - FST(現在進行形)   … satelliteVenueIds を渡す。文言は「開催されています」の現在形
+//   - WJPT/JOPT(終了済み)… pastSatelliteVenueIds を渡す。文言は「開催されていました」の過去形
+//     (会期が終わった大会に「現在開催中」の現在形を使わないため。PR#50のコメント・依頼4を参照)
+function satelliteVenuesBlock(ids, opts) {
+  if (!ids || !ids.length) return '';
   const venues = DATA.VENUES.filter(v => ids.indexOf(v.id) >= 0);
   return `
-<h2 class="day">サテライト開催店舗</h2>
-<p class="lead">下記の店舗では、FSTチケット（獲得するとMAIN EVENT・CHAMPIONSHIPにエントリーできます）が懸かったサテライト（チケット獲得トーナメント）が開催されています（当サイト掲載データより集計・${venues.length}店舗）。日程・詳細は各店舗のページでご確認ください。</p>
+<h2 class="day">${esc(opts.heading)}</h2>
+<p class="lead">${opts.lead(venues.length)}</p>
 <div class="vp-cards">
 ${venues.map(v => `  <a class="vp-card" href="/venues/${v.slug}/">
     <div class="vp-card-name">${esc(v.name)}</div>
     <div class="vp-card-sub">${esc(v.area)}</div>
   </a>`).join('\n')}
 </div>`;
+}
+// 終了済み大会(WJPT/JOPT)向けの過去形ラッパ。見出し・文言をここで固定し、
+// buildWjpt()/buildJopt() 側では大会名とデータだけを渡す形にする(文言を2箇所に書かない)。
+function pastSatelliteVenuesBlock(reg, eventLabel) {
+  return satelliteVenuesBlock((reg && reg.pastSatelliteVenueIds) || [], {
+    heading: 'サテライト開催店舗（開催実績）',
+    lead: n => `下記の店舗では、${esc(eventLabel)}の開催期間にチケット獲得を目的としたサテライト（チケット獲得トーナメント）が開催されていました（当サイト掲載データより集計・${n}店舗。当時の記録です）。現在の開催状況は各店舗のページ・公式情報・SNSでご確認ください。`
+  });
 }
 
 // ---- FST 5.0 ページ ----
@@ -548,7 +580,8 @@ ${venues.map(v => `  <a class="vp-card" href="/venues/${v.slug}/">
 // ★ ここに推測を足さないこと。値はすべて index.html の const FST(＝一次情報で裏取り済み)から取る。
 function buildFst() {
   const canonical = `${SITE}/events/fst-2026-fukuoka/`;
-  const image = 'img/fst/fst-banner.jpg';   // 本文のバナーは SVG だが、構造化データでは使えないため .jpg を指す
+  // OGP専用画像(1200x630。依頼5・2026-08-28)。本文中のバナー(SVG、1024x412)とは別物。
+  const image = 'img/fst/fst-og.jpg';
   const reg = BIG.bigEventById('fst');
   const first = BIG.eventFirstDay(FST.days), last = BIG.eventLastDay(FST.days);
   const f1 = fmtDate(first), f2 = fmtDate(last);
@@ -613,7 +646,10 @@ ${e.sched.map(([k, v]) => `    <tr><th>${esc(k)}</th><td class="start">${esc(v)}
 <a class="cta" href="/#fst">▶ サイト内のFSTサテライト（チケット獲得トーナメント）を見る<small>インタラクティブ版（日付・店舗つきで直近の開催予定を表示）</small></a>
 ${tables}
 <p class="lead" style="margin-top:14px">※ エントリー方法の「FSTチケット」は、県内各店で開催されるサテライトで獲得できるチケットを指します。サテライトの開催予定は<a href="/#fst">トップページのFSTページ</a>に掲載しています。</p>
-${satelliteVenuesBlock(reg)}
+${satelliteVenuesBlock((reg && reg.satelliteVenueIds) || [], {
+  heading: 'サテライト開催店舗',
+  lead: n => `下記の店舗では、FSTチケット（獲得するとMAIN EVENT・CHAMPIONSHIPにエントリーできます）が懸かったサテライト（チケット獲得トーナメント）が開催されています（当サイト掲載データより集計・${n}店舗）。日程・詳細は各店舗のページでご確認ください。`
+})}
 ${faq.html}
 ${venueScheduleBlock()}
 <div class="links">
@@ -621,7 +657,7 @@ ${venueScheduleBlock()}
   ▶ <a href="/">福岡の他のポーカートーナメント日程を見る</a>
 </div>
 ${faq.script}`;
-  return pageHead({ title, desc, canonical, jsonld, image, extraCss: FST_FAQ_CSS }) + body + pageFoot('/events/fst-2026-fukuoka/');
+  return pageHead({ title, desc, canonical, jsonld, image, extraCss: FST_FAQ_CSS, breadcrumb: pageBreadcrumb('fst', canonical) }) + body + pageFoot('/events/fst-2026-fukuoka/');
 }
 
 // ---- 書き出し / 検査 ----

@@ -114,12 +114,14 @@ validateUnverifiedFlags(VENUES);
 // 【なぜ切り出したか】gen-sitemap.js が「掲載0件の店」を判定して sitemap から外す。
 //   その判定基準がこちらと2箇所に分かれるとズレて、「sitemapには載っているのに中身は空」
 //   あるいはその逆が起きるため、判定を1箇所に寄せた。
-const { SCHEDULE_JS, SCHED, venueRange, RecurringDedupe } = require('./venue-schedule.js');
+const { SCHEDULE_JS, SCHED, venueRange, RecurringDedupe, venueHasCurrentFstSatellite } = require('./venue-schedule.js');
 
 // エリアページ(/areas/<slug>/)への導線を出すため、どのエリアにページがあるかを聞く。
 // 判定そのものは area-schedule.js が所有する(こちらは結果を使うだけ)。
-const { AREA_SLUGS, areaList } = require('./area-schedule.js');
+const { AREA_SLUGS, areaList, footerAreaLinksHtml } = require('./area-schedule.js');
 const AREA_PAGES = new Set(areaList(VENUES, AREAS));
+// フッターの「エリアから探す」リンク行(依頼3)。全店舗ページで内容は共通なので1回だけ組み立てる。
+const FOOTER_AREA_LINKS = footerAreaLinksHtml(VENUES, AREAS);
 
 // ---- 店舗ページ本体 ----
 const VENUE_CSS = `  .vp-sub{font-size:.9em;color:var(--mut);margin-bottom:14px}
@@ -138,10 +140,8 @@ const VENUE_CSS = `  .vp-sub{font-size:.9em;color:var(--mut);margin-bottom:14px}
   /* リング(キャッシュゲーム)開催ブロック */
   .vp-ring{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:13px 15px;margin-bottom:14px;font-size:.9em;line-height:1.8}
   .vp-ring b{color:var(--felt)}
-  /* FSTサテライト開催中の告知(依頼2) */
-  .vp-fst{font-size:.86em;line-height:1.7;color:#26424e;background:#eef6f8;border:1px solid #cfe3e9;border-radius:10px;padding:11px 13px;margin-bottom:14px}
-  .vp-fst b{color:#14333d}
-  .vp-fst a{color:#0e6a72;font-weight:700}
+  /* .vp-fst(FSTサテライト開催中の告知)は site-shell.js の BASE_CSS 側に移設した
+     (2026-08-28。エリアページでも使うため。複製すると片方だけ直して片方を忘れる)。 */
 `;
 
 // 住所を PostalAddress に分解する。data.js の address 文字列を機械的に切るだけで、
@@ -207,36 +207,65 @@ function metaRows(v) {
 }
 
 // ---- FST 5.0 サテライトを「現在開催中」と出してよいかの判定(依頼2) ----
-// 【なぜ big-events.js の satelliteVenueIds をそのまま使わないか】
-//   あのリストは「一度集計した結果を書いた静的な配列」。店が開催をやめても人が書き換えを
-//   忘れれば古いまま残り、「今も開催中」という文言が実態と食い違う(READMEの編集方針
-//   ＝確度の低い情報を断定しない、に反する)。そこで店舗ページ側は data.js の実データを
-//   都度読み直して判定し、data.js を更新するだけで表示が自動的に追従するようにする。
-// 【判定基準】
-//   - RECURRING(毎週固定)に一致する行が1件でもあれば「現在開催中」(定期開催は
-//     "今も続けている"という宣言そのものなので、日付は絡まない)。
-//   - TOURNAMENTS(絶対日付)は、その店の直近の掲載日(=その店のTOURNAMENTSの最大日付)から
-//     さかのぼって30日以内に一致する行があるかで見る。1回だけ実施して以降やっていない店が
-//     いつまでも「開催中」と出続けるのを防ぐため(v25の実例: 7/29に1回だけの記録が
-//     8月末の店の最新日から33日前で、この基準だと該当しない＝妥当)。
-//   - 「今日」の日付には依存しない(店のデータそのものから相対的に決まる)。
-//     理由は他の焼き込み判定と同じ(このファイル冒頭のコメント「焼き込む内容を
-//     『今日以降』にしない理由」を参照)。data.js を1文字も触っていないのに
-//     翌日には --check が落ちる、という事故を避けるため。
-const FST_SAT_RE = /サテライト|satellite/i;
-const FST_NAME_RE = /FST/i;
-const isFstSatelliteEntry = t => (FST_SAT_RE.test(t.name || '') || (t.tags || []).some(x => FST_SAT_RE.test(x)))
-  && (FST_NAME_RE.test(t.name || '') || (t.tags || []).some(x => FST_NAME_RE.test(x)));
-const FST_SAT_RECENT_DAYS = 30;
-function venueHasCurrentFstSatellite(venueId) {
-  if (RECURRING.some(r => r.venueId === venueId && isFstSatelliteEntry(r))) return true;
-  const rows = TOURNAMENTS.filter(t => t.venueId === venueId);
-  if (!rows.length) return false;
-  const latest = rows.reduce((m, t) => (t.date > m ? t.date : m), rows[0].date);
-  return rows.some(t => isFstSatelliteEntry(t)
-    && Math.round((Date.parse(latest) - Date.parse(t.date)) / 86400000) <= FST_SAT_RECENT_DAYS);
-}
+// 判定ロジックの実体は tools/venue-schedule.js の venueHasCurrentFstSatellite() に移設した
+// (2026-08-28。エリアページ(gen-area-pages.js・依頼1)にも同じ判定基準が必要になったため。
+// 判定基準そのものはPR#50から変えていない。呼び出し方は venueHasCurrentFstSatellite(TOURNAMENTS,
+// RECURRING, venueId) の3引数になった)。
 const FST_REG = BIG.bigEventById('fst');
+
+// ---- title/description 差別化バッジの材料(依頼1・マーケティング部提案 2026-08-28) ----
+// 【背景】全店舗ページ(37件)のtitle/descriptionが店名以外まったく同じ文言で、Search Console実測で
+//   CTR0%のページが目立つ(例: CasinoX福岡今泉店・KING&QUEEN SUITED黒崎店・THE DOJO大橋)。
+//   店名以外の文言が全店共通だと「機械的な一覧サイト」に見えて選ばれにくいため、data.js に
+//   既にある「サテライト開催中か(venueHasCurrentFstSatellite)」「リング開催の有無(ring)」
+//   「最寄駅(access)」から、店ごとに異なる一言を1つだけ選んでtitle/descriptionの前寄りに差し込む。
+//   37件を手作業で書き分けるのではなく、テンプレート側のロジックとして実装してある
+//   (店を追加・削除しても自動でついてくる)。
+// 【1件だけ選ぶ理由】材料を全部詰め込むとtitleが長くなり読みにくい。
+//   優先順位: サテライト開催中 > リング開催 > 最寄駅(駅名が拾えるとき)。
+// 【noteの自由文はパースしない】ring・venueHasCurrentFstSatelliteは既に構造化された
+//   判定(data.jsのフラグ／このファイルの判定関数)を再利用するだけで、note文字列から
+//   新しい事実を作り出すことはしない(READMEの編集方針を踏襲)。
+
+// 「◯◯駅 徒歩5分（△△駅 徒歩8分）」のような access 文字列から、主要な1駅ぶんだけを短く取り出す。
+// 【なぜ必要か】v38/v39のように「メインの駅 徒歩◯分（サブの駅 徒歩◯分）」の形で複数駅を
+//   併記している店があり、そのままtitleに使うと長くなりすぎる。末尾の「（サブ駅…）」だけを削る
+//   (先頭側の「西鉄福岡（天神）駅」のように駅名そのものに括弧を含む店では、「徒歩◯分」の
+//   直前に括弧が来ないため、下の正規表現は何もせず元の文字列をそのまま返す)。
+// 【「確認」を含む access は使わない】v20(直方店)のように access 自体が
+//   「直方市（住所未確認）」の形で不確実性を表している店があり、これをtitleの差別化材料に
+//   使うと未確認情報を目立たせることになるため対象外にする。
+function shortStation(access) {
+  if (!access || /確認/.test(access)) return null;
+  const m = access.match(/^(.*?徒歩[^\s（(]+)(?:[（(][^）)]*[）)])?$/);
+  return (m ? m[1] : access).trim() || null;
+}
+
+// 店ごとの差別化バッジを1つだけ選ぶ。優先順位: サテライト開催中 > リング開催 > 最寄駅。
+// 該当材料が何も無い店では null を返し、呼び出し側は従来通りの文面にフォールバックする。
+function venueBadge(v) {
+  if (FST_REG && venueHasCurrentFstSatellite(TOURNAMENTS, RECURRING, v.id)) return { kind: 'fst', label: 'FSTサテライト開催中' };
+  if (v.ring === true) return { kind: 'ring', label: 'リングあり' };
+  const station = shortStation(v.access);
+  if (station) return { kind: 'station', label: station };
+  return null;
+}
+
+// パンくずリスト(依頼2・2026-08-28): トップ > エリアから探す > 〇〇エリア > 店舗名。
+// 「エリアから探す」はトップページのヒーロー直下のナビ(index.html #areaNav)へのアンカー
+// (専用ページを持たないため)。その店のエリアにエリアページが無い(1店舗しか無いエリア。
+// 2026-08-28時点で西中洲・博多・京築・筑豊)場合は、存在しない階層を作らずその段を省く。
+function venueBreadcrumb(v, canonical) {
+  const items = [
+    { name: 'ふくおかポーカーナビ', url: `${SITE}/` },
+    { name: 'エリアから探す', url: `${SITE}/#areaNav` }
+  ];
+  if (AREA_PAGES.has(v.area)) {
+    items.push({ name: v.area, url: `${SITE}/areas/${AREA_SLUGS[v.area]}/` });
+  }
+  items.push({ name: v.name, url: canonical });
+  return items;
+}
 
 function buildVenue(v) {
   const canonical = `${SITE}/venues/${v.slug}/`;
@@ -264,12 +293,24 @@ function buildVenue(v) {
   //   【括弧付きの同一表記】が既にあるときだけ足さない、という判定にしてある
   //   (半角括弧の店名が来ても効くようにしている)。
   const areaInName = v.name.includes(`（${v.area}）`) || v.name.includes(`(${v.area})`);
-  const titleName = areaInName ? v.name : `${v.name}（${v.area}）`;
-  // description の括弧は「エリア／アクセス」。エリアが店名に入っているならアクセスだけを残す。
+  // title側の括弧: エリア(店名に無ければ) + 差別化バッジ(あれば)。1店1店違う材料が入るので、
+  // 同じエリアの店どうしでもtitleの前寄りが同じにならない(依頼1のねらい)。
+  const badge = venueBadge(v);
+  const titleParenParts = [];
+  if (!areaInName) titleParenParts.push(v.area);
+  if (badge) titleParenParts.push(badge.label);
+  const titleName = titleParenParts.length ? `${v.name}（${titleParenParts.join('・')}）` : v.name;
+  // description の括弧は従来通り「エリア／アクセス」(こちらはアクセスの正式表記として残す。
+  // station種別のバッジと情報が重なることはあるが、titleとdescriptionで役割が違うため複製ではない)。
   const parenParts = [];
   if (!areaInName) parenParts.push(v.area);
   if (v.access) parenParts.push(v.access);
   const descName = parenParts.length ? `${v.name}（${parenParts.join('／')}）` : v.name;
+  // description冒頭に出す差別化の一文(サテライト開催中／リング開催のときだけ)。
+  // stationバッジはdescNameのアクセス表記で既に分かるため、ここでは繰り返さない。
+  const descLead = badge && badge.kind === 'fst' ? 'FST 5.0のサテライト（チケット獲得トーナメント）を開催中の店舗です。'
+    : badge && badge.kind === 'ring' ? 'リングゲーム（キャッシュゲーム）も開催している店舗です。'
+    : '';
   let title, desc, sub;
   if (v.preopen) {
     // 未開店の店。営業中と読める文面を出さない(JSON-LDのLocalBusinessも出さない)。
@@ -279,12 +320,12 @@ function buildVenue(v) {
     sub = `${esc(v.area)}のポーカースポット${v.access ? `（${esc(v.access)}）` : ''} — オープン予定`;
   } else if (rows.length) {
     title = `${titleName}のポーカートーナメント日程 | ふくおかポーカーナビ`;
-    desc = `${descName}で開催されるポーカートーナメントの日程を日付順に掲載。`
+    desc = `${descLead}${descName}で開催されるポーカートーナメントの日程を日付順に掲載。`
       + `開始時刻・バイイン・スタックのほか、${v.address ? '住所・' : ''}アクセス・公式SNSもまとめて確認できます。`;
     sub = `${esc(v.area)}のポーカースポット${v.access ? `（${esc(v.access)}）` : ''} — トーナメント日程・バイイン・アクセス`;
   } else {
     title = `${titleName}｜住所・アクセス・トーナメント開催情報 | ふくおかポーカーナビ`;
-    desc = `${descName}の${v.address ? '住所・' : ''}アクセス・公式SNSをまとめています。`
+    desc = `${descLead}${descName}の${v.address ? '住所・' : ''}アクセス・公式SNSをまとめています。`
       + `現時点で当サイトに掲載中の開催予定はありません。最新の開催情報は店舗の公式情報・SNSをご確認ください。`;
     sub = `${esc(v.area)}のポーカースポット${v.access ? `（${esc(v.access)}）` : ''} — 住所・アクセス・開催情報`;
   }
@@ -311,8 +352,16 @@ ${sameAreaShown.map(x => `  <a class="vp-card" href="/venues/${x.slug}/">
 
   // FST 5.0 サテライトを現在開催中の店舗への告知(依頼2)。判定は venueHasCurrentFstSatellite が
   // data.js の実データから都度行う(店舗一覧を手で足し引きしない)。大会ページが無ければ出さない。
-  const fstSatBlock = (FST_REG && venueHasCurrentFstSatellite(v.id)) ? `
+  const fstSatBlock = (FST_REG && venueHasCurrentFstSatellite(TOURNAMENTS, RECURRING, v.id)) ? `
 <div class="vp-fst"><b>現在FST 5.0のサテライトを開催中です。</b>FSTチケット（獲得すると本大会にエントリーできます）を賭けたトーナメントを開催しています。詳細は<a href="${esc(FST_REG.featureUrl)}">FST 5.0 大会ページ</a>をご確認ください。</div>` : '';
+
+  // 終了済み大会(WJPT/JOPT)のサテライト開催実績の告知(依頼4・2026-08-28)。
+  // FSTと違って会期が終わっているので「現在開催中」ではなく過去形。判定は big-events.js の
+  // pastSatelliteVenueIds(静的リスト。終了済み大会なので動的判定にする必要が無い)を参照する。
+  // 見た目は「終了しました」告知と同じ .archived(BASE_CSS)を流用する(意味的にも「記録」なので)。
+  const pastSatEvents = BIG.BIG_EVENTS.filter(e => (e.pastSatelliteVenueIds || []).indexOf(v.id) >= 0);
+  const pastSatBlock = pastSatEvents.length ? `
+<div class="archived"><b>${esc(v.name)}は、${pastSatEvents.map(e => `<a href="${esc(e.featureUrl)}">${esc(e.label)}</a>`).join('・')}のサテライト（チケット獲得トーナメント）を開催していました。</b>いずれも終了した大会の開催実績です。現在の開催状況は店舗の公式情報・SNSをご確認ください。</div>` : '';
 
   // リングゲーム(キャッシュゲーム)開催ブロック(依頼3)。ring:true の店だけ出す。
   // レート等の裏取り状況は店ごとにまちまちなので、data.js の ringNote をそのまま出す
@@ -358,7 +407,7 @@ ${sameAreaShown.map(x => `  <a class="vp-card" href="/venues/${x.slug}/">
 <p class="vp-sub">${sub}</p>
 <div class="evt-meta">
   ${metaRows(v)}
-</div>${fstSatBlock}
+</div>${fstSatBlock}${pastSatBlock}
 <div class="disclaimer">${noteBlock}当サイトは店舗が公開している情報を集約している媒体で、この店舗の運営者ではありません。日程・料金・営業状況は変更されることがあるため、参加前に必ず店舗の公式情報・SNSをご確認ください。${sourceBlock}<br>${POSITIONING}</div>
 <a class="cta" href="/#venue/${esc(v.id)}">▶ 月を切り替えて日程を見る<small>サイト内の月別カレンダー（前月・翌月に移動できます）</small></a>
 <h2 class="vp-sec" id="vp-sched-title">${schedTitle}</h2>
@@ -414,11 +463,13 @@ ${SCHEDULE_JS}
     title, desc, canonical,
     // 未開店の店では LocalBusiness を出さない(営業中の事業所として宣言しないため)。
     jsonld: v.preopen ? null : venueJsonLd(v),
-    noImage: true,
+    breadcrumb: venueBreadcrumb(v, canonical),
+    // OGP画像(依頼5・2026-08-28)。店舗ごとの専用画像は持たないため、image を省略して
+    // pageHead の既定値(サイト共通OGP・img/ogp/common-og.jpg)に任せる。
     ogType: 'website',
-    twitterCard: 'summary',
+    twitterCard: 'summary_large_image',
     extraCss: VENUE_CSS
-  }) + body + pageFoot(BIG, null, scripts);
+  }) + body + pageFoot(BIG, null, scripts, FOOTER_AREA_LINKS);
 }
 
 // ---- トップページ(index.html)の店舗リンク行(#venueLinks)を同期する ----

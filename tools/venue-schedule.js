@@ -268,4 +268,45 @@ function hasSchedule(TOURNAMENTS, RECURRING, venueId) {
   return SCHED.vpRows(TOURNAMENTS, RECURRING, venueId, range.from, range.to).length > 0;
 }
 
-module.exports = { SCHEDULE_JS, SCHED, monthRange, venueRange, hasSchedule, RecurringDedupe };
+// ---- FST 5.0 サテライトを「現在開催中」と出してよいかの判定 ----
+// 【なぜここに置くか】もとは gen-venue-pages.js だけが持っていたが、エリアページ
+//   (gen-area-pages.js・依頼1「エリア内のいずれかの店舗が現在サテライト開催中ならバナー表示」)
+//   にも同じ判定基準が必要になったため、TOURNAMENTS/RECURRING を都度読み直す他の店舗単位の
+//   判定(venueRange・hasSchedule)と同じこのファイルに寄せた。判定基準そのものはPR#50から
+//   変えていない。
+// 【なぜ big-events.js の satelliteVenueIds をそのまま使わないか】
+//   あのリストは「一度集計した結果を書いた静的な配列」。店が開催をやめても人が書き換えを
+//   忘れれば古いまま残り、「今も開催中」という文言が実態と食い違う(READMEの編集方針
+//   ＝確度の低い情報を断定しない、に反する)。そこで data.js の実データを都度読み直して判定し、
+//   data.js を更新するだけで表示が自動的に追従するようにする。
+// 【判定基準】
+//   - RECURRING(毎週固定)に一致する行が1件でもあれば「現在開催中」(定期開催は
+//     "今も続けている"という宣言そのものなので、日付は絡まない)。
+//   - TOURNAMENTS(絶対日付)は、その店の直近の掲載日(=その店のTOURNAMENTSの最大日付)から
+//     さかのぼって30日以内に一致する行があるかで見る。1回だけ実施して以降やっていない店が
+//     いつまでも「開催中」と出続けるのを防ぐため(v25の実例: 7/29に1回だけの記録が
+//     8月末の店の最新日から33日前で、この基準だと該当しない＝妥当)。
+//   - 「今日」の日付には依存しない(店のデータそのものから相対的に決まる)。
+//     理由は他の焼き込み判定と同じ(このファイル冒頭のコメント「焼き込む内容を
+//     『今日以降』にしない理由」を参照)。
+// 【FST専用】WJPT/JOPTのように会期が終わった大会には使わない(「現在開催中」という現在形の
+//   主張が終了済み大会には成立しないため)。終了済み大会の店舗一覧は
+//   big-events.js の pastSatelliteVenueIds(静的リスト・依頼4)を別途参照すること。
+const FST_SAT_RE = /サテライト|satellite/i;
+const FST_NAME_RE = /FST/i;
+const isFstSatelliteEntry = t => (FST_SAT_RE.test(t.name || '') || (t.tags || []).some(x => FST_SAT_RE.test(x)))
+  && (FST_NAME_RE.test(t.name || '') || (t.tags || []).some(x => FST_NAME_RE.test(x)));
+const FST_SAT_RECENT_DAYS = 30;
+function venueHasCurrentFstSatellite(TOURNAMENTS, RECURRING, venueId) {
+  if (RECURRING.some(r => r.venueId === venueId && isFstSatelliteEntry(r))) return true;
+  const rows = TOURNAMENTS.filter(t => t.venueId === venueId);
+  if (!rows.length) return false;
+  const latest = rows.reduce((m, t) => (t.date > m ? t.date : m), rows[0].date);
+  return rows.some(t => isFstSatelliteEntry(t)
+    && Math.round((Date.parse(latest) - Date.parse(t.date)) / 86400000) <= FST_SAT_RECENT_DAYS);
+}
+
+module.exports = {
+  SCHEDULE_JS, SCHED, monthRange, venueRange, hasSchedule, RecurringDedupe,
+  isFstSatelliteEntry, venueHasCurrentFstSatellite
+};

@@ -34,7 +34,24 @@ const BIG_EVENTS = [
     banner: 'img/wjpt/wjpt-banner.jpg',
     bannerAlt: 'WJPT West Japan Poker Tour 7.18-7.20 北九州',
     bannerDesc: '北九州・全21トーナメント',
-    bannerClass: 'ev-wjpt'
+    bannerClass: 'ev-wjpt',
+    // ---- WJPT 2026 サテライト開催実績(依頼4・2026-08-28。終了済み大会のアーカイブ) ----
+    // FSTの satelliteVenueIds(下記)と同じ機械走査で集計。判定基準は「大会名(name)または
+    // タグ(tags)に『サテライト』『satellite』を含み、かつ大会名またはタグに『WJPT』を含む」こと。
+    // 再集計用のワンライナー(再実行するときは正規表現の FST → WJPT に読み替える):
+    //   node -e "const D=require('./data.js');const sat=/サテライト|satellite/i,re=/WJPT/i;
+    //     const hit=t=>(sat.test(t.name||'')||(t.tags||[]).some(x=>sat.test(x)))&&
+    //       (re.test(t.name||'')||(t.tags||[]).some(x=>re.test(x)));
+    //     const ids=new Set([...D.TOURNAMENTS,...D.RECURRING].filter(hit).map(t=>t.venueId));
+    //     console.log([...ids].sort())"
+    // 企画部の参考情報(目視)はKENポーカー久留米(v21)・KKPOKER FUKUOKA(v2)の2店舗のみだったが、
+    // 機械走査ではv13(PokerBar NUWLAND)・v18(Poker Bar IRIS)・v25(72 -SevenTwo-)の3店舗が
+    // 追加で見つかり、計5店舗が正(FSTのv25除外とは別件。WJPTは会期が終了しており「現在開催中」
+    // という現在形の主張をしないアーカイブ表示のみのため、FSTの30日基準・タグ整合性チェックは適用しない)。
+    // 【会期は既に終了済み(7/18-20)】このリストは「現在開催中」ではなく「過去に開催していた」
+    // という過去形・アーカイブ表示にのみ使うこと(tools/gen-event-pages.js の
+    // satelliteVenuesBlock() / tools/gen-venue-pages.js の venuePastSatelliteEvents() を参照)。
+    pastSatelliteVenueIds: ['v2', 'v13', 'v18', 'v21', 'v25']
   },
   {
     id: 'jopt',
@@ -46,7 +63,18 @@ const BIG_EVENTS = [
     bannerAlt: 'JOPT 2026 Fukuoka #01 7.30-8.2 UNITEDLAB 福岡・大名',
     // 件数はデータ読み込み後に index.html 側が上書きする(jopt-data.js は #jopt を開くまで読まないため)
     bannerDesc: '福岡・大名／全44トーナメント',
-    bannerClass: 'ev-jopt'
+    bannerClass: 'ev-jopt',
+    // ---- JOPT 2026 福岡 #01 サテライト開催実績(依頼4・2026-08-28。終了済み大会のアーカイブ) ----
+    // 判定基準・再集計方法はWJPTと同じ(正規表現を JOPT に読み替える)。
+    // 企画部の参考情報(目視)はKKPOKER FUKUOKA(v2)・RAFTEL CASINO(v37)・Poker room SKY(v33)の
+    // 3店舗のみだったが、機械走査ではv8(RAISE BLUE 天神)・v22(CRownCLown)・v25(72 -SevenTwo-)・
+    // v26(JOKER♠️ 福岡大橋)・v35(A&K)の5店舗が追加で見つかり、計8店舗が正。
+    // ★v25は「SP ギルガメッシュ（JOPT福岡 or FST5.0 / …）」(tags: サテライト/ハイローラー/JOPT/FST)
+    //   の1件がJOPT/FST両対応の併記形。FSTの satelliteVenueIds では継続確認が取れず除外しているが、
+    //   このJOPTアーカイブ一覧は「開催実績」の記録であり、tagsに'JOPT'を含む事実は動かないため含めている
+    //   (FST側の除外理由=「現在開催中」という現在形の主張を続けられるかどうかとは別の論点)。
+    // 【会期は既に終了済み(7/30-8/2)】過去形・アーカイブ表示にのみ使うこと。
+    pastSatelliteVenueIds: ['v2', 'v8', 'v22', 'v25', 'v26', 'v33', 'v35', 'v37']
   },
   {
     id: 'nippon',
@@ -57,7 +85,18 @@ const BIG_EVENTS = [
     banner: 'img/nippon-series/nippon-series-banner.svg',
     bannerAlt: 'NIPPON SERIES FUKUOKA 2026 8.11-8.16 福岡 トヨタホールスカラエスパシオ',
     bannerDesc: '福岡・渡辺通／全38イベント',
-    bannerClass: 'ev-nippon'
+    bannerClass: 'ev-nippon',
+    // ---- 日本シリーズ 2026 福岡 サテライト開催実績(依頼4・2026-08-28) ----
+    // WJPT/JOPTと同じ機械走査(正規表現を「日本シリーズ|NIPPON|nippon」に読み替え)を実行したが、
+    // data.js の TOURNAMENTS/RECURRING に該当エントリは1件も無かった(0件)。名前に「NIPPON」を
+    // 含む2件("NIPPON SERIES タッグトナメ（ボルCUP体験会）" v21・"m NIPPON SERIES KICK OFF" v3)は
+    // 存在するが、いずれもtagsに「サテライト」を含まない特別開催イベントで、チケット獲得を
+    // 目的としたサテライトではない。企画部の過去調査でも日本シリーズの候補店舗は報告されていない
+    // (WJPT/JOPTと違って参考情報が無かった)ため、この0件は集計漏れではなく実態と判断する。
+    // pastSatelliteVenueIds は意図的に空配列にしてある(フィールド自体を省略すると「集計していない」
+    // のか「集計して0件だった」のか区別が付かないため、0件であることを明示する)。
+    // data.js が更新されて該当エントリが増えたら、上記ワンライナーを再実行してここを埋めること。
+    pastSatelliteVenueIds: []
   },
   {
     id: 'fst',
