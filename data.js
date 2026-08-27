@@ -466,8 +466,8 @@ const VENUES = [
     "tel": "",
     "featured": false,
     "note": "本格リング+フリーロールトーナメント開催(会員制からコンセプト変更の可能性あり・要現地確認)。",
-    "sourceLabel": "オンカジモンスター「ARIA」店舗紹介",
-    "sourceUrl": "https://oncasimonster.jp/information/amusement-casino/aria-poker-bar/",
+    "sourceLabel": "",
+    "sourceUrl": "",
     "ring": true,
     "ringNote": "チャージ1,000円（飲み放題込み）＋リング参加4,000円で50BB（250C）相当という情報があります（公開情報より）。追加購入は100BB＝10,000円／400BB＝30,000円／800BB＝50,000円。ただし会員制からコンセプト変更の可能性があり、レート・詳細は店舗にご確認ください。"
   },
