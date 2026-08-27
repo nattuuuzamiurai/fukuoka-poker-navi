@@ -505,7 +505,7 @@ const VENUES = [
     "sourceLabel": "Instagram",
     "sourceUrl": "https://www.instagram.com/sky_minoshima/",
     "ring": true,
-    "ringNote": "Webコイン制でリングゲームを開催しています（公式note記載）。レートは分かりません。レート・詳細は店舗にご確認ください。"
+    "ringNote": "Webコイン制でリングゲームを開催しています（店舗公式SNS記載の情報をもとに構成）。レートは分かりません。レート・詳細は店舗にご確認ください。"
   },
   {
     "id": "v34",
