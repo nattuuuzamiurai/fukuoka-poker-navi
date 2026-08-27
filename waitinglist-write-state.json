@@ -36,22 +36,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01KXSJK2CH4T9XXK4235S587CX": {
-      "id": "wl-01KXSJK2CH4T9XXK4235S587CX",
-      "venueId": "v3",
-      "name": "【3.5K 飲み放題！】m Booze up",
-      "date": "2026-08-26",
-      "start": "18:00",
-      "buyin": 3500,
-      "addon": 1500,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01KYMMQWQGSW86X4NFN7BFQH8K": {
       "id": "wl-01KYMMQWQGSW86X4NFN7BFQH8K",
       "venueId": "v3",
@@ -295,24 +279,6 @@
       "reentry": true,
       "prize": null,
       "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01KZTQ8YCWCSDZGSNYPAC14RNY": {
-      "id": "wl-01KZTQ8YCWCSDZGSNYPAC14RNY",
-      "venueId": "v3",
-      "name": "m Bounty Turbo",
-      "date": "2026-08-26",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": 1000,
-      "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
       "source": "auto",
       "verified": false
     },
