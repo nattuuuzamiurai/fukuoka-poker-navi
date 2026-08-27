@@ -132,6 +132,16 @@ const VENUE_CSS = `  .vp-sub{font-size:.9em;color:var(--mut);margin-bottom:14px}
   .evt-meta a{color:#0e6a72;font-weight:700}
   ul.vp-list{list-style:none;display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 6px}
   ul.vp-list a{display:inline-block;background:var(--sur);border:1px solid var(--bor);border-radius:20px;padding:6px 13px;font-size:.85em;font-weight:700;color:var(--felt);text-decoration:none;box-shadow:var(--sha)}
+  /* .vp-cards / .vp-card(「同じエリアの他のポーカー店」「サテライト開催店舗」カード)は
+     店舗ページ・イベントページの両方で使うため site-shell.js の BASE_CSS 側に定義してある
+     (2箇所に複製すると、片方だけ直して片方を忘れる事故が起きる。README・#evtLinks の教訓と同じ)。 */
+  /* リング(キャッシュゲーム)開催ブロック */
+  .vp-ring{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:13px 15px;margin-bottom:14px;font-size:.9em;line-height:1.8}
+  .vp-ring b{color:var(--felt)}
+  /* FSTサテライト開催中の告知(依頼2) */
+  .vp-fst{font-size:.86em;line-height:1.7;color:#26424e;background:#eef6f8;border:1px solid #cfe3e9;border-radius:10px;padding:11px 13px;margin-bottom:14px}
+  .vp-fst b{color:#14333d}
+  .vp-fst a{color:#0e6a72;font-weight:700}
 `;
 
 // 住所を PostalAddress に分解する。data.js の address 文字列を機械的に切るだけで、
@@ -196,6 +206,38 @@ function metaRows(v) {
   return rows.join('<br>\n  ');
 }
 
+// ---- FST 5.0 サテライトを「現在開催中」と出してよいかの判定(依頼2) ----
+// 【なぜ big-events.js の satelliteVenueIds をそのまま使わないか】
+//   あのリストは「一度集計した結果を書いた静的な配列」。店が開催をやめても人が書き換えを
+//   忘れれば古いまま残り、「今も開催中」という文言が実態と食い違う(READMEの編集方針
+//   ＝確度の低い情報を断定しない、に反する)。そこで店舗ページ側は data.js の実データを
+//   都度読み直して判定し、data.js を更新するだけで表示が自動的に追従するようにする。
+// 【判定基準】
+//   - RECURRING(毎週固定)に一致する行が1件でもあれば「現在開催中」(定期開催は
+//     "今も続けている"という宣言そのものなので、日付は絡まない)。
+//   - TOURNAMENTS(絶対日付)は、その店の直近の掲載日(=その店のTOURNAMENTSの最大日付)から
+//     さかのぼって30日以内に一致する行があるかで見る。1回だけ実施して以降やっていない店が
+//     いつまでも「開催中」と出続けるのを防ぐため(v25の実例: 7/29に1回だけの記録が
+//     8月末の店の最新日から33日前で、この基準だと該当しない＝妥当)。
+//   - 「今日」の日付には依存しない(店のデータそのものから相対的に決まる)。
+//     理由は他の焼き込み判定と同じ(このファイル冒頭のコメント「焼き込む内容を
+//     『今日以降』にしない理由」を参照)。data.js を1文字も触っていないのに
+//     翌日には --check が落ちる、という事故を避けるため。
+const FST_SAT_RE = /サテライト|satellite/i;
+const FST_NAME_RE = /FST/i;
+const isFstSatelliteEntry = t => (FST_SAT_RE.test(t.name || '') || (t.tags || []).some(x => FST_SAT_RE.test(x)))
+  && (FST_NAME_RE.test(t.name || '') || (t.tags || []).some(x => FST_NAME_RE.test(x)));
+const FST_SAT_RECENT_DAYS = 30;
+function venueHasCurrentFstSatellite(venueId) {
+  if (RECURRING.some(r => r.venueId === venueId && isFstSatelliteEntry(r))) return true;
+  const rows = TOURNAMENTS.filter(t => t.venueId === venueId);
+  if (!rows.length) return false;
+  const latest = rows.reduce((m, t) => (t.date > m ? t.date : m), rows[0].date);
+  return rows.some(t => isFstSatelliteEntry(t)
+    && Math.round((Date.parse(latest) - Date.parse(t.date)) / 86400000) <= FST_SAT_RECENT_DAYS);
+}
+const FST_REG = BIG.bigEventById('fst');
+
 function buildVenue(v) {
   const canonical = `${SITE}/venues/${v.slug}/`;
 
@@ -248,17 +290,35 @@ function buildVenue(v) {
   }
 
   // 同じエリアの他店。内部リンクを増やしつつ、読者にとっても「近くの別の店」になる。
+  // 【社長方針・2026-08-27】大型大会は一時的なものなので、リピート導線は店舗どうしの
+  //   内部リンクで作る。カードは3〜5件に絞る(それ以上は下のエリアページへの導線でカバーする。
+  //   1エリアに何十件も並べると「近くの店」として一覧しづらくなるため)。
   const sameArea = VENUES.filter(x => x.area === v.area && x.id !== v.id);
+  const sameAreaShown = sameArea.slice(0, 5);
   // そのエリアにエリアページ(/areas/<slug>/)があるなら、まとめページへの導線も足す。
   // 【判定を書き写さない】どのエリアにページがあるかは area-schedule.js が所有する
   // (2店舗以上、という条件をここに複製すると、条件を変えたときに片方が古くなる)。
   const areaHref = AREA_PAGES.has(v.area) ? `/areas/${AREA_SLUGS[v.area]}/` : null;
   const areaBlock = sameArea.length ? `
 <h2 class="vp-sec">同じエリア（${esc(v.area)}）の他のポーカー店</h2>
-<ul class="vp-list">
-${sameArea.map(x => `  <li><a href="/venues/${x.slug}/">${esc(x.name)}</a></li>`).join('\n')}
-</ul>${areaHref ? `
+<div class="vp-cards">
+${sameAreaShown.map(x => `  <a class="vp-card" href="/venues/${x.slug}/">
+    <div class="vp-card-name">${esc(x.name)}</div>
+    <div class="vp-card-sub">${esc(x.access || x.area)}</div>
+  </a>`).join('\n')}
+</div>${areaHref ? `
 <p class="lead">▶ <a href="${areaHref}">${esc(v.area)}のポーカー店${VENUES.filter(x => x.area === v.area).length}店舗の日程をまとめて見る</a></p>` : ''}` : '';
+
+  // FST 5.0 サテライトを現在開催中の店舗への告知(依頼2)。判定は venueHasCurrentFstSatellite が
+  // data.js の実データから都度行う(店舗一覧を手で足し引きしない)。大会ページが無ければ出さない。
+  const fstSatBlock = (FST_REG && venueHasCurrentFstSatellite(v.id)) ? `
+<div class="vp-fst"><b>現在FST 5.0のサテライトを開催中です。</b>FSTチケット（獲得すると本大会にエントリーできます）を賭けたトーナメントを開催しています。詳細は<a href="${esc(FST_REG.featureUrl)}">FST 5.0 大会ページ</a>をご確認ください。</div>` : '';
+
+  // リングゲーム(キャッシュゲーム)開催ブロック(依頼3)。ring:true の店だけ出す。
+  // レート等の裏取り状況は店ごとにまちまちなので、data.js の ringNote をそのまま出す
+  // (noteBlock と同じ考え方 ＝ 生成スクリプト側で要約・断定を足さない)。
+  const ringBlock = v.ring === true ? `
+<div class="vp-ring"><b>${esc(v.name)}はリングゲーム（キャッシュゲーム）を開催しています。</b>${v.ringNote ? esc(v.ringNote) : 'レート・詳細は店舗にご確認ください。'}</div>` : '';
 
   // ★ note は data.js の文面をそのまま出す。
   //   「住所は第三者情報のため要確認。」のような留保はREADMEの編集方針に沿って
@@ -298,12 +358,13 @@ ${sameArea.map(x => `  <li><a href="/venues/${x.slug}/">${esc(x.name)}</a></li>`
 <p class="vp-sub">${sub}</p>
 <div class="evt-meta">
   ${metaRows(v)}
-</div>
+</div>${fstSatBlock}
 <div class="disclaimer">${noteBlock}当サイトは店舗が公開している情報を集約している媒体で、この店舗の運営者ではありません。日程・料金・営業状況は変更されることがあるため、参加前に必ず店舗の公式情報・SNSをご確認ください。${sourceBlock}<br>${POSITIONING}</div>
 <a class="cta" href="/#venue/${esc(v.id)}">▶ 月を切り替えて日程を見る<small>サイト内の月別カレンダー（前月・翌月に移動できます）</small></a>
 <h2 class="vp-sec" id="vp-sched-title">${schedTitle}</h2>
 <p class="lead" id="vp-sched-note">${schedNote}</p>
-<div id="vp-sched">${schedHtml}</div>${areaBlock}
+<div id="vp-sched">${schedHtml}</div>${ringBlock ? `
+<h2 class="vp-sec">リングゲーム（キャッシュゲーム）</h2>${ringBlock}` : ''}${areaBlock}
 <div class="links">
   ▶ <a href="/">福岡のポーカートーナメント日程を日付順に見る（全${VENUES.length}店舗）</a><br>
   ▶ <a href="/#venue/${esc(v.id)}">${esc(v.name)} の月別カレンダー</a>

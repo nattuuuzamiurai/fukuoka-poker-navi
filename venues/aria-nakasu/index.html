@@ -96,6 +96,14 @@
   /* 大会ページ末尾の「エリア別の店舗トーナメント」への導線。店舗ページの .vp-list と同じ見た目。 */
   ul.evt-areas{list-style:none;display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 6px;padding:0}
   ul.evt-areas a{display:inline-block;background:var(--sur);border:1px solid var(--bor);border-radius:20px;padding:6px 13px;font-size:.85em;font-weight:700;color:var(--felt);text-decoration:none;box-shadow:var(--sha)}
+  /* 店舗カード(店舗ページの「同じエリアの他のポーカー店」・イベントページの「サテライト開催店舗」で共用)。
+     社長方針・2026-08-27(大型大会は一時的なので、店舗どうしの内部リンクでリピートを作る)。
+     ここに1つだけ置く(gen-venue-pages.js / gen-event-pages.js の両方から使うため複製しない)。 */
+  .vp-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin:2px 0 6px}
+  .vp-card{display:block;background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:12px 13px;text-decoration:none;color:inherit}
+  .vp-card:hover{border-color:var(--gold)}
+  .vp-card-name{font-weight:800;font-size:.92em;color:var(--felt);line-height:1.3}
+  .vp-card-sub{font-size:.78em;color:var(--mut);margin-top:4px}
   footer{background:#1b2320;color:#9aa39d;padding:22px 16px;font-size:.8em;text-align:center;line-height:1.9}
   footer a{color:var(--gold2)}
   .stickyAd{position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;align-items:center;gap:10px;padding:9px 12px calc(9px + env(safe-area-inset-bottom));background:radial-gradient(120% 220% at 6% 0%,rgba(96,214,255,.20),transparent 55%),radial-gradient(120% 220% at 100% 100%,rgba(200,110,255,.16),transparent 55%),linear-gradient(160deg,#12101d,#191325 60%,#140f1e);border-top:1px solid rgba(255,255,255,.08);box-shadow:0 -4px 18px rgba(5,0,15,.35)}
@@ -115,6 +123,16 @@
   .evt-meta a{color:#0e6a72;font-weight:700}
   ul.vp-list{list-style:none;display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 6px}
   ul.vp-list a{display:inline-block;background:var(--sur);border:1px solid var(--bor);border-radius:20px;padding:6px 13px;font-size:.85em;font-weight:700;color:var(--felt);text-decoration:none;box-shadow:var(--sha)}
+  /* .vp-cards / .vp-card(「同じエリアの他のポーカー店」「サテライト開催店舗」カード)は
+     店舗ページ・イベントページの両方で使うため site-shell.js の BASE_CSS 側に定義してある
+     (2箇所に複製すると、片方だけ直して片方を忘れる事故が起きる。README・#evtLinks の教訓と同じ)。 */
+  /* リング(キャッシュゲーム)開催ブロック */
+  .vp-ring{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:13px 15px;margin-bottom:14px;font-size:.9em;line-height:1.8}
+  .vp-ring b{color:var(--felt)}
+  /* FSTサテライト開催中の告知(依頼2) */
+  .vp-fst{font-size:.86em;line-height:1.7;color:#26424e;background:#eef6f8;border:1px solid #cfe3e9;border-radius:10px;padding:11px 13px;margin-bottom:14px}
+  .vp-fst b{color:#14333d}
+  .vp-fst a{color:#0e6a72;font-weight:700}
 </style>
 </head>
 <body>
@@ -133,20 +151,36 @@
   <b>アクセス</b>　中洲川端駅周辺<br>
   <b>SNS</b>　<a href="https://twitter.com/AriaPoker8" target="_blank" rel="noopener">X</a>
 </div>
-<div class="disclaimer"><b>ARIA 中洲について</b>　本格リング+フリーロールトーナメント開催(会員制からコンセプト変更の可能性あり・要現地確認)。<br>当サイトは店舗が公開している情報を集約している媒体で、この店舗の運営者ではありません。日程・料金・営業状況は変更されることがあるため、参加前に必ず店舗の公式情報・SNSをご確認ください。<br>当サイトは店舗・主催者が公開している情報を集約する媒体であり、賭博行為の勧誘・仲介を行うものではありません。賞品・プライズの取扱いは各店舗・主催者の規定によります。</div>
+<div class="disclaimer"><b>ARIA 中洲について</b>　本格リング+フリーロールトーナメント開催(会員制からコンセプト変更の可能性あり・要現地確認)。<br>当サイトは店舗が公開している情報を集約している媒体で、この店舗の運営者ではありません。日程・料金・営業状況は変更されることがあるため、参加前に必ず店舗の公式情報・SNSをご確認ください。主な情報源: <a href="https://oncasimonster.jp/information/amusement-casino/aria-poker-bar/" target="_blank" rel="noopener">オンカジモンスター「ARIA」店舗紹介</a>。<br>当サイトは店舗・主催者が公開している情報を集約する媒体であり、賭博行為の勧誘・仲介を行うものではありません。賞品・プライズの取扱いは各店舗・主催者の規定によります。</div>
 <a class="cta" href="/#venue/v30">▶ 月を切り替えて日程を見る<small>サイト内の月別カレンダー（前月・翌月に移動できます）</small></a>
 <h2 class="vp-sec" id="vp-sched-title">トーナメント日程</h2>
 <p class="lead" id="vp-sched-note">※ JavaScriptが有効な環境では、読み込み時に最新の掲載データから<b>今日以降</b>の日程に差し替わります。</p>
 <div id="vp-sched"><div class="vp-empty">現在このサイトに掲載している開催予定はありません。<br>開催状況は店舗の公式情報・SNSをご確認ください。</div></div>
+<h2 class="vp-sec">リングゲーム（キャッシュゲーム）</h2>
+<div class="vp-ring"><b>ARIA 中洲はリングゲーム（キャッシュゲーム）を開催しています。</b>チャージ1,000円（飲み放題込み）＋リング参加4,000円で50BB（250C）相当という情報があります（公開情報より）。追加購入は100BB＝10,000円／400BB＝30,000円／800BB＝50,000円。ただし会員制からコンセプト変更の可能性があり、レート・詳細は店舗にご確認ください。</div>
 <h2 class="vp-sec">同じエリア（中洲）の他のポーカー店</h2>
-<ul class="vp-list">
-  <li><a href="/venues/m-holdem-nakasu/">m HOLD'EM 中洲</a></li>
-  <li><a href="/venues/onecasino-fukuoka-nakasu/">ONECASINO 福岡中洲</a></li>
-  <li><a href="/venues/casino-bar-leje-hakata/">Casino bar Leje 博多店</a></li>
-  <li><a href="/venues/casino-blow-nishi-nakasu/">CASINO BLOW 西中洲</a></li>
-  <li><a href="/venues/crownclown-nakasu/">CRownCLown（クラウンクラウン）</a></li>
-  <li><a href="/venues/bar-betty-nakasu/">BAR BETTY（バーベティ）</a></li>
-</ul>
+<div class="vp-cards">
+  <a class="vp-card" href="/venues/m-holdem-nakasu/">
+    <div class="vp-card-name">m HOLD'EM 中洲</div>
+    <div class="vp-card-sub">中洲川端駅4番出口直結</div>
+  </a>
+  <a class="vp-card" href="/venues/onecasino-fukuoka-nakasu/">
+    <div class="vp-card-name">ONECASINO 福岡中洲</div>
+    <div class="vp-card-sub">中洲川端駅 徒歩2分</div>
+  </a>
+  <a class="vp-card" href="/venues/casino-bar-leje-hakata/">
+    <div class="vp-card-name">Casino bar Leje 博多店</div>
+    <div class="vp-card-sub">中洲川端駅 徒歩2分</div>
+  </a>
+  <a class="vp-card" href="/venues/casino-blow-nishi-nakasu/">
+    <div class="vp-card-name">CASINO BLOW 西中洲</div>
+    <div class="vp-card-sub">中洲川端駅 徒歩5分</div>
+  </a>
+  <a class="vp-card" href="/venues/crownclown-nakasu/">
+    <div class="vp-card-name">CRownCLown（クラウンクラウン）</div>
+    <div class="vp-card-sub">中洲川端駅 徒歩1分</div>
+  </a>
+</div>
 <p class="lead">▶ <a href="/areas/nakasu/">中洲のポーカー店7店舗の日程をまとめて見る</a></p>
 <div class="links">
   ▶ <a href="/">福岡のポーカートーナメント日程を日付順に見る（全35店舗）</a><br>

@@ -442,6 +442,24 @@ CSS `scroll-snap` だけで作ってあり、レジストリに大会を足せ�
 **やってはいけないこと**: そのイベント専用の表示期間ロジックを `index.html` に書くこと。
 （過去にWJPT＝最終日まで／JOPT＝初日の2週間前から、と判定が分裂して二重に出る一歩手前だった。2026-07-29に共通化済み）
 
+### サテライト開催店舗（`satelliteVenueIds`。社長方針・2026-08-27〜）
+
+県内各店でチケット獲得トーナメント（サテライト）が開催される大会（現在はFST）には、
+`BIG_EVENTS` のエントリに任意で `satelliteVenueIds: ['v2', 'v7', …]` を持たせられる。
+
+- **手打ちしない。** 一覧は `data.js` の `TOURNAMENTS` / `RECURRING` を機械的に走査して作る。
+  判定基準は「大会名(`name`)またはタグ(`tags`)に『サテライト』『satellite』を含み、かつ
+  大会名またはタグに大会略称（FSTなら`FST`）を含む」こと。再集計用のワンライナーは
+  `big-events.js` の `satelliteVenueIds` 定義の直前コメントに書いてある（コピペで再実行できる）。
+- 用途は2つ:
+  - `tools/gen-event-pages.js` の大会ページに「サテライト開催店舗」カード（`satelliteVenuesBlock()`）
+  - `tools/gen-venue-pages.js` の各店舗ページの「現在サテライトを開催中です」告知
+    （こちらは `satelliteVenueIds` を直接は見ず、`venueHasCurrentFstSatellite()` が
+    その店の `TOURNAMENTS`/`RECURRING` を都度読み直して判定する。店が開催をやめても
+    人がリストを書き換え忘れて「開催中」のまま残る、という事故を避けるため）
+- 月次で `data.js` を更新したら、`satelliteVenueIds` も上記ワンライナーで再集計し、
+  変わっていたら書き直して `tools/gen-event-pages.js` を再実行すること。
+
 ## 管理コンソールの使い方（月末の更新作業）
 
 ```

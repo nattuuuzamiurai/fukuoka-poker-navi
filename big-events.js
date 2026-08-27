@@ -79,7 +79,24 @@ const BIG_EVENTS = [
     //   「FST 5.」のように【数字の途中で切れる】(トップ375px・#majors で実測)。
     //   ナンバリングはバナー画像内のバッジと bannerAlt が持っているので、ここで重ねる必要はない。
     bannerDesc: '福岡・渡辺通／怒涛の5日間',
-    bannerClass: 'ev-fst'
+    bannerClass: 'ev-fst',
+    // ---- FST 5.0 サテライト開催店舗(社長方針・2026-08-27) ----
+    // data.js の TOURNAMENTS / RECURRING を機械的に走査して集計した結果(手打ちではない)。
+    // 判定基準: 大会名(name)またはタグ(tags)に「サテライト」「satellite」を含み、
+    //   かつ 大会名またはタグに「FST」を含むエントリ(他大会=JOPT/WJPT向けサテライトは除外)。
+    // 集計に使ったワンライナー(再集計する場合はこれを再実行する):
+    //   node -e "const D=require('./data.js');const sat=/サテライト|satellite/i,fst=/FST/i;
+    //     const hit=t=>(sat.test(t.name||'')||(t.tags||[]).some(x=>sat.test(x)))&&
+    //       (fst.test(t.name||'')||(t.tags||[]).some(x=>fst.test(x)));
+    //     const ids=new Set([...D.TOURNAMENTS,...D.RECURRING].filter(hit).map(t=>t.venueId));
+    //     console.log([...ids].sort())"
+    // 企画部の目視確認(TOURNAMENTS配列の7割ほど)では13店舗+note記載のみ2店舗(v28/v34)だったが、
+    // 上記の機械走査で v14・v18・v20・v21・v35 の5店舗が追加で見つかったため、このリストが正。
+    // 新しく満たさなくなったら(店舗が開催をやめたら)、上のワンライナーを再実行して更新すること。
+    satelliteVenueIds: [
+      'v2', 'v7', 'v8', 'v13', 'v14', 'v18', 'v19', 'v20', 'v21',
+      'v22', 'v25', 'v26', 'v27', 'v28', 'v33', 'v34', 'v35', 'v37', 'v40'
+    ]
   }
 ];
 
