@@ -7,20 +7,26 @@
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-L7091YHTFH');
+  // 本番ドメイン以外(GitHub Pagesのリダイレクト元・ローカル確認・プレビュー環境等)からの
+  // アクセスをGA4に計測させない。config を呼ばない限りGA4側にヒットは送られないため、
+  // ここでホストを絞る(GA4実測: /index.html や存在しない /_baseline-index.html に
+  // 人手とは考えにくい偏ったPVが計測されていたことへの対応)。
+  if (location.hostname === 'fukuokapoker.com') {
+    gtag('js', new Date());
+    gtag('config', 'G-L7091YHTFH');
+  }
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JOPT 2026 Fukuoka #01 タイムスケジュール（7/30〜8/2 福岡・大名）| ふくおかポーカーナビ</title>
-<meta name="description" content="JOPT 2026 Fukuoka #01（2026年7月30日〜8月2日・UNITEDLAB 福岡市中央区大名）の全44トーナメントのタイムスケジュール・バイイン・スタックを一覧掲載。メインイベントはプライズ保証1,500万円。">
+<title>JOPT 2026 Fukuoka #01 結果・優勝者は誰？（7/30〜8/2 福岡・大名）| ふくおかポーカーナビ</title>
+<meta name="description" content="JOPT 2026 Fukuoka #01（2026年7月30日〜8月2日・UNITEDLAB 福岡市中央区大名）の結果まとめ。Main Event優勝はKoheiさん（エントリー1,179人／プライズ保証1,500万円）。全44トーナメントのタイムスケジュール・バイインも掲載。">
 <link rel="canonical" href="https://fukuokapoker.com/events/jopt-2026-fukuoka-01/">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/favicon.png" sizes="192x192" type="image/png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="ふくおかポーカーナビ">
-<meta property="og:title" content="JOPT 2026 Fukuoka #01 タイムスケジュール（7/30〜8/2 福岡・大名）| ふくおかポーカーナビ">
-<meta property="og:description" content="JOPT 2026 Fukuoka #01（2026年7月30日〜8月2日・UNITEDLAB 福岡市中央区大名）の全44トーナメントのタイムスケジュール・バイイン・スタックを一覧掲載。メインイベントはプライズ保証1,500万円。">
+<meta property="og:title" content="JOPT 2026 Fukuoka #01 結果・優勝者は誰？（7/30〜8/2 福岡・大名）| ふくおかポーカーナビ">
+<meta property="og:description" content="JOPT 2026 Fukuoka #01（2026年7月30日〜8月2日・UNITEDLAB 福岡市中央区大名）の結果まとめ。Main Event優勝はKoheiさん（エントリー1,179人／プライズ保証1,500万円）。全44トーナメントのタイムスケジュール・バイインも掲載。">
 <meta property="og:url" content="https://fukuokapoker.com/events/jopt-2026-fukuoka-01/">
 <meta property="og:image" content="https://fukuokapoker.com/img/jopt/jopt-banner.jpg">
 <meta property="og:locale" content="ja_JP">
@@ -350,7 +356,7 @@
       "url": "https://japanopenpoker.com/fukuoka/"
     }
   ],
-  "description": "JOPT 2026 Fukuoka #01（2026年7月30日〜8月2日・UNITEDLAB 福岡市中央区大名）の全44トーナメントのタイムスケジュール・バイイン・スタックを一覧掲載。メインイベントはプライズ保証1,500万円。",
+  "description": "JOPT 2026 Fukuoka #01（2026年7月30日〜8月2日・UNITEDLAB 福岡市中央区大名）の結果まとめ。Main Event優勝はKoheiさん（エントリー1,179人／プライズ保証1,500万円）。全44トーナメントのタイムスケジュール・バイイン・スタックも一覧掲載。",
   "url": "https://fukuokapoker.com/events/jopt-2026-fukuoka-01/",
   "isAccessibleForFree": false
 }
@@ -421,15 +427,28 @@
   </div>
 </header>
 <main class="wrap">
-<h1>JOPT 2026 Fukuoka #01 タイムスケジュール</h1>
-<p class="lead">Japan Open Poker Tour 2026 福岡 #01 の全44トーナメント日程</p>
+<h1>JOPT 2026 Fukuoka #01 結果・優勝者 ＆ タイムスケジュール</h1>
+<p class="lead">Japan Open Poker Tour 2026 福岡 #01（2026年7月30日〜8月2日）の結果まとめと、全44トーナメントの日程</p>
+<div class="archived"><b>このイベントは終了しました。</b>Main Event優勝は<b>Koheiさん</b>（エントリー1,179人）でした。詳しい結果は下記「結果・優勝者」をご覧ください。以下は開催当時のタイムスケジュールの記録です。今後のトーナメントは<a href="/">トップページ</a>をご確認ください。</div>
 <div class="evt-meta">
   <b>会期</b>　2026年7月30日（木）〜8月2日（日）<br>
   <b>会場</b>　UNITEDLAB（〒810-0041 福岡県福岡市中央区大名1-3-36）<br>
   <b>メインイベント</b>　<span class="prize">プライズ保証 ¥15,000,000</span>
 </div>
 <div class="disclaimer">当サイトはJOPTの主催者・公式媒体ではありません。公開情報をもとに当サイトが独自に集約した<b>非公式のまとめ</b>です。掲載内容は2026年7月時点の公式情報にもとづきますが、当サイトによる転記の誤りが含まれる可能性があります。プライズ額は主催者発表で、JOPTではプライズは賞金ではなく選手契約として扱われます。参加前に必ず<a href="https://japanopenpoker.com/fukuoka/" target="_blank" rel="noopener">公式サイト</a>をご確認ください。<br>当サイトは店舗・主催者が公開している情報を集約する媒体であり、賭博行為の勧誘・仲介を行うものではありません。賞品・プライズの取扱いは各店舗・主催者の規定によります。</div>
+<h2 class="day">結果・優勝者（Main Event）</h2>
+<div class="sched-wrap"><table class="sched">
+  <tbody>
+    <tr><th>優勝</th><td class="fst-prize">Koheiさん</td></tr>
+    <tr><th>準優勝</th><td>TSUNEさん</td></tr>
+    <tr><th>総エントリー数</th><td>1,179人</td></tr>
+    <tr><th>プライズ保証</th><td>¥15,000,000</td></tr>
+  </tbody>
+</table></div>
+<p class="lead" style="margin-top:10px">主な注目トーナメントの優勝者　NLH Fukuoka（128エントリー）：ぽんたろうさん／NLH Platinum Sponsored by APT（72エントリー）：Sugarさん／PLO Prime（66エントリー）：こすもんさん／FL 2-7 TD &amp; Badugi #03（49エントリー）：きりんさん／FL 2-7 TD &amp; Badugi #26（75エントリー）：Takumaruさん。JOPT 2026 Fukuoka #01 全体（全トーナメント合算）の総エントリー数は6,045。</p>
+<p class="lead" style="margin-top:-6px">出典：<a href="https://light-three.com/jopt-fukuoka-result/" target="_blank" rel="noopener">ポーカーマガジン LightTHREE「【JOPT 2026 Fukuoka #01リザルト】初代Main Event王者はKoheiさん！注目イベントの結果も紹介」</a>（2026年8月7日公開・2026年8月27日確認）</p>
 <a class="cta" href="/#jopt">▶ 各トーナメントのブラインドストラクチャーを見る／日付で絞り込む<small>インタラクティブ版(全ストラクチャー表つき)</small></a>
+<p class="lead" style="margin:18px 0 -4px">以下は開催当時の全44トーナメントのタイムスケジュールの記録です。</p>
 <h2 class="day">7月30日（木）</h2>
 <div class="sched-wrap"><table class="sched">
   <thead><tr><th>No.</th><th>開始</th><th>トーナメント</th><th>バイイン</th><th>スタック</th></tr></thead>
