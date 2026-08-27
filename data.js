@@ -20,6 +20,13 @@
  *   無関係な入居者の部屋を訪ねる・無関係な番号に電話する経路を当サイトが作ることになる。
  * ★ 裏が取れたらこのフィールドを外すこと。note のヘッジ文も同時に外す
  *   (フラグと note がズレていると tools/gen-venue-pages.js が店名を挙げて異常終了する)。
+ *
+ * VENUES の "ring": true/false/null は「リングゲーム(キャッシュゲーム)を開催しているか」の印
+ * (社長方針・2026-08-27。null=不明で既定値。無理に false と断定しない)。
+ * "ring": true の店だけ、店舗静的ページに「リングゲーム(キャッシュゲーム)開催」ブロックが出る
+ * (tools/gen-venue-pages.js)。"ringNote" は判明している範囲のレート・チャージ情報の文面
+ * (note と同じく、生成スクリプト側では要約・断定を足さずそのまま出す。裏取りが第三者メディア
+ * だけの場合は「(公開情報より)」等を文面に含めること)。
  * ============================================================ */
 
 const VENUES = [
@@ -208,7 +215,9 @@ const VENUES = [
     "featured": false,
     "note": "リング/トーナメント両方",
     "sourceLabel": "公式スケジュールページ",
-    "sourceUrl": "https://texaspoker.pro/sc/sche3.cgi?year=2026&mon=7"
+    "sourceUrl": "https://texaspoker.pro/sc/sche3.cgi?year=2026&mon=7",
+    "ring": true,
+    "ringNote": "公式スケジュールページにキャッシュゲーム枠の記載がありますが、レート等の詳細は分かりません。レート・詳細は店舗にご確認ください。"
   },
   {
     "id": "v17",
@@ -295,7 +304,9 @@ const VENUES = [
     "telUnverified": true,
     "note": "営業18:00-24:00・初心者講習あり。JOPT/WJPT・MASAKICHI SUPER LEAGUE系。卓状況はオープンチャットで更新中。住所/電話はポーカー店ディレクトリ情報のため要確認。",
     "sourceLabel": "公式ライン",
-    "sourceUrl": "https://line.me/ti/g2/JROMKCR0N5"
+    "sourceUrl": "https://line.me/ti/g2/JROMKCR0N5",
+    "ring": null,
+    "ringNote": "自社データにて「BLIND RING」という項目名は確認できていますが、詳細は「別紙参照」とされているのみで、リングゲームの実施有無・レートは当サイトでは確認できていません。レート・詳細は店舗にご確認ください。"
   },
   {
     "id": "v22",
@@ -313,7 +324,9 @@ const VENUES = [
     "addressUnverified": true,
     "note": "RFID導入の本格ポーカールーム。ハイローラー等イベント定期開催。住所は複数ソース一致(要確認)。",
     "sourceLabel": "X",
-    "sourceUrl": "https://x.com/rownlown"
+    "sourceUrl": "https://x.com/rownlown",
+    "ring": null,
+    "ringNote": "20,000ポイント以上のチップ購入という価格体系の情報がありますが（公開情報より）、SB/BBの表記が無く、リングゲームの実施有無自体を当サイトでは確認できていません。レート・詳細は店舗にご確認ください。"
   },
   {
     "id": "v23",
@@ -401,7 +414,9 @@ const VENUES = [
     "featured": false,
     "note": "2025/12開店。DJL(店内リーグ戦)・FPC・FSTサテライト・ミステリーバウンティ等を定期開催。「SUPER DOJO RING DAY」はリングゲーム企画のため掲載対象外。",
     "sourceLabel": "X",
-    "sourceUrl": "https://x.com/dojofukuoka"
+    "sourceUrl": "https://x.com/dojofukuoka",
+    "ring": true,
+    "ringNote": "「SUPER DOJO RING DAY」としてリングゲームを開催しています。新規来店特典で3,000円＝100BB相当という情報がありますが（公開情報より）、常設のレート表は非公開です。レート・詳細は店舗にご確認ください。"
   },
   {
     "id": "v28",
@@ -452,7 +467,9 @@ const VENUES = [
     "featured": false,
     "note": "本格リング+フリーロールトーナメント開催(会員制からコンセプト変更の可能性あり・要現地確認)。",
     "sourceLabel": "",
-    "sourceUrl": ""
+    "sourceUrl": "",
+    "ring": true,
+    "ringNote": "チャージ1,000円（飲み放題込み）＋リング参加4,000円で50BB（250C）相当という情報があります（公開情報より）。追加購入は100BB＝10,000円／400BB＝30,000円／800BB＝50,000円。ただし会員制からコンセプト変更の可能性があり、レート・詳細は店舗にご確認ください。"
   },
   {
     "id": "v32",
@@ -486,7 +503,9 @@ const VENUES = [
     "featured": false,
     "note": "NLH〜Mix対応・Webコイン制。日曜定休。月=フリーロール/火=FREEZE OUT/金=JOPT福岡サテライトが毎週固定。",
     "sourceLabel": "Instagram",
-    "sourceUrl": "https://www.instagram.com/sky_minoshima/"
+    "sourceUrl": "https://www.instagram.com/sky_minoshima/",
+    "ring": true,
+    "ringNote": "Webコイン制でリングゲームを開催しています（店舗公式SNS記載の情報をもとに構成）。レートは分かりません。レート・詳細は店舗にご確認ください。"
   },
   {
     "id": "v34",

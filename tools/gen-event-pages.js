@@ -460,6 +460,88 @@ ${venueScheduleBlock()}
   return pageHead({ title, desc, canonical, jsonld, image }) + body + pageFoot('/events/nippon-series-2026-fukuoka/');
 }
 
+// ---- FST 5.0 ページ「よくある質問」(FAQ) ----
+// ★ ここも推測を足さない原則は本文と同じ。断定できない項目(buy-in未発表・初心者/経験者向けの言及なし等)は
+//   「店舗・大会により異なる」「公式発表をご確認ください」等でヘッジする(社長指示・2026-08-27)。
+// 見た目は <details>/<summary>。当サイトに既存の類似パターンが無いため新規に用意する
+// (色・角丸・影は既存カード類 .evt-meta 等と揃えてある)。
+const FST_FAQ_CSS = `  .faq-item{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);margin-bottom:9px;overflow:hidden}
+  .faq-item summary{padding:12px 40px 12px 15px;font-weight:800;color:var(--felt);font-size:.92em;cursor:pointer;list-style:none;position:relative}
+  .faq-item summary::-webkit-details-marker{display:none}
+  .faq-item summary::after{content:'+';position:absolute;right:15px;top:50%;transform:translateY(-50%);font-weight:800;color:var(--gold);font-size:1.3em;line-height:1}
+  .faq-item[open] summary::after{content:'−'}
+  .faq-item .faq-a{padding:0 15px 14px;font-size:.86em;line-height:1.85;color:var(--txt)}
+  .faq-a a{color:#0e6a72;font-weight:700}
+`;
+// FST(index.html の const FST)を受け取って質問配列を組み立てる。
+// aHtml … 画面表示用(リンクつき)。aText … FAQPage構造化データ用のプレーンテキスト(HTMLタグを持たない)。
+function fstFaqItems(FST, main, champ) {
+  const xLink = `<a href="${esc(FST.x)}" target="_blank" rel="noopener">公式X（@fst_202408）</a>`;
+  return [
+    {
+      q: 'アミューズメントポーカー大会に初めて参加します。当日の流れや注意点は？',
+      aHtml: `一般的にアミューズメントポーカー店・大会は、現金を賭けるのではなく、エントリー時に受け取るチップ（店舗内でのみ有効なポイント）を使ってプレイし、そのチップを現金に換金することはできない仕組みで運営されています。これは風営法の規制を踏まえた、多くのアミューズメントポーカー店に共通する運営形態です。身分証の提示や年齢確認の要否、当日の受付手順などは<b>店舗・大会により異なる</b>ため、初参加の場合は事前に${xLink}等の公式情報で最新のルールをご確認ください。`,
+      aText: '一般的にアミューズメントポーカー店・大会は、現金を賭けるのではなく、エントリー時に受け取るチップ(店舗内でのみ有効なポイント)を使ってプレイし、そのチップを現金に換金することはできない仕組みで運営されています。これは風営法の規制を踏まえた、多くのアミューズメントポーカー店に共通する運営形態です。身分証の提示や年齢確認の要否、当日の受付手順などは店舗・大会により異なるため、初参加の場合は事前に公式X(@fst_202408)等の公式情報で最新のルールをご確認ください。'
+    },
+    {
+      q: 'buy-in（参加費）の目安は？',
+      aHtml: `現時点（${esc(FST.asOf)}時点）で公式に金額が発表されているのは、MAIN EVENTとCHAMPIONSHIPの2大会のみです。<br>・MAIN EVENT：${esc(main.entry)}<br>・CHAMPIONSHIP：${esc(champ.entry)}<br>上記以外の個別トーナメント（サイドイベント等）のbuy-inは、この時点で公式発表がありません。<b>大会ごとに異なります</b>ので、詳細は${xLink}等の公式発表をご確認ください。`,
+      aText: `現時点(${FST.asOf}時点)で公式に金額が発表されているのはMAIN EVENTとCHAMPIONSHIPの2大会のみです。MAIN EVENTは${main.entry}、CHAMPIONSHIPは${champ.entry}です。上記以外の個別トーナメント(サイドイベント等)のbuy-inは公式発表がありません。大会ごとに異なりますので、詳細は公式発表をご確認ください。`
+    },
+    {
+      q: '予約・エントリー方法は？',
+      aHtml: `予約・エントリー方法は、公式SNS上で随時案内されています。参加を検討する場合は${xLink}・<a href="${esc(FST.instagram)}" target="_blank" rel="noopener">公式Instagram（@fst_fukuoka）</a>・<a href="${esc(FST.linktree)}" target="_blank" rel="noopener">公式Linktree</a>を確認のうえ、案内に沿ってお申し込みください。MAIN EVENT・CHAMPIONSHIPは現金のほか、県内各店で開催されるサテライト（チケット獲得トーナメント）で獲得できる「FSTチケット」でもエントリーできます（<a href="/#fst">サイト内のFSTサテライト情報</a>）。`,
+      aText: '予約・エントリー方法は公式SNS(公式X @fst_202408、公式Instagram @fst_fukuoka、公式Linktree)で随時案内されています。参加を検討する場合はこれらの公式情報を確認のうえお申し込みください。MAIN EVENT・CHAMPIONSHIPは現金のほか、県内各店のサテライト(チケット獲得トーナメント)で獲得できるFSTチケットでもエントリーできます。'
+    },
+    {
+      q: '初心者でも参加できますか？経験者向けの大会ですか？',
+      aHtml: '該当する公式アナウンスは、当サイトでは確認できていません。一般的に大型のアミューズメントポーカートーナメントは経験者だけでなく初心者も参加できる形で運営されることが多く、参加のハードルを下げる仕組みとして県内各店でのサテライト（チケット獲得トーナメント）が用意されているのもその一例です。初参加で不安がある場合は、まず<a href="/">福岡県内の店舗トーナメント</a>で経験を積んでから大型大会に臨むのも一つの方法です。',
+      aText: '初心者向け・経験者向けと明言している公式情報は確認できていません。一般的に大型のアミューズメントポーカートーナメントは経験者だけでなく初心者も参加できる形で運営されることが多く、参加のハードルを下げる仕組みとして県内各店でのサテライトが用意されているのもその一例です。初参加で不安がある場合は、まず福岡県内の店舗トーナメントで経験を積んでから大型大会に臨むのも一つの方法です。'
+    }
+  ];
+}
+function fstFaqBlock(FST, main, champ) {
+  const items = fstFaqItems(FST, main, champ);
+  const html = `
+<h2 class="day">よくある質問</h2>
+${items.map((f, i) => `<details class="faq-item"${i === 0 ? ' open' : ''}>
+  <summary>${esc(f.q)}</summary>
+  <div class="faq-a">${f.aHtml}</div>
+</details>`).join('\n')}`;
+  const jsonld = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: items.map(f => ({
+      '@type': 'Question',
+      name: f.q,
+      acceptedAnswer: { '@type': 'Answer', text: f.aText }
+    }))
+  };
+  const script = `<script type="application/ld+json">
+${JSON.stringify(jsonld, null, 2)}
+</script>`;
+  return { html, script };
+}
+
+// ---- FST 5.0 サテライト開催店舗(依頼2・社長方針2026-08-27) ----
+// big-events.js の FST エントリの satelliteVenueIds(data.js を機械走査して集計した結果。
+// 集計手順はそちらのコメントを参照)を店舗データと突き合わせてカードにする。
+// ここでは venueId のリストを信じるだけで、判定ロジック自体は複製しない。
+function satelliteVenuesBlock(reg) {
+  const ids = (reg && reg.satelliteVenueIds) || [];
+  if (!ids.length) return '';
+  const venues = DATA.VENUES.filter(v => ids.indexOf(v.id) >= 0);
+  return `
+<h2 class="day">サテライト開催店舗</h2>
+<p class="lead">下記の店舗では、FSTチケット（獲得するとMAIN EVENT・CHAMPIONSHIPにエントリーできます）が懸かったサテライト（チケット獲得トーナメント）が開催されています（当サイト掲載データより集計・${venues.length}店舗）。日程・詳細は各店舗のページでご確認ください。</p>
+<div class="vp-cards">
+${venues.map(v => `  <a class="vp-card" href="/venues/${v.slug}/">
+    <div class="vp-card-name">${esc(v.name)}</div>
+    <div class="vp-card-sub">${esc(v.area)}</div>
+  </a>`).join('\n')}
+</div>`;
+}
+
 // ---- FST 5.0 ページ ----
 // 個別トーナメント(タイムスケジュール・ストラクチャー)は未発表のため、
 // 会期・会場・発表済みの2大会(MAIN EVENT / CHAMPIONSHIP)の概要だけの薄いページ。
@@ -510,6 +592,9 @@ function buildFst() {
 ${e.sched.map(([k, v]) => `    <tr><th>${esc(k)}</th><td class="start">${esc(v)}</td></tr>`).join('\n')}
   </tbody>
 </table></div>`).join('\n');
+  // よくある質問(FAQ)。開催前で検索意欲が高まる時期(9/19〜9/23開催・掲載時点で開催前)に、
+  // 検索から来た人が知りたいこと(参加の流れ・buy-in目安・予約方法・初心者可否)にその場で答える。
+  const faq = fstFaqBlock(FST, main, FST.events[1]);
   const body = `
 <h1>FST 5.0（FUKUOKA SUPER TOURNAMENT）2026 福岡 開催概要</h1>
 <p class="lead">2026年${f1.m}月${f1.d}日（${f1.wd}）〜${f2.m}月${f2.d}日（${f2.wd}）／ホテルニューオータニ博多（福岡市中央区渡辺通）</p>
@@ -528,12 +613,15 @@ ${e.sched.map(([k, v]) => `    <tr><th>${esc(k)}</th><td class="start">${esc(v)}
 <a class="cta" href="/#fst">▶ サイト内のFSTサテライト（チケット獲得トーナメント）を見る<small>インタラクティブ版（日付・店舗つきで直近の開催予定を表示）</small></a>
 ${tables}
 <p class="lead" style="margin-top:14px">※ エントリー方法の「FSTチケット」は、県内各店で開催されるサテライトで獲得できるチケットを指します。サテライトの開催予定は<a href="/#fst">トップページのFSTページ</a>に掲載しています。</p>
+${satelliteVenuesBlock(reg)}
+${faq.html}
 ${venueScheduleBlock()}
 <div class="links">
   ▶ <a href="${esc(FST.x)}" target="_blank" rel="noopener">公式X（@fst_202408）</a>　／　<a href="${esc(FST.linktree)}" target="_blank" rel="noopener">公式Linktree</a>　／　<a href="${esc(FST.instagram)}" target="_blank" rel="noopener">公式Instagram</a><br>
   ▶ <a href="/">福岡の他のポーカートーナメント日程を見る</a>
-</div>`;
-  return pageHead({ title, desc, canonical, jsonld, image }) + body + pageFoot('/events/fst-2026-fukuoka/');
+</div>
+${faq.script}`;
+  return pageHead({ title, desc, canonical, jsonld, image, extraCss: FST_FAQ_CSS }) + body + pageFoot('/events/fst-2026-fukuoka/');
 }
 
 // ---- 書き出し / 検査 ----

@@ -129,6 +129,14 @@
   /* 大会ページ末尾の「エリア別の店舗トーナメント」への導線。店舗ページの .vp-list と同じ見た目。 */
   ul.evt-areas{list-style:none;display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 6px;padding:0}
   ul.evt-areas a{display:inline-block;background:var(--sur);border:1px solid var(--bor);border-radius:20px;padding:6px 13px;font-size:.85em;font-weight:700;color:var(--felt);text-decoration:none;box-shadow:var(--sha)}
+  /* 店舗カード(店舗ページの「同じエリアの他のポーカー店」・イベントページの「サテライト開催店舗」で共用)。
+     社長方針・2026-08-27(大型大会は一時的なので、店舗どうしの内部リンクでリピートを作る)。
+     ここに1つだけ置く(gen-venue-pages.js / gen-event-pages.js の両方から使うため複製しない)。 */
+  .vp-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin:2px 0 6px}
+  .vp-card{display:block;background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:12px 13px;text-decoration:none;color:inherit}
+  .vp-card:hover{border-color:var(--gold)}
+  .vp-card-name{font-weight:800;font-size:.92em;color:var(--felt);line-height:1.3}
+  .vp-card-sub{font-size:.78em;color:var(--mut);margin-top:4px}
   footer{background:#1b2320;color:#9aa39d;padding:22px 16px;font-size:.8em;text-align:center;line-height:1.9}
   footer a{color:var(--gold2)}
   .stickyAd{position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;align-items:center;gap:10px;padding:9px 12px calc(9px + env(safe-area-inset-bottom));background:radial-gradient(120% 220% at 6% 0%,rgba(96,214,255,.20),transparent 55%),radial-gradient(120% 220% at 100% 100%,rgba(200,110,255,.16),transparent 55%),linear-gradient(160deg,#12101d,#191325 60%,#140f1e);border-top:1px solid rgba(255,255,255,.08);box-shadow:0 -4px 18px rgba(5,0,15,.35)}
@@ -138,6 +146,13 @@
   .stickyAd .sa-desc{font-size:.68em;color:#b9b6c9;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .stickyAd .sa-btn{flex-shrink:0;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#3a2a06;font-weight:800;font-size:.76em;padding:8px 14px;border-radius:18px;white-space:nowrap;text-decoration:none}
   @media(max-width:420px){.stickyAd .sa-desc{display:none}}
+  .faq-item{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);margin-bottom:9px;overflow:hidden}
+  .faq-item summary{padding:12px 40px 12px 15px;font-weight:800;color:var(--felt);font-size:.92em;cursor:pointer;list-style:none;position:relative}
+  .faq-item summary::-webkit-details-marker{display:none}
+  .faq-item summary::after{content:'+';position:absolute;right:15px;top:50%;transform:translateY(-50%);font-weight:800;color:var(--gold);font-size:1.3em;line-height:1}
+  .faq-item[open] summary::after{content:'−'}
+  .faq-item .faq-a{padding:0 15px 14px;font-size:.86em;line-height:1.85;color:var(--txt)}
+  .faq-a a{color:#0e6a72;font-weight:700}
 </style>
 </head>
 <body>
@@ -184,6 +199,101 @@
 </table></div>
 <p class="lead" style="margin-top:14px">※ エントリー方法の「FSTチケット」は、県内各店で開催されるサテライトで獲得できるチケットを指します。サテライトの開催予定は<a href="/#fst">トップページのFSTページ</a>に掲載しています。</p>
 
+<h2 class="day">サテライト開催店舗</h2>
+<p class="lead">下記の店舗では、FSTチケット（獲得するとMAIN EVENT・CHAMPIONSHIPにエントリーできます）が懸かったサテライト（チケット獲得トーナメント）が開催されています（当サイト掲載データより集計・18店舗）。日程・詳細は各店舗のページでご確認ください。</p>
+<div class="vp-cards">
+  <a class="vp-card" href="/venues/kkpoker-fukuoka/">
+    <div class="vp-card-name">KKPOKER FUKUOKA</div>
+    <div class="vp-card-sub">天神</div>
+  </a>
+  <a class="vp-card" href="/venues/fuxk-fukuoka-tenjin/">
+    <div class="vp-card-name">FUXK 福岡天神店</div>
+    <div class="vp-card-sub">天神</div>
+  </a>
+  <a class="vp-card" href="/venues/raise-blue-tenjin/">
+    <div class="vp-card-name">RAISE BLUE 天神</div>
+    <div class="vp-card-sub">天神</div>
+  </a>
+  <a class="vp-card" href="/venues/pokerbar-nuwland/">
+    <div class="vp-card-name">PokerBar NUWLAND</div>
+    <div class="vp-card-sub">北九州</div>
+  </a>
+  <a class="vp-card" href="/venues/triplebarrel-kokura/">
+    <div class="vp-card-name">TripleBarrel 小倉店</div>
+    <div class="vp-card-sub">北九州</div>
+  </a>
+  <a class="vp-card" href="/venues/poker-bar-iris/">
+    <div class="vp-card-name">Poker Bar IRIS</div>
+    <div class="vp-card-sub">北九州</div>
+  </a>
+  <a class="vp-card" href="/venues/casino-arrows-kokura/">
+    <div class="vp-card-name">CASINO Arrows 小倉店</div>
+    <div class="vp-card-sub">北九州</div>
+  </a>
+  <a class="vp-card" href="/venues/king-queen-suited-nogata/">
+    <div class="vp-card-name">KING&amp;QUEEN SUITED 直方店</div>
+    <div class="vp-card-sub">筑豊</div>
+  </a>
+  <a class="vp-card" href="/venues/ken-poker-kurume/">
+    <div class="vp-card-name">KENポーカー（久留米）</div>
+    <div class="vp-card-sub">久留米</div>
+  </a>
+  <a class="vp-card" href="/venues/crownclown-nakasu/">
+    <div class="vp-card-name">CRownCLown（クラウンクラウン）</div>
+    <div class="vp-card-sub">中洲</div>
+  </a>
+  <a class="vp-card" href="/venues/joker-fukuoka-ohashi/">
+    <div class="vp-card-name">JOKER♠️ 福岡大橋</div>
+    <div class="vp-card-sub">大橋</div>
+  </a>
+  <a class="vp-card" href="/venues/the-dojo-fukuoka/">
+    <div class="vp-card-name">THE DOJO</div>
+    <div class="vp-card-sub">大橋</div>
+  </a>
+  <a class="vp-card" href="/venues/casinox-fukuoka-imaizumi/">
+    <div class="vp-card-name">CasinoX（カジノックス）福岡今泉店</div>
+    <div class="vp-card-sub">今泉</div>
+  </a>
+  <a class="vp-card" href="/venues/poker-room-sky/">
+    <div class="vp-card-name">Poker room SKY</div>
+    <div class="vp-card-sub">博多</div>
+  </a>
+  <a class="vp-card" href="/venues/king-queen-suited-kurosaki/">
+    <div class="vp-card-name">KING&amp;QUEEN SUITED 黒崎店</div>
+    <div class="vp-card-sub">北九州</div>
+  </a>
+  <a class="vp-card" href="/venues/ace-and-king-kurume/">
+    <div class="vp-card-name">A&amp;K（Ace and King）</div>
+    <div class="vp-card-sub">久留米</div>
+  </a>
+  <a class="vp-card" href="/venues/raftel-casino-fukuoka-imaizumi/">
+    <div class="vp-card-name">RAFTEL CASINO（ラフテルカジノ 福岡今泉店）</div>
+    <div class="vp-card-sub">今泉</div>
+  </a>
+  <a class="vp-card" href="/venues/triplebarrel-orio/">
+    <div class="vp-card-name">TripleBarrel 折尾店</div>
+    <div class="vp-card-sub">北九州</div>
+  </a>
+</div>
+
+<h2 class="day">よくある質問</h2>
+<details class="faq-item" open>
+  <summary>アミューズメントポーカー大会に初めて参加します。当日の流れや注意点は？</summary>
+  <div class="faq-a">一般的にアミューズメントポーカー店・大会は、現金を賭けるのではなく、エントリー時に受け取るチップ（店舗内でのみ有効なポイント）を使ってプレイし、そのチップを現金に換金することはできない仕組みで運営されています。これは風営法の規制を踏まえた、多くのアミューズメントポーカー店に共通する運営形態です。身分証の提示や年齢確認の要否、当日の受付手順などは<b>店舗・大会により異なる</b>ため、初参加の場合は事前に<a href="https://x.com/fst_202408" target="_blank" rel="noopener">公式X（@fst_202408）</a>等の公式情報で最新のルールをご確認ください。</div>
+</details>
+<details class="faq-item">
+  <summary>buy-in（参加費）の目安は？</summary>
+  <div class="faq-a">現時点（2026年7月29日時点）で公式に金額が発表されているのは、MAIN EVENTとCHAMPIONSHIPの2大会のみです。<br>・MAIN EVENT：¥50,000 ／ FSTチケット2枚 ／ ¥25,000＋FSTチケット1枚<br>・CHAMPIONSHIP：¥30,000 ／ FSTチケット2枚 ／ ¥20,000＋FSTチケット1枚<br>上記以外の個別トーナメント（サイドイベント等）のbuy-inは、この時点で公式発表がありません。<b>大会ごとに異なります</b>ので、詳細は<a href="https://x.com/fst_202408" target="_blank" rel="noopener">公式X（@fst_202408）</a>等の公式発表をご確認ください。</div>
+</details>
+<details class="faq-item">
+  <summary>予約・エントリー方法は？</summary>
+  <div class="faq-a">予約・エントリー方法は、公式SNS上で随時案内されています。参加を検討する場合は<a href="https://x.com/fst_202408" target="_blank" rel="noopener">公式X（@fst_202408）</a>・<a href="https://www.instagram.com/fst_fukuoka/" target="_blank" rel="noopener">公式Instagram（@fst_fukuoka）</a>・<a href="https://linktr.ee/fukuokasupertounament" target="_blank" rel="noopener">公式Linktree</a>を確認のうえ、案内に沿ってお申し込みください。MAIN EVENT・CHAMPIONSHIPは現金のほか、県内各店で開催されるサテライト（チケット獲得トーナメント）で獲得できる「FSTチケット」でもエントリーできます（<a href="/#fst">サイト内のFSTサテライト情報</a>）。</div>
+</details>
+<details class="faq-item">
+  <summary>初心者でも参加できますか？経験者向けの大会ですか？</summary>
+  <div class="faq-a">該当する公式アナウンスは、当サイトでは確認できていません。一般的に大型のアミューズメントポーカートーナメントは経験者だけでなく初心者も参加できる形で運営されることが多く、参加のハードルを下げる仕組みとして県内各店でのサテライト（チケット獲得トーナメント）が用意されているのもその一例です。初参加で不安がある場合は、まず<a href="/">福岡県内の店舗トーナメント</a>で経験を積んでから大型大会に臨むのも一つの方法です。</div>
+</details>
+
 <h2 class="day">福岡の店舗で開催されているポーカートーナメント</h2>
 <p class="lead">大型大会の期間外も、福岡県内のアミューズメントポーカー店では日々トーナメントが開催されています（当サイト掲載: 35店舗）。エリアごとの日程はこちらから確認できます。</p>
 <ul class="evt-areas">
@@ -198,7 +308,47 @@
 <div class="links">
   ▶ <a href="https://x.com/fst_202408" target="_blank" rel="noopener">公式X（@fst_202408）</a>　／　<a href="https://linktr.ee/fukuokasupertounament" target="_blank" rel="noopener">公式Linktree</a>　／　<a href="https://www.instagram.com/fst_fukuoka/" target="_blank" rel="noopener">公式Instagram</a><br>
   ▶ <a href="/">福岡の他のポーカートーナメント日程を見る</a>
-</div></main>
+</div>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "アミューズメントポーカー大会に初めて参加します。当日の流れや注意点は？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "一般的にアミューズメントポーカー店・大会は、現金を賭けるのではなく、エントリー時に受け取るチップ(店舗内でのみ有効なポイント)を使ってプレイし、そのチップを現金に換金することはできない仕組みで運営されています。これは風営法の規制を踏まえた、多くのアミューズメントポーカー店に共通する運営形態です。身分証の提示や年齢確認の要否、当日の受付手順などは店舗・大会により異なるため、初参加の場合は事前に公式X(@fst_202408)等の公式情報で最新のルールをご確認ください。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "buy-in（参加費）の目安は？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "現時点(2026年7月29日時点)で公式に金額が発表されているのはMAIN EVENTとCHAMPIONSHIPの2大会のみです。MAIN EVENTは¥50,000 ／ FSTチケット2枚 ／ ¥25,000＋FSTチケット1枚、CHAMPIONSHIPは¥30,000 ／ FSTチケット2枚 ／ ¥20,000＋FSTチケット1枚です。上記以外の個別トーナメント(サイドイベント等)のbuy-inは公式発表がありません。大会ごとに異なりますので、詳細は公式発表をご確認ください。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "予約・エントリー方法は？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "予約・エントリー方法は公式SNS(公式X @fst_202408、公式Instagram @fst_fukuoka、公式Linktree)で随時案内されています。参加を検討する場合はこれらの公式情報を確認のうえお申し込みください。MAIN EVENT・CHAMPIONSHIPは現金のほか、県内各店のサテライト(チケット獲得トーナメント)で獲得できるFSTチケットでもエントリーできます。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "初心者でも参加できますか？経験者向けの大会ですか？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "初心者向け・経験者向けと明言している公式情報は確認できていません。一般的に大型のアミューズメントポーカートーナメントは経験者だけでなく初心者も参加できる形で運営されることが多く、参加のハードルを下げる仕組みとして県内各店でのサテライトが用意されているのもその一例です。初参加で不安がある場合は、まず福岡県内の店舗トーナメントで経験を積んでから大型大会に臨むのも一つの方法です。"
+      }
+    }
+  ]
+}
+</script></main>
 <footer>
   <div><b style="color:#fff">ふくおかポーカーナビ</b> — 福岡ポーカートーナメント日程アグリゲーター</div>
   <div style="margin-top:6px"><a href="/">トップ</a>　|　<a href="/events/wjpt-2026/">WJPT 2026</a>　|　<a href="/events/jopt-2026-fukuoka-01/">JOPT 2026 福岡</a>　|　<a href="/events/nippon-series-2026-fukuoka/">NIPPON SERIES 福岡 2026</a>　|　<span aria-current="page" style="color:#cfd6d1">FST 5.0 2026 福岡</span></div>
