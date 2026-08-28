@@ -107,6 +107,14 @@ function breadcrumbJsonLd(items) {
     }))
   };
 }
+// 【2026-08-28 レビュー部指摘対応】長い店舗名・大会名で nav.breadcrumb が overflow-x:auto に
+// なるとき、横スクロール可能であることを示す視覚的ヒントが無く気づきにくい、という指摘。
+// スクロールする要素(nav.breadcrumb)自身に::afterでフェードを乗せると、フェードの位置も
+// 一緒にスクロールしてしまい右端に留まらない(position:absoluteの包含ブロックがnavでも、
+// navの中身と同じスクロールオフセットの影響を受けるため)。そのためスクロールしない外側の
+// div(.bc-wrap)を1枚かぶせ、フェードはその外側divの右端に固定して重ねる(常時表示。
+// 「スクロールし切った後も出続ける」簡略化は許容 — 過剰な実装(JSでスクロール位置を監視して
+// 消す等)は避ける、という依頼の方針どおり)。
 function breadcrumbNavHtml(items) {
   const lis = items.map((it, i) => {
     const isLast = i === items.length - 1;
@@ -115,7 +123,7 @@ function breadcrumbNavHtml(items) {
       : `<a href="${esc(it.url)}">${esc(it.name)}</a>`;
     return `<li>${inner}</li>`;
   }).join('');
-  return `<nav class="breadcrumb" aria-label="パンくずリスト"><ol>${lis}</ol></nav>`;
+  return `<div class="bc-wrap"><nav class="breadcrumb" aria-label="パンくずリスト"><ol>${lis}</ol></nav></div>`;
 }
 
 // ---- 共通CSS ----
@@ -146,8 +154,12 @@ const BASE_CSS = `  *,*::before,*::after{box-sizing:border-box;margin:0;padding:
   .tba{font-size:.86em;line-height:1.7;color:#26424e;background:#eef6f8;border:1px solid #cfe3e9;border-radius:10px;padding:11px 13px;margin-bottom:14px}
   .tba b{color:#14333d}
   /* パンくずリスト(依頼2・2026-08-28)。events/venues/areas の全静的ページ共通。
-     横に長くなる店舗名・大会名でも折り返さず、必要なら横スクロールで逃がす(狭い画面での実装コストを避けるため)。 */
-  nav.breadcrumb{font-size:.78em;color:var(--mut);margin:0 0 12px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+     横に長くなる店舗名・大会名でも折り返さず、必要なら横スクロールで逃がす(狭い画面での実装コストを避けるため)。
+     .bc-wrap はスクロールしない外側の器(2026-08-28追記): 右端のフェード(下記::after)を
+     スクロール位置に関わらず同じ場所に固定して重ねるための包含ブロック。 */
+  .bc-wrap{position:relative;margin:0 0 12px}
+  .bc-wrap::after{content:'';position:absolute;top:0;right:0;bottom:0;width:26px;background:linear-gradient(to right,rgba(246,244,239,0),var(--bg));pointer-events:none}
+  nav.breadcrumb{font-size:.78em;color:var(--mut);margin:0;overflow-x:auto;-webkit-overflow-scrolling:touch}
   nav.breadcrumb ol{list-style:none;display:flex;align-items:center;flex-wrap:nowrap;padding:0;margin:0;white-space:nowrap}
   nav.breadcrumb li{display:flex;align-items:center}
   nav.breadcrumb li:not(:last-child)::after{content:'›';margin:0 6px;color:var(--mut)}

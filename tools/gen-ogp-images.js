@@ -19,18 +19,20 @@
  *   （NODE_PATHで別途インストール済みのplaywrightを指す形でもよい）
  *
  * 【既存のバナー画像(1024×412)をどう扱ったか】
- *   ゼロから描き直すのではなく、既存のバナー(WJPT/JOPT/FST/NIPPON SERIESそれぞれの
+ *   ゼロから描き直すのではなく、既存のバナー(JOPT/FST/NIPPON SERIESそれぞれの
  *   img/<id>/*-banner.*)をそのまま1つの画像として1200×630のキャンバスに
  *   object-fit:containで縮小配置し、外周に十分な余白(セーフゾーン基準の60pxを大きく超える
- *   実測値)を取ることで、この画像単体では安全に収まるようにしてある。
- *   ★正直に書いておくと、WJPTの元バナーは虎の顔(左)・地図装飾(右)がアートワーク自体の
- *   構図として既に画像の端で切れている(ベクター/レイヤー単位で要素を動かせる素材が無く、
- *   このスクリプトはラスター/SVGを丸ごと1枚の画像として扱うため、内部の要素だけを
- *   個別に再配置することはできない)。今回の対応は「その1枚を安全な余白つきで縮小配置し、
- *   OGP側で新たに切れることは無くす」までで、元アートワークの構図そのものの描き直しは
- *   スコープ外とした(必要であれば別途デザイン素材の再制作が要る)。
- *   その他のイベント(JOPT/NIPPON SERIES)は元バナーの時点で余白が十分あり、この縮小配置だけで
- *   セーフゾーン要件を満たす。
+ *   実測値)を取ることで、この画像単体では安全に収まるようにしてある。これらは元バナーの時点で
+ *   余白が十分あり、この縮小配置だけでセーフゾーン要件を満たす。
+ *
+ *   【WJPTだけは例外・2026-08-28再制作】WJPTの元バナー(img/wjpt/wjpt-banner.jpg)は虎の顔(左)・
+ *   地図装飾(右)がアートワーク自体の構図として既に画像の端で切れている(ベクター/レイヤー単位で
+ *   要素を動かせる素材が無く、1枚のラスター画像として扱うこのスクリプトでは内部の要素だけを
+ *   個別に再配置することはできない)。前回(PR#51)はこの1枚を縮小配置し外周に余白を足しただけの
+ *   対応にとどめていたが、それでは「元アートワーク内で既に切れている」問題は解決しない
+ *   (レビュー部指摘・2026-08-28)。そのため buildWjpt() は他イベントと異なり元バナーを一切使わず、
+ *   buildCommon() と同じ「CSSタイポグラフィのみで組む」方式に作り直した(大会名・開催期間・
+ *   エリア・トーナメント数をテキストで表現し、配色・書体は既存4枚のトーンを踏襲)。
  *
  * 生成物:
  *   - img/ogp/common-og.jpg              … トップ・エリア・店舗ページ共用
@@ -80,6 +82,7 @@ function extractConst(indexSrc, name) {
 }
 const INDEX_SRC = fs.readFileSync(path.join(REPO, 'index.html'), 'utf8');
 const FST = extractConst(INDEX_SRC, 'FST');
+const WJPT = extractConst(INDEX_SRC, 'WJPT');
 
 // ---- 画像をdata URIに変換 ----
 // Playwrightのpage.setContent()で組み立てるページはfile://を経由しない(about:blank相当)ため、
@@ -202,13 +205,43 @@ function buildNippon() {
 }
 
 // ---- 5. WJPT用OGP(終了済み=アーカイブ。結果情報の新規追加はしない) ----
+// 【2026-08-28 レビュー部指摘対応】元バナー画像は使わず、他イベントページと同じ配色
+// (#0a1226→#122046・ゴールド#d9a441/#f0c56b)を保ちつつ、buildCommon() と同様に
+// CSSタイポグラフィのみでレイアウトする(ファイル先頭コメント参照)。
+// 日程は big-events.js の会期(唯一の正)から、トーナメント数は index.html の WJPT.tournaments
+// から動的に焼き込み、手打ちしない(README「数値を手打ちしない」原則)。
 function buildWjpt() {
-  return buildEventOgp({
-    bgFrom: '#0a1226', bgTo: '#122046',
-    imageDataUri: dataUri('img/wjpt/wjpt-banner.jpg'), imageAlt: 'WJPT West Japan Poker Tour',
-    title1: 'WJPT TOURNAMENT SCHEDULE',
-    lines: ['7.18 - 7.20　WEST JAPAN POKER TOUR／北九州']
-  });
+  const days = BIG.bigEventDays('wjpt');
+  const fmtMD = iso => { const [, m, d] = iso.split('-'); return `${Number(m)}.${Number(d)}`; };
+  const dateRange = `${fmtMD(days[0])} - ${fmtMD(days[days.length - 1])}`;
+  const style = `
+    body{background:linear-gradient(135deg,#0a1226,#122046)}
+    .ray{position:absolute;border-radius:50%}
+    .ray.a{width:640px;height:640px;left:-220px;top:-260px;background:radial-gradient(circle,rgba(217,164,65,.18),transparent 70%)}
+    .ray.b{width:560px;height:560px;right:-200px;bottom:-220px;background:radial-gradient(circle,rgba(240,197,107,.16),transparent 70%)}
+    .center{align-items:center;justify-content:center;text-align:center;gap:16px}
+    .eyebrow{font-size:22px;font-weight:700;letter-spacing:.2em;color:#d9a441}
+    .wTitle{font-size:104px;font-weight:800;letter-spacing:.04em;color:#f0c56b;line-height:1;text-shadow:0 2px 22px rgba(217,164,65,.35)}
+    .wTitle .pip{color:#d9a441;font-size:.55em;margin:0 14px;vertical-align:middle}
+    .wSub{font-size:32px;font-weight:700;letter-spacing:.08em;color:#fff;opacity:.94}
+    .divider{width:74px;height:3px;background:linear-gradient(90deg,transparent,#d9a441,transparent)}
+    .wDate{font-size:38px;font-weight:800;color:#fff}
+    .wArea{font-size:24px;font-weight:700;color:#e9e2cf;opacity:.92}
+    .wBadge{margin-top:6px;background:rgba(217,164,65,.16);border:1px solid #d9a441;color:#f0c56b;font-size:22px}
+  `;
+  const body = `
+    <div class="ray a"></div>
+    <div class="ray b"></div>
+    <div class="safe center">
+      <div class="eyebrow">WEST JAPAN POKER TOUR</div>
+      <div class="wTitle"><span class="pip">♠</span>WJPT<span class="pip">♠</span></div>
+      <div class="wSub">TOURNAMENT SCHEDULE</div>
+      <div class="divider"></div>
+      <div class="wDate">${dateRange}</div>
+      <div class="wArea">北九州</div>
+      <div class="pill wBadge">全${WJPT.tournaments.length}トーナメント</div>
+    </div>`;
+  return page(body, style);
 }
 
 // ---- 書き出し ----
