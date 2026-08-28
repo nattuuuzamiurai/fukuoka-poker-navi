@@ -120,22 +120,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01KZQR328BHHJ0SCQ3VR4C234F": {
-      "id": "wl-01KZQR328BHHJ0SCQ3VR4C234F",
-      "venueId": "v3",
-      "name": "m LIVE LEAGUE season1",
-      "date": "2026-08-27",
-      "start": "17:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01KZQR328BQVAWCEVZ3EW0FM7Q": {
       "id": "wl-01KZQR328BQVAWCEVZ3EW0FM7Q",
       "venueId": "v3",
@@ -279,24 +263,6 @@
       "reentry": true,
       "prize": null,
       "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01KZTQ9W9TZ0K0573T2NG8KTH7": {
-      "id": "wl-01KZTQ9W9TZ0K0573T2NG8KTH7",
-      "venueId": "v3",
-      "name": "ｍ Hyper Deep Turbo",
-      "date": "2026-08-27",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": null,
-      "stack": 100000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
       "source": "auto",
       "verified": false
     },
@@ -463,22 +429,6 @@
       "stack": 40000,
       "guarantee": null,
       "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01KZX5JC4X07X651QXPCMCJQ56": {
-      "id": "wl-01KZX5JC4X07X651QXPCMCJQ56",
-      "venueId": "v19",
-      "name": "3000 Freeze Out",
-      "date": "2026-08-27",
-      "start": "18:30",
-      "buyin": 3000,
-      "addon": null,
-      "stack": 20000,
-      "guarantee": null,
-      "reentry": false,
       "prize": null,
       "tags": [],
       "source": "auto",
