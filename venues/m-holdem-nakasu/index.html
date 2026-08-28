@@ -113,8 +113,12 @@
   .tba{font-size:.86em;line-height:1.7;color:#26424e;background:#eef6f8;border:1px solid #cfe3e9;border-radius:10px;padding:11px 13px;margin-bottom:14px}
   .tba b{color:#14333d}
   /* パンくずリスト(依頼2・2026-08-28)。events/venues/areas の全静的ページ共通。
-     横に長くなる店舗名・大会名でも折り返さず、必要なら横スクロールで逃がす(狭い画面での実装コストを避けるため)。 */
-  nav.breadcrumb{font-size:.78em;color:var(--mut);margin:0 0 12px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+     横に長くなる店舗名・大会名でも折り返さず、必要なら横スクロールで逃がす(狭い画面での実装コストを避けるため)。
+     .bc-wrap はスクロールしない外側の器(2026-08-28追記): 右端のフェード(下記::after)を
+     スクロール位置に関わらず同じ場所に固定して重ねるための包含ブロック。 */
+  .bc-wrap{position:relative;margin:0 0 12px}
+  .bc-wrap::after{content:'';position:absolute;top:0;right:0;bottom:0;width:26px;background:linear-gradient(to right,rgba(246,244,239,0),var(--bg));pointer-events:none}
+  nav.breadcrumb{font-size:.78em;color:var(--mut);margin:0;overflow-x:auto;-webkit-overflow-scrolling:touch}
   nav.breadcrumb ol{list-style:none;display:flex;align-items:center;flex-wrap:nowrap;padding:0;margin:0;white-space:nowrap}
   nav.breadcrumb li{display:flex;align-items:center}
   nav.breadcrumb li:not(:last-child)::after{content:'›';margin:0 6px;color:var(--mut)}
@@ -193,7 +197,7 @@
     <a class="back-link" href="/">← トップへ</a>
   </div>
 </header>
-<main class="wrap"><nav class="breadcrumb" aria-label="パンくずリスト"><ol><li><a href="https://fukuokapoker.com/">ふくおかポーカーナビ</a></li><li><a href="https://fukuokapoker.com/#areaNav">エリアから探す</a></li><li><a href="https://fukuokapoker.com/areas/nakasu/">中洲</a></li><li><span aria-current="page">m HOLD'EM 中洲</span></li></ol></nav>
+<main class="wrap"><div class="bc-wrap"><nav class="breadcrumb" aria-label="パンくずリスト"><ol><li><a href="https://fukuokapoker.com/">ふくおかポーカーナビ</a></li><li><a href="https://fukuokapoker.com/#areaNav">エリアから探す</a></li><li><a href="https://fukuokapoker.com/areas/nakasu/">中洲</a></li><li><span aria-current="page">m HOLD'EM 中洲</span></li></ol></nav></div>
 <h1>m HOLD'EM 中洲</h1>
 <p class="vp-sub">中洲のポーカースポット（中洲川端駅4番出口直結） — トーナメント日程・バイイン・アクセス</p>
 <div class="evt-meta">
