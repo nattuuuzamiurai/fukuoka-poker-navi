@@ -36,24 +36,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01KYY0XNH6Y8AB70NQ0H3ED04V": {
-      "id": "wl-01KYY0XNH6Y8AB70NQ0H3ED04V",
-      "venueId": "v19",
-      "name": "3000 Deep Stack",
-      "date": "2026-08-29",
-      "start": "16:10",
-      "buyin": 3000,
-      "addon": 2000,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01KZNDXBV74FTT0R1JE2V129MK": {
       "id": "wl-01KZNDXBV74FTT0R1JE2V129MK",
       "venueId": "v19",
@@ -182,40 +164,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01KZQR5NMTN6Y41VEEKTSH1DJH": {
-      "id": "wl-01KZQR5NMTN6Y41VEEKTSH1DJH",
-      "venueId": "v3",
-      "name": "m Monster Stack",
-      "date": "2026-08-29",
-      "start": "13:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 60000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01KZR9PST4DEBD43CBTVCDSXS9": {
-      "id": "wl-01KZR9PST4DEBD43CBTVCDSXS9",
-      "venueId": "v3",
-      "name": "m FT Bounty",
-      "date": "2026-08-29",
-      "start": "18:00",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01KZTN96VHMTVM39RSD1R0CKYG": {
       "id": "wl-01KZTN96VHMTVM39RSD1R0CKYG",
       "venueId": "v3",
@@ -245,24 +193,6 @@
       "reentry": true,
       "prize": null,
       "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01KZTQH8DAQJXQB8BFFRWG5MY4": {
-      "id": "wl-01KZTQH8DAQJXQB8BFFRWG5MY4",
-      "venueId": "v3",
-      "name": "m Super Hold'em Turbo",
-      "date": "2026-08-29",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": 1000,
-      "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
       "source": "auto",
       "verified": false
     },
