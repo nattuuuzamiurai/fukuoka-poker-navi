@@ -2,24 +2,6 @@
   "version": 1,
   "writtenBy": "tools/import-waitinglist.js",
   "entries": {
-    "wl-01KX6FVR28N8GADBGJ69WZ4KH6": {
-      "id": "wl-01KX6FVR28N8GADBGJ69WZ4KH6",
-      "venueId": "v3",
-      "name": "VS m KANON",
-      "date": "2026-08-28",
-      "start": "17:30",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "特別開催"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01KXSJK2CH0ZX4D3EPBZY5SJEB": {
       "id": "wl-01KXSJK2CH0ZX4D3EPBZY5SJEB",
       "venueId": "v3",
@@ -263,24 +245,6 @@
       "reentry": true,
       "prize": null,
       "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01KZTQDFRTAYX1MSCX2BQCPX31": {
-      "id": "wl-01KZTQDFRTAYX1MSCX2BQCPX31",
-      "venueId": "v3",
-      "name": "m Turbo",
-      "date": "2026-08-28",
-      "start": "21:00",
-      "buyin": 2000,
-      "addon": 1000,
-      "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
       "source": "auto",
       "verified": false
     },
