@@ -173,6 +173,27 @@ function buildArea(area) {
   const areaLabel = hints.length === 0 ? area
     : hints.length === 1 ? `${area}（${hints[0]}駅周辺）`
     : `${area}（${hints.join('・')}）`;
+  // 上と同じ材料をエスケープ済みで持つ(body側の可視テキストに使うため)。
+  // 【なぜ必要か・2026-08-29】これまで hints は title/description(pageHead側でesc済み)にしか
+  //   反映されておらず、本文側の見出し直下(.vp-sub、閲覧者に見える1行)は area だけを使う
+  //   固定文言だった。北九州のように複数の町(小倉・黒崎・折尾…)にまたがる広域エリアの
+  //   特徴が、検索結果のスニペットにしか出ず本文には出ていなかった(Search Console実測で
+  //   表示回数はあるのに掲載順位9〜12位のページの見直し・企画部/開発部タスク)。
+  //   メタ情報と本文の記述を揃え、実データ(access由来の駅名)だけで差別化する。
+  const escAreaLabel = hints.length === 0 ? esc(area)
+    : hints.length === 1 ? `${esc(area)}（${esc(hints[0])}駅周辺）`
+    : `${esc(area)}（${hints.map(esc).join('・')}）`;
+  // 複数の駅から店舗にアクセスできるエリアであることを示す一言(2駅以上拾えたときだけ)。
+  // 1駅しか拾えない/拾えないエリア(天神・大橋・久留米など)では出さない(冗長になるため)。
+  // 【「広域エリア」と言い切らない理由】拾えるのはあくまで「複数の異なる最寄り駅」であって、
+  //   面積や行政区の広さそのものは data.js から分からない。北九州(市境をまたぐ距離)も
+  //   大名(徒歩圏の2駅)も同じ条件(hints.length>=2)で拾ってしまうため、どちらにも
+  //   当てはまる「アクセスできる駅が複数ある」という事実だけを述べ、規模の大小は主張しない。
+  // ★ 見出し直下の1行(vp-sub)が既に escAreaLabel で駅名を列挙しているため、
+  //   ここで同じ駅名を繰り返さない(読んで二度同じ固有名詞が並ぶと冗長なため)。
+  const multiStationNote = hints.length >= 2
+    ? `<p class="lead">${esc(area)}は複数の駅からアクセスできる範囲に店舗が分かれています。下記の店舗カードの「アクセス」欄で、店舗ごとの最寄り駅をご確認ください。</p>`
+    : '';
 
   // ★ title / description は「掲載日程があるか」で切り替える(店舗ページと同じ理由)。
   //   0件のエリアで「日程を日付順に掲載」と書くと、検索結果に出る文が中身と一致しない。
@@ -182,12 +203,12 @@ function buildArea(area) {
     title = `${areaLabel}のポーカートーナメント日程・店舗一覧（${venues.length}店舗） | ふくおかポーカーナビ`;
     desc = `${areaLabel}のアミューズメントポーカー${venues.length}店舗のトーナメント日程を、店舗をまたいで日付順にまとめています。`
       + `開始時刻・バイイン・各店のアクセスをまとめて確認できます。`;
-    sub = `${esc(area)}のポーカー店${venues.length}店舗 — トーナメント日程・バイイン・アクセス`;
+    sub = `${escAreaLabel}のポーカー店${venues.length}店舗 — トーナメント日程・バイイン・アクセス`;
   } else {
     title = `${areaLabel}のポーカー店一覧（${venues.length}店舗） | ふくおかポーカーナビ`;
     desc = `${areaLabel}のアミューズメントポーカー${venues.length}店舗の所在地・アクセス・公式SNSをまとめています。`
       + `現時点で当サイトに掲載中の開催予定はありません。最新の開催情報は各店舗の公式情報・SNSをご確認ください。`;
-    sub = `${esc(area)}のポーカー店${venues.length}店舗 — 所在地・アクセス・開催情報`;
+    sub = `${escAreaLabel}のポーカー店${venues.length}店舗 — 所在地・アクセス・開催情報`;
   }
 
   // 他のエリアへの内部リンク。エリア間を横に繋いで、どのエリアページからも全エリアに辿れるようにする。
@@ -216,7 +237,7 @@ ${others.map(a => `  <li><a href="/areas/${AREA_SLUGS[a]}/">${esc(a)}（${areaVe
 
   const body = `
 <h1>${esc(area)}のポーカートーナメント日程</h1>
-<p class="vp-sub">${sub}</p>${fstAreaBlock}
+<p class="vp-sub">${sub}</p>${multiStationNote}${fstAreaBlock}
 <div class="disclaimer">当サイトは店舗が公開している情報を集約している媒体で、掲載店舗の運営者ではありません。日程・料金・営業状況は変更されることがあるため、参加前に必ず各店舗の公式情報・SNSをご確認ください。<br>${POSITIONING}</div>
 <h2 class="vp-sec">${esc(area)}のポーカー店（${venues.length}店舗）</h2>
 <div class="ap-cards">

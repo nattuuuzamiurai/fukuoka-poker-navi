@@ -334,13 +334,30 @@ function buildVenue(v) {
   // 【社長方針・2026-08-27】大型大会は一時的なものなので、リピート導線は店舗どうしの
   //   内部リンクで作る。カードは3〜5件に絞る(それ以上は下のエリアページへの導線でカバーする。
   //   1エリアに何十件も並べると「近くの店」として一覧しづらくなるため)。
-  const sameArea = VENUES.filter(x => x.area === v.area && x.id !== v.id);
-  const sameAreaShown = sameArea.slice(0, 5);
+  // 【選出方法・2026-08-30改訂(品質管理部指摘・PR#53)】以前は「VENUES配列順の先頭から5件」を
+  //   全ページ共通で固定選出していた。この方式だと、エリアの店舗数が6件(自店+5件)を超えた
+  //   瞬間、【配列の後方にいる店舗がどのページからも永遠に選ばれない】(被リンク0本のまま
+  //   固定化する)。実際に中洲エリアが7→8店舗に増えたとき(本PRでBon西中洲を合流)、
+  //   配列末尾のARIA中洲・BAR BETTYの2店がこの状態になった(ARIA中洲はSearch Console実測で
+  //   表示9回・順位9.8位という、本PRが救おうとしていたのと同種の"あと一歩"ページだった)。
+  //   そこで、自店の位置を起点に「エリア内(自店を含む配列)の次のmin(5, 他店数)件」を
+  //   円環状(末尾まで行ったら先頭に戻る)に選ぶ方式にする。エリアがn店舗のとき、
+  //   自店以外の各店は必ず「自分の直前min(5, n-1)店のページ」から選ばれるため、
+  //   被リンクがmin(5, n-1)本で全店均等になり、0本に固定される店が出ない。
+  //   エリアがn<=6店舗(=他店が5件以下)なら全員が対象になり、以前の slice(0,5) と
+  //   結果は変わらない(小さいエリアへの影響なし)。
+  const areaMembers = VENUES.filter(x => x.area === v.area); // 自店を含む、VENUES順
+  const selfIdx = areaMembers.findIndex(x => x.id === v.id);
+  const showCount = Math.min(5, areaMembers.length - 1);
+  const sameAreaShown = [];
+  for (let i = 1; i <= showCount; i++) {
+    sameAreaShown.push(areaMembers[(selfIdx + i) % areaMembers.length]);
+  }
   // そのエリアにエリアページ(/areas/<slug>/)があるなら、まとめページへの導線も足す。
   // 【判定を書き写さない】どのエリアにページがあるかは area-schedule.js が所有する
   // (2店舗以上、という条件をここに複製すると、条件を変えたときに片方が古くなる)。
   const areaHref = AREA_PAGES.has(v.area) ? `/areas/${AREA_SLUGS[v.area]}/` : null;
-  const areaBlock = sameArea.length ? `
+  const areaBlock = sameAreaShown.length ? `
 <h2 class="vp-sec">同じエリア（${esc(v.area)}）の他のポーカー店</h2>
 <div class="vp-cards">
 ${sameAreaShown.map(x => `  <a class="vp-card" href="/venues/${x.slug}/">

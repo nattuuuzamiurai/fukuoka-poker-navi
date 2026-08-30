@@ -439,7 +439,7 @@ const VENUES = [
     "id": "v29",
     "slug": "bon-nishi-nakasu",
     "name": "梵 bon 西中洲",
-    "area": "西中洲",
+    "area": "中洲",
     "address": "福岡県福岡市中央区西中洲1-21 6F",
     "access": "天神南駅周辺",
     "x": "https://x.com/bon_nishinakasu",
@@ -17470,7 +17470,6 @@ const TOURNAMENTS = [
 const AREAS = [
   "天神",
   "中洲",
-  "西中洲",
   "大名",
   "今泉",
   "大橋",
