@@ -12943,6 +12943,22 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01M19SPXXDVWV2JNXX3GYF7Z77",
+    "venueId": "v3",
+    "name": "m ORIGIN",
+    "date": "2026-09-18",
+    "start": "18:00",
+    "buyin": 4000,
+    "addon": null,
+    "stack": 40000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "wl-01M0W0KXCHMQVYVEQ73TJPZ88Q",
     "venueId": "v3",
     "name": "m LIVE LEAGUE ~WEEKEND~",
@@ -13801,6 +13817,24 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01M18T2N3JXTTGX9MCS4C0N922",
+    "venueId": "v19",
+    "name": "2000 Turbo",
+    "date": "2026-09-06",
+    "start": "16:10",
+    "buyin": 2000,
+    "addon": 1000,
+    "stack": 30000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "wl-01KZNDXBV772FY6DQS7TR0NXKT",
     "venueId": "v19",
     "name": "Free Roll",
@@ -13829,6 +13863,60 @@ const TOURNAMENTS = [
     "reentry": false,
     "prize": null,
     "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M18T2N3J0MM70WYH1A0YJY9Z",
+    "venueId": "v19",
+    "name": "2000 Turbo",
+    "date": "2026-09-13",
+    "start": "16:10",
+    "buyin": 2000,
+    "addon": 1000,
+    "stack": 30000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M18T2N3J0RCVYKHTNR3BXK81",
+    "venueId": "v19",
+    "name": "2000 Turbo",
+    "date": "2026-09-20",
+    "start": "16:10",
+    "buyin": 2000,
+    "addon": 1000,
+    "stack": 30000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M18T2N3JHRJ914NHJACE9P2P",
+    "venueId": "v19",
+    "name": "2000 Turbo",
+    "date": "2026-09-27",
+    "start": "16:10",
+    "buyin": 2000,
+    "addon": 1000,
+    "stack": 30000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
     "source": "auto",
     "verified": false
   },
