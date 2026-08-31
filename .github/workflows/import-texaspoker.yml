@@ -1,0 +1,207 @@
+name: てきさすほーるでむ 日程の自動取得
+
+# 店舗「てきさすほーるでむ。」(v16)の公式スケジュールページ(HTML・カレンダー形式)から
+# トーナメント日程を取得し、差分があるときだけ data.js をコミットする。
+# 詳細は tools/import-texaspoker.js のコメント、README「Texaspoker 自動取込」を参照。
+#
+# 対象は認証不要の公開HTML(Waitinglistの公開JSON APIとは違いHTMLスクレイピング)。
+# リングゲーム(キャッシュゲーム)営業日は取り込まない(大会名の語で判定・除外)。
+#
+# スクリプトは「取得失敗 / HTTP 200以外 / 要求した年月が反映されていない(構造変化) /
+# アンカー数と見出しの読み取り件数が不一致(パース崩壊) / 全月合わせて0件 /
+# 今日以降の件数の急減」のいずれかで、data.js を書き換えない。
+#
+# ============================================================
+# 【実行モード】手動実行は既定 dry-run / 定期実行は無条件で本番
+# ============================================================
+# 本番実行は不可逆(機械が最後に書いた値の控え texaspoker-write-state.json が前進し、
+# 人が直した項目の保護がその値を基準に働くようになる)。--dry-run は data.js への書き込みと
+# 状態ファイルの保存の両方より前に return するので、何度でもやり直せる。
+# そこで手動実行(workflow_dispatch)の既定を dry-run にし、本番反映は入力 dry_run の
+# チェックを外したときだけ行う(Instagram監視 monitor-instagram-apify.yml と同じ設計)。
+#
+# 定期実行(schedule)は入力を一切参照せず、無条件で本番実行する(schedule には inputs が
+# 渡らないため。判定を「明示的に false でなければ dry-run」にすると定期実行が永久に
+# dry-run になり、Actions が毎日グリーンのまま data.js が更新されない静かな固着になる)。
+#
+# ★★2026-09時点、この定期実行は無効(disabled_manually)にしてある★★
+#   新規の取込み経路(HTMLスクレイピング・正規表現による項目抽出)を、無人の早朝cronに
+#   いきなり乗せる前に、実データで --dry-run を確認してから有効化する
+#   (monitor-instagram-apify.yml の導入時と同じ手順)。マージ後、品質管理部・レビュー部の
+#   チェックを経て経営管理オフィスが有効化を判断する。
+#
+#   ▼ 初回の観測から有効化までの手順(monitor-instagram-apify.yml と同じ形)
+#     無効化中は workflow_dispatch も 422 で弾かれるため、有効化 → dry-run実行 → 完了待ち →
+#     無効化、を1コマンドで行う:
+#
+#       bash -c '
+#       WF=.github/workflows/import-texaspoker.yml
+#       cleanup() {
+#         trap - EXIT INT TERM HUP
+#         echo ""
+#         echo "--- 無効化に戻します ---"
+#         gh workflow disable "$WF" || echo "(disable が失敗しました。すでに無効なら正常)"
+#         gh workflow list --all | grep -i texaspoker || true
+#       }
+#       on_signal() { cleanup; exit 130; }
+#       trap cleanup EXIT
+#       trap on_signal INT TERM HUP
+#       gh workflow enable "$WF" || exit 1
+#       gh workflow run "$WF"
+#       sleep 15
+#       gh run watch "$(gh run list --workflow="$WF" --event workflow_dispatch --limit 1 --json databaseId --jq ".[0].databaseId")" --exit-status
+#       '
+#
+#     ログ先頭が「実行モード: DRY-RUN」であることを確認し、追加/除外(リング)/急減等の
+#     サマリを読んでから判断する。較正OKなら改めて `gh workflow enable` で有効化すること。
+
+on:
+  schedule:
+    # cronはUTC。21:40 UTC = 06:40 JST(Waitinglist取込み 06:23 JST の後にずらしてある)。
+    - cron: '40 21 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: >-
+          dry-run(書き込みなし)で実行する。ONのままなら取得とパースだけ行い、
+          data.js / texaspoker-write-state.json / venues/ / areas/ を一切書き換えない
+          (コミット・pushもしない)。本番反映したいときだけOFFにする。
+        type: boolean
+        required: false
+        default: true
+
+permissions:
+  contents: write
+
+# 同時実行を防ぐ(手動実行とcronが重なって競合するのを避ける)
+concurrency:
+  group: import-texaspoker
+  cancel-in-progress: false
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      # 【このジョブが dry-run になる条件はこの1箇所だけで決まる】
+      #   イベントが workflow_dispatch 以外(schedule等) … 入力を一切参照せず dry_run=false(本番)
+      #   イベントが workflow_dispatch … 入力が明示的に false のときだけ本番。既定・空・
+      #     想定外の値はすべて dry-run(monitor-instagram-apify.yml と同じ設計)
+      - name: 実行モードを判定する(手動実行の既定は dry-run / 定期実行は本番)
+        id: mode
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_DRY_RUN: ${{ github.event.inputs.dry_run }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            if [ "$INPUT_DRY_RUN" = "false" ]; then
+              dry_run=false
+            else
+              dry_run=true
+            fi
+          else
+            dry_run=false
+          fi
+          echo "dry_run=$dry_run" >> "$GITHUB_OUTPUT"
+          echo "イベント=$EVENT_NAME / 入力dry_run=${INPUT_DRY_RUN:-(なし)} / 判定=$dry_run"
+          if [ "$dry_run" = "true" ]; then
+            echo "::notice title=実行モード DRY-RUN::data.js / texaspoker-write-state.json / venues/ / areas/ は書き換えず、コミット・pushも行いません。"
+          elif [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            echo "::warning title=手動での本番実行::dry_run のチェックが外れています。差分があればコミット&pushします。"
+          else
+            echo "::notice title=実行モード 本番(定期実行)::差分があればコミット&pushします。"
+          fi
+
+      - name: リポジトリを取得
+        uses: actions/checkout@v4
+        with:
+          # 浅いクローンだと push 直前の `git pull --rebase` がマージベースを解決できないことがある。
+          fetch-depth: 0
+
+      - name: Node.js をセットアップ
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # 終了コード: 0=全店成功 / 2=一部の店だけ失敗(成功分は書込済み) / 1=何も書いていない
+      - name: てきさすほーるでむの日程を取得して data.js を更新
+        id: import
+        env:
+          DRY_RUN: ${{ steps.mode.outputs.dry_run }}
+        run: |
+          set +e
+          if [ "$DRY_RUN" = "true" ]; then
+            node tools/import-texaspoker.js --dry-run
+          else
+            node tools/import-texaspoker.js
+          fi
+          rc=$?
+          set -e
+          echo "rc=$rc" >> "$GITHUB_OUTPUT"
+          if [ "$rc" = "0" ] || [ "$rc" = "2" ]; then
+            exit 0
+          fi
+          exit "$rc"
+
+      # 壊れた data.js をコミットして本番サイトを白画面にしないための最終ゲート。
+      - name: 出力の妥当性を確認(日付書式を含む)
+        if: steps.mode.outputs.dry_run != 'true'
+        run: node tools/validate-data.js .
+
+      # 【dry-run の安全確認】--dry-run は1バイトも書かないはずなので実測で確かめる。
+      - name: 書き込みが起きていないことを確認(dry-runのみ)
+        if: steps.mode.outputs.dry_run != 'false'
+        run: |
+          if test -n "$(git status --porcelain)"; then
+            echo "::error title=dry-run なのに作業ツリーが変化::tools/import-texaspoker.js の --dry-run 分岐を確認してください。"
+            git status --porcelain
+            exit 1
+          fi
+          echo "作業ツリーに差分なし。dry-run が何も書き換えていないことを確認しました。"
+
+      - name: 差分があればコミット & プッシュ
+        if: steps.mode.outputs.dry_run == 'false'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          committed=0
+          if test -n "$(git status --porcelain)"; then
+            git add -A
+            git commit -m "chore: てきさすほーるでむの日程を自動取得 ($(TZ=Asia/Tokyo date +%Y-%m-%d))"
+            committed=1
+          else
+            echo "取込みによる差分なし。"
+          fi
+          git pull --rebase
+          if test "$(git rev-list --count "@{u}..HEAD")" = "0"; then
+            echo "rebase で自分のコミットが空になりました(同じ変更が既に main にあります)。amendは行いません。"
+            committed=0
+          fi
+          # 再生成・再検査は rebase の後(押す物そのものを検査するため)。
+          node tools/validate-data.js .
+          node tools/gen-venue-pages.js .
+          node tools/gen-venue-pages.js . --check
+          node tools/gen-area-pages.js .
+          node tools/gen-area-pages.js . --check
+          if test -n "$(git status --porcelain)"; then
+            git add -A
+            if test "$committed" = "1"; then
+              git commit --amend --no-edit
+            else
+              git commit -m "chore: 静的ページを data.js に追随させる(自動再生成) ($(TZ=Asia/Tokyo date +%Y-%m-%d))"
+              committed=1
+            fi
+          fi
+          if test "$committed" = "0"; then
+            echo "差分なし。プッシュしません。"
+            exit 0
+          fi
+          git push
+
+      # 一部店舗の取得に失敗していた場合、成功したぶんのコミット・pushが終わってから
+      # ジョブを赤くする(現状は対象1店のみなので、失敗=このジョブ全体が rc=1 になる想定だが、
+      # 将来店舗を増やしたときのために import-waitinglist.yml と同じ配線にしてある)。
+      - name: 一部店舗の取得に失敗していたらジョブを失敗させる
+        if: steps.import.outputs.rc == '2'
+        run: |
+          echo "::error::一部店舗の取得に失敗しました(成功した店のぶんは反映済み)。失敗した店舗名は取得ステップのエラー注記に出ています。"
+          exit 1

@@ -54,8 +54,8 @@ AdSense/PR枠が埋まるまでの間、自社アプリの導線を3か所に置
 | `jopt-data.js` | 大型イベント JOPT 2026 Fukuoka #01 のトーナメント・ストラクチャーデータ（約116KB）。**`#jopt` を開いたときにだけ動的読み込みされる**（全ページで読むには重いため）。件数（`index.html` の `JOPT_META.tournamentCount`）のみ二重管理で、ズレはデータ読み込み時に自動訂正される（会期は `big-events.js` 側が正） |
 | `nippon-series-data.js` | 大型イベント NIPPON SERIES FUKUOKA 2026 の全38イベント（データ行は42行＝MAIN EVENTが5フライト）。**`#nippon` を開いたときにだけ動的読み込みされる**。公式ページのHTMLからスクリプトで機械抽出したもので手打ちしていない。Fee・Prize は公式表記のまま（`+ 1,000` の内訳を言い換えない） |
 | `fukuoka-venues.json` | 実在店の調査結果（出典・注記付き。`data.js` の VENUES の原典） |
-| `waitinglist-write-state.json`<br>`instagram-write-state.json`<br>`venue-image-write-state.json` | **機械が最後に書いた値の控え**（`id` → そのとき書いたエントリ）。いまの `data.js` と1項目ずつ突き合わせて「人が直したか」を判定するために使う。**書き手ごとに別ファイル**（2つの日次ジョブが同じJSONを触ると `git pull --rebase` が衝突してジョブが落ちるため）。未来日ぶんだけを保持し、内容が変わらない実行では書き込まない。判定の規則・状態ファイルを失ったときの縮退は `tools/machine-write-state.js` のヘッダと下記「人が入力した値を機械が壊さない仕組み」 |
-| `auto-import-stores.json` | **自動取得（Waitinglist）の対象店リスト**。`tools/import-waitinglist.js` が `STORES` から生成する機械可読ファイル。**掲載管理コンソール（別リポジトリ `fukuoka-poker-admin`・ローカル専用）が読んで「この店は自動取得なので手入力不要」を出す**ためにある。中身は `STORES` を書き換えたときだけ変わる（生成日時などの毎回変わる値は入れない＝日次実行で無駄なコミットが増えない）。生成物だが `.gitignore` に入れずコミットする |
+| `waitinglist-write-state.json`<br>`instagram-write-state.json`<br>`venue-image-write-state.json`<br>`texaspoker-write-state.json` | **機械が最後に書いた値の控え**（`id` → そのとき書いたエントリ）。いまの `data.js` と1項目ずつ突き合わせて「人が直したか」を判定するために使う。**書き手ごとに別ファイル**（2つの日次ジョブが同じJSONを触ると `git pull --rebase` が衝突してジョブが落ちるため）。未来日ぶんだけを保持し、内容が変わらない実行では書き込まない。判定の規則・状態ファイルを失ったときの縮退は `tools/machine-write-state.js` のヘッダと下記「人が入力した値を機械が壊さない仕組み」 |
+| `auto-import-stores.json` | **自動取得の対象店リスト（複数の取込み経路を束ねる）**。`tools/import-waitinglist.js`（Waitinglist・`source:'waitinglist'`）と `tools/import-texaspoker.js`（てきさすほーるでむ。v16・`source:'texaspoker'`）が**共同編集する**機械可読ファイル。各スクリプトは自分の担当店（`venueId`）ぶんの行だけを自分の `STORES` から作り直し、他スクリプトが書いた行はそのまま残す（`mergeOwnIntoStoreList`。片方の実行がもう片方の行を消さないための設計）。**掲載管理コンソール（別リポジトリ `fukuoka-poker-admin`・ローカル専用）が読んで「この店は自動取得なので手入力不要」を出す**ためにある。中身は各スクリプトの `STORES` を書き換えたときだけ変わる（生成日時などの毎回変わる値は入れない＝日次実行で無駄なコミットが増えない）。生成物だが `.gitignore` に入れずコミットする |
 | `events/<slug>/index.html` | 大型イベント個別の**静的ページ**（検索流入用）。SPAのハッシュURL(`#jopt`等)はインデックスされないため、実URL(`/events/jopt-2026-fukuoka-01/` 等)でクローラブルな全日程ページを別途用意する。Event構造化データ・canonical付き |
 | `venues/<slug>/index.html` | 店舗個別の**静的ページ**（検索流入用）。SPAのハッシュURL(`#venue/v41`)は独立URLとして扱われずインデックスされないため、実URL(`/venues/poker-studio-deep-blue-yukuhashi/` 等)でクローラブルな店舗ページを別途用意する。狙いは「行橋 ポーカー」「折尾 ポーカー」のようにトップ1枚では取りにいけない地域×店名のロングテール。LocalBusiness構造化データ・canonical付き |
 | `tools/gen-event-pages.js` | 上記イベント静的ページと**トップの恒久リンク行（`index.html` の `#evtLinks` 1行）**の**生成スクリプト**。データは `jopt-data.js` と `index.html` の `const WJPT` からそのまま読み込む（数値を手打ちしない=転記ミス防止）。実行: `node tools/gen-event-pages.js <リポジトリのパス>`（`--check` を付けると書き込まずに一致確認だけ行い、ズレていれば非ゼロ終了）。**JOPT等のデータや `big-events.js` を更新したら必ず再実行すること**（静的ページはデータのスナップショットのため） |
@@ -547,7 +547,7 @@ v28: PR #48 → 社長確認により同様に判明・2026-09-01に修正）。
 | ソース | 自動化 | 方法 |
 |---|---|---|
 | **Waitinglist（DMMポーカー）掲載店** | ◎ **自動（稼働中）** | 認証不要の公開JSON APIを毎日取得 → `data.js` に upsert（下記） |
-| 店舗公式サイト / Googleビジネス | ◎ 自動 | 定期クロール → HTML/構造化データをパース |
+| 店舗公式サイト / Googleビジネス | ◎ **自動（v16「てきさすほーるでむ。」で稼働中）** | 公式スケジュールページ（HTML・Shift_JIS）を定期クロール → カレンダーをパース（下記「Texaspoker 自動取込」） |
 | X（旧Twitter） | △ 条件付き | API有料枠 or 公開タイムラインの限定取得。店舗アカウントを購読 |
 | Instagram | ◎ **自動（稼働中・Apify経由）** | ログイン壁＋規約のため自社アカウントでの巡回は中止（下記参照）。**正規の第三者サービスApify（pay-per-result）で6店舗の投稿を定期取得（JST 25日〜翌10日は毎日／期間外は週1）** → 新着のスケジュール告知をVisionで抽出 → `data.js` に upsert（下記） |
 | **公式LINE 配信** | ✕ **不可** | 他店のブロードキャストを外部取得する公開手段は存在しない |
@@ -645,12 +645,36 @@ GET https://api.waitinglist-poker.com/v1/game-schedules/tournament?storeId=<stor
   - 焼き込む期間が店舗別（`venueRange()`）になったので、**日次で書き換わるのは `data.js` と取込対象店のページだけ**。実測（v3に1件追加 / v3の9月分が消える / 2027年3月の大会が1件載る の3シナリオすべて）で**2ファイル**（`data.js` + `venues/m-holdem-nakasu/index.html`）に収まり、他店のページと `sitemap.xml` は動かない。**対象店を増やすとページの枚数もそのぶん増える**（`STORES` を触ったらこの記述も見直すこと）
     - ただし**定期開催しか無い2店（v5/v41）だけは構造的な保証ではない**。この取込が過去日を作らない・触らないので結果的に動かないだけで、依存関係がある（上記「`data.js` を更新したら」の⚠を参照）
   - 全店共通の期間だった頃は、同じ3シナリオが **2 / 36 / 36 ファイル**、`venues/` 全体が 1.1MB → 1.4MB（`casino-bar-leje-hakata` 単体で 61KB → 142KB）まで膨らんでいた。無人の日次pushでこれをやると `venues/` を触る他の作業と競合が常態化する
-- **自動取得の対象店リストを出力する**: 実行のたびに `STORES` の内容を `auto-import-stores.json`（リポジトリ直下）に書き出す。**掲載管理コンソール（別リポジトリ `fukuoka-poker-admin`・ローカル専用）が読んで「この店は自動取得なので手入力不要」を出す**ためのもの。コンソール側がこのスクリプトの JavaScript をパースしなくて済むようにしてある。
-  - 中身は `STORES` から取れる値だけで、**生成日時などの毎回変わる値は入れない**。入れると日程に変化が無い日でもこのファイルだけが差分になり、日次実行のたびに無意味なコミットが増える（ワークフローの差分判定は `git status --porcelain` なので1バイトでも変われば必ずコミットされる）
-  - `STORES` を編集したら `node tools/import-waitinglist.js` を実行して**このファイルも一緒にコミットする**。忘れても翌朝の日次実行で更新される。`--dry-run` を付けると書き込まずに「ズレているか」だけを報告する
+- **自動取得の対象店リストを出力する**: 実行のたびに `STORES` の内容を `auto-import-stores.json`（リポジトリ直下）に**合流**させる。**掲載管理コンソール（別リポジトリ `fukuoka-poker-admin`・ローカル専用）が読んで「この店は自動取得なので手入力不要」を出す**ためのもの。コンソール側がこのスクリプトの JavaScript をパースしなくて済むようにしてある。
+  - **2026-09-01〜: `tools/import-texaspoker.js`（v16）と共同編集するファイルになった**。各スクリプトは`このファイルを丸ごと上書きしない` — 自分の担当店（`venueId`）ぶんの行だけを自分の `STORES` から作り直し、それ以外の行（もう一方のスクリプトが書いた行）はそのまま残す（`writeStoreList` / `mergeOwnIntoStoreList`。単純な「`STORES` から毎回作り直して上書き」だと、もう片方のスクリプトが書いた行が実行のたびに消えてしまうため）。並び順は実行したスクリプトに関わらず `venueId` の数値昇順に揃えてある（実行順で並びが変わると中身が同じでも差分が出るため）
+  - 中身は `STORES` から取れる値だけで、**生成日時などの毎回変わる値は入れない**。入れると日程に変化が無い日でもこのファイルだけが差分になり、日次実行のたびに無意味なコミットが増える（ワークフローの差分判定は `git status --porcelain` なので1バイトでも変われば必ずコミットされる）。`generatedBy` の文言は2つのスクリプトで完全に一致させてある（食い違うと、どちらが最後に実行したかでこのフィールドだけ揺れて同じ理由で無駄なコミットが増える）
+  - `STORES` を編集したら該当スクリプト（`node tools/import-waitinglist.js` または `node tools/import-texaspoker.js`）を実行して**このファイルも一緒にコミットする**。忘れても翌朝の日次実行で更新される。`--dry-run` を付けると書き込まずに「ズレているか」だけを報告する
   - 途中で異常を検知して中止した実行では書き換えない（`data.js` と同じく、失敗した実行は何も残さない）
-  - **公開ウェブルートに置いているのは意図的**（`https://fukuokapoker.com/auto-import-stores.json` として誰でも取得できる）。掲載管理コンソールは別リポジトリのローカル専用ツールで、公開サイトのリポジトリを手元に持っているとは限らないため、HTTPで読める場所に置く必要がある。中身は「どの店の日程を Waitinglist の公開APIから取っているか」だけで、**認証情報も非公開情報も含まない**（`displayId` は同APIから誰でも辿れる公開値）。検索結果に出す意味は無いので `robots.txt` で `Disallow: /auto-import-stores.json` にしてある
+  - **公開ウェブルートに置いているのは意図的**（`https://fukuokapoker.com/auto-import-stores.json` として誰でも取得できる）。掲載管理コンソールは別リポジトリのローカル専用ツールで、公開サイトのリポジトリを手元に持っているとは限らないため、HTTPで読める場所に置く必要がある。中身は「どの店の日程をどの取込み経路（Waitinglistの公開API／Texaspokerの公開カレンダーページ）から取っているか」だけで、**認証情報も非公開情報も含まない**（`displayId` は同APIから誰でも辿れる公開値）。検索結果に出す意味は無いので `robots.txt` で `Disallow: /auto-import-stores.json` にしてある
 - **⚠ 運用メモ**: GitHub Actions のスケジュール実行は、**リポジトリが60日間まったく活動しないと自動的に無効化される**（GitHubの仕様）。無効化された場合はActionsの画面から手動で再有効化する。このワークフロー自身が差分をコミットするため通常は活動が途切れないが、日程に変化が無い期間が続くとコミットが発生しない点に注意
+
+### Texaspoker 自動取込（`tools/import-texaspoker.js`）
+
+店舗「てきさすほーるでむ。」(`v16`) は、月1回・人が公式サイトを見て `data.js` に転記する**完全手動運用**だった。公式サイトに月ごとのカレンダー形式のスケジュールページ（認証不要・公開）があるため、これをスクレイピングして自動化した。
+
+```
+GET https://texaspoker.pro/sc/sche3.cgi?year=<year>&mon=<mon>
+    User-Agent: fukuokapoker.com-bot/1.0 (+https://fukuokapoker.com/contact.html)
+→ Shift_JIS のHTML（カレンダーグリッド + 大会ごとの詳細セクション）
+```
+
+Waitinglist のような構造化JSON APIが無いため、HTMLをパースして取り出す。**upsertの安全設計は自前で複製せず、`tools/tournament-merge.js` の `mergeStore` をそのまま使う**（`source: 'auto'`。取得結果=その時点の完全な今後のスケジュール、という前提が Waitinglist と同じ取得元のため。`import-waitinglist.js` が自前の `mergeStore` を持つのは店舗数が多く複製の歴史的経緯があったためで、今回は新規実装なので重複を増やさない）。
+
+- **Shift_JIS のデコード**: Node 22（フルICUビルド）の `TextDecoder('shift_jis')` が追加パッケージなしで変換できる（このリポジトリに `package.json` は無く npm 依存を持たない方針のため、`iconv-lite` 等は導入していない）。
+- **リングゲーム（キャッシュゲーム）の除外**: このサイトのカレンダーは「トーナメント」と「リングゲーム営業日」を区別せず同じマス目に並べる（実測で確認できた表記は `ノーレーキリングゲーム`）。`VENUES` 側には既に `v16.ring: true` / `ringNote`（掲載管理コンソール `fukuoka-poker-admin/admin-state.json` 由来）として「リング営業もある店」の注記があるため、`TOURNAMENTS`（トーナメントだけを載せる配列）からは**大会名がリング/キャッシュゲームを指す語を含む行を除外**する（`isRingRow`。語彙は `tools/monitor-instagram-apify.js` の `isNonTournamentFormat` と同じものをローカルに複製 — 複製している理由は無関係な取込み経路同士を結合させないため）。店休日（`店休日`とだけ書かれ、リンクを持たないマス）はそもそも大会詳細セクションが存在しないため自然に対象外になる。
+- **本文からの項目抽出**: 大会詳細セクションの本文は店が書いた自由文なので、開始時刻・参加費・アドオン・初期スタック・リエントリー可否は正規表現で読み取れる範囲だけ読み取り、**読み取れない項目は null（記法の翻訳はしない）**。`guarantee` / `prize` は Waitinglist と同じ理由（自由文からの推測は誤りの温床）で常に null、`tags` も名前からの推測をせず常に空配列。リエントリー可否の判定で実測時に見つけた誤判定（「無し」の射程の取り違え）と、その修正の詳細は `tools/import-texaspoker.js` の該当関数のコメント・`tools/import-texaspoker.test.js` を参照。
+- **id**: サイト自身が振るアンカー番号を使い `txp-<venueId>-<anchorId>` とする（`wl-<ULID>` と同じ考え方。大会名が多少変わっても同じ大会として追跡できる）。
+- **取得範囲**: 当月 + 翌々月まで（計3ヶ月・3リクエスト）。実測では当月・前月は必ず全日程が公開されているが、翌月以降は未公開のことが多い（空のカレンダーが返るだけでエラーにはならない）。
+- **安全弁**: fetch失敗 / HTTP 200以外 / **ページが要求した年月を反映していない**（サイトの構造変化・不正な `mon` の丸め込みの検知） / **アンカー数と見出しを読み取れた件数が不一致**（HTML構造が変わって一部だけパース失敗＝黙って捨てない） / 取得した全月を合わせても0件 / 今日以降の件数の急減（`--allow-shrink` で解除）— いずれかが起きたらこの店舗のデータを一切書き換えない。書き込み直前の自己チェック（`tools/schedule-write-guard.js`）・人の行の突き合わせ（`tools/machine-write-state.js`）は Waitinglist と共通。
+- **状態管理**: 機械が最後に書いた値の控えは `texaspoker-write-state.json`（書き手ごとにファイルを分ける理由は Waitinglist と同じ）。
+- **対象店リスト**: `auto-import-stores.json` に `venueId: v16 / source: 'texaspoker'` を書き込む。このファイルは `tools/import-waitinglist.js` と**共同編集**する（丸ごと上書きせず、自分の担当店の行だけ作り直す。詳細は上記「自動取得の対象店リストを出力する」）。**この登録が抜けると `recurring-dedupe.js` の `auditAutoStores()` が警告する**（`source:'auto'` の行があるのに対象店リストに載っていない状態を検知する監査。テストは `node tools/recurring-dedupe.test.js`）。
+- **実行**: 手動実行（`workflow_dispatch`。既定 `--dry-run`）のみで導入し、定期実行（`schedule`）は入れてあるが**マージ直後は無効化**する（Instagram監視の初回導入と同じ手順。有効化は品質管理部・レビュー部のチェック後に判断する）。
+- 使い方: `node tools/import-texaspoker.js`（`--dry-run` / `--allow-shrink` あり）。テスト: `node tools/import-texaspoker.test.js`
 
 ### Instagram自動巡回は中止し、店舗からの画像直送＋Vision取込みに切り替えた(2026-07-31)
 
