@@ -425,7 +425,9 @@ CSS `scroll-snap` だけで作ってあり、レジストリに大会を足せ�
 2. `index.html` に配色（`.evtBanner.ev-xxx` の CSS 変数）と専用ページ（`renderXxxPage()` / `parseXxxHash()` /
    `route()` の分岐）を足す。`route()` のページ切り替えは `showPage()` に集約してあるので、
    `PAGE_IDS` / `HBAR_IDS` / `HEADER_MODES` にも id を足すこと。
-   実装例は情報量の少ない順に **FST（`#fst`・インラインデータ）→ NIPPON SERIES（`#nippon`・別ファイル遅延ロード）**
+   実装例は **NIPPON SERIES（`#nippon`）→ FST（`#fst`）**。どちらも会期・概要は `big-events.js`/`index.html`
+   のインラインデータ、全日程(件数の多いデータ本体)は別ファイル(`nippon-series-data.js`/`fst-schedule-data.js`)
+   に切り出して `#<id>` を開いたときにだけ遅延ロードする、という同じ作法を踏襲している
 3. バナー画像を `img/<id>/` に置く（**1024×412**。既存バナーと並べて違和感のないトーン・別配色にする）。
    公式素材が手元にない場合は当サイト制作のSVGバナーを作る（FST・NIPPON SERIESがその例）。
    静的ページを作る場合は OGP 用に同じ絵の `.jpg` も置く（SVGはOGPで表示されないため）
@@ -434,7 +436,8 @@ CSS `scroll-snap` だけで作ってあり、レジストリに大会を足せ�
      検索流入に直結するので取りこぼしたくないが、推測で書くと誤情報になる。確認できないなら**書かない**。
      公式に表記ゆれ（`FST 5.0` / `FST5.0`）がある場合は読みやすい方を主表記にし、本文中で併記して拾う
 5. 個別トーナメントの一覧が出そろっていれば `tools/gen-event-pages.js` に静的ページ生成を足し、
-   `featureUrl` を `/events/<slug>/` に差し替える（SEO資産にする）。未発表なら `/#<id>` のままでよい（FSTがその状態）
+   `featureUrl` を `/events/<slug>/` に差し替える（SEO資産にする）。未発表なら `/#<id>` のままでよい
+   （2026-09-01時点でこの状態にある大会は無い。FSTも同日に全日程が判明し `/events/fst-2026-fukuoka/` に切り替え済み）
 6. **`node tools/gen-event-pages.js <リポジトリのパス>` を実行する（静的ページを作らない大会でも必ず）。**
    トップと静的ページの恒久リンク行が両方まとめて更新される。実行後は `--check` を付けてもう一度走らせ、
    「生成物はすべて最新」と出ることを確認する

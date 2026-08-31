@@ -431,9 +431,10 @@
   .fst-sub a{color:var(--fst-txt);font-weight:700;text-decoration:underline}
   .fst-venue{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:12px 14px;margin:0 0 14px;font-size:.85em;line-height:1.7}
   .fst-venue b{color:var(--fst-txt)}
-  /* 未発表の情報がある旨の告知(推測で埋めず「未発表」と明示するための枠) */
-  .fst-tba{font-size:.84em;line-height:1.7;color:#6d2530;background:#fdeaee;border:1px solid #f6c3cd;border-radius:10px;padding:11px 13px;margin:0 2px 14px}
-  .fst-tba b{color:#8e1524}
+  /* お知らせ枠(色は .tba/.vp-fst と同じ落ち着いた水色に揃える。以前は「未発表」の告知だったが、
+     全日程判明後は用途が変わったため fst-tba → fst-info に改称した) */
+  .fst-info{font-size:.84em;line-height:1.7;color:#26424e;background:#eef6f8;border:1px solid #cfe3e9;border-radius:10px;padding:11px 13px;margin:0 2px 14px}
+  .fst-info b{color:#14333d}
   .fst-sect{font-weight:800;font-size:.95em;color:var(--fst-txt);margin:20px 2px 8px}
   .fst-ecard{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:13px 15px;margin-bottom:10px}
   .fst-ecard h3{font-size:1.02em;font-weight:800;color:var(--txt)}
@@ -443,6 +444,25 @@
   .fst-ecard .fe-v{flex:1;min-width:0;overflow-wrap:anywhere}
   .fst-links{font-size:.86em;line-height:2;margin:4px 2px 6px}
   .fst-links a{color:var(--fst-txt);font-weight:700;text-decoration:underline}
+  /* 全日程(タイムスケジュール)。見た目・構造は NIPPON SERIES の .ns-day/.ns-tcard に揃え、
+     配色だけ FST の色(--fst系)に差し替えている(同じ役割のUIを2通りの作法で作らない)。 */
+  .fst-days{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 16px}
+  .fst-day{flex:1 1 18%;min-width:56px;padding:9px 2px 8px;border-radius:12px;border:1px solid var(--bor);background:var(--sur);text-align:center;cursor:pointer;transition:.13s;font-family:inherit}
+  .fst-day .fd-d{display:block;font-size:1.05em;font-weight:800;color:var(--txt);line-height:1.2}
+  .fst-day .fd-w{display:block;font-size:.62em;color:var(--mut);font-weight:700;margin-top:2px}
+  .fst-day.on{background:linear-gradient(135deg,#1a2455,#070c22);border-color:var(--fst)}
+  .fst-day.on .fd-d{color:var(--fst2)}
+  .fst-day.on .fd-w{color:#ffb3bd}
+  .fst-tcard{display:flex;align-items:stretch;gap:0;background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);margin-bottom:10px;overflow:hidden}
+  .fst-tcard .ft-no{flex-shrink:0;width:52px;background:linear-gradient(160deg,#1a2455,#070c22);color:#fff;font-weight:800;font-size:.86em;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;line-height:1.25}
+  .fst-tcard .ft-no span{display:block;font-size:.62em;font-weight:700;color:var(--fst2);letter-spacing:.02em}
+  .fst-tcard .ft-body{flex:1;min-width:0;padding:11px 13px}
+  .fst-tcard .ft-name{font-size:.98em;font-weight:800;color:var(--txt);overflow-wrap:anywhere}
+  .fst-tcard .ft-badge{display:inline-block;background:#eef1fb;border:1px solid #ccd6f5;color:#33409e;font-size:.72em;font-weight:700;padding:1px 6px;border-radius:8px;margin-right:5px;vertical-align:1px}
+  .fst-tcard .ft-meta{font-size:.8em;color:var(--mut);margin-top:3px;display:flex;flex-wrap:wrap;gap:4px 12px}
+  .fst-tcard .ft-meta b{color:var(--fst-txt);font-weight:800}
+  .fst-tcard .ft-meta .ft-tbd{color:#8e1524;font-weight:700}
+  .fst-sched-note{font-size:.78em;color:var(--mut);line-height:1.7;margin:-6px 2px 14px}
 
   /* ===== NIPPON SERIES FUKUOKA 2026 大型イベント 2026/8/11-16 福岡・渡辺通 ===== */
   /* アクセントは赤。WJPT(ゴールド)・JOPT(ティール)・FST(濃紺)とは配色で区別する。 */
@@ -1499,7 +1519,12 @@
   }
 
   // ===== FST (FUKUOKA SUPER TOURNAMENT) 専用ページ =====
-  // 出典: 主催者(株式会社FST)の公式告知。2026-07-29時点で判明している内容だけを掲載する。
+  // 出典: 主催者(株式会社FST)の公式告知。判明している内容だけを掲載する。
+  // 2026-07-29時点: 会期・会場・MAIN EVENT/CHAMPIONSHIPの概要(下記 events[])を確認。
+  // 2026-09-01追記: 主催者公式Linktree(https://linktr.ee/fukuokasupertounament)に掲載のPDF
+  //   「EVENT SCHEDULE 2026.09.19-23」で、メイン会場(ホテルニューオータニ博多)の全56トーナメントの
+  //   タイムスケジュールを確認。社長が2026-09-01に書き起こしを提供。詳細は下の const FST 直前のコメント、
+  //   および実データ(fst-schedule-data.js)冒頭のコメントを参照。
   //
   // ■ 大会のナンバリングは「FST 5.0」。主催者公式X(@fst_202408)の告知2件で確認した(2026-07-29確認)。
   //   ① https://x.com/fst_202408/status/2079519350244225267 (2026-07-21)
@@ -1520,8 +1545,13 @@
   //   「FST 5.0（…／公式表記は「FST 5.0」「FST5.0」）」のように循環的で読みにくくなるため。
   //   表記ゆれで別ページを作ったり、あちこちに乱発したりはしない。
   //
-  // 個別トーナメントの本数・ストラクチャー・レイトレジ時刻等は
-  // 一次情報で確認できていないため書かない(推測を載せない)。発表され次第ここに追記する。
+  // 個別トーナメントのブラインドストラクチャーは一次情報で確認できていないため書かない(推測を載せない)。
+  //
+  // ■ 全日程(タイムスケジュール): 主催者公式Linktree(https://linktr.ee/fukuokasupertounament)に
+  //   掲載のPDF「EVENT SCHEDULE 2026.09.19-23」(メイン会場=ホテルニューオータニ博多の全56トーナメント)
+  //   を社長が2026-09-01に確認・提供。データ本体は別ファイル fst-schedule-data.js に切り出してあり、
+  //   #fst を開いたときにだけ動的読み込みされる(loadFstScheduleData。NIPPON SERIESと同じ方式)。
+  //   同ファイル冒頭のコメントに、金額欄が読み取れなかった行の扱い等の注意点をまとめてある。
   const FST = {
     edition: 'FST 5.0',
     name: 'FST 5.0（FUKUOKA SUPER TOURNAMENT）',
@@ -1535,7 +1565,7 @@
     instagram: 'https://www.instagram.com/fst_fukuoka/',
     // 公式Xのプロフィールからリンクされている公式Linktree(URLのスペルは公式のまま。tounament は原文)
     linktree: 'https://linktr.ee/fukuokasupertounament',
-    asOf: '2026年7月29日',
+    asOf: '2026年9月1日',
     events: [
       { name:'MAIN EVENT', prize:'¥15,000,000',
         entry:'¥50,000 ／ FSTチケット2枚 ／ ¥25,000＋FSTチケット1枚',
@@ -1553,6 +1583,75 @@
       .filter(t => (t.tags||[]).includes('FST') && t.date >= localToday)
       .sort((a,b)=> a.date.localeCompare(b.date) || startKey(a).localeCompare(startKey(b)))
       .slice(0, limit || 20);
+  }
+
+  // ===== FST 全日程(タイムスケジュール) =====
+  // 出典・注意点は fst-schedule-data.js 冒頭のコメントを参照。
+  // 全56トーナメントのデータ(fst-schedule-data.js)は #fst を開いたときにだけ読み込む(NIPPON SERIESと同じ方式)。
+  let fstScheduleData = null;
+  let fstScheduleError = false;
+  function loadFstScheduleData(){
+    return loadEventData(
+      'fst-schedule-data.js', 'FST_SCHEDULE_DATA',
+      d => !!d && Array.isArray(d.tournaments) && d.tournaments.length > 0 && Array.isArray(d.days) && d.days.length > 0
+    ).then(d => {
+      fstScheduleData = d;
+      fstScheduleError = false;
+      if (!d.days.includes(fstScheduleDay)){
+        fstScheduleDay = d.days.includes(localTodayGlobal()) ? localTodayGlobal() : d.days[0];
+      }
+      return d;
+    }).catch(err => { fstScheduleError = true; throw err; });
+  }
+  // 会期そのものは big-events.js のレジストリ(FST.days)から既に分かっているため、
+  // データ読み込み前でも日付タブの初期値だけは決められる(nipponDay と同じ考え方)。
+  let fstScheduleDay = FST.days.includes(localTodayGlobal()) ? localTodayGlobal() : FST.days[0];
+
+  function fstMoney(n){ return '¥' + Number(n).toLocaleString('ja-JP'); }
+
+  function fstScheduleCards(tournaments, day){
+    return tournaments.filter(t => t.day === day).map(t => {
+      const badge = t.series ? `<span class="ft-badge">[${escHtml(t.series)}]</span>` : '';
+      // entry が null の行はPDF側でエントリー欄が数値ではなくアイコン/バッジ表記だった行。
+      // 金額を推測で埋めず、「読み取れなかった」ことが分かる表現にする(fst-schedule-data.js 注1)。
+      const entryHtml = (t.entry === null)
+        ? `エントリー <span class="ft-tbd">PDF未記載（本ページのMain Event/Championship概要をご確認ください）</span>`
+        : `エントリー <b>${escHtml(fstMoney(t.entry))}</b>`;
+      return `<div class="fst-tcard">
+        <div class="ft-no">${escHtml(t.no)}<span>No.</span></div>
+        <div class="ft-body">
+          <div class="ft-name">${badge}${escHtml(t.name)}</div>
+          <div class="ft-meta"><span>START <b>${escHtml(t.start)}</b></span><span>CLOSE <b>${escHtml(t.close)}</b></span><span>${entryHtml}</span></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function fstScheduleDayTabs(days, current){
+    return days.map(d => {
+      const dt = iso(d);
+      const on = d === current ? ' on' : '';
+      const label = d === localToday ? '本日' : WD[dt.getDay()] + '曜';
+      return `<button type="button" class="fst-day${on}" data-fday="${d}"><span class="fd-d">${dt.getMonth()+1}/${dt.getDate()}</span><span class="fd-w">${label}</span></button>`;
+    }).join('');
+  }
+
+  // 全日程セクションの中身だけを返す(読み込み中・失敗時も含む)。renderFstPage() から呼ぶ。
+  function fstScheduleSectionHtml(){
+    if (fstScheduleData){
+      const days = fstScheduleData.days;
+      if (!days.includes(fstScheduleDay)){
+        fstScheduleDay = days.includes(localTodayGlobal()) ? localTodayGlobal() : days[0];
+      }
+      return `
+        <div class="fst-days">${fstScheduleDayTabs(days, fstScheduleDay)}</div>
+        <div class="fst-sched-note">※CLOSE欄が「-」の回はレイトレジ無し(最後まで続行)です。※［EC］［F100］［XPT］は公式PDFのTOURNAMENT列に付いていたバッジ表記をそのまま掲載しています。正式名称・詳細は当サイトでは確認できていません。</div>
+        <div id="fst-schedule-list">${fstScheduleCards(fstScheduleData.tournaments, fstScheduleDay)}</div>`;
+    }
+    if (fstScheduleError){
+      return '<div class="empty">全日程を読み込めませんでした。<br>通信環境をご確認のうえ、時間をおいて再度お試しください。</div>';
+    }
+    return '<div class="jopt-loading">読み込み中…</div>';
   }
 
   function renderFstPage(){
@@ -1584,7 +1683,7 @@
       <a class="fst-top${archived?' is-archived':''}" href="${FST.x}" target="_blank" rel="noopener"><img src="${FST.banner}" alt="${FST.name} ${period} ${FST.venue}"></a>
       <p class="fst-sub">${FST.name}（2026年9/19〜9/23・${FST.venue}）。「${FST.catchCopy}」を掲げた怒涛の5日間開催。${archived
         ? `以下は開催当時に公開されていた情報の記録です。`
-        : `現時点で公表されているのは MAIN EVENT と CHAMPIONSHIP の概要のみです。最新情報は<a href="${FST.x}" target="_blank" rel="noopener">公式X（@fst_202408）</a>をご確認ください。`}</p>
+        : `MAIN EVENT・CHAMPIONSHIPの概要に加え、メイン会場で行われる全日程(タイムスケジュール)も掲載しています。最新情報は<a href="${FST.x}" target="_blank" rel="noopener">公式X（@fst_202408）</a>をご確認ください。`}</p>
       <div class="evt-disclaimer">当サイトはFSTの主催者・公式媒体ではありません。公開情報をもとに当サイトが独自に集約した<b>非公式のまとめ</b>です。ページ内のバナーは当サイトが作成したもので、ロゴ・大会名等の権利は主催者に帰属します。掲載内容は<b>${FST.asOf}時点</b>の公式告知にもとづきますが、当サイトによる転記の誤りが含まれる可能性があります。${archived?'イベント終了後は内容を更新していません。':'参加前に必ず公式情報をご確認ください。'}</div>
       <div class="fst-venue">
         <b>大会名</b>　${FST.edition}（FUKUOKA SUPER TOURNAMENT）<br>
@@ -1598,9 +1697,12 @@
            (同じ行に FST 5.0 が何度も出ると循環的で読みにくいため)。この一文を消すと
            「FST5.0」がHTMLから消えて未スペース検索を取りこぼすので、消すなら代替を用意すること。 -->
       <p class="fst-sub" style="margin-top:-8px">※ 公式では「FST5.0」（スペースなし）とも表記されます。</p>
-      ${archived ? '' : `<div class="fst-tba"><b>個別トーナメントの詳細は未発表です。</b>タイムスケジュール・ストラクチャー・レイトレジ締切・サイドイベントの本数などは公表され次第、このページに掲載します。</div>`}
+      ${archived ? '' : `<div class="fst-info"><b>${FST.asOf}時点で、メイン会場の全日程(タイムスケジュール)が判明しました。</b>ブラインドストラクチャー等の詳細は引き続き公式から発表されていません。発表され次第、このページに掲載します。</div>`}
       <div class="fst-sect">発表済みのトーナメント</div>
       ${cards}
+      <div class="fst-sect">全日程（タイムスケジュール）</div>
+      <p class="fst-sub">メイン会場（${FST.venue}）で行われる全トーナメントのSTART・CLOSE・エントリーです。出典は主催者公式Linktreeに掲載のPDF「EVENT SCHEDULE 2026.09.19-23」（${FST.asOf}時点）。</p>
+      <div id="fst-schedule-section">${fstScheduleSectionHtml()}</div>
       <div class="fst-links">
         ▶ <a href="${FST.x}" target="_blank" rel="noopener">公式X（@fst_202408）</a>　／　<a href="${FST.linktree}" target="_blank" rel="noopener">公式Linktree</a>　／　<a href="${FST.instagram}" target="_blank" rel="noopener">公式Instagram</a>
       </div>
@@ -1608,6 +1710,10 @@
       <p class="fst-sub">当サイトに登録されている、県内各店のFSTサテライト(チケット獲得トーナメント)の直近の開催予定です。開催内容は変更される場合があるため、参加前に各店舗の公式情報をご確認ください。</p>
       ${satHtml}
     `;
+    // NIPPON SERIESの .ns-day と同じ方式(タブを押したら現在日を更新してページ全体を描き直す)。
+    page.querySelectorAll('.fst-day').forEach(b => b.addEventListener('click', () => {
+      fstScheduleDay = b.dataset.fday; renderFstPage(); window.scrollTo({top:0,behavior:'instant'});
+    }));
   }
 
   function parseFstHash(){
@@ -1765,6 +1871,15 @@
       document.title = 'FST 5.0（FUKUOKA SUPER TOURNAMENT 2026 福岡 9/19〜9/23）日程 | ふくおかポーカーナビ';
       window.scrollTo(0,0);
       sendPageView();
+      // 全日程データ(fst-schedule-data.js)は初回アクセス時のみ読み込む(2回目以降はキャッシュ済み)。
+      // MAIN EVENT/CHAMPIONSHIPの概要等、ページの他の部分は const FST から即描画済みなので、
+      // ここでは全日程セクションだけを後から描き直す(NIPPON SERIESと違いページ全体を待たせない)。
+      if (!fstScheduleData){
+        const requestedHash = location.hash;
+        loadFstScheduleData()
+          .then(() => { if (location.hash === requestedHash) renderFstPage(); })
+          .catch(() => { if (location.hash === requestedHash) renderFstPage(); });
+      }
       return;
     }
     if (majors){
