@@ -1,11 +1,16 @@
 {
-  "generatedBy": "tools/import-waitinglist.js",
+  "generatedBy": "複数の自動取込スクリプト(tools/import-waitinglist.js, tools/import-texaspoker.js)がそれぞれの担当店ぶんをSTORESから生成",
   "stores": [
     {
       "venueId": "v3",
       "displayId": "4018492",
       "label": "m HOLD'EM 中洲",
       "source": "waitinglist"
+    },
+    {
+      "venueId": "v16",
+      "label": "てきさすほーるでむ。",
+      "source": "texaspoker"
     },
     {
       "venueId": "v19",

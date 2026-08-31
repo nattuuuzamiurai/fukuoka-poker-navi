@@ -369,9 +369,43 @@ function writeDataJs(file, tournaments) {
 }
 
 // ---------- 自動取得の対象店リスト(掲載管理コンソール向け) ----------
+//
+// 【2026-09-01 追記: 複数の取込みスクリプトが同じファイルを共同編集する】
+//   `auto-import-stores.json` は当初このスクリプト専用だったが、`tools/import-texaspoker.js`
+//   (v16)が同じファイルに自分の担当店を書き込む必要が生じた。単純に「STORES から作り直して
+//   丸ごと上書き」を続けると、片方が実行されるたびにもう片方が書いた行が消える。
+//   そこで【自分の担当店(venueId)の行だけを作り直し、それ以外の行(=他スクリプトが書いた行)は
+//   そのまま残す】マージ方式にした。`GENERATED_BY` / `venueSortKey` / `mergeOwnIntoStoreList` は
+//   `tools/import-texaspoker.js` に同じ内容を複製してある(このリポジトリの convention どおり、
+//   取込み経路どうしを require で結合させないため)。**複製した3つは意味的に同一でなければ
+//   ならない** — 特に `GENERATED_BY` の文字列が2つのスクリプトで食い違うと、日程に変化が無い日
+//   でもどちらが最後に実行したかで `auto-import-stores.json` の中身が揺れ、無意味なコミットが
+//   増える。どちらかを変更したらもう片方も同じ文言に直すこと。
+
+/** 掲載管理コンソール向けJSONの `generatedBy`。2つの取込みスクリプトで文言を完全に一致させること(理由は上記)。 */
+const GENERATED_BY = '複数の自動取込スクリプト(tools/import-waitinglist.js, tools/import-texaspoker.js)がそれぞれの担当店ぶんをSTORESから生成';
+
+/** venueId ("v3" 等)を並び替え用の数値キーにする。数字部分が無い形式が来ても落ちないよう文字列比較にフォールバックする。 */
+function venueSortKey(venueId) {
+  const m = /^v(\d+)$/.exec(String(venueId));
+  return m ? Number(m[1]) : Number.POSITIVE_INFINITY;
+}
 
 /**
- * 有効な STORES の内容を auto-import-stores.json に書き出す。
+ * 既存の stores 配列のうち「自分の担当ではない行」を残しつつ、自分の担当ぶんを作り直して合流する。
+ * 実行するスクリプトがどちらでも同じ並び(venueId の数値昇順)になるようにする
+ * (実行順で並びが変わると、中身が同じでも差分が出てしまうため)。
+ */
+function mergeOwnIntoStoreList(existingStores, ownEntries, ownVenueIds) {
+  const others = (Array.isArray(existingStores) ? existingStores : []).filter((s) => !ownVenueIds.has(s && s.venueId));
+  return others.concat(ownEntries).sort((a, b) => {
+    const k = venueSortKey(a.venueId) - venueSortKey(b.venueId);
+    return k !== 0 ? k : String(a.venueId).localeCompare(String(b.venueId));
+  });
+}
+
+/**
+ * 有効な STORES の内容を auto-import-stores.json に合流させる(自分の担当店の行だけ作り直す)。
  *
  * 【何のためか】掲載管理コンソール(別リポジトリ fukuoka-poker-admin・ローカル専用)に
  *   「この店は自動取得なので手入力不要」を出すため。コンソールがこのスクリプトの
@@ -383,6 +417,9 @@ function writeDataJs(file, tournaments) {
  *   git status --porcelain なので、1バイトでも変われば必ずコミットされる)。
  *   → STORES を書き換えたときだけ差分が出る。
  *
+ * 【他スクリプトが書いた行は保持する】上記「2026-09-01 追記」参照。読めない/存在しないファイルは
+ *   「他スクリプトの行が0件」として扱い、自分の担当ぶんだけで新規作成する。
+ *
  * 内容が変わらないときは書き込み自体を行わない(mtimeも動かさない)。
  *
  * 【書くのは実行が最後まで通ったときだけ】このスクリプトは「途中で異常を見つけたら何も書き換えない」
@@ -392,15 +429,17 @@ function writeDataJs(file, tournaments) {
  *   dryRun=true では書かずに「ズレているか」だけを返す。
  */
 function writeStoreList(dryRun) {
-  const json = JSON.stringify({
-    generatedBy: 'tools/import-waitinglist.js',
-    stores: STORES.map((s) => ({
-      venueId: s.venueId,
-      displayId: s.displayId,
-      label: s.label,
-      source: 'waitinglist',
-    })),
-  }, null, 2) + '\n';
+  let existing = null;
+  try { existing = JSON.parse(fs.readFileSync(STORES_JSON, 'utf8')); } catch (e) { /* 未生成/壊れている → 他店の行は無いものとして続行 */ }
+  const ownVenueIds = new Set(STORES.map((s) => s.venueId));
+  const ownEntries = STORES.map((s) => ({
+    venueId: s.venueId,
+    displayId: s.displayId,
+    label: s.label,
+    source: 'waitinglist',
+  }));
+  const stores = mergeOwnIntoStoreList(existing && existing.stores, ownEntries, ownVenueIds);
+  const json = JSON.stringify({ generatedBy: GENERATED_BY, stores }, null, 2) + '\n';
 
   let cur = null;
   try { cur = fs.readFileSync(STORES_JSON, 'utf8'); } catch (e) { /* 未生成 */ }
