@@ -55,6 +55,8 @@ const JOPT = require(path.join(REPO, 'jopt-data.js'));
 // 大型イベントのレジストリ(会期・掲載期間ルール)。ブラウザ側と同じファイルを使う。
 const BIG = require(path.join(REPO, 'big-events.js'));
 const NIPPON = require(path.join(REPO, 'nippon-series-data.js'));
+// FST 5.0 メイン会場(ホテルニューオータニ博多)の全日程。出典・注意点はファイル冒頭のコメントを参照。
+const FST_SCHEDULE = require(path.join(REPO, 'fst-schedule-data.js'));
 
 // index.html に直接書かれている大会データ(const WJPT / const FST)を、値を手打ちせずに取り出す。
 // 対象は「行頭から2スペース字下げの `};` で閉じるオブジェクトリテラル」= index.html の書式。
@@ -574,10 +576,49 @@ function pastSatelliteVenuesBlock(reg, eventLabel) {
   });
 }
 
+// ---- FST 5.0 全日程スケジュール表(日別) ----
+// 出典・注意点は fst-schedule-data.js 冒頭のコメントを参照。列がJOPT/WJPT(バイイン・スタック)とも
+// NIPPON SERIES(Fee/Reg Close/Prize)とも違う(No./START/CLOSE/エントリー)ため専用の表を作る。
+// entry が null の行(MAIN EVENT/FST Championshipの各Day1フライト)はPDF側で金額が数値ではなく
+// アイコン/バッジ表記だった行。★推測で埋めず、「PDF未記載」と分かる文言にする(index.html の
+// fstScheduleCards() と同じ扱い。文言も揃えてある)。
+function fstMoney(n) { return '¥' + Number(n).toLocaleString('ja-JP'); }
+const FST_ENTRY_UNKNOWN_HTML = '<span style="color:#8e1524">PDF未記載（本ページのMain Event/Championship概要をご確認ください）</span>';
+function schedTableFst(tournaments) {
+  const byDay = {};
+  const order = [];
+  tournaments.forEach(t => { if (!byDay[t.day]) { byDay[t.day] = []; order.push(t.day); } byDay[t.day].push(t); });
+  order.sort();
+  return order.map(day => {
+    const f = fmtDate(day);
+    const rows = byDay[day].map(t => {
+      // series はPDFのTOURNAMENT列先頭に付いていた角カッコバッジ([EC]/[F100]/[XPT])をそのまま掲載。
+      // 正式名称・詳細は公式に未確認のため、当サイトで意味を補って言い換えない(fst-schedule-data.js 注3)。
+      const badge = t.series ? `<span style="color:#33409e;font-weight:700;font-size:.85em">[${esc(t.series)}]</span> ` : '';
+      const entry = (t.entry === null) ? FST_ENTRY_UNKNOWN_HTML : esc(fstMoney(t.entry));
+      return `      <tr>
+        <td class="no">${esc(t.no)}</td>
+        <td class="start">${esc(t.start)}</td>
+        <td>${badge}${esc(t.name)}</td>
+        <td class="start">${esc(t.close)}</td>
+        <td class="buyin">${entry}</td>
+      </tr>`;
+    }).join('\n');
+    return `<h2 class="day">${f.m}月${f.d}日（${f.wd}）</h2>
+<div class="sched-wrap"><table class="sched">
+  <thead><tr><th>No.</th><th>START</th><th>トーナメント</th><th>CLOSE</th><th>エントリー</th></tr></thead>
+  <tbody>
+${rows}
+  </tbody>
+</table></div>`;
+  }).join('\n');
+}
+
 // ---- FST 5.0 ページ ----
-// 個別トーナメント(タイムスケジュール・ストラクチャー)は未発表のため、
-// 会期・会場・発表済みの2大会(MAIN EVENT / CHAMPIONSHIP)の概要だけの薄いページ。
-// ★ ここに推測を足さないこと。値はすべて index.html の const FST(＝一次情報で裏取り済み)から取る。
+// 会期・会場・発表済みの2大会(MAIN EVENT / CHAMPIONSHIP)の概要に加え、メイン会場の全日程表(上記
+// schedTableFst)を掲載する。個別トーナメントのブラインドストラクチャーは引き続き未発表。
+// ★ ここに推測を足さないこと。概要の値は index.html の const FST、全日程は fst-schedule-data.js
+//   (いずれも一次情報で裏取り済み)からそのまま取る。
 function buildFst() {
   const canonical = `${SITE}/events/fst-2026-fukuoka/`;
   // OGP専用画像(1200x630。依頼5・2026-08-28)。本文中のバナー(SVG、1024x412)とは別物。
@@ -586,9 +627,9 @@ function buildFst() {
   const first = BIG.eventFirstDay(FST.days), last = BIG.eventLastDay(FST.days);
   const f1 = fmtDate(first), f2 = fmtDate(last);
   const main = FST.events[0];
-  const title = `FST 5.0（FUKUOKA SUPER TOURNAMENT）2026 福岡 開催概要（${f1.m}/${f1.d}〜${f2.m}/${f2.d} ホテルニューオータニ博多）| ふくおかポーカーナビ`;
-  const desc = `FST 5.0（FUKUOKA SUPER TOURNAMENT／2026年${f1.m}月${f1.d}日〜${f2.m}月${f2.d}日・ホテルニューオータニ博多）の開催概要。`
-    + `MAIN EVENT は Prize Total ${main.prize}、CHAMPIONSHIP は Prize Total ${FST.events[1].prize}。個別トーナメントの詳細は未発表です。`;
+  const title = `FST 5.0（FUKUOKA SUPER TOURNAMENT）2026 福岡 全日程（${f1.m}/${f1.d}〜${f2.m}/${f2.d} ホテルニューオータニ博多）| ふくおかポーカーナビ`;
+  const desc = `FST 5.0（FUKUOKA SUPER TOURNAMENT／2026年${f1.m}月${f1.d}日〜${f2.m}月${f2.d}日・ホテルニューオータニ博多）の開催概要と全日程。`
+    + `MAIN EVENT は Prize Total ${main.prize}、CHAMPIONSHIP は Prize Total ${FST.events[1].prize}。メイン会場で行われる全${FST_SCHEDULE.tournaments.length}トーナメントのタイムスケジュールを掲載。`;
   // entry は「¥50,000 ／ FSTチケット2枚 ／ ¥25,000＋FSTチケット1枚」の形。
   // 現金のみで入れる額だけを Offer にする(申込先の案内は公式X。この大会は公式サイトを持たない)。
   const offers = FST.events
@@ -641,11 +682,14 @@ ${e.sched.map(([k, v]) => `    <tr><th>${esc(k)}</th><td class="start">${esc(v)}
   <b>MAIN EVENT</b>　<span class="prize">Prize Total ${esc(main.prize)}</span>
 </div>
 <p class="lead" style="margin-top:-6px">※ 公式では「FST5.0」（スペースなし）とも表記されます。</p>
-<div class="tba"><b>個別トーナメントの詳細は未発表です。</b>タイムスケジュール・ブラインドストラクチャー・レイトレジ締切・サイドイベントの本数などは公表されていません。発表され次第、このページに掲載します。下表は現時点で公表されている MAIN EVENT と CHAMPIONSHIP の概要です。</div>
+<div class="tba"><b>${esc(FST.asOf)}時点で、メイン会場の全日程（タイムスケジュール）が判明しました。</b>ブラインドストラクチャー等の詳細は引き続き公式から発表されていません。下表は現時点で公表されている MAIN EVENT と CHAMPIONSHIP の概要です。</div>
 <div class="disclaimer">当サイトはFSTの主催者・公式媒体ではありません。公開情報をもとに当サイトが独自に集約した<b>非公式のまとめ</b>です。掲載しているバナーは当サイトが作成したもので、ロゴ・大会名等の権利は主催者に帰属します。掲載内容は<b>${esc(FST.asOf)}時点</b>の公式告知にもとづきますが、当サイトによる転記の誤りが含まれる可能性があります。発表済みの内容も変更される場合があります。参加前に必ず<a href="${esc(FST.x)}" target="_blank" rel="noopener">公式X（@fst_202408）</a>等の公式情報をご確認ください。<br>${POSITIONING}</div>
 <a class="cta" href="/#fst">▶ サイト内のFSTサテライト（チケット獲得トーナメント）を見る<small>インタラクティブ版（日付・店舗つきで直近の開催予定を表示）</small></a>
 ${tables}
 <p class="lead" style="margin-top:14px">※ エントリー方法の「FSTチケット」は、県内各店で開催されるサテライトで獲得できるチケットを指します。サテライトの開催予定は<a href="/#fst">トップページのFSTページ</a>に掲載しています。</p>
+<h2 class="day">全日程（タイムスケジュール）</h2>
+<p class="lead">メイン会場（${esc(FST.venue)}）で行われる全${FST_SCHEDULE.tournaments.length}トーナメントのSTART・CLOSE・エントリーです。出典: 主催者公式Linktreeに掲載のPDF「EVENT SCHEDULE 2026.09.19-23」（${esc(FST.asOf)}時点）。エントリー欄が「PDF未記載」の行は、PDF側でエントリー欄が数値ではなくアイコン/バッジ表記になっており、当サイトで金額を読み取れなかった行です（推測で埋めていません）。CLOSE欄が「-」の回はレイトレジ無し（最後まで続行）です。［EC］［F100］［XPT］は公式PDFのTOURNAMENT列に付いていたバッジ表記をそのまま掲載しており、正式名称・詳細は当サイトでは確認できていません。</p>
+${schedTableFst(FST_SCHEDULE.tournaments)}
 ${satelliteVenuesBlock((reg && reg.satelliteVenueIds) || [], {
   heading: 'サテライト開催店舗',
   lead: n => `下記の店舗では、FSTチケット（獲得するとMAIN EVENT・CHAMPIONSHIPにエントリーできます）が懸かったサテライト（チケット獲得トーナメント）が開催されています（当サイト掲載データより集計・${n}店舗）。日程・詳細は各店舗のページでご確認ください。`
