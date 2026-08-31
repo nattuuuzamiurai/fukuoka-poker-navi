@@ -137,7 +137,7 @@ const VENUE_CSS = `  .vp-sub{font-size:.9em;color:var(--mut);margin-bottom:14px}
   /* .vp-cards / .vp-card(「同じエリアの他のポーカー店」「サテライト開催店舗」カード)は
      店舗ページ・イベントページの両方で使うため site-shell.js の BASE_CSS 側に定義してある
      (2箇所に複製すると、片方だけ直して片方を忘れる事故が起きる。README・#evtLinks の教訓と同じ)。 */
-  /* リング(キャッシュゲーム)開催ブロック */
+  /* リング開催ブロック */
   .vp-ring{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:13px 15px;margin-bottom:14px;font-size:.9em;line-height:1.8}
   .vp-ring b{color:var(--felt)}
   /* .vp-fst(FSTサテライト開催中の告知)は site-shell.js の BASE_CSS 側に移設した
@@ -309,7 +309,7 @@ function buildVenue(v) {
   // description冒頭に出す差別化の一文(サテライト開催中／リング開催のときだけ)。
   // stationバッジはdescNameのアクセス表記で既に分かるため、ここでは繰り返さない。
   const descLead = badge && badge.kind === 'fst' ? 'FST 5.0のサテライト（チケット獲得トーナメント）を開催中の店舗です。'
-    : badge && badge.kind === 'ring' ? 'リングゲーム（キャッシュゲーム）も開催している店舗です。'
+    : badge && badge.kind === 'ring' ? 'リングゲームも開催している店舗です。'
     : '';
   let title, desc, sub;
   if (v.preopen) {
@@ -380,11 +380,11 @@ ${sameAreaShown.map(x => `  <a class="vp-card" href="/venues/${x.slug}/">
   const pastSatBlock = pastSatEvents.length ? `
 <div class="archived"><b>${esc(v.name)}は、${pastSatEvents.map(e => `<a href="${esc(e.featureUrl)}">${esc(e.label)}</a>`).join('・')}のサテライト（チケット獲得トーナメント）を開催していました。</b>いずれも終了した大会の開催実績です。現在の開催状況は店舗の公式情報・SNSをご確認ください。</div>` : '';
 
-  // リングゲーム(キャッシュゲーム)開催ブロック(依頼3)。ring:true の店だけ出す。
+  // リングゲーム開催ブロック(依頼3)。ring:true の店だけ出す。
   // レート等の裏取り状況は店ごとにまちまちなので、data.js の ringNote をそのまま出す
   // (noteBlock と同じ考え方 ＝ 生成スクリプト側で要約・断定を足さない)。
   const ringBlock = v.ring === true ? `
-<div class="vp-ring"><b>${esc(v.name)}はリングゲーム（キャッシュゲーム）を開催しています。</b>${v.ringNote ? esc(v.ringNote) : 'レート・詳細は店舗にご確認ください。'}</div>` : '';
+<div class="vp-ring"><b>${esc(v.name)}はリングゲームを開催しています。</b>${v.ringNote ? esc(v.ringNote) : 'レート・詳細は店舗にご確認ください。'}</div>` : '';
 
   // ★ note は data.js の文面をそのまま出す。
   //   「住所は第三者情報のため要確認。」のような留保はREADMEの編集方針に沿って
@@ -430,7 +430,7 @@ ${sameAreaShown.map(x => `  <a class="vp-card" href="/venues/${x.slug}/">
 <h2 class="vp-sec" id="vp-sched-title">${schedTitle}</h2>
 <p class="lead" id="vp-sched-note">${schedNote}</p>
 <div id="vp-sched">${schedHtml}</div>${ringBlock ? `
-<h2 class="vp-sec">リングゲーム（キャッシュゲーム）</h2>${ringBlock}` : ''}${areaBlock}
+<h2 class="vp-sec">リングゲーム</h2>${ringBlock}` : ''}${areaBlock}
 <div class="links">
   ▶ <a href="/">福岡のポーカートーナメント日程を日付順に見る（全${VENUES.length}店舗）</a><br>
   ▶ <a href="/#venue/${esc(v.id)}">${esc(v.name)} の月別カレンダー</a>
