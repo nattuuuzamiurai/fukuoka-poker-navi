@@ -311,7 +311,7 @@ const VENUES = [
     "slug": "crownclown-nakasu",
     "name": "CRownCLown（クラウンクラウン）",
     "area": "中洲",
-    "address": "福岡県福岡市博多区中洲3-7-15 TM30 BUILDING 5F",
+    "address": "福岡県福岡市博多区中洲3-7-15 TM30 BUILDING 2F",
     "access": "中洲川端駅 徒歩1分",
     "x": "https://x.com/rownlown",
     "line": "",
