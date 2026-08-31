@@ -643,6 +643,26 @@ const VENUES = [
     "note": "2025年5月オープン。公式サイトが「行橋初のカジノ専門店」を掲げる。公式サイトによると風俗営業5号許可を取得済みで、チップの換金・景品交換は一切なし。19:00〜24:00。トーナメント定期開催（日程はInstagramで告知）。初心者プランあり。",
     "sourceLabel": "Instagram",
     "sourceUrl": "https://www.instagram.com/deepblue824/"
+  },
+  {
+    "id": "v42",
+    "slug": "dream-casinobar-kurume",
+    "name": "DreaM CASINO BAR",
+    "area": "久留米",
+    "address": "福岡県久留米市東町(一番街)",
+    "access": "",
+    "x": "",
+    "line": "",
+    "instagram": "https://www.instagram.com/dream.casinobar/",
+    "website": "",
+    "tel": "",
+    "featured": false,
+    "addressUnverified": true,
+    "note": "2026年9月1日グランドオープン。入場料(1ドリンク付)1,500円、ソフトドリンク飲み放題(12時間)500円、アルコール飲み放題(12時間)1,500円。営業時間12:00〜24:00(公式Instagramより)。ポーカートーナメントも定期開催(フリーロール30,000保証、KO Bounty60,000保証など)。住所は久留米一番街内という情報のみ確認できており、番地までは未確認のため要確認。",
+    "sourceLabel": "Instagram",
+    "sourceUrl": "https://www.instagram.com/dream.casinobar/",
+    "ring": true,
+    "ringNote": "通常リング レート50-100。点数5,000点=1,500円/10,000点=3,000円/20,000点=6,000円。まとめ買い割引あり(40,000点10,000円・90,000点20,000円・140,000点30,000円・200,000点40,000円・300,000点50,000円)。(公式Instagramより)"
   }
 ];
 
