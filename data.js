@@ -431,7 +431,7 @@ const VENUES = [
     "website": "",
     "tel": "",
     "featured": false,
-    "note": "姉弟運営の小規模店。女性・初心者向け。貸切イベント可。水曜=FSTサテライトが毎週固定。",
+    "note": "姉弟運営の小規模店。女性・初心者向け。貸切イベント可。曜日固定の定期開催ではなく、毎月カレンダー画像で告知するタイプ(2026年8月の再確認で判明)。日程は毎月カレンダー投稿を確認し個別入力すること。",
     "sourceLabel": "Instagram",
     "sourceUrl": "https://www.instagram.com/cajinox/"
   },
@@ -520,7 +520,7 @@ const VENUES = [
     "website": "",
     "tel": "",
     "featured": false,
-    "note": "直方店の系列店。4卓でXPT等サテライトを頻繁に開催。水休。月=FSTサテライト/火=フリロ/木=ディープフリロ/金=1Kトナメ/土=ディープスタック/日=PKOバウンティが毎週固定(2026年8月のチラシで確認。旧パターンから土日・木・月を更新)。",
+    "note": "直方店の系列店。4卓でXPT等サテライトを頻繁に開催。水休は継続。曜日固定の毎週パターンではなく、月替わりのカレンダー画像で毎月告知(月曜は月前半FSTサテライト/後半チップエントリートーナメントに分かれる、金曜はリングゲームの月もある等、月によって内容が変わる。2026年9月のカレンダーで確認)。日程は毎月カレンダー投稿を確認し個別入力すること。",
     "sourceLabel": "Instagram",
     "sourceUrl": "https://www.instagram.com/king806queenkurosaki/"
   },
@@ -19173,6 +19173,386 @@ const TOURNAMENTS = [
     ],
     "source": "semi",
     "verified": false
+  },
+  {
+    "id": "kq2_0901",
+    "venueId": "v34",
+    "name": "フリロ",
+    "date": "2026-09-01",
+    "start": "",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "フリーロール"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "kq2_0903",
+    "venueId": "v34",
+    "name": "ディープフリロ",
+    "date": "2026-09-03",
+    "start": "",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "フリーロール",
+      "ディープ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "kq2_0905",
+    "venueId": "v34",
+    "name": "ディープスタック",
+    "date": "2026-09-05",
+    "start": "",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "ディープ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "kq2_0906",
+    "venueId": "v34",
+    "name": "PKOバウンティ",
+    "date": "2026-09-06",
+    "start": "",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "バウンティ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "kq2_0907",
+    "venueId": "v34",
+    "name": "FSTサテライト",
+    "date": "2026-09-07",
+    "start": "",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "サテライト",
+      "FST"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "kq2_0908",
+    "venueId": "v34",
+    "name": "フリロ",
+    "date": "2026-09-08",
+    "start": "",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "フリーロール"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "kq2_0910",
+    "venueId": "v34",
+    "name": "ディープフリロ",
+    "date": "2026-09-10",
+    "start": "",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "フリーロール",
+      "ディープ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "kq2_0912",
+    "venueId": "v34",
+    "name": "ディープスタック",
+    "date": "2026-09-12",
+    "start": "",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "ディープ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "kq2_0913",
+    "venueId": "v34",
+    "name": "PKOバウンティ",
+    "date": "2026-09-13",
+    "start": "",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "バウンティ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "kq2_0914",
+    "venueId": "v34",
+    "name": "FSTサテライト",
+    "date": "2026-09-14",
+    "start": "",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "サテライト",
+      "FST"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "kq2_0915",
+    "venueId": "v34",
+    "name": "フリロ",
+    "date": "2026-09-15",
+    "start": "",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "フリーロール"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "kq2_0917",
+    "venueId": "v34",
+    "name": "ディープフリロ",
+    "date": "2026-09-17",
+    "start": "",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "フリーロール",
+      "ディープ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "kq2_0919",
+    "venueId": "v34",
+    "name": "ディープスタック",
+    "date": "2026-09-19",
+    "start": "",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "ディープ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "kq2_0920",
+    "venueId": "v34",
+    "name": "PKOバウンティ",
+    "date": "2026-09-20",
+    "start": "",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "バウンティ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "kq2_0921",
+    "venueId": "v34",
+    "name": "チップエントリー(2K)トーナメント",
+    "date": "2026-09-21",
+    "start": "",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "kq2_0922",
+    "venueId": "v34",
+    "name": "フリロ",
+    "date": "2026-09-22",
+    "start": "",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "フリーロール"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "kq2_0924",
+    "venueId": "v34",
+    "name": "ディープフリロ",
+    "date": "2026-09-24",
+    "start": "",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "フリーロール",
+      "ディープ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "kq2_0926",
+    "venueId": "v34",
+    "name": "ディープスタック",
+    "date": "2026-09-26",
+    "start": "",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "ディープ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "kq2_0927",
+    "venueId": "v34",
+    "name": "PKOバウンティ",
+    "date": "2026-09-27",
+    "start": "",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "バウンティ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "kq2_0928",
+    "venueId": "v34",
+    "name": "チップエントリー(2K)トーナメント",
+    "date": "2026-09-28",
+    "start": "",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "kq2_0929",
+    "venueId": "v34",
+    "name": "フリロ",
+    "date": "2026-09-29",
+    "start": "",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "フリーロール"
+    ],
+    "source": "semi",
+    "verified": false
   }
 ];
 
@@ -19197,6 +19577,11 @@ const AREAS = [
  *   buyin, buyinStack, reentryFee, reentryStack, addon(円|null), addonStack(点|null),
  *   blindTime, tags
  * }
+ *
+ * ★ 1ヶ月分のチラシ・カレンダー画像だけを根拠にここへ登録しないこと(2026-08-22、v28/v34の
+ *   両方で同じ誤りが起きた)。店がカレンダー画像形式(日付マス目)で毎月告知しているなら、
+ *   それは「月替わりで内容が変わる」合図なので、TOURNAMENTSに個別日付で入れること。
+ *   固定と判断してよいのは、同一の曜日別パターンが複数ヶ月連続して確認できた場合のみ。
  */
 const RECURRING = [
   { id: "rec_v5_mon", venueId: "v5", weekday: 1, name: "DAILY TOURNAMENT", start: "19:00", lateReg: "22:00", buyin: 3000, buyinStack: 20000, reentryFee: 2000, reentryStack: 20000, addon: 2000, addonStack: 20000, blindTime: "20min", tags: [] },
@@ -19211,17 +19596,9 @@ const RECURRING = [
   { id: "rec_v19_thu", venueId: "v19", weekday: 4, name: "Freeze Out", start: "18:30", lateReg: "19:40", buyin: 3000, buyinStack: 20000, reentryFee: null, reentryStack: null, addon: null, addonStack: null, blindTime: null, tags: [] },
   { id: "rec_v19_sat", venueId: "v19", weekday: 6, name: "Deep Stack", start: "16:10", lateReg: "18:50", buyin: 3000, buyinStack: 40000, reentryFee: null, reentryStack: null, addon: null, addonStack: null, blindTime: null, tags: ["ディープ"] },
   { id: "rec_v19_sun", venueId: "v19", weekday: 0, name: "Turbo", start: "16:10", lateReg: "18:20", buyin: 2000, buyinStack: 30000, reentryFee: null, reentryStack: null, addon: null, addonStack: null, blindTime: null, tags: ["ターボ"] },
-  { id: "rec_v28_wed", venueId: "v28", weekday: 3, name: "FSTサテライト", start: "", lateReg: "", buyin: 0, buyinStack: null, reentryFee: null, reentryStack: null, addon: null, addonStack: null, blindTime: null, tags: ["サテライト", "FST"] },
-  { id: "rec_v28_sun", venueId: "v28", weekday: 0, name: "ハイパーターボトナメ", start: "", lateReg: "", buyin: 0, buyinStack: null, reentryFee: null, reentryStack: null, addon: null, addonStack: null, blindTime: null, tags: ["ターボ"] },
   { id: "rec_v33_mon", venueId: "v33", weekday: 1, name: "フリーロール", start: "19:00", lateReg: "21:30", buyin: 0, buyinStack: null, reentryFee: 1000, reentryStack: null, addon: 1000, addonStack: null, blindTime: null, tags: ["フリーロール"] },
   { id: "rec_v33_tue", venueId: "v33", weekday: 2, name: "FREEZE OUT", start: "12:30", lateReg: "14:00", buyin: 5000, buyinStack: null, reentryFee: null, reentryStack: null, addon: null, addonStack: null, blindTime: null, tags: [] },
   { id: "rec_v33_fri", venueId: "v33", weekday: 5, name: "JOPT福岡サテライト", start: "19:00", lateReg: "21:30", buyin: 4000, buyinStack: null, reentryFee: 4000, reentryStack: null, addon: 4000, addonStack: null, blindTime: null, tags: ["サテライト", "JOPT"] },
-  { id: "rec_v34_mon", venueId: "v34", weekday: 1, name: "FSTサテライト", start: "", lateReg: "", buyin: 0, buyinStack: null, reentryFee: null, reentryStack: null, addon: null, addonStack: null, blindTime: null, tags: ["サテライト", "FST"] },
-  { id: "rec_v34_tue", venueId: "v34", weekday: 2, name: "フリロ", start: "", lateReg: "", buyin: 0, buyinStack: null, reentryFee: null, reentryStack: null, addon: null, addonStack: null, blindTime: null, tags: ["フリーロール"] },
-  { id: "rec_v34_thu", venueId: "v34", weekday: 4, name: "ディープフリロ", start: "", lateReg: "", buyin: 0, buyinStack: null, reentryFee: null, reentryStack: null, addon: null, addonStack: null, blindTime: null, tags: ["フリーロール", "ディープ"] },
-  { id: "rec_v34_fri", venueId: "v34", weekday: 5, name: "1Kトナメ", start: "", lateReg: "", buyin: 1000, buyinStack: null, reentryFee: null, reentryStack: null, addon: null, addonStack: null, blindTime: null, tags: [] },
-  { id: "rec_v34_sat", venueId: "v34", weekday: 6, name: "ディープスタック", start: "", lateReg: "", buyin: 0, buyinStack: null, reentryFee: null, reentryStack: null, addon: null, addonStack: null, blindTime: null, tags: ["ディープ"] },
-  { id: "rec_v34_sun", venueId: "v34", weekday: 0, name: "PKOバウンティ", start: "", lateReg: "", buyin: 0, buyinStack: null, reentryFee: null, reentryStack: null, addon: null, addonStack: null, blindTime: null, tags: ["バウンティ"] },
   {"id":"rec_v41_mon","venueId":"v41","weekday":1,"name":"FREE ROLL HELLO TEXAS","start":"19:30","lateReg":"21:45","buyin":0,"buyinStack":15000,"reentryFee":1000,"reentryStack":15000,"addon":1000,"addonStack":15000,"blindTime":null,"tags":["フリーロール"]},
   {"id":"rec_v41_tue","venueId":"v41","weekday":2,"name":"CHIP ENTRY LOYAL","start":"19:30","lateReg":"21:45","buyin":2000,"buyinStack":30000,"reentryFee":2000,"reentryStack":30000,"addon":2000,"addonStack":30000,"blindTime":null,"tags":[]},
   {"id":"rec_v41_thu","venueId":"v41","weekday":4,"name":"CHIP ENTRY LOYAL","start":"19:30","lateReg":"21:45","buyin":2000,"buyinStack":30000,"reentryFee":2000,"reentryStack":30000,"addon":2000,"addonStack":30000,"blindTime":null,"tags":[]},
