@@ -267,9 +267,15 @@
      フッター簡素化(feat/footer-simplify)でトップから免責文を退避した際、賞金額(最大1,500万円)を
      表示するこのバナー周辺には免責が一切ない状態になってしまう指摘(レビュー部, 2026-07-30)があった。
      フッターの縮小は維持したまま、ここにだけ最小限の一文を残す。文言は tools/site-shell.js の
-     POSITIONING 定数の前半文と一致させること。バナーが0件で非表示のときは道連れで隠す。 */
+     POSITIONING 定数の前半文と一致させること。バナーが0件で非表示のときは道連れで隠す。
+     大型一覧ページ(#majors, renderMajorsPage())でも同じクラスを使い回している。あちらはJS側で
+     0件時は要素自体を出し分けているため、このCSSでの:empty連動はトップ(#bigEventBanner)専用。 */
   #bigEventBanner:empty + .bigban-disc{display:none}
-  .bigban-disc{font-size:.72em;color:var(--mut);text-align:center;margin:8px 2px 0;line-height:1.5}
+  /* コントラスト比の是正(レビュー部指摘・2026-09-01再チェック): var(--mut)=#8a8078は背景#f6f4ef
+     に対し実測約3.51:1でWCAG AA(4.5:1)未達だったため、footer .discの是正(2026-08-27, #858d87)と
+     同様に専用の色を直書きする。#858d87は背景#1b2320(フッター)向けに調整した値でここでは流用できない
+     ため、この明るい背景(#f6f4ef)向けに#6e6660(実測約5.12:1)を採用。 */
+  .bigban-disc{font-size:.72em;color:#6e6660;text-align:center;margin:8px 2px 0;line-height:1.5}
   /* --ec-gap: スライド間の余白。スライド幅の上限(下の max-width の calc)でも同じ値を使うため、
      数字を2箇所に書かないよう変数にしてある。ここを変えれば上限も自動で追従する。 */
   .evtCarousel{position:relative; --ec-gap:10px}
@@ -1717,6 +1723,9 @@
   // レジストリ(BIG_EVENTS)の大型イベントをバナーで縦に並べる。
   // 終了済みは暗転させ、新しい順に MAJORS_ARCHIVED_LIMIT 件までだけ出す(それ以前は出さない)。
   // レジストリにエントリを足せば自動でここに載る(一覧側に個別の書き足しは不要)。
+  // 免責文(.bigban-disc): showPage()で#page-listごと隠れるトップの免責文(#bigEventBannerの直後)は
+  // このページには届かないため、レビュー部指摘(2026-09-01再チェック)を受けてここにも同じ文言・同じ
+  // クラスで表示する。0件(掲載中の大型大会なし)のときは道連れで出さない(banners が空文字なら描画しない)。
   const MAJORS_ARCHIVED_LIMIT = 3;
   function renderMajorsPage(){
     const page = document.getElementById('page-majors');
@@ -1725,7 +1734,9 @@
     page.innerHTML = `
       <div class="shead"><h2>大型大会 一覧</h2><span class="cnt">${list.length}件</span></div>
       <p class="majors-lead">当サイトが特集している福岡の大型ポーカー大会です。バナーをタップすると各大会の日程ページへ移動します。<br>終了した大会は<b>暗く表示</b>し、新しいものから${MAJORS_ARCHIVED_LIMIT}件までを掲載しています（それより前の大会は表示していません）。</p>
-      ${banners ? `<div class="majors-list">${banners}</div>` : '<div class="majors-empty">掲載中の大型大会はありません。</div>'}
+      ${banners
+        ? `<div class="majors-list">${banners}</div><p class="bigban-disc">当サイトは店舗・主催者が公開している情報を集約する媒体であり、賭博行為の勧誘・仲介を行うものではありません。</p>`
+        : '<div class="majors-empty">掲載中の大型大会はありません。</div>'}
     `;
   }
 
