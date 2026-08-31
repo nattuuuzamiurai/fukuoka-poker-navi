@@ -569,6 +569,14 @@
   footer a{color:var(--gold2)}
   /* コントラスト比の是正(2026-08-27点検): 実測3.48:1でWCAG AA(4.5:1)未達だったため文字色を明るくした */
   footer .disc{max-width:640px;margin:10px auto 0;font-size:.92em;color:#858d87}
+  /* 大会ページ/エリア別/店舗ページのリンク一覧(#evtLinks/#areaLinks/#venueLinks)。
+     JSを実行しないクローラがevents/venues/areasページに辿り着く唯一の経路(tools/site-shell.js
+     冒頭のコメント参照)なので<a href>自体・テキスト・件数は変更しないが、閲覧者向けの見た目としては
+     優先度が低いため縮小・ミュートする(社長指示・2026-09-01)。色は上の footer .disc と同じ#858d87
+     (この#1b2320背景でWCAG AA 4.5:1を満たすことを2026-08-27点検で確認済み)を流用し、リンクも
+     同色にして目立たなくする。 */
+  footer .footer-linklist{font-size:.68em;color:#858d87}
+  footer .footer-linklist a{color:#858d87}
 
   @media(max-width:560px){
     .hero h1{font-size:1.15em}
@@ -754,7 +762,7 @@
        リンク先は featureUrl(レジストリの値)。現時点では全4大会とも静的ページを持つ。
          静的ページを持たない大会を足したときだけ、その大会はハッシュURL(/#xxx)になる。
        実行時には mountBigEventLinks() が同じ内容で描き直す(JSありの環境向けの二重の保険)。 -->
-  <div id="evtLinks" style="margin-top:2px">大会ページ: <a href="/events/wjpt-2026/">WJPT 2026</a>　|　<a href="/events/jopt-2026-fukuoka-01/">JOPT 2026 福岡</a>　|　<a href="/events/nippon-series-2026-fukuoka/">NIPPON SERIES 福岡 2026</a>　|　<a href="/events/fst-2026-fukuoka/">FST 5.0 2026 福岡</a></div>
+  <div id="evtLinks" class="footer-linklist" style="margin-top:2px">大会ページ: <a href="/events/wjpt-2026/">WJPT 2026</a>　|　<a href="/events/jopt-2026-fukuoka-01/">JOPT 2026 福岡</a>　|　<a href="/events/nippon-series-2026-fukuoka/">NIPPON SERIES 福岡 2026</a>　|　<a href="/events/fst-2026-fukuoka/">FST 5.0 2026 福岡</a></div>
   <!-- 大会特集は「開催中、無ければ次の大会」を1件だけ出す。
        中身は big-events.js の mountBigEventFooter() が入れる。該当が無ければ行ごと非表示。
        ★ここはトップのバナー(visibleBigEvents)とは判定条件が違うため、
@@ -769,7 +777,7 @@
        ★★ 中身は【自動生成】。手で書き換えないこと。★★
          `node tools/gen-area-pages.js <repo>` を実行するとこの1行だけが差し替わる。
          2店舗以上あるエリアが自動で並ぶ。ズレは `--check` を付けた実行で検出できる。 -->
-  <div id="areaLinks" style="margin-top:6px;line-height:2">エリア別: <a href="/areas/tenjin/">天神</a>・<a href="/areas/nakasu/">中洲</a>・<a href="/areas/daimyo/">大名</a>・<a href="/areas/imaizumi/">今泉</a>・<a href="/areas/ohashi/">大橋</a>・<a href="/areas/kitakyushu/">北九州</a>・<a href="/areas/kurume/">久留米</a></div>
+  <div id="areaLinks" class="footer-linklist" style="margin-top:6px">エリア別: <a href="/areas/tenjin/">天神</a>・<a href="/areas/nakasu/">中洲</a>・<a href="/areas/daimyo/">大名</a>・<a href="/areas/imaizumi/">今泉</a>・<a href="/areas/ohashi/">大橋</a>・<a href="/areas/kitakyushu/">北九州</a>・<a href="/areas/kurume/">久留米</a></div>
   <!-- 【店舗リンク行】掲載店舗の静的ページ(venues/<slug>/)への内部リンク。
        ★JSを実行しないクローラにも拾わせるため、ここに静的リンクを直接書いてある。
          上の「掲載店舗」カードは renderVenues() がJSで描いているので、JS無しでは
@@ -778,17 +786,14 @@
        ★★ 中身は【自動生成】。手で書き換えないこと。★★
          `node tools/gen-venue-pages.js <repo>` を実行するとこの1行だけが差し替わる。
          店舗を足せば自動で増える。ズレは `--check` を付けた実行で検出できる。 -->
-  <div id="venueLinks" style="margin-top:6px;line-height:2">店舗ページ: 【天神】<a href="/venues/kkpoker-fukuoka/">KKPOKER FUKUOKA</a>・<a href="/venues/grand-mirage-poker/">グランドミラージュポーカー</a>・<a href="/venues/fuxk-fukuoka-tenjin/">FUXK 福岡天神店</a>・<a href="/venues/raise-blue-tenjin/">RAISE BLUE 天神</a>・<a href="/venues/alice-the-poker-room/">ALICE the Poker room（アリス）</a>・<a href="/venues/seventwo-tenjin/">72 -SevenTwo-</a>・<a href="/venues/save-tenjin/">アミューズメントバー SAVE天神店</a>　【中洲】<a href="/venues/m-holdem-nakasu/">m HOLD'EM 中洲</a>・<a href="/venues/onecasino-fukuoka-nakasu/">ONECASINO 福岡中洲</a>・<a href="/venues/casino-bar-leje-hakata/">Casino bar Leje 博多店</a>・<a href="/venues/casino-blow-nishi-nakasu/">CASINO BLOW 西中洲</a>・<a href="/venues/crownclown-nakasu/">CRownCLown（クラウンクラウン）</a>・<a href="/venues/bon-nishi-nakasu/">梵 bon 西中洲</a>・<a href="/venues/aria-nakasu/">ARIA 中洲</a>・<a href="/venues/bar-betty-nakasu/">BAR BETTY（バーベティ）</a>　【大名】<a href="/venues/roots-fukuoka/">ROOTS FUKUOKA</a>・<a href="/venues/musashi-poker-room-fukuoka/">むさぽ福岡（MUSASHI POKER ROOM 福岡店）</a>　【今泉】<a href="/venues/casinox-fukuoka-imaizumi/">CasinoX（カジノックス）福岡今泉店</a>・<a href="/venues/raftel-casino-fukuoka-imaizumi/">RAFTEL CASINO（ラフテルカジノ 福岡今泉店）</a>　【大橋】<a href="/venues/joker-fukuoka-ohashi/">JOKER♠️ 福岡大橋</a>・<a href="/venues/the-dojo-fukuoka/">THE DOJO</a>　【博多】<a href="/venues/poker-room-sky/">Poker room SKY</a>　【北九州】<a href="/venues/pokerbar-nuwland/">PokerBar NUWLAND</a>・<a href="/venues/triplebarrel-kokura/">TripleBarrel 小倉店</a>・<a href="/venues/texas-holdem-3000/">てきさすほーるでむ。</a>・<a href="/venues/texas-holdem-aa/">テキサスホールデムAA</a>・<a href="/venues/poker-bar-iris/">Poker Bar IRIS</a>・<a href="/venues/casino-arrows-kokura/">CASINO Arrows 小倉店</a>・<a href="/venues/king-queen-suited-kurosaki/">KING&amp;QUEEN SUITED 黒崎店</a>・<a href="/venues/kaji-bar-kokura/">KAJI BAR</a>・<a href="/venues/triplebarrel-orio/">TripleBarrel 折尾店</a>　【京築】<a href="/venues/poker-studio-deep-blue-yukuhashi/">POKER Studio DEEP BLUE</a>　【筑豊】<a href="/venues/king-queen-suited-nogata/">KING&amp;QUEEN SUITED 直方店</a>　【久留米】<a href="/venues/ken-poker-kurume/">KENポーカー（久留米）</a>・<a href="/venues/ace-and-king-kurume/">A&amp;K（Ace and King）</a>・<a href="/venues/dream-casinobar-kurume/">DreaM CASINO BAR</a></div>
+  <div id="venueLinks" class="footer-linklist" style="margin-top:6px">店舗ページ: 【天神】<a href="/venues/kkpoker-fukuoka/">KKPOKER FUKUOKA</a>・<a href="/venues/grand-mirage-poker/">グランドミラージュポーカー</a>・<a href="/venues/fuxk-fukuoka-tenjin/">FUXK 福岡天神店</a>・<a href="/venues/raise-blue-tenjin/">RAISE BLUE 天神</a>・<a href="/venues/alice-the-poker-room/">ALICE the Poker room（アリス）</a>・<a href="/venues/seventwo-tenjin/">72 -SevenTwo-</a>・<a href="/venues/save-tenjin/">アミューズメントバー SAVE天神店</a>　【中洲】<a href="/venues/m-holdem-nakasu/">m HOLD'EM 中洲</a>・<a href="/venues/onecasino-fukuoka-nakasu/">ONECASINO 福岡中洲</a>・<a href="/venues/casino-bar-leje-hakata/">Casino bar Leje 博多店</a>・<a href="/venues/casino-blow-nishi-nakasu/">CASINO BLOW 西中洲</a>・<a href="/venues/crownclown-nakasu/">CRownCLown（クラウンクラウン）</a>・<a href="/venues/bon-nishi-nakasu/">梵 bon 西中洲</a>・<a href="/venues/aria-nakasu/">ARIA 中洲</a>・<a href="/venues/bar-betty-nakasu/">BAR BETTY（バーベティ）</a>　【大名】<a href="/venues/roots-fukuoka/">ROOTS FUKUOKA</a>・<a href="/venues/musashi-poker-room-fukuoka/">むさぽ福岡（MUSASHI POKER ROOM 福岡店）</a>　【今泉】<a href="/venues/casinox-fukuoka-imaizumi/">CasinoX（カジノックス）福岡今泉店</a>・<a href="/venues/raftel-casino-fukuoka-imaizumi/">RAFTEL CASINO（ラフテルカジノ 福岡今泉店）</a>　【大橋】<a href="/venues/joker-fukuoka-ohashi/">JOKER♠️ 福岡大橋</a>・<a href="/venues/the-dojo-fukuoka/">THE DOJO</a>　【博多】<a href="/venues/poker-room-sky/">Poker room SKY</a>　【北九州】<a href="/venues/pokerbar-nuwland/">PokerBar NUWLAND</a>・<a href="/venues/triplebarrel-kokura/">TripleBarrel 小倉店</a>・<a href="/venues/texas-holdem-3000/">てきさすほーるでむ。</a>・<a href="/venues/texas-holdem-aa/">テキサスホールデムAA</a>・<a href="/venues/poker-bar-iris/">Poker Bar IRIS</a>・<a href="/venues/casino-arrows-kokura/">CASINO Arrows 小倉店</a>・<a href="/venues/king-queen-suited-kurosaki/">KING&amp;QUEEN SUITED 黒崎店</a>・<a href="/venues/kaji-bar-kokura/">KAJI BAR</a>・<a href="/venues/triplebarrel-orio/">TripleBarrel 折尾店</a>　【京築】<a href="/venues/poker-studio-deep-blue-yukuhashi/">POKER Studio DEEP BLUE</a>　【筑豊】<a href="/venues/king-queen-suited-nogata/">KING&amp;QUEEN SUITED 直方店</a>　【久留米】<a href="/venues/ken-poker-kurume/">KENポーカー（久留米）</a>・<a href="/venues/ace-and-king-kurume/">A&amp;K（Ace and King）</a>・<a href="/venues/dream-casinobar-kurume/">DreaM CASINO BAR</a></div>
   <div><a href="contact.html">お問い合わせ</a>　|　<a href="contact.html">店舗の掲載・PRについて</a>　|　<a href="privacy.html">プライバシーポリシー</a></div>
+  <!-- フッターの免責文は1文に圧縮している(社長指示・2026-09-01)。元は4文あり、
+       2〜4文目(賭博の勧誘・仲介ではない/プライズの扱いは各店舗規定による/バナーの著作権は
+       各主催者に帰属)は削除ではなく privacy.html 第7条に移設済み。3・4文目は以前レビュー部の
+       申し送りで追加された経緯があるため、内容自体はどこかに必ず残すこと(消したのは見た目だけ)。 -->
   <div class="disc">
-    掲載情報は各店舗・主催者のSNS・公式サイト等をもとに自動/手動で収集しています。開催内容は変更される場合があるため、
-    参加前に必ず各店舗・主催者の公式情報をご確認ください。
-    当サイトは店舗・主催者が公開している情報を集約する媒体であり、賭博行為の勧誘・仲介を行うものではありません。
-    賞品・プライズの取扱いは各店舗・主催者の規定によります。
-    <!-- 大型イベントのバナー画像は当サイトの自作。静的イベントページ(events/<slug>/)には同趣旨の
-         注記が隣接しているが、トップと #majors のカルーセルには無かったため共通フッターに置く
-         (レビュー部の申し送り・2026-07-30)。既存の免責文は消さずに1文追加するだけに留める。 -->
-    掲載しているバナーは当サイトが作成したもので、ロゴ・大会名等の権利は各主催者に帰属します。
+    掲載情報は各店舗・主催者のSNS・公式サイト等をもとに収集。開催内容は変更される場合があるため参加前に公式情報をご確認ください。
   </div>
 </footer>
 

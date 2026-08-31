@@ -204,6 +204,13 @@ const BASE_CSS = `  *,*::before,*::after{box-sizing:border-box;margin:0;padding:
   .vp-fst a{color:#0e6a72;font-weight:700}
   footer{background:#1b2320;color:#9aa39d;padding:22px 16px;font-size:.8em;text-align:center;line-height:1.9}
   footer a{color:var(--gold2)}
+  /* 大会ページ一覧・エリア別リンク行(pageFoot の permanentEventLinks・areaLinksHtml)。
+     JSを実行しないクローラがevents/venues/areasページに辿り着く唯一の経路(このファイル冒頭の
+     コメント参照)なのでリンクの中身・件数は変更しないが、閲覧者向けの見た目としては優先度が低いため
+     縮小・ミュートする(社長指示・2026-09-01。index.htmlの同種の行と揃える)。色は同じ#1b2320背景で
+     WCAG AA 4.5:1を満たす#858d87(index.html footer .disc で確認済みの値)を流用する。 */
+  footer .footer-linklist{font-size:.68em;color:#858d87}
+  footer .footer-linklist a{color:#858d87}
   .stickyAd{position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;align-items:center;gap:10px;padding:9px 12px calc(9px + env(safe-area-inset-bottom));background:radial-gradient(120% 220% at 6% 0%,rgba(96,214,255,.20),transparent 55%),radial-gradient(120% 220% at 100% 100%,rgba(200,110,255,.16),transparent 55%),linear-gradient(160deg,#12101d,#191325 60%,#140f1e);border-top:1px solid rgba(255,255,255,.08);box-shadow:0 -4px 18px rgba(5,0,15,.35)}
   .stickyAd img{width:38px;height:38px;flex-shrink:0;filter:drop-shadow(0 0 8px rgba(120,210,255,.4))}
   .stickyAd .sa-body{flex:1;min-width:0}
@@ -325,12 +332,15 @@ function pageFoot(BIG, currentPath, extraScripts, areaLinksHtml) {
   // 【エリアリンク行(依頼3)】トップページ(index.html)のフッターには元々 #areaLinks があるが、
   //   events/venues/areas の下層ページの共通フッター(=このpageFoot)には無かった。下層ページを
   //   読み終えて離脱しかけたユーザーに、店舗の集約ページ(エリアページ)への行き先を1つ増やす。
+  // 【見た目の縮小(社長指示・2026-09-01)】リンクの中身(href・テキスト)・件数は変えず、
+  // 「トップ」等の通常ナビとは切り離して .footer-linklist だけを小さく・ミュートにする
+  // (index.html の #evtLinks/#areaLinks/#venueLinks と同じ考え方。詳しくはCSS側のコメント参照)。
   const areaLinksRow = areaLinksHtml ? `
-  <div style="margin-top:6px">エリアから探す: ${areaLinksHtml}</div>` : '';
+  <div class="footer-linklist" style="margin-top:6px">エリアから探す: ${areaLinksHtml}</div>` : '';
   return `</main>
 <footer>
   <div><b style="color:#fff">ふくおかポーカーナビ</b> — 福岡ポーカートーナメント日程アグリゲーター</div>
-  <div style="margin-top:6px"><a href="/">トップ</a>　|　${permanentEventLinks(BIG, currentPath)}</div>${areaLinksRow}
+  <div style="margin-top:6px"><a href="/">トップ</a>　|　<span class="footer-linklist">${permanentEventLinks(BIG, currentPath)}</span></div>${areaLinksRow}
   <div style="margin-top:6px"><a href="/contact.html">お問い合わせ</a>　|　<a href="/privacy.html">プライバシーポリシー</a></div>
   <div id="evtFeature" style="display:none"></div>
 </footer>
