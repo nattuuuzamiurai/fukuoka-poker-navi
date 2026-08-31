@@ -19553,6 +19553,297 @@ const TOURNAMENTS = [
     ],
     "source": "semi",
     "verified": false
+  },
+  {
+    "id": "dc0901",
+    "venueId": "v42",
+    "name": "プレオープン フリーロール",
+    "date": "2026-09-01",
+    "start": "19:00",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": 30000,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "フリーロール"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dc0902",
+    "venueId": "v42",
+    "name": "プレオープン フリーロール／KOバウンティ",
+    "date": "2026-09-02",
+    "start": "19:00",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": 30000,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "フリーロール",
+      "バウンティ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dc0903",
+    "venueId": "v42",
+    "name": "プレオープン フリーロール",
+    "date": "2026-09-03",
+    "start": "19:00",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": 30000,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "フリーロール"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dc0904",
+    "venueId": "v42",
+    "name": "プレオープン フリーロール／KOバウンティ",
+    "date": "2026-09-04",
+    "start": "19:00",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": 30000,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "フリーロール",
+      "バウンティ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dc0905",
+    "venueId": "v42",
+    "name": "グランドオープン記念トーナメント",
+    "date": "2026-09-05",
+    "start": "18:00",
+    "buyin": null,
+    "addon": null,
+    "stack": 25000,
+    "guarantee": 200000,
+    "reentry": true,
+    "prize": "1位70,000pt/2位20,000pt/3位10,000pt/4位DreaM Chip40,000pt(チップリーダー賞)+10,000pt。ENTRY/RE-ENTRY・ADD-ONは各3,000pt or 10,000pt(PLAYERS+POINTにて給付、取り扱い店)",
+    "tags": [
+      "特別開催"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dc0906a",
+    "venueId": "v42",
+    "name": "フリーロール",
+    "date": "2026-09-06",
+    "start": "14:00",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": 30000,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "フリーロール"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dc0906b",
+    "venueId": "v42",
+    "name": "KOバウンティ",
+    "date": "2026-09-06",
+    "start": "19:00",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": 60000,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "バウンティ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dc0907",
+    "venueId": "v42",
+    "name": "フリーロール",
+    "date": "2026-09-07",
+    "start": "19:00",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": 30000,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "フリーロール"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dc0908",
+    "venueId": "v42",
+    "name": "NLH Bomb Pot フリーロール",
+    "date": "2026-09-08",
+    "start": "19:00",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": 30000,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "フリーロール"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dc0909",
+    "venueId": "v42",
+    "name": "フリーロール／KOバウンティ",
+    "date": "2026-09-09",
+    "start": "19:00",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": 30000,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "フリーロール",
+      "バウンティ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dc0910",
+    "venueId": "v42",
+    "name": "フリーロール",
+    "date": "2026-09-10",
+    "start": "19:00",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": 30000,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "フリーロール"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dc0911",
+    "venueId": "v42",
+    "name": "KOバウンティ",
+    "date": "2026-09-11",
+    "start": "19:00",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": 60000,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "バウンティ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dc0912a",
+    "venueId": "v42",
+    "name": "フリーロール",
+    "date": "2026-09-12",
+    "start": "14:00",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": 30000,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "フリーロール"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dc0912b",
+    "venueId": "v42",
+    "name": "KOバウンティ",
+    "date": "2026-09-12",
+    "start": "19:00",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": 60000,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "バウンティ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dc0913a",
+    "venueId": "v42",
+    "name": "フリーロール",
+    "date": "2026-09-13",
+    "start": "14:00",
+    "buyin": 0,
+    "addon": null,
+    "stack": 0,
+    "guarantee": 30000,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "フリーロール"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dc0913b",
+    "venueId": "v42",
+    "name": "KOバウンティ",
+    "date": "2026-09-13",
+    "start": "19:00",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": 60000,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "バウンティ"
+    ],
+    "source": "semi",
+    "verified": false
   }
 ];
 
