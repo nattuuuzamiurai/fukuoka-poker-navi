@@ -2,7 +2,8 @@
 /**
  * monitor-instagram-apify.js
  *
- * 公式サイトAPIが無い6店舗(v40/v20/v18/v21/v34/v35)のInstagram投稿をApify経由で日次チェックし、
+ * 公式サイトAPIが無い5店舗(v40/v20/v18/v21/v35)のInstagram投稿をApify経由で日次チェックし、
+ * (v34=KING&QUEEN SUITED 黒崎店は2026-09-01付で対象から除外した。詳細はREADME「対象店舗」参照)
  * 新着のスケジュール告知らしき投稿を見つけたらVisionで抽出して `data.js` に安全にupsertする。
  *
  * 【全体の流れ】
@@ -153,14 +154,20 @@ const STATE_PATH = path.join(REPO_ROOT, 'apify-monitor-state.json');
 const WRITE_STATE_PATH = path.join(REPO_ROOT, 'instagram-write-state.json');
 
 // ============================================================
-// 対象店舗 — 公式サイトAPIが無く、Instagramでのみ日程告知される6店舗
+// 対象店舗 — 公式サイトAPIが無く、Instagramでのみ日程告知される5店舗
 // ============================================================
+// ★v34(KING&QUEEN SUITED 黒崎店)は2026-09-01付でここから除外した。2026-08-06以降、
+//   Apifyへの生の問い合わせ(状態ファイルを介さない完全に新規の呼び出しでも)が投稿一覧だけ
+//   4週間以上同じ12件を返し続ける一方、Instagram本体への軽いプロフィール情報アクセス
+//   (フォロワー数等)は最新値が取れたため、こちら側のコード・Apify設定ではなく
+//   Instagram側がこのアカウントの「投稿一覧取得」だけを狙い撃ちで制限/古いキャッシュ応答して
+//   いる可能性が高いと判断した。実害はないが、無駄なApify課金と混乱を避けるため完全手動運用
+//   (掲載管理コンソール経由の月次入力)に戻した。詳細はREADME「対象店舗」の項を参照。
 const STORES = [
   { venueId: 'v40', handle: 'triple_orio', label: 'TripleBarrel 折尾店' },
   { venueId: 'v20', handle: 'king2485queen', label: 'KING&QUEEN SUITED 直方店' },
   { venueId: 'v18', handle: 'pokerbar_iris', label: 'Poker Bar IRIS' },
   { venueId: 'v21', handle: 'kurume_ken_poker', label: 'KENポーカー久留米' },
-  { venueId: 'v34', handle: 'king806queenkurosaki', label: 'KING&QUEEN SUITED 黒崎店' },
   { venueId: 'v35', handle: 'ace_and_king259', label: 'A&K' },
 ];
 
