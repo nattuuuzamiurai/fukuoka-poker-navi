@@ -1,0 +1,27 @@
+name: 【使い捨て診断】Instagram単体取得
+# v34(@king806queenkurosaki)のApify取得が2026-08-06以降ずっと同じ12件を
+# 返し続けている原因切り分け用。1店舗ぶんだけ(課金は12件分のみ)。
+# 診断が終わったらこのファイルごと削除する(mainにはマージしない)。
+on:
+  workflow_dispatch:
+    inputs:
+      handle:
+        description: 診断対象のInstagramハンドル
+        type: string
+        required: false
+        default: king806queenkurosaki
+
+permissions:
+  contents: read
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node tools/debug-fetch-one.js "${{ inputs.handle }}"
+        env:
+          APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
