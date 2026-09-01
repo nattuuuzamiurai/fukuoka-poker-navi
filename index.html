@@ -1604,18 +1604,21 @@
   //   引き継がれる。エントリー体系もサテライトと異なる(下記footerNotes参照)ため、既存の
   //   「サイト内の今後のFSTサテライト」セクション(fstSatellites())とは別枠で扱う。
   // venueId: 当サイトの既存VENUESとの突き合わせ結果。
-  //   - confidence:'high'   … 表記がほぼ一致。店舗ページへリンクする。
-  //   - confidence:'medium' … 略称(KKPF)からの推測で裏取りが取れていない。リンクはするが
+  //   - confidence:'high'   … 表記がほぼ一致、または裏取り済み。店舗ページへリンクする。
+  //   - confidence:'medium' … 略称からの推測で裏取りが取れていない。リンクはするが
   //     「店舗名要確認」を明記する(店舗ページへの自動リンク自体は誤りのリスクが低いため許容)。
   //   - confidence:'unresolved' … 候補が複数(v14/v40)あり断定できない。venueId は null とし、
   //     【店舗ページへは絶対にリンクしない】(誤った店舗に紐付けないため。裏取りが取れるまで
   //     「トリプルバレル(店舗未確定)」のまま表示する。一方に決め打ちしないこと)。
+  //   ★KKPF(9/5)は当初 confidence:'medium'(略称からの推測)だったが、店舗紐付け(v2=KKPOKER
+  //     FUKUOKA)は2026-09-01に社長確認済みのため confidence:'high' に更新(トリプルバレル(9/13)は
+  //     引き続き未確認のまま。一方だけ決め打ちしない)。
   const FST_MAIN_HOUSE_DAY1 = {
     asOf: '2026年9月1日',
     days: [
       { date:'2026-08-29', start:'16:30', close:'20:50', houseName:'SKY', venueId:'v33', confidence:'high' },
       { date:'2026-08-30', start:'19:00', close:'23:20', houseName:'梵-bon-西中洲', venueId:'v29', confidence:'high' },
-      { date:'2026-09-05', start:'15:00', close:'19:20', houseName:'KKPF', venueId:'v2', confidence:'medium' },
+      { date:'2026-09-05', start:'15:00', close:'19:20', houseName:'KKPF', venueId:'v2', confidence:'high' },
       { date:'2026-09-06', start:'16:00', close:'20:20', houseName:'72', venueId:'v25', confidence:'high' },
       { date:'2026-09-11', start:'18:00', close:'21:20', houseName:'JOKER', venueId:'v26', confidence:'high' },
       { date:'2026-09-12', start:'17:00', close:'21:20', houseName:'RAISE BLUE', venueId:'v8', confidence:'high' },
