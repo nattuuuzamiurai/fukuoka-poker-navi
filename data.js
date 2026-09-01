@@ -16893,6 +16893,22 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01M1E32H6FEBXCTHKDNB7EJZFV",
+    "venueId": "v19",
+    "name": "FST Satellite",
+    "date": "2026-09-08",
+    "start": "18:30",
+    "buyin": 3000,
+    "addon": 1000,
+    "stack": 30000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "wl-01KZX5JC4XCYE7GJ7A701EN2P9",
     "venueId": "v19",
     "name": "3000 Freeze Out",
@@ -24169,7 +24185,6 @@ const TOURNAMENTS = [
     "source": "semi",
     "verified": false,
     "lowConfidence": true
-
   },
   {
     "id": "bn0830",
