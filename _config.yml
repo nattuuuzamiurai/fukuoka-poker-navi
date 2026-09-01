@@ -1,0 +1,74 @@
+# GitHub Pages (legacy Jekyll build) の公開範囲を絞るための設定。
+#
+# 【背景】
+# このリポジトリは build_type: legacy (source: main ブランチ / ルート) で
+# GitHub Pages に配信されている。_config.yml が存在しなかったため、Jekyllの
+# デフォルト設定でリポジトリ直下がほぼそのまま本番配信され、社内向けドキュメント
+# (README.md)・管理コンソール(admin.html)・自動化スクリプト一式(tools/)・
+# パイプラインの内部状態ファイル(*.json)まで https://fukuokapoker.com/ から
+# 誰でも直接閲覧できてしまっていた(2026-09、開発部が発見)。
+#
+# 【対処方針】
+# .github/workflows/*.yml は actions/checkout でリポジトリ全体をチェックアウトし、
+# tools/*.js をリポジトリ内のファイルとして直接 `node tools/xxx.js` 実行している
+# (ビルド成果物からではない)。そのためリポジトリから tools/ 等を削除・移動すると
+# 自動化パイプライン(店舗データの自動取込・Instagram監視など)が壊れる。
+# よって「ファイルは残したまま、GitHub Pagesの配信(_site生成)からだけ除外する」
+# 方針を取る。既存の公開URL構成(/venues/xxx/ 等)は一切変更しない。
+#
+# 【exclude で除外しても壊れない理由】
+# 除外対象はどれも「クライアント側のJS(<script src>や動的読み込み)からブラウザが
+# 直接取得するファイル」ではなく、(a) 人間向けの社内ドキュメント、(b) Node.js の
+# `require()` でビルド時にのみ読み込まれるデータ、(c) CIワークフローが読み書きする
+# 内部状態ファイル、のいずれか。index.html / venues|areas|events 配下のページが
+# <script src="..."> で読み込むのは data.js, big-events.js, recurring-dedupe.js と、
+# 開いたときだけ動的読み込みされる jopt-data.js / fst-schedule-data.js /
+# nippon-series-data.js のみ(index.html 内の loadEventData() を参照)。これらは
+# 本設定で除外していない。
+#
+# 【検証方法】
+# ローカルに Jekyll 4.4.1 を導入し、この _config.yml を使わない状態(現状再現)と
+# 使った状態の両方で `jekyll build` した _site を比較。除外対象ファイルが
+# 生成物から消え、かつ index.html / venues/*/index.html / areas/*/index.html /
+# events/*/index.html / data.js / big-events.js / recurring-dedupe.js /
+# jopt-data.js / fst-schedule-data.js / nippon-series-data.js / sitemap.xml /
+# robots.txt / CNAME / ads.txt / favicon.png / favicon.svg / apple-touch-icon.png /
+# img/ が引き続き生成物に残ることを確認済み(PR本文参照)。
+#
+# 【要検証(このPRのマージだけでは断定できない点)】
+# GitHub Pages (legacy build) がこの _config.yml をどのバージョンのJekyllで
+# 処理するかは非公開のため、ローカル検証(Jekyll 4.4.1, プラグインなし)と
+# 完全に同一の挙動になる保証はない。マージ後、以下を本番URLで直接確認すること:
+#   - https://fukuokapoker.com/README.md          → 404 になっていること
+#   - https://fukuokapoker.com/admin.html         → 404 になっていること
+#   - https://fukuokapoker.com/tools/validate-data.js → 404 になっていること
+#   - https://fukuokapoker.com/apify-monitor-state.json → 404 になっていること
+#   - https://fukuokapoker.com/                   → 従来通り表示されること
+#   - https://fukuokapoker.com/venues/ken-poker-kurume/ → 従来通り表示されること
+#   - https://fukuokapoker.com/areas/nakasu/       → 従来通り表示されること
+#   - https://fukuokapoker.com/data.js, /big-events.js, /jopt-data.js,
+#     /fst-schedule-data.js, /nippon-series-data.js → 従来通り200で取得できること
+#     (JOPT/FST/NIPPON SERIES の各セクションを開いてコンソールにエラーが
+#      出ないことも合わせて確認)
+
+exclude:
+  # 社内向けドキュメント・管理コンソール・ローカル開発用サーバ
+  - README.md
+  - admin.html
+  - dev-server.py
+  - ogp-design-spec.md
+
+  # 自動化スクリプト一式(CIワークフローがリポジトリ内から直接実行するため
+  # ファイル自体は削除できない。配信からのみ除外する)
+  - tools/
+
+  # ビルド時にのみ Node.js の require() で読み込まれ、ブラウザからは
+  # 直接読み込まれないデータファイル(生成済みの events/ ページ等に値は
+  # 焼き込み済みで、このファイル自体が公開される必要はない)
+  - fukuoka-venues.json
+  - jopt-result-data.js
+
+  # 自動取込パイプラインの内部状態ファイル(機械が最後に書いた値の控えなど)
+  - apify-monitor-state.json
+  - auto-import-stores.json
+  - "*-write-state.json"
