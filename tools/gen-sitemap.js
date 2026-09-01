@@ -3,8 +3,11 @@
  * gen-sitemap.js — sitemap.xml の【唯一の所有者】
  *
  * 【なぜ独立したファイルなのか】
- *   sitemap.xml に載せるURLは2種類のソースにまたがる:
+ *   sitemap.xml に載せるURLは3種類のソースにまたがる:
  *     - 大型イベントページ … big-events.js のレジストリ(featureUrl が /events/ で始まるもの)
+ *     - 単発の店舗プロモーション … promo-banners.js のレジストリ(href が /events/ で始まるもの。
+ *       2026-09-02追加。BIG_EVENTSとは別レジストリだが、静的ページを持つ点は同じなので
+ *       sitemapの掲載元としては同列に扱う)
  *     - 店舗ページ         … data.js の VENUES(slug)
  *   これを gen-event-pages.js と gen-venue-pages.js がそれぞれ自前で組み立てると、
  *   「後に実行したほうが相手のURLを消す」奪い合いになる。
@@ -51,6 +54,7 @@ const AREA = { freq: 'weekly', pri: '0.8' };
 /** sitemap.xml の中身(文字列)を組み立てる。REPO は絶対パスで渡すこと。 */
 function buildSitemap(REPO) {
   const BIG = require(path.join(REPO, 'big-events.js'));
+  const PROMO = require(path.join(REPO, 'promo-banners.js'));
   const DATA = require(path.join(REPO, 'data.js'));
 
   // slug が欠けている・重複している状態の sitemap は公開してはいけないので、ここでも止める。
@@ -65,6 +69,13 @@ function buildSitemap(REPO) {
     .sort((a, b) => String(BIG.eventFirstDay(a.days)).localeCompare(String(BIG.eventFirstDay(b.days))))
     .filter(e => e.featureUrl && e.featureUrl.startsWith('/events/'))
     .forEach(e => urls.push({ loc: SITE + e.featureUrl, ...EVENT }));
+
+  // 単発の店舗プロモーションページ(promo-banners.js。2026-09-02追加): 静的ページを持つものだけ。
+  // BIG_EVENTSと同じ理由(掲載中/終了で出し分けない。上記「changefreq/priorityを日付で変えない理由」参照)で、
+  // 掲載ウィンドウ(visiblePromoBanners)には縛られず、レジストリにある間は常にsitemapへ載せ続ける。
+  PROMO.PROMO_BANNERS
+    .filter(p => p.href && p.href.startsWith('/events/'))
+    .forEach(p => urls.push({ loc: SITE + p.href, ...EVENT }));
 
   // 店舗ページ: 掲載中の日程が1件以上ある店だけ。
   // 【なぜ全件載せないか】このサイトの現時点の収益ゲートは検索順位ではなく AdSense審査で、

@@ -252,6 +252,10 @@
   .evtBanner.ev-jopt{--ev-bd:var(--jopt);--ev-bg:#07171d;--ev-bg2:#0e3d48;--ev-fg:var(--jopt2);--ev-ac:var(--jopt);--ev-ac2:var(--jopt2);--ev-on:#04222a}
   .evtBanner.ev-nippon{--ev-bd:var(--ns);--ev-bg:#5c0910;--ev-bg2:#a8111c;--ev-fg:#ffd9d4;--ev-ac:var(--ns);--ev-ac2:var(--ns2);--ev-on:#fff}
   .evtBanner.ev-fst{--ev-bd:var(--fst);--ev-bg:#070c22;--ev-bg2:#1a2455;--ev-fg:var(--fst2);--ev-ac:var(--fst);--ev-ac2:var(--fst2);--ev-on:#fff}
+  /* DreaM CASINO BAR グランドオープン記念(promo-banners.js)。専用の :root 変数は作らず、
+     WJPTと同じくバナー画像(黒地×ゴールド×赤リボン)に合わせた色を直接指定する
+     (このバナー以外でDreaMの色を使う箇所が無いため、変数化する理由が無い)。 */
+  .evtBanner.ev-dream{--ev-bd:var(--gold);--ev-bg:#1a0f05;--ev-bg2:#3a2308;--ev-fg:var(--gold2);--ev-ac:var(--red);--ev-ac2:#e0574a;--ev-on:#fff}
 
   /* ===== 大型バナーの横スライド(カルーセル) 社長指示・2026-07-29 =====
      掲載中の大会が【2件以上】のときだけカルーセルにする。縦に積むと1件につき約195px、
@@ -743,7 +747,8 @@
 
 <main class="wrap">
   <div id="page-list">
-    <!-- 大型イベントのバナー。big-events.js のレジストリから renderBigEventBanner() が描画する。
+    <!-- 大型イベント(big-events.js)＋単発の店舗プロモーション(promo-banners.js)のバナー。
+         renderBigEventBanner() が両レジストリから描画する(プロモは常に先頭)。
          0件=空(領域ごと非表示) / 1件=バナー1枚 / 2件以上=横スライド(カルーセル)。中身はJS生成。 -->
     <div id="bigEventBanner"></div>
     <p class="bigban-disc">当サイトは店舗・主催者が公開している情報を集約する媒体であり、賭博行為の勧誘・仲介を行うものではありません。</p>
@@ -842,6 +847,9 @@
 
 <!-- 大型イベントのレジストリと掲載期間ルール。data.js より先に読む(バナー・フッターの判定に使う) -->
 <script src="big-events.js"></script>
+<!-- 単発の店舗プロモーション(グランドオープン記念など)の小さなレジストリ。big-events.js の
+     直後に読む(掲載期間の判定に eventFirstDay 等をそのまま使うため。詳細はファイル冒頭のコメント参照)。 -->
+<script src="promo-banners.js"></script>
 <script src="data.js"></script>
 <!-- 「自動取込と同じ枠の定期開催は出さない」判定。静的な店舗ページ(tools/venue-schedule.js)と
      同じ1本を読む。判定を書き写さないこと(必ず片方が古くなる) -->
@@ -906,12 +914,15 @@
 
   // 大型イベントのバナー1枚分のHTML。トップのバナー領域と大型一覧(#majors)の両方で使い、
   // 見た目と「開催中/まもなく/終了」の出し分けを1か所に集約する。
+  // promo-banners.js のプロモ(DreaMグランドオープン等)もこの関数を共用する。BIG_EVENTSは
+  // トップ内の遷移先を `hash`(例 '#fst')で持つが、プロモは実ページへのリンクなので `href` を持つ
+  // (どちらか一方だけを見ればよいよう `ev.href || ev.hash` で吸収する)。
   function bigEventBannerHtml(ev){
     const today = localTodayGlobal();
     const cls = ['evtBanner', ev.bannerClass];
     if (isEventArchived(ev.days)) cls.push('is-archived');       // 終了 → 暗転+「終了」バッジ
     else if (today < eventFirstDay(ev.days)) cls.push('upcoming'); // 未開催 → 「まもなく」バッジ
-    return `<a class="${cls.join(' ')}" href="${ev.hash}">
+    return `<a class="${cls.join(' ')}" href="${ev.href || ev.hash}">
         <img class="eb-img" src="${ev.banner}" alt="${escHtml(ev.bannerAlt)}">
         <div class="eb-foot">
           <span class="eb-tag"><span class="eb-desc">${escHtml(ev.bannerDesc)}</span></span>
@@ -2241,6 +2252,11 @@
   // すべて出す。0件のことも複数件のこともある(社長了承済み・big-events.js の説明を参照)。
   // 並び順(開催中→まもなく→終了)の決定は big-events.js の visibleBigEvents() に一本化する。
   //
+  // 【単発の店舗プロモーション(DreaMグランドオープン等)は常に先頭】
+  // promo-banners.js の visiblePromoBanners() を visibleBigEvents() の【結果の先頭に連結】する
+  // (renderBigEventBanner() 内)。visibleBigEvents() 側の並び替えロジックには一切手を入れない。
+  // BIG_EVENTSに混ぜない理由は promo-banners.js 冒頭のコメントを参照。
+  //
   // 【2件以上のときは縦に積まず横スライドにする(社長指示・2026-07-29)】
   // 縦積みだとバナー1件につき約195px、直下の「トーナメント日程」見出しが下がってしまうため。
   // 1件のときはカルーセルUI(ドット・矢印)を出さない。レジストリに大会を足せば枚数は自動で増える。
@@ -2259,7 +2275,11 @@
   function renderBigEventBanner(){
     const slot = document.getElementById('bigEventBanner');
     if (!slot) return [];
-    const evs = visibleBigEvents();
+    // 単発の店舗プロモーション(promo-banners.js)は常に大型大会より先頭(1枚目)に出す。
+    // typeof チェックは promo-banners.js の読み込みが何らかの理由で失敗してもトップ全体を
+    // 落とさないための保険(big-events.js側の型チェックと同じ考え方)。
+    const promos = (typeof visiblePromoBanners === 'function') ? visiblePromoBanners() : [];
+    const evs = promos.concat(visibleBigEvents());
     // JOPT/NIPPONのデータ読み込み後に描き直すことがある。並びが変わっていなければ表示中の枚を保つ。
     const ids = evs.map(e => e.id).join(',');
     const keep = (slot.dataset.evIds === ids) ? Number(slot.dataset.index || 0) : 0;
@@ -2272,7 +2292,7 @@
 
     slot.className = 'evtCarousel';
     slot.innerHTML = `
-      <div class="ec-track" role="group" aria-label="開催中・開催予定の大型大会 ${evs.length}件（横スクロールできます）">
+      <div class="ec-track" role="group" aria-label="開催中・開催予定の大会・イベント ${evs.length}件（横スクロールできます）">
         ${evs.map(ev => `<div class="ec-slide">${bigEventBannerHtml(ev)}</div>`).join('')}
       </div>
       <button class="ec-arrow ec-prev" type="button" aria-label="前の大会を表示">‹</button>
