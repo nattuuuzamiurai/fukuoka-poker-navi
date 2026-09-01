@@ -801,7 +801,7 @@
        中身は big-events.js の mountBigEventFooter() が入れる。該当が無ければ行ごと非表示。
        ★ここはトップのバナー(visibleBigEvents)とは判定条件が違うため、
          【バナーとフッターが一致しない日がある】。これは意図的な仕様であってバグではない。
-         フッターは掲載ウィンドウ(初日−14日〜最終日+1日)に縛られず、
+         フッターは掲載ウィンドウ(初日−30日〜最終日+1日)に縛られず、
          バナーが0件の期間でも「次の大会」を出し続ける(big-events.js の footerBigEvent を参照)。 -->
   <div id="evtFeature" style="display:none"></div>
   <!-- 【エリアリンク行】エリアの静的ページ(areas/<slug>/)への内部リンク。
@@ -2166,7 +2166,7 @@
   // <button> なので Enter / Space はブラウザが click に変換する(keydown は不要)。
   todayBtn.addEventListener('click', goToday);
 
-  // 大型イベントのバナーは、掲載ウィンドウ(初日の14日前〜最終日の翌日)に入っているものを
+  // 大型イベントのバナーは、掲載ウィンドウ(初日の30日前〜最終日の翌日)に入っているものを
   // すべて出す。0件のことも複数件のこともある(社長了承済み・big-events.js の説明を参照)。
   // 並び順(開催中→まもなく→終了)の決定は big-events.js の visibleBigEvents() に一本化する。
   //
