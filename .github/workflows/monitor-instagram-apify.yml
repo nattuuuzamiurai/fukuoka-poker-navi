@@ -1,7 +1,9 @@
 name: Instagram投稿の自動監視(Apify)
 
-# 公式サイトAPIが無い6店舗(v40/v20/v18/v21/v34/v35)のInstagram投稿をApify経由でチェックし、
+# 公式サイトAPIが無い5店舗(v40/v20/v18/v21/v35)のInstagram投稿をApify経由でチェックし、
 # 新着のスケジュール告知らしき投稿があればVisionで抽出して data.js に差分反映する。
+# (v34=KING&QUEEN SUITED 黒崎店は2026-09-01付で対象から除外。詳細は
+#  tools/monitor-instagram-apify.js のコメント・README「対象店舗」参照)
 # 詳細は tools/monitor-instagram-apify.js のコメント参照。
 #
 # Apifyは正規の第三者スクレイピングサービス(pay-per-result)で、自社アカウントへのログイン・

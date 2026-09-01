@@ -209,7 +209,7 @@ test('runMonitor: 実データ(v40等)を使った統合テストで、新着ス
     assert.equal(added.date, futureDate);
     assert.ok(added.id.startsWith('ig-v40-'));
 
-    // v40以外の全店舗(対象6店舗のうちv40以外・対象外の一般店舗すべて)は1件も変化していない
+    // v40以外の全店舗(対象5店舗のうちv40以外・対象外の一般店舗すべて)は1件も変化していない
     const others = (list) => list.filter((t) => t.venueId !== 'v40');
     assert.deepEqual(others(result.arr), others(before));
 
@@ -222,7 +222,7 @@ test('runMonitor: 実データ(v40等)を使った統合テストで、新着ス
       );
     }
 
-    // 対象6店舗いずれの過去日エントリも一切変化していない
+    // 対象5店舗いずれの過去日エントリも一切変化していない
     const pastOf = (list) => list.filter((t) => TARGET_VENUE_IDS.includes(t.venueId) && t.date < today);
     assert.deepEqual(pastOf(result.arr), pastOf(before));
 
@@ -4010,7 +4010,7 @@ test('★隔離: CLI — dry-run でも同じ挙動(失敗店をスキップし�
     assert.equal(r.status, 2);
     // 【他店の処理は続く】dry-run が全店を1回で観測できないと、較正のたびに何度も回すことになる
     assert.match(r.stdout, /追加行: v20 /, '失敗店をスキップして他店の明細まで出ること');
-    assert.match(r.stdout, /対象 6店 = 観測できた 5店 \+ 【取得失敗 1店】/);
+    assert.match(r.stdout, /対象 5店 = 観測できた 4店 \+ 【取得失敗 1店】/);
     // 書き込みは一切していない
     assert.equal(fs.readFileSync(path.join(root, 'data.js'), 'utf8'), beforeData);
     assert.equal(fs.readFileSync(path.join(root, 'apify-monitor-state.json'), 'utf8'), beforeState);
@@ -4036,7 +4036,7 @@ test('★隔離(検知側): CLI — 店の集計が合わなくなったら ::er
     // 失敗した店の summary を summaries に入れ忘れる変異(=店の数が合わなくなる)
     const p = path.join(root, 'tools', 'monitor-instagram-apify.js');
     const src = fs.readFileSync(p, 'utf8');
-    // 新着0件の店の summary を入れ忘れる = 対象6店に対し記録が足りなくなる
+    // 新着0件の店の summary を入れ忘れる = 対象5店に対し記録が足りなくなる
     const out = src.replace(
       '    if (newPosts.length === 0) {\n      summaries.push(summary);\n      continue;',
       '    if (newPosts.length === 0) {\n      continue;'
@@ -5601,7 +5601,7 @@ test('★完走: 判定が記録されていない投稿があれば「★不完
 });
 
 test('★完走: 店の記録そのものが欠けていても「★不完全」になる(残差で数えていないこと)', () => {
-  // 対象6店なのに summaries が1店ぶんしか無い = どこかで push を忘れた形。
+  // 対象5店なのに summaries が1店ぶんしか無い = どこかで push を忘れた形。
   const summaries = [
     { store: monitor.STORES[0], fetchFailed: false, scheduleLikeCount: 1, probeVerdicts: [{ kind: 'empty' }] },
   ];
@@ -5619,7 +5619,7 @@ test('★CLI(探索): 完走マーカーがログの最後に1行だけ出る(�
   assert.equal(r.status, 0, r.stderr);
   const lines = r.stdout.split('\n').filter((l) => l.includes('探索の完了状態:'));
   assert.equal(lines.length, 1, '完走マーカーは1行だけ出すこと(複数あると grep の判定が揺れる)');
-  assert.match(lines[0], /対象6店 = 観測できた6店 \+ 取得失敗0店/);
+  assert.match(lines[0], /対象5店 = 観測できた5店 \+ 取得失敗0店/);
   assert.match(lines[0], /★完走/);
 });
 
@@ -5803,7 +5803,7 @@ test('★掲載ルール(v20): 「華金」を含む行を除外する', async (
 });
 
 test('★掲載ルール(逆方向・これが本命): 他店の「大還元」は取込み経路でも落ちない', async () => {
-  // v18(Poker Bar IRIS)は【監視対象6店の1つ】で、実データに `大還元フリロ` `月末大還元` がある。
+  // v18(Poker Bar IRIS)は【監視対象5店の1つ】で、実データに `大還元フリロ` `月末大還元` がある。
   // 除外を全店に効かせると、この店の正当な大会が毎月静かに消える。
   const result = await monitor.runMonitor(
     { stores: [STORE_V18], before: [], today: '2026-07-31', state: {} },
