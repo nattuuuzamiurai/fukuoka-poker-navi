@@ -1595,11 +1595,75 @@
     ]
   };
 
+  // ===== FST 5.0「Main House Day1」(店舗開催のMAIN EVENT Day1フライト) =====
+  // 出典: 主催者公式Linktree(https://linktr.ee/fukuokasupertounament)に掲載されている画像
+  //   「FST Main House Day1」。社長が2026-09-01に書き起こしを提供。
+  // ★これは【サテライト(チケット獲得トーナメント)ではない】。メイン会場(ホテルニューオータニ博多)とは
+  //   別に、県内各店舗で開催されるMAIN EVENT本戦のDay1フライトそのもの。ここで獲得したスタックは
+  //   メイン会場のDay2(fst-schedule-data.js の flight:'MAIN_DAY2'。2026-09-21 13:00開始)に
+  //   引き継がれる。エントリー体系もサテライトと異なる(下記footerNotes参照)ため、既存の
+  //   「サイト内の今後のFSTサテライト」セクション(fstSatellites())とは別枠で扱う。
+  // venueId: 当サイトの既存VENUESとの突き合わせ結果。
+  //   - confidence:'high'   … 表記がほぼ一致。店舗ページへリンクする。
+  //   - confidence:'medium' … 略称(KKPF)からの推測で裏取りが取れていない。リンクはするが
+  //     「店舗名要確認」を明記する(店舗ページへの自動リンク自体は誤りのリスクが低いため許容)。
+  //   - confidence:'unresolved' … 候補が複数(v14/v40)あり断定できない。venueId は null とし、
+  //     【店舗ページへは絶対にリンクしない】(誤った店舗に紐付けないため。裏取りが取れるまで
+  //     「トリプルバレル(店舗未確定)」のまま表示する。一方に決め打ちしないこと)。
+  const FST_MAIN_HOUSE_DAY1 = {
+    asOf: '2026年9月1日',
+    days: [
+      { date:'2026-08-29', start:'16:30', close:'20:50', houseName:'SKY', venueId:'v33', confidence:'high' },
+      { date:'2026-08-30', start:'19:00', close:'23:20', houseName:'梵-bon-西中洲', venueId:'v29', confidence:'high' },
+      { date:'2026-09-05', start:'15:00', close:'19:20', houseName:'KKPF', venueId:'v2', confidence:'medium' },
+      { date:'2026-09-06', start:'16:00', close:'20:20', houseName:'72', venueId:'v25', confidence:'high' },
+      { date:'2026-09-11', start:'18:00', close:'21:20', houseName:'JOKER', venueId:'v26', confidence:'high' },
+      { date:'2026-09-12', start:'17:00', close:'21:20', houseName:'RAISE BLUE', venueId:'v8', confidence:'high' },
+      { date:'2026-09-13', start:'17:00', close:'21:20', houseName:'RAFTEL', venueId:'v37', confidence:'high' },
+      { date:'2026-09-13', start:'17:00', close:'21:20', houseName:'トリプルバレル', venueId:null, confidence:'unresolved' },
+      { date:'2026-09-17', start:'18:00', close:'21:20', houseName:'DOJO', venueId:'v27', confidence:'high' }
+    ],
+    footerNotes: [
+      'Entry: チップ×2 or チップ+25,000円 or 50,000円',
+      'Chip: 40,000',
+      '施設利用料6,000円(Entry毎にお支払い頂きます)',
+      'ドリンク代は店舗により異なります。',
+      'Day2へ通過した場合でも、他Day1へのエントリーは可能です。',
+      'スタックはDay2へと引継ぎとなります。',
+      '複数回Day1を通過した場合は、最大スタックを採用いたします。'
+    ]
+  };
+  function fstMainHouseDay1Cards(){
+    return FST_MAIN_HOUSE_DAY1.days
+      .slice()
+      .sort((a,b)=> a.date.localeCompare(b.date) || String(a.start).localeCompare(String(b.start)))
+      .map(r => {
+        const d = iso(r.date);
+        let houseHtml;
+        if (r.venueId){
+          const v = venueById[r.venueId] || {};
+          const suffix = r.confidence === 'medium' ? '・店舗名要確認' : '';
+          houseHtml = `<a href="#venue/${encodeURIComponent(r.venueId)}">${escHtml(r.houseName)}</a>${v.name ? `（${escHtml(v.name)}${suffix}）` : ''}`;
+        } else {
+          houseHtml = `${escHtml(r.houseName)}<span class="ft-tbd">（店舗未確定）</span>`;
+        }
+        return `<div class="fst-tcard">
+        <div class="ft-no">${d.getMonth()+1}/${d.getDate()}</div>
+        <div class="ft-body">
+          <div class="ft-name">${houseHtml}</div>
+          <div class="ft-meta"><span>START <b>${escHtml(r.start)}</b></span><span>CLOSE <b>${escHtml(r.close)}</b></span></div>
+        </div>
+      </div>`;
+      }).join('');
+  }
+
   // サイト内に登録済みの「FSTサテライト」(data.js で tags に "FST" を持つトーナメント)の
   // 今後の開催分。専用ページからサテライトへの導線として出す。
+  // ★タグ「店舗DAY1」を持つ行(=Main House Day1。サテライトではない)は除外する
+  //   (fstMainHouseDay1Cards()が別セクションで表示するため、ここに混ぜない)。
   function fstSatellites(limit){
     return ALL_TOURNAMENTS
-      .filter(t => (t.tags||[]).includes('FST') && t.date >= localToday)
+      .filter(t => (t.tags||[]).includes('FST') && !(t.tags||[]).includes('店舗DAY1') && t.date >= localToday)
       .sort((a,b)=> a.date.localeCompare(b.date) || startKey(a).localeCompare(startKey(b)))
       .slice(0, limit || 20);
   }
@@ -1729,6 +1793,10 @@
       <div class="fst-links">
         ▶ <a href="${FST.x}" target="_blank" rel="noopener">公式X（@fst_202408）</a>　／　<a href="${FST.linktree}" target="_blank" rel="noopener">公式Linktree</a>　／　<a href="${FST.instagram}" target="_blank" rel="noopener">公式Instagram</a>
       </div>
+      <div class="fst-sect">店舗開催のMain Event Day1（Main House）</div>
+      <p class="fst-sub">メイン会場とは別に、県内一部店舗でMAIN EVENTのDay1フライトが開催されます。<b>チケット獲得を目的としたサテライトではなく、MAIN EVENT本戦のDay1フライトそのもの</b>です。ここで獲得したスタックはメイン会場のDay2（9/21 13:00開始）に引き継がれます。出典は主催者公式Linktreeに掲載の画像「FST Main House Day1」（${FST_MAIN_HOUSE_DAY1.asOf}時点）。</p>
+      <div id="fst-main-house-list">${fstMainHouseDay1Cards()}</div>
+      <div class="fst-venue">${FST_MAIN_HOUSE_DAY1.footerNotes.map(n=>escHtml(n)).join('<br>')}</div>
       <div class="fst-sect">サイト内の今後のFSTサテライト</div>
       <p class="fst-sub">当サイトに登録されている、県内各店のFSTサテライト(チケット獲得トーナメント)の直近の開催予定です。開催内容は変更される場合があるため、参加前に各店舗の公式情報をご確認ください。</p>
       ${satHtml}

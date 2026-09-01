@@ -71,6 +71,9 @@ function extractConst(indexSrc, name) {
 const INDEX_SRC = fs.readFileSync(path.join(REPO, 'index.html'), 'utf8');
 const WJPT = extractConst(INDEX_SRC, 'WJPT');
 const FST = extractConst(INDEX_SRC, 'FST');
+// FST 5.0「Main House Day1」(店舗開催のMAIN EVENT Day1フライト。サテライトではない)。
+// 出典・venueId の突き合わせ方針は index.html の const FST_MAIN_HOUSE_DAY1 直前のコメントを参照。
+const FST_MAIN_HOUSE_DAY1 = extractConst(INDEX_SRC, 'FST_MAIN_HOUSE_DAY1');
 
 // ---- 大会ページ → 店舗のトーナメント日程への導線 ----
 // 【なぜ必要か】Search Console 実測(2026-08-18・直近28日)では、検索からのクリック87件のうち
@@ -510,8 +513,8 @@ function fstFaqItems(FST, main, champ) {
     },
     {
       q: 'buy-in（参加費）の目安は？',
-      aHtml: `MAIN EVENT・CHAMPIONSHIPの概要のbuy-inは次のとおりです。<br>・MAIN EVENT：${esc(main.entry)}<br>・CHAMPIONSHIP：${esc(champ.entry)}<br>MAIN EVENTの各Day1フライト（Day1A〜E）のエントリーも、上記MAIN EVENT概要と同額です。一方、CHAMPIONSHIPの各Day1フライトについては、上記概要欄の金額が個々のDay1フライトにも同様に適用されるかは当サイトでは未確認です。<br>上記以外の個別トーナメント（サイドイベント等）を含む全56トーナメントのbuy-inは、${esc(FST.asOf)}時点の公式スケジュールにもとづき<a href="#all-schedule">下記の全日程（タイムスケジュール）</a>に掲載済みです。最新情報は${xLink}等の公式発表もあわせてご確認ください。`,
-      aText: `MAIN EVENT・CHAMPIONSHIPの概要のbuy-inは、MAIN EVENTが${main.entry}、CHAMPIONSHIPが${champ.entry}です。MAIN EVENTの各Day1フライト(Day1A〜E)のエントリーも同額です。CHAMPIONSHIPの各Day1フライトについては、概要欄の金額が個々のDay1フライトにも同様に適用されるかは当サイトでは未確認です。上記以外の個別トーナメント(サイドイベント等)を含む全56トーナメントのbuy-inは、${FST.asOf}時点の公式スケジュールにもとづき本ページの全日程(タイムスケジュール)に掲載済みです。`
+      aHtml: `MAIN EVENT・CHAMPIONSHIPの概要のbuy-inは次のとおりです。<br>・MAIN EVENT：${esc(main.entry)}<br>・CHAMPIONSHIP：${esc(champ.entry)}<br>MAIN EVENT・CHAMPIONSHIPとも、各Day1フライト（Day1A〜E）のエントリーは、上記概要と同額であることを確認済みです。<br>上記以外の個別トーナメント（サイドイベント等）を含む全56トーナメントのbuy-inは、${esc(FST.asOf)}時点の公式スケジュールにもとづき<a href="#all-schedule">下記の全日程（タイムスケジュール）</a>に掲載済みです。最新情報は${xLink}等の公式発表もあわせてご確認ください。`,
+      aText: `MAIN EVENT・CHAMPIONSHIPの概要のbuy-inは、MAIN EVENTが${main.entry}、CHAMPIONSHIPが${champ.entry}です。MAIN EVENT・CHAMPIONSHIPとも、各Day1フライト(Day1A〜E)のエントリーは上記概要と同額であることを確認済みです。上記以外の個別トーナメント(サイドイベント等)を含む全56トーナメントのbuy-inは、${FST.asOf}時点の公式スケジュールにもとづき本ページの全日程(タイムスケジュール)に掲載済みです。`
     },
     {
       q: '予約・エントリー方法は？',
@@ -619,6 +622,44 @@ ${rows}
   }).join('\n');
 }
 
+// ---- FST 5.0「Main House Day1」(店舗開催のMAIN EVENT Day1フライト) ----
+// ★これはサテライト(チケット獲得トーナメント)ではない。venueId が null の行(候補が複数あり
+//   断定できないもの)は店舗ページへリンクしない(index.html の const FST_MAIN_HOUSE_DAY1 直前の
+//   コメント・fst-main-house-day1-2026-09-01.json の _important_distinction を参照)。
+function mainHouseDay1Table(mh) {
+  const rows = mh.days.slice().sort((a, b) => a.date.localeCompare(b.date) || String(a.start).localeCompare(String(b.start)));
+  const trs = rows.map(r => {
+    const f = fmtDate(r.date);
+    let house;
+    if (r.venueId) {
+      const v = DATA.VENUES.find(x => x.id === r.venueId);
+      const suffix = r.confidence === 'medium' ? '・店舗名要確認' : '';
+      house = v ? `<a href="/venues/${esc(v.slug)}/">${esc(r.houseName)}</a>（${esc(v.name)}${suffix}）` : esc(r.houseName);
+    } else {
+      house = `${esc(r.houseName)}<span style="color:#8e1524">（店舗未確定）</span>`;
+    }
+    return `      <tr>
+        <td class="start">${f.m}/${f.d}（${f.wd}）</td>
+        <td class="start">${esc(r.start)}〜${esc(r.close)}</td>
+        <td>${house}</td>
+      </tr>`;
+  }).join('\n');
+  return `<div class="sched-wrap"><table class="sched">
+  <thead><tr><th>日付</th><th>時間</th><th>開催店舗（Main House）</th></tr></thead>
+  <tbody>
+${trs}
+  </tbody>
+</table></div>`;
+}
+function mainHouseDay1Block(mh) {
+  if (!mh || !Array.isArray(mh.days) || !mh.days.length) return '';
+  return `
+<h2 class="day">店舗開催のMain Event Day1（Main House）</h2>
+<p class="lead">メイン会場とは別に、県内一部店舗でMAIN EVENTのDay1フライトが開催されます。<b>チケット獲得を目的としたサテライトではなく、MAIN EVENT本戦のDay1フライトそのもの</b>です。ここで獲得したスタックはメイン会場のDay2（9/21 13:00開始）に引き継がれます。出典は主催者公式Linktreeに掲載の画像「FST Main House Day1」（${esc(mh.asOf)}時点）。</p>
+${mainHouseDay1Table(mh)}
+<div class="evt-meta">${mh.footerNotes.map(esc).join('<br>')}</div>`;
+}
+
 // ---- FST 5.0 ページ ----
 // 会期・会場・発表済みの2大会(MAIN EVENT / CHAMPIONSHIP)の概要に加え、メイン会場の全日程表(上記
 // schedTableFst)を掲載する。個別トーナメントのブラインドストラクチャーは引き続き未発表。
@@ -695,6 +736,7 @@ ${tables}
 <h2 class="day" id="all-schedule">全日程（タイムスケジュール）</h2>
 <p class="lead">メイン会場（${esc(FST.venue)}）で行われる全${FST_SCHEDULE.tournaments.length}トーナメントのSTART・CLOSE・エントリーです。出典: 主催者公式Linktreeに掲載のPDF「EVENT SCHEDULE 2026.09.19-23」（${esc(FST.asOf)}時点）。エントリー欄が「PDF未記載」の行は、PDF側でエントリー欄が数値ではなくアイコン/バッジ表記になっており、当サイトで金額を読み取れなかった行です（推測で埋めていません）。CLOSE欄が「-」の回はレイトレジ無し（最後まで続行）です。［EC］［F100］［XPT］は公式PDFのTOURNAMENT列に付いていたバッジ表記をそのまま掲載しており、正式名称・詳細は当サイトでは確認できていません。</p>
 ${schedTableFst(FST_SCHEDULE.tournaments)}
+${mainHouseDay1Block(FST_MAIN_HOUSE_DAY1)}
 ${satelliteVenuesBlock((reg && reg.satelliteVenueIds) || [], {
   heading: 'サテライト開催店舗',
   lead: n => `下記の店舗では、FSTチケット（獲得するとMAIN EVENT・CHAMPIONSHIPにエントリーできます）が懸かったサテライト（チケット獲得トーナメント）が開催されています（当サイト掲載データより集計・${n}店舗）。日程・詳細は各店舗のページでご確認ください。`
