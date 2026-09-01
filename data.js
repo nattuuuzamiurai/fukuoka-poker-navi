@@ -469,23 +469,6 @@ const VENUES = [
     "ringNote": "チャージ1,000円（飲み放題込み）＋リング参加4,000円で50BB（250C）相当という情報があります（公開情報より）。追加購入は100BB＝10,000円／400BB＝30,000円／800BB＝50,000円。ただし会員制からコンセプト変更の可能性があり、レート・詳細は店舗にご確認ください。"
   },
   {
-    "id": "v32",
-    "slug": "bar-betty-nakasu",
-    "name": "BAR BETTY（バーベティ）",
-    "area": "中洲",
-    "address": "福岡県福岡市博多区中洲2-6-20 2F",
-    "access": "中洲川端駅 徒歩5分",
-    "x": "",
-    "line": "",
-    "instagram": "https://www.instagram.com/casinobar_betty/",
-    "website": "",
-    "tel": "092-272-3077",
-    "featured": false,
-    "note": "バニーガール接客のカジノバー。定期トーナメントは要確認。",
-    "sourceLabel": "",
-    "sourceUrl": ""
-  },
-  {
     "id": "v33",
     "slug": "poker-room-sky",
     "name": "Poker room SKY",
