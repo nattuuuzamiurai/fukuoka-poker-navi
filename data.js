@@ -661,6 +661,18 @@ const VENUES = [
   }
 ];
 
+/* TOURNAMENTS は行単位の upsert ツール(tools/tournament-merge.js の readDataJs)が
+ * `JSON.parse` でそのまま読むため、この配列の中(直後の `[` 〜 `\n];` の間)には
+ * コメントを書けない(書くと JSON として壊れ、取込みツールが例外で落ちる)。
+ * 個別エントリに関する経緯・確認状況などの注記はこのコメント、または該当PRの説明に残すこと。
+ *
+ * ★ kk0905(FST Main House Day1, 2026-09-05, venueId: v2)の店舗紐付け(略称「KKPF」→
+ *   KKPOKER FUKUOKA)は 2026-09-01 に社長確認済み。以前は裏取り不足で name に
+ *   「(店舗名要確認)」を付記し lowConfidence: true としていたが、確認が取れたため両方外した。
+ *   一方、同じ FST Main House Day1 の「トリプルバレル」(2026-09-13開催分)は
+ *   候補が複数(v14/v40)あり依然として店舗未確定のため変更していない
+ *   (index.html の const FST_MAIN_HOUSE_DAY1 直前のコメントを参照)。
+ */
 const TOURNAMENTS = [
   {
     "id": "k0701",
@@ -22196,7 +22208,7 @@ const TOURNAMENTS = [
   {
     "id": "kk0905",
     "venueId": "v2",
-    "name": "FST Main House Day1（店舗名要確認）",
+    "name": "FST Main House Day1",
     "date": "2026-09-05",
     "start": "15:00",
     "buyin": null,
@@ -22210,8 +22222,7 @@ const TOURNAMENTS = [
       "FST"
     ],
     "source": "semi",
-    "verified": false,
-    "lowConfidence": true
+    "verified": false
   },
   {
     "id": "kk0906a",
