@@ -510,8 +510,8 @@ function fstFaqItems(FST, main, champ) {
     },
     {
       q: 'buy-in（参加費）の目安は？',
-      aHtml: `現時点（${esc(FST.asOf)}時点）で公式に金額が発表されているのは、MAIN EVENTとCHAMPIONSHIPの2大会のみです。<br>・MAIN EVENT：${esc(main.entry)}<br>・CHAMPIONSHIP：${esc(champ.entry)}<br>上記以外の個別トーナメント（サイドイベント等）のbuy-inは、この時点で公式発表がありません。<b>大会ごとに異なります</b>ので、詳細は${xLink}等の公式発表をご確認ください。`,
-      aText: `現時点(${FST.asOf}時点)で公式に金額が発表されているのはMAIN EVENTとCHAMPIONSHIPの2大会のみです。MAIN EVENTは${main.entry}、CHAMPIONSHIPは${champ.entry}です。上記以外の個別トーナメント(サイドイベント等)のbuy-inは公式発表がありません。大会ごとに異なりますので、詳細は公式発表をご確認ください。`
+      aHtml: `MAIN EVENT・CHAMPIONSHIPの概要のbuy-inは次のとおりです。<br>・MAIN EVENT：${esc(main.entry)}<br>・CHAMPIONSHIP：${esc(champ.entry)}<br>MAIN EVENTの各Day1フライト（Day1A〜E）のエントリーも、上記MAIN EVENT概要と同額です。一方、CHAMPIONSHIPの各Day1フライトについては、上記概要欄の金額が個々のDay1フライトにも同様に適用されるかは当サイトでは未確認です。<br>上記以外の個別トーナメント（サイドイベント等）を含む全56トーナメントのbuy-inは、${esc(FST.asOf)}時点の公式スケジュールにもとづき<a href="#all-schedule">下記の全日程（タイムスケジュール）</a>に掲載済みです。最新情報は${xLink}等の公式発表もあわせてご確認ください。`,
+      aText: `MAIN EVENT・CHAMPIONSHIPの概要のbuy-inは、MAIN EVENTが${main.entry}、CHAMPIONSHIPが${champ.entry}です。MAIN EVENTの各Day1フライト(Day1A〜E)のエントリーも同額です。CHAMPIONSHIPの各Day1フライトについては、概要欄の金額が個々のDay1フライトにも同様に適用されるかは当サイトでは未確認です。上記以外の個別トーナメント(サイドイベント等)を含む全56トーナメントのbuy-inは、${FST.asOf}時点の公式スケジュールにもとづき本ページの全日程(タイムスケジュール)に掲載済みです。`
     },
     {
       q: '予約・エントリー方法は？',
@@ -579,9 +579,13 @@ function pastSatelliteVenuesBlock(reg, eventLabel) {
 // ---- FST 5.0 全日程スケジュール表(日別) ----
 // 出典・注意点は fst-schedule-data.js 冒頭のコメントを参照。列がJOPT/WJPT(バイイン・スタック)とも
 // NIPPON SERIES(Fee/Reg Close/Prize)とも違う(No./START/CLOSE/エントリー)ため専用の表を作る。
-// entry が null の行(MAIN EVENT/FST Championshipの各Day1フライト)はPDF側で金額が数値ではなく
-// アイコン/バッジ表記だった行。★推測で埋めず、「PDF未記載」と分かる文言にする(index.html の
-// fstScheduleCards() と同じ扱い。文言も揃えてある)。
+// entry は number(円建て) / string(複合表記) / null(不明) の3種類を取りうる
+// (fst-schedule-data.js 冒頭コメント参照)。
+//   - number → fstMoney() で「¥●●●」表示。
+//   - string → すでに「¥50,000 ／ …」のような完成した表記のため、円マーク等を二重に付けず
+//     エスケープしてそのまま表示(MAIN EVENTの各Day1フライトが該当。社長確認・2026-09-01)。
+//   - null   → PDF側で金額が数値ではなくアイコン/バッジ表記だった行。★推測で埋めず、
+//     「PDF未記載」と分かる文言にする(index.html の fstScheduleCards() と同じ扱い。文言も揃えてある)。
 function fstMoney(n) { return '¥' + Number(n).toLocaleString('ja-JP'); }
 const FST_ENTRY_UNKNOWN_HTML = '<span style="color:#8e1524">PDF未記載（本ページのMain Event/Championship概要をご確認ください）</span>';
 function schedTableFst(tournaments) {
@@ -595,7 +599,8 @@ function schedTableFst(tournaments) {
       // series はPDFのTOURNAMENT列先頭に付いていた角カッコバッジ([EC]/[F100]/[XPT])をそのまま掲載。
       // 正式名称・詳細は公式に未確認のため、当サイトで意味を補って言い換えない(fst-schedule-data.js 注3)。
       const badge = t.series ? `<span style="color:#33409e;font-weight:700;font-size:.85em">[${esc(t.series)}]</span> ` : '';
-      const entry = (t.entry === null) ? FST_ENTRY_UNKNOWN_HTML : esc(fstMoney(t.entry));
+      const entry = (t.entry === null) ? FST_ENTRY_UNKNOWN_HTML
+        : esc(typeof t.entry === 'string' ? t.entry : fstMoney(t.entry));
       return `      <tr>
         <td class="no">${esc(t.no)}</td>
         <td class="start">${esc(t.start)}</td>
@@ -687,7 +692,7 @@ ${e.sched.map(([k, v]) => `    <tr><th>${esc(k)}</th><td class="start">${esc(v)}
 <a class="cta" href="/#fst">▶ サイト内のFSTサテライト（チケット獲得トーナメント）を見る<small>インタラクティブ版（日付・店舗つきで直近の開催予定を表示）</small></a>
 ${tables}
 <p class="lead" style="margin-top:14px">※ エントリー方法の「FSTチケット」は、県内各店で開催されるサテライトで獲得できるチケットを指します。サテライトの開催予定は<a href="/#fst">トップページのFSTページ</a>に掲載しています。</p>
-<h2 class="day">全日程（タイムスケジュール）</h2>
+<h2 class="day" id="all-schedule">全日程（タイムスケジュール）</h2>
 <p class="lead">メイン会場（${esc(FST.venue)}）で行われる全${FST_SCHEDULE.tournaments.length}トーナメントのSTART・CLOSE・エントリーです。出典: 主催者公式Linktreeに掲載のPDF「EVENT SCHEDULE 2026.09.19-23」（${esc(FST.asOf)}時点）。エントリー欄が「PDF未記載」の行は、PDF側でエントリー欄が数値ではなくアイコン/バッジ表記になっており、当サイトで金額を読み取れなかった行です（推測で埋めていません）。CLOSE欄が「-」の回はレイトレジ無し（最後まで続行）です。［EC］［F100］［XPT］は公式PDFのTOURNAMENT列に付いていたバッジ表記をそのまま掲載しており、正式名称・詳細は当サイトでは確認できていません。</p>
 ${schedTableFst(FST_SCHEDULE.tournaments)}
 ${satelliteVenuesBlock((reg && reg.satelliteVenueIds) || [], {

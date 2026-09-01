@@ -1631,11 +1631,15 @@
   function fstScheduleCards(tournaments, day){
     return tournaments.filter(t => t.day === day).map(t => {
       const badge = t.series ? `<span class="ft-badge">[${escHtml(t.series)}]</span>` : '';
-      // entry が null の行はPDF側でエントリー欄が数値ではなくアイコン/バッジ表記だった行。
-      // 金額を推測で埋めず、「読み取れなかった」ことが分かる表現にする(fst-schedule-data.js 注1)。
+      // entry は number(円建て) / string(複合表記) / null(不明) の3種類を取りうる
+      // (fst-schedule-data.js 冒頭コメント参照)。
+      //   - number → 従来通り fstMoney() で「¥●●●」表示。
+      //   - string → すでに「¥50,000 ／ …」のような完成した表記のため、円マーク等を二重に付けず
+      //     エスケープしてそのまま表示(MAIN EVENTの各Day1フライトが該当。社長確認・2026-09-01)。
+      //   - null   → 金額を推測で埋めず、「読み取れなかった」ことが分かる表現にする(fst-schedule-data.js 注1)。
       const entryHtml = (t.entry === null)
         ? `エントリー <span class="ft-tbd">PDF未記載（本ページのMain Event/Championship概要をご確認ください）</span>`
-        : `エントリー <b>${escHtml(fstMoney(t.entry))}</b>`;
+        : `エントリー <b>${escHtml(typeof t.entry === 'string' ? t.entry : fstMoney(t.entry))}</b>`;
       return `<div class="fst-tcard">
         <div class="ft-no">${escHtml(t.no)}<span>No.</span></div>
         <div class="ft-body">
