@@ -40,21 +40,34 @@
  * ■ 新しいプロモを追加するときは下の PROMO_BANNERS に1エントリ足すだけでよい。
  * ============================================================ */
 
-// Node実行時(tools/gen-sitemap.js 等)は big-events.js が export する関数をこのファイルの
-// ローカル変数に束ねる。ブラウザでは index.html がこのファイルより先に big-events.js を
-// 読み込むため(<script src="big-events.js"> → <script src="promo-banners.js">)、
-// eventFirstDay 等はすでにこのスクリプトと同じトップレベルの字句スコープに存在しており、
-// 素の識別子のままで使える(big-events.js冒頭のコメント・index.htmlのinline<script>と同じ仕組み)。
-if (typeof module !== 'undefined' && typeof require === 'function') {
-  var BE = require('./big-events.js');
-  var eventFirstDay = BE.eventFirstDay;
-  var eventLastDay = BE.eventLastDay;
-  var shiftDateStr = BE.shiftDateStr;
-  var eventShowUntil = BE.eventShowUntil;
-  var isEventArchived = BE.isEventArchived;
-  var isEventOngoing = BE.isEventOngoing;
-  var localTodayGlobal = BE.localTodayGlobal;
-}
+// Node実行時(tools/gen-sitemap.js 等)は big-events.js が export する関数を _BE 経由で参照する。
+// ブラウザでは index.html がこのファイルより先に big-events.js を読み込むため
+// (<script src="big-events.js"> → <script src="promo-banners.js">)、eventFirstDay 等は
+// すでにこのスクリプトと同じトップレベルの字句スコープに存在している。
+//
+// ★★2026-09-02の本番障害・再発防止(重要)★★
+//   以前はここで `var eventFirstDay = BE.eventFirstDay;` のように big-events.js と
+//   【同じ名前】でNode用のローカル変数を宣言していた。ブラウザの複数の<script>タグは
+//   同じページ内でグローバルな字句スコープを共有するため、if文の中の var 宣言であっても
+//   【実行されなくても】構文解析の時点でスクリプト全体にホイスティングされ、
+//   big-events.js側の `const eventFirstDay = …` と名前が衝突して
+//   `Uncaught SyntaxError: Identifier 'eventFirstDay' has already been declared` になり、
+//   このファイル全体(PROMO_BANNERSごと)が読み込めずDreaMのバナーが出なくなった
+//   (node --test はCommonJSでファイルごとにスコープが独立するため検知できず、
+//   本番デプロイ後に実際のブラウザで初めて発覚した)。
+//   そのため、Node向けのrequire結果は `_BE` という【big-events.js側と衝突しない別名】
+//   1つだけをトップレベルで宣言し、このファイルで使う各関数もすべて `_` を付けた別名
+//   (`_eventFirstDay` 等)に束ねる。ブラウザでは `_BE` が null になるので、素の識別子
+//   (big-events.jsがすでに宣言済みのもの)に読みにいくだけで新しい宣言は増やさない。
+//   ★同じ名前の var/let/const をここに追加しないこと。★
+const _BE = (typeof module !== 'undefined' && typeof require === 'function')
+  ? require('./big-events.js')
+  : null;
+const _eventFirstDay = _BE ? _BE.eventFirstDay : eventFirstDay;
+const _eventLastDay = _BE ? _BE.eventLastDay : eventLastDay;
+const _shiftDateStr = _BE ? _BE.shiftDateStr : shiftDateStr;
+const _eventShowUntil = _BE ? _BE.eventShowUntil : eventShowUntil;
+const _localTodayGlobal = _BE ? _BE.localTodayGlobal : localTodayGlobal;
 
 const PROMO_BANNERS = [
   {
@@ -73,8 +86,8 @@ const PROMO_BANNERS = [
 // 短い、単発1日イベント用の値(社長了承済み・2026-09-02)。
 const PROMO_LEAD_DAYS = 14;
 const promoShowFrom = days => {
-  const first = eventFirstDay(days);
-  return first ? shiftDateStr(first, -PROMO_LEAD_DAYS) : null;
+  const first = _eventFirstDay(days);
+  return first ? _shiftDateStr(first, -PROMO_LEAD_DAYS) : null;
 };
 
 // トップのバナー領域に出すプロモ(0件〜複数件)。掲載ウィンドウに入っているものすべてを、
@@ -82,10 +95,10 @@ const promoShowFrom = days => {
 // 第2引数 promos は big-events.js の visibleBigEvents(today, events) と同じテスト用の差し替え口
 // (省略時は本番の PROMO_BANNERS を使う。テストで本番データを書き換えずに境界値を検証できる)。
 function visiblePromoBanners(today, promos) {
-  const t = today || localTodayGlobal();
+  const t = today || _localTodayGlobal();
   return (promos || PROMO_BANNERS)
-    .filter(p => eventFirstDay(p.days) && eventLastDay(p.days))
-    .map(p => ({ promo: p, from: promoShowFrom(p.days), to: eventShowUntil(p.days) }))
+    .filter(p => _eventFirstDay(p.days) && _eventLastDay(p.days))
+    .map(p => ({ promo: p, from: promoShowFrom(p.days), to: _eventShowUntil(p.days) }))
     .filter(w => t >= w.from && t <= w.to)
     .sort((a, b) => a.from.localeCompare(b.from))
     .map(w => w.promo);
