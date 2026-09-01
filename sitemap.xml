@@ -116,6 +116,11 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://fukuokapoker.com/venues/bon-nishi-nakasu/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://fukuokapoker.com/venues/poker-room-sky/</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>

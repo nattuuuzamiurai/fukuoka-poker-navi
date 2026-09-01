@@ -12163,23 +12163,6 @@ const TOURNAMENTS = [
     "lowConfidence": true
   },
   {
-    "id": "tb0913",
-    "venueId": "v14",
-    "name": "店舗DAY1",
-    "date": "2026-09-13",
-    "start": null,
-    "buyin": null,
-    "addon": null,
-    "stack": null,
-    "guarantee": null,
-    "reentry": false,
-    "prize": null,
-    "tags": [],
-    "source": "semi",
-    "verified": false,
-    "lowConfidence": true
-  },
-  {
     "id": "tb0914",
     "venueId": "v14",
     "name": "FSTサテ",
@@ -18311,6 +18294,25 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "rb0912",
+    "venueId": "v8",
+    "name": "FST Main House Day1",
+    "date": "2026-09-12",
+    "start": "17:00",
+    "buyin": null,
+    "addon": null,
+    "stack": 40000,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "FST",
+      "店舗DAY1"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
     "id": "rf0803",
     "venueId": "v37",
     "name": "FSTサテライト",
@@ -18797,6 +18799,25 @@ const TOURNAMENTS = [
     "tags": [
       "サテライト",
       "FST"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "rf0913",
+    "venueId": "v37",
+    "name": "FST Main House Day1",
+    "date": "2026-09-13",
+    "start": "17:00",
+    "buyin": null,
+    "addon": null,
+    "stack": 40000,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "FST",
+      "店舗DAY1"
     ],
     "source": "semi",
     "verified": false
@@ -19306,6 +19327,25 @@ const TOURNAMENTS = [
     "tags": [
       "サテライト",
       "FST"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "sk0829b",
+    "venueId": "v33",
+    "name": "FST Main House Day1",
+    "date": "2026-08-29",
+    "start": "16:30",
+    "buyin": null,
+    "addon": null,
+    "stack": 40000,
+    "guarantee": null,
+    "reentry": false,
+    "prize": "同日16:00開始の「FST5.0サテライト②」(sk0829)とは別のエントリ。両者は30分違いの開催のため、サテライト終了後にMain House Day1が続けて開催される可能性があるが、運営上の関係(サテライト勝者がそのままDay1に進む等)は当サイトでは未確認のため断定しない",
+    "tags": [
+      "FST",
+      "店舗DAY1"
     ],
     "source": "semi",
     "verified": false
@@ -20031,6 +20071,25 @@ const TOURNAMENTS = [
     "lowConfidence": true
   },
   {
+    "id": "s70906",
+    "venueId": "v25",
+    "name": "FST Main House Day1",
+    "date": "2026-09-06",
+    "start": "16:00",
+    "buyin": null,
+    "addon": null,
+    "stack": 40000,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "FST",
+      "店舗DAY1"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
     "id": "cc0810n",
     "venueId": "v22",
     "name": "深夜トナメ",
@@ -20688,6 +20747,25 @@ const TOURNAMENTS = [
     "tags": [
       "サテライト",
       "FST"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "jk0911",
+    "venueId": "v26",
+    "name": "FST Main House Day1",
+    "date": "2026-09-11",
+    "start": "18:00",
+    "buyin": null,
+    "addon": null,
+    "stack": 40000,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "FST",
+      "店舗DAY1"
     ],
     "source": "semi",
     "verified": false
@@ -22118,12 +22196,12 @@ const TOURNAMENTS = [
   {
     "id": "kk0905",
     "venueId": "v2",
-    "name": "FST店舗DAY1",
+    "name": "FST Main House Day1（店舗名要確認）",
     "date": "2026-09-05",
     "start": "15:00",
-    "buyin": 50000,
+    "buyin": null,
     "addon": null,
-    "stack": 0,
+    "stack": 40000,
     "guarantee": null,
     "reentry": false,
     "prize": null,
@@ -22132,7 +22210,8 @@ const TOURNAMENTS = [
       "FST"
     ],
     "source": "semi",
-    "verified": false
+    "verified": false,
+    "lowConfidence": true
   },
   {
     "id": "kk0906a",
@@ -23937,23 +24016,21 @@ const TOURNAMENTS = [
   {
     "id": "dj0917",
     "venueId": "v27",
-    "name": "FST店舗DAY1",
+    "name": "FST Main House Day1",
     "date": "2026-09-17",
     "start": "18:00",
-    "buyin": 0,
+    "buyin": null,
     "addon": null,
-    "stack": 0,
+    "stack": 40000,
     "guarantee": null,
     "reentry": false,
-    "prize": "通常のFSTサテライトより上位の店舗代表決定戦的イベント。参加費は画像に明記なし",
+    "prize": null,
     "tags": [
-      "サテライト",
       "FST",
-      "特別開催"
+      "店舗DAY1"
     ],
     "source": "semi",
-    "verified": false,
-    "lowConfidence": true
+    "verified": false
   },
   {
     "id": "dj0924",
@@ -24098,6 +24175,26 @@ const TOURNAMENTS = [
     "source": "semi",
     "verified": false,
     "lowConfidence": true
+
+  },
+  {
+    "id": "bn0830",
+    "venueId": "v29",
+    "name": "FST Main House Day1",
+    "date": "2026-08-30",
+    "start": "19:00",
+    "buyin": null,
+    "addon": null,
+    "stack": 40000,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "FST",
+      "店舗DAY1"
+    ],
+    "source": "semi",
+    "verified": false
   }
 ];
 
