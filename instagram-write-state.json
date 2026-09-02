@@ -2,24 +2,6 @@
   "version": 1,
   "writtenBy": "tools/monitor-instagram-apify.js",
   "entries": {
-    "ig-v18-2026-09-01-nostart-mystery-bounty": {
-      "id": "ig-v18-2026-09-01-nostart-mystery-bounty",
-      "venueId": "v18",
-      "name": "MYSTERY BOUNTY",
-      "date": "2026-09-01",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "バウンティ"
-      ],
-      "source": "semi",
-      "verified": false
-    },
     "ig-v18-2026-09-02-nostart-fst-satellite": {
       "id": "ig-v18-2026-09-02-nostart-fst-satellite",
       "venueId": "v18",
@@ -471,24 +453,6 @@
       "source": "semi",
       "verified": false
     },
-    "ig-v20-2026-09-01-nostart-fst": {
-      "id": "ig-v20-2026-09-01-nostart-fst",
-      "venueId": "v20",
-      "name": "FST",
-      "date": "2026-09-01",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "FST"
-      ],
-      "source": "semi",
-      "verified": false
-    },
     "ig-v20-2026-09-02-nostart-free-roll": {
       "id": "ig-v20-2026-09-02-nostart-free-roll",
       "venueId": "v20",
@@ -880,24 +844,6 @@
       "reentry": false,
       "prize": null,
       "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v35-2026-09-01-1915-free-roll": {
-      "id": "ig-v35-2026-09-01-1915-free-roll",
-      "venueId": "v35",
-      "name": "FREE ROLL",
-      "date": "2026-09-01",
-      "start": "19:15",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "フリーロール"
-      ],
       "source": "semi",
       "verified": false
     },
