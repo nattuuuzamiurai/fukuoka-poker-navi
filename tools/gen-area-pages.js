@@ -106,6 +106,27 @@ function areaBreadcrumb(area, canonical) {
   ];
 }
 
+/**
+ * エリア内の店舗一覧の ItemList 構造化データ(GEO監査2026-09-03 3章⑤への対応)。
+ * このページが「そのエリアの店舗一覧」であることを機械にも伝える。
+ * 表示用の店舗カード(venueCards)がすでに持っている店舗配列(venues)をそのままJSON-LD化するだけで、
+ * 新規のデータ収集・推測は行わない(name・url とも data.js 由来の実在情報)。
+ * BreadcrumbList(pageHead の breadcrumb オプション)とは役割が別物なので、
+ * jsonld と統合せず別スクリプトタグにする(tools/site-shell.js の pageHead コメントと同じ考え方)。
+ */
+function areaItemListJsonLd(venues) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    itemListElement: venues.map((v, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: v.name,
+      url: `${SITE}/venues/${v.slug}/`
+    }))
+  };
+}
+
 function venueCards(venues) {
   return venues.map(v => {
     const meta = [];
@@ -286,6 +307,7 @@ ${SCHEDULE_JS}${AREA_SCHEDULE_JS}
 
   return pageHead({
     title, desc, canonical,
+    jsonld: areaItemListJsonLd(venues),
     breadcrumb: areaBreadcrumb(area, canonical),
     // OGP画像(依頼5・2026-08-28)。エリアごとの専用画像は持たないため、image を省略して
     // pageHead の既定値(サイト共通OGP・img/ogp/common-og.jpg)に任せる。

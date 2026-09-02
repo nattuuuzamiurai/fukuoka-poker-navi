@@ -126,6 +126,52 @@ function breadcrumbNavHtml(items) {
   return `<div class="bc-wrap"><nav class="breadcrumb" aria-label="パンくずリスト"><ol>${lis}</ol></nav></div>`;
 }
 
+// ---- FAQ(よくある質問): 見た目(<details>アコーディオン)とFAQPage構造化データの共通生成 ----
+// 【なぜここにあるか】以前は tools/gen-event-pages.js の fstFaqBlock() がFSTページ専用に
+//   ハードコードされていた(GEO監査 2026-09-03 dev-lead向け仕様書 3章①④で指摘)。
+//   トップページ(index.html)にもFAQPageを新規実装するにあたり、「質問配列→表示HTML+JSON-LDを
+//   同時生成する」ロジック自体をここに1つだけ置き、FST・トップの両方(および将来の他イベント
+//   ページ)から呼ぶ。複製すると片方だけ直して片方を忘れる事故が起きる、というこのファイル
+//   全体の教訓と同じ理由。
+// items … [{ q, aHtml, aText }] の配列。
+//   q     … 質問文(表示・JSON-LDの name 共通、esc() 済みにして渡す必要はない。ここで esc する)
+//   aHtml … 画面表示用の回答(リンク等のHTMLタグを含んでよい。呼び出し側で組み立て済みの文字列)
+//   aText … FAQPage構造化データ用のプレーンテキスト回答(HTMLタグを持たない)
+// opts.heading … セクション見出し(h2.day)。既定「よくある質問」
+// opts.headingId … 見出しセクションの id 属性(ページ内リンク用)。省略可
+const FAQ_CSS = `  .faq-item{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);margin-bottom:9px;overflow:hidden}
+  .faq-item summary{padding:12px 40px 12px 15px;font-weight:800;color:var(--felt);font-size:.92em;cursor:pointer;list-style:none;position:relative}
+  .faq-item summary::-webkit-details-marker{display:none}
+  .faq-item summary::after{content:'+';position:absolute;right:15px;top:50%;transform:translateY(-50%);font-weight:800;color:var(--gold);font-size:1.3em;line-height:1}
+  .faq-item[open] summary::after{content:'−'}
+  .faq-item .faq-a{padding:0 15px 14px;font-size:.86em;line-height:1.85;color:var(--txt)}
+  .faq-a a{color:#0e6a72;font-weight:700}
+`;
+function faqBlock(items, opts) {
+  opts = opts || {};
+  const heading = opts.heading || 'よくある質問';
+  const idAttr = opts.headingId ? ` id="${esc(opts.headingId)}"` : '';
+  const html = `
+<h2 class="day"${idAttr}>${esc(heading)}</h2>
+${items.map((f, i) => `<details class="faq-item"${i === 0 ? ' open' : ''}>
+  <summary>${esc(f.q)}</summary>
+  <div class="faq-a">${f.aHtml}</div>
+</details>`).join('\n')}`;
+  const jsonld = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: items.map(f => ({
+      '@type': 'Question',
+      name: f.q,
+      acceptedAnswer: { '@type': 'Answer', text: f.aText }
+    }))
+  };
+  const script = `<script type="application/ld+json">
+${JSON.stringify(jsonld, null, 2)}
+</script>`;
+  return { html, script, jsonld };
+}
+
 // ---- 共通CSS ----
 // 静的ページ共通の見た目。トップページ(index.html)の配色・角丸・影に合わせてある。
 // 店舗ページだけで必要になるものは pageHead({ extraCss }) で足す(ここを膨らませない)。
@@ -341,7 +387,7 @@ function pageFoot(BIG, currentPath, extraScripts, areaLinksHtml) {
 <footer>
   <div><b style="color:#fff">ふくおかポーカーナビ</b> — 福岡ポーカートーナメント日程アグリゲーター</div>
   <div style="margin-top:6px"><a href="/">トップ</a>　|　<span class="footer-linklist">${permanentEventLinks(BIG, currentPath)}</span></div>${areaLinksRow}
-  <div style="margin-top:6px"><a href="/contact.html">お問い合わせ</a>　|　<a href="/privacy.html">プライバシーポリシー</a></div>
+  <div style="margin-top:6px"><a href="/about.html">運営者情報</a>　|　<a href="/contact.html">お問い合わせ</a>　|　<a href="/privacy.html">プライバシーポリシー</a></div>
   <div id="evtFeature" style="display:none"></div>
 </footer>
 <script src="/big-events.js"></script>
@@ -367,5 +413,6 @@ module.exports = {
   LINK_SEP, permanentEventLinks, permanentEventLinksList,
   breadcrumbJsonLd, breadcrumbNavHtml,
   BASE_CSS, pageHead, pageFoot,
+  FAQ_CSS, faqBlock,
   validateVenueSlugs
 };
