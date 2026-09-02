@@ -56,10 +56,64 @@
   "inLanguage": "ja",
   "publisher": {
     "@type": "Organization",
-    "name": "エースハイ合同会社"
+    "name": "エースハイ合同会社",
+    "url": "https://fukuokapoker.com/about.html"
   }
 }
 </script>
+<!-- FAQ(トップページ)のJSON-LD(FAQPage)。中身は tools/gen-top-faq.js が
+     tools/site-shell.js の faqBlock() から生成し、下の2つのマーカーの間だけを差し替える
+     (自動同期。手で書き換えないこと)。 -->
+<!-- FAQ_JSONLD:START -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "福岡でポーカー大会・トーナメントを探すにはどうすればいい？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "トップページ上部の絞り込み機能から探せます。日付バーで日にちを選び、「エリア」「種類」(サテライト／PLO／NLH)のプルダウンで条件を指定すると、その条件に合う福岡県内のポーカー大会・トーナメントが一覧表示されます。地名から探したい場合は「エリアから探す」からも店舗一覧を確認できます。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "今日開催されているポーカー大会はすぐ分かる？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "はい。トップページを開くと当日の日付が自動的に選択された状態で表示され、「本日開催」の件数もひと目で確認できます。日付を他の日に切り替えたあとは「今日」ボタンで、すぐに本日の表示に戻せます。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "掲載している店舗・大会情報はどのくらいの頻度で更新される？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "情報源によって更新頻度が異なります。DMM Waitinglist(予約システム)と連携している一部の店舗は、毎日06:23(日本時間)に自動で最新の日程を取得・反映しています。Instagramで告知される一部店舗は、月末月初(毎月24日ごろ〜翌月10日ごろ)は毎日、それ以外の時期は週1回のペースで新着投稿を自動チェックし、日程の告知があれば反映しています。それ以外の店舗については、運営が各店舗の公式サイト・SNS等を随時確認し、判明した時点で手動で反映しており、更新の間隔は店舗ごとに異なります。開催内容は変更されることもあるため、参加前には各店舗・主催者の公式情報もあわせてご確認ください。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "掲載内容に誤りがあった場合はどうすればいい？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "お問い合わせフォームの「お問い合わせ種別」で「掲載内容の誤り・修正依頼」を選び、誤りの内容をご記入のうえ送信してください。運営(エースハイ合同会社)が確認し、必要に応じて掲載内容を修正します。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "このサイトは大会の公式情報ですか？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "いいえ、当サイトは各店舗・大会の主催者ではなく、公式媒体でもありません。当サイトは店舗・主催者が公開している情報を集約する媒体であり、賭博行為の勧誘・仲介を行うものではありません。最新情報や参加条件は、必ず各店舗・大会の公式サイト・SNS等でご確認ください。"
+      }
+    }
+  ]
+}
+</script>
+<!-- FAQ_JSONLD:END -->
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   :root{
@@ -626,6 +680,19 @@
     .vcard .vc-area,.vcard .vc-links,.vcard .vc-cta{display:none}
     .vc-name{font-size:.68em;line-height:1.25;justify-content:center;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
   }
+
+  /* FAQ(トップページ「よくある質問」)。events/fst-2026-fukuoka/ と同じ見た目にするため、
+     CSSの実体は tools/site-shell.js の FAQ_CSS 1本だけに置き、ここは tools/gen-top-faq.js が
+     自動で同期する(複製すると片方だけ直して片方を忘れる事故を防ぐため。手で書き換えないこと)。 */
+  /* FAQ_CSS:START */
+  .faq-item{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);margin-bottom:9px;overflow:hidden}
+  .faq-item summary{padding:12px 40px 12px 15px;font-weight:800;color:var(--felt);font-size:.92em;cursor:pointer;list-style:none;position:relative}
+  .faq-item summary::-webkit-details-marker{display:none}
+  .faq-item summary::after{content:'+';position:absolute;right:15px;top:50%;transform:translateY(-50%);font-weight:800;color:var(--gold);font-size:1.3em;line-height:1}
+  .faq-item[open] summary::after{content:'−'}
+  .faq-item .faq-a{padding:0 15px 14px;font-size:.86em;line-height:1.85;color:var(--txt)}
+  .faq-a a{color:#0e6a72;font-weight:700}
+/* FAQ_CSS:END */
 </style>
 </head>
 <body>
@@ -785,6 +852,34 @@
     </div>
     <span class="ac-btn">使ってみる →</span>
   </a>
+
+  <!-- FAQ(GEO監査2026-09-03 3章①への対応)。JSを実行しないクローラにも読める静的HTML。
+       中身・CSS・対応するJSON-LD(<head>のFAQ_JSONLD)は tools/gen-top-faq.js が
+       tools/site-shell.js の faqBlock() から生成し、この2つのコメントの間だけを差し替える
+       (自動同期。手で書き換えないこと)。 -->
+  <!-- FAQ_SECTION:START -->
+<h2 class="day" id="faq">よくある質問</h2>
+<details class="faq-item" open>
+  <summary>福岡でポーカー大会・トーナメントを探すにはどうすればいい？</summary>
+  <div class="faq-a">トップページ上部の絞り込み機能から探せます。日付バーで日にちを選び、「エリア」「種類」（サテライト／PLO／NLH）のプルダウンで条件を指定すると、その条件に合う福岡県内のポーカー大会・トーナメントが一覧表示されます。地名から探したい場合は<a href="#areaNav">エリアから探す</a>からも店舗一覧を確認できます。</div>
+</details>
+<details class="faq-item">
+  <summary>今日開催されているポーカー大会はすぐ分かる？</summary>
+  <div class="faq-a">はい。トップページを開くと当日の日付が自動的に選択された状態で表示され、「本日開催」の件数もひと目で確認できます。日付を他の日に切り替えたあとは「今日」ボタンで、すぐに本日の表示に戻せます。</div>
+</details>
+<details class="faq-item">
+  <summary>掲載している店舗・大会情報はどのくらいの頻度で更新される？</summary>
+  <div class="faq-a">情報源によって更新頻度が異なります。<br>・DMM Waitinglist（予約システム）と連携している一部の店舗：毎日06:23（日本時間）に自動で最新の日程を取得・反映<br>・Instagramで告知される一部店舗：月末月初（毎月24日ごろ〜翌月10日ごろ）は毎日、それ以外の時期は週1回のペースで新着投稿を自動チェックし反映<br>・それ以外の店舗：運営が公式サイト・SNS等を随時確認し、判明した時点で手動反映（更新の間隔は店舗により異なります）<br>開催内容は変更されることもあるため、参加前には各店舗・主催者の公式情報もあわせてご確認ください。</div>
+</details>
+<details class="faq-item">
+  <summary>掲載内容に誤りがあった場合はどうすればいい？</summary>
+  <div class="faq-a"><a href="contact.html">お問い合わせフォーム</a>の「お問い合わせ種別」で「掲載内容の誤り・修正依頼」を選び、誤りの内容をご記入のうえ送信してください。運営（エースハイ合同会社）が確認し、必要に応じて掲載内容を修正します。</div>
+</details>
+<details class="faq-item">
+  <summary>このサイトは大会の公式情報ですか？</summary>
+  <div class="faq-a">いいえ、当サイトは各店舗・大会の主催者ではなく、公式媒体でもありません。当サイトは店舗・主催者が公開している情報を集約する媒体であり、賭博行為の勧誘・仲介を行うものではありません。最新情報や参加条件は、必ず各店舗・大会の公式サイト・SNS等でご確認ください。</div>
+</details>
+<!-- FAQ_SECTION:END -->
 </main>
 
 <footer>
@@ -826,7 +921,7 @@
          `node tools/gen-venue-pages.js <repo>` を実行するとこの1行だけが差し替わる。
          店舗を足せば自動で増える。ズレは `--check` を付けた実行で検出できる。 -->
   <div id="venueLinks" class="footer-linklist" style="margin-top:6px">店舗ページ: 【天神】<a href="/venues/kkpoker-fukuoka/">KKPOKER FUKUOKA</a>・<a href="/venues/grand-mirage-poker/">グランドミラージュポーカー</a>・<a href="/venues/fuxk-fukuoka-tenjin/">FUXK 福岡天神店</a>・<a href="/venues/raise-blue-tenjin/">RAISE BLUE 天神</a>・<a href="/venues/alice-the-poker-room/">ALICE the Poker room（アリス）</a>・<a href="/venues/seventwo-tenjin/">72 -SevenTwo-</a>・<a href="/venues/save-tenjin/">アミューズメントバー SAVE天神店</a>　【中洲】<a href="/venues/m-holdem-nakasu/">m HOLD'EM 中洲</a>・<a href="/venues/onecasino-fukuoka-nakasu/">ONECASINO 福岡中洲</a>・<a href="/venues/casino-bar-leje-hakata/">Casino bar Leje 博多店</a>・<a href="/venues/casino-blow-nishi-nakasu/">CASINO BLOW 西中洲</a>・<a href="/venues/crownclown-nakasu/">CRownCLown（クラウンクラウン）</a>・<a href="/venues/bon-nishi-nakasu/">梵 bon 西中洲</a>・<a href="/venues/aria-nakasu/">ARIA 中洲</a>　【大名】<a href="/venues/roots-fukuoka/">ROOTS FUKUOKA</a>・<a href="/venues/musashi-poker-room-fukuoka/">むさぽ福岡（MUSASHI POKER ROOM 福岡店）</a>　【今泉】<a href="/venues/casinox-fukuoka-imaizumi/">CasinoX（カジノックス）福岡今泉店</a>・<a href="/venues/raftel-casino-fukuoka-imaizumi/">RAFTEL CASINO（ラフテルカジノ 福岡今泉店）</a>　【大橋】<a href="/venues/joker-fukuoka-ohashi/">JOKER♠️ 福岡大橋</a>・<a href="/venues/the-dojo-fukuoka/">THE DOJO</a>　【博多】<a href="/venues/poker-room-sky/">Poker room SKY</a>　【北九州】<a href="/venues/pokerbar-nuwland/">PokerBar NUWLAND</a>・<a href="/venues/triplebarrel-kokura/">TripleBarrel 小倉店</a>・<a href="/venues/texas-holdem-3000/">てきさすほーるでむ。</a>・<a href="/venues/texas-holdem-aa/">テキサスホールデムAA</a>・<a href="/venues/poker-bar-iris/">Poker Bar IRIS</a>・<a href="/venues/casino-arrows-kokura/">CASINO Arrows 小倉店</a>・<a href="/venues/king-queen-suited-kurosaki/">KING&amp;QUEEN SUITED 黒崎店</a>・<a href="/venues/kaji-bar-kokura/">KAJI BAR</a>・<a href="/venues/triplebarrel-orio/">TripleBarrel 折尾店</a>　【京築】<a href="/venues/poker-studio-deep-blue-yukuhashi/">POKER Studio DEEP BLUE</a>　【筑豊】<a href="/venues/king-queen-suited-nogata/">KING&amp;QUEEN SUITED 直方店</a>　【久留米】<a href="/venues/ken-poker-kurume/">KENポーカー（久留米）</a>・<a href="/venues/ace-and-king-kurume/">A&amp;K（Ace and King）</a>・<a href="/venues/dream-casinobar-kurume/">DreaM CASINO BAR</a></div>
-  <div><a href="contact.html">お問い合わせ</a>　|　<a href="contact.html">店舗の掲載・PRについて</a>　|　<a href="privacy.html">プライバシーポリシー</a></div>
+  <div><a href="about.html">運営者情報</a>　|　<a href="contact.html">お問い合わせ</a>　|　<a href="contact.html">店舗の掲載・PRについて</a>　|　<a href="privacy.html">プライバシーポリシー</a></div>
   <!-- フッターの免責文は1文に圧縮している(社長指示・2026-09-01)。元は4文あり、
        2〜4文目(賭博の勧誘・仲介ではない/プライズの扱いは各店舗規定による/バナーの著作権は
        各主催者に帰属)は削除ではなく privacy.html 第7条に移設済み。3・4文目は以前レビュー部の

@@ -46,7 +46,7 @@ const REPO = path.resolve(REPO_ARG);
 // 共通ユーティリティは tools/site-shell.js に寄せてある。
 // 店舗ページ(tools/gen-venue-pages.js)がまったく同じ骨格を使うため、複製せず共有する。
 const shell = require('./site-shell.js');
-const { SITE, POSITIONING, esc, fmtDate, LINK_SEP, pageHead } = shell;
+const { SITE, POSITIONING, esc, fmtDate, LINK_SEP, pageHead, FAQ_CSS, faqBlock } = shell;
 // sitemap.xml の唯一の所有者。中身はここでは組み立てず、丸ごと受け取って書くだけ。
 const { sitemapFile } = require('./gen-sitemap.js');
 
@@ -491,16 +491,10 @@ ${venueScheduleBlock()}
 // ---- FST 5.0 ページ「よくある質問」(FAQ) ----
 // ★ ここも推測を足さない原則は本文と同じ。断定できない項目(buy-in未発表・初心者/経験者向けの言及なし等)は
 //   「店舗・大会により異なる」「公式発表をご確認ください」等でヘッジする(社長指示・2026-08-27)。
-// 見た目は <details>/<summary>。当サイトに既存の類似パターンが無いため新規に用意する
-// (色・角丸・影は既存カード類 .evt-meta 等と揃えてある)。
-const FST_FAQ_CSS = `  .faq-item{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);margin-bottom:9px;overflow:hidden}
-  .faq-item summary{padding:12px 40px 12px 15px;font-weight:800;color:var(--felt);font-size:.92em;cursor:pointer;list-style:none;position:relative}
-  .faq-item summary::-webkit-details-marker{display:none}
-  .faq-item summary::after{content:'+';position:absolute;right:15px;top:50%;transform:translateY(-50%);font-weight:800;color:var(--gold);font-size:1.3em;line-height:1}
-  .faq-item[open] summary::after{content:'−'}
-  .faq-item .faq-a{padding:0 15px 14px;font-size:.86em;line-height:1.85;color:var(--txt)}
-  .faq-a a{color:#0e6a72;font-weight:700}
-`;
+// 見た目(<details>/<summary>)とFAQPage構造化データの生成ロジックは tools/site-shell.js の
+// faqBlock()/FAQ_CSS に集約してある(GEO監査2026-09-03で「FST専用にハードコードされている」
+// と指摘されたための切り出し。トップページ(index.html)のFAQも同じ関数を使う。
+// tools/gen-top-faq.js を参照)。このファイルには「FSTの質問配列を組み立てる」ことだけを残す。
 // FST(index.html の const FST)を受け取って質問配列を組み立てる。
 // aHtml … 画面表示用(リンクつき)。aText … FAQPage構造化データ用のプレーンテキスト(HTMLタグを持たない)。
 function fstFaqItems(FST, main, champ) {
@@ -529,26 +523,7 @@ function fstFaqItems(FST, main, champ) {
   ];
 }
 function fstFaqBlock(FST, main, champ) {
-  const items = fstFaqItems(FST, main, champ);
-  const html = `
-<h2 class="day">よくある質問</h2>
-${items.map((f, i) => `<details class="faq-item"${i === 0 ? ' open' : ''}>
-  <summary>${esc(f.q)}</summary>
-  <div class="faq-a">${f.aHtml}</div>
-</details>`).join('\n')}`;
-  const jsonld = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: items.map(f => ({
-      '@type': 'Question',
-      name: f.q,
-      acceptedAnswer: { '@type': 'Answer', text: f.aText }
-    }))
-  };
-  const script = `<script type="application/ld+json">
-${JSON.stringify(jsonld, null, 2)}
-</script>`;
-  return { html, script };
+  return faqBlock(fstFaqItems(FST, main, champ));
 }
 
 // ---- サテライト開催店舗カード(依頼2・社長方針2026-08-27 / 依頼4・2026-08-28で過去形にも対応) ----
@@ -748,7 +723,7 @@ ${venueScheduleBlock()}
   ▶ <a href="/">福岡の他のポーカートーナメント日程を見る</a>
 </div>
 ${faq.script}`;
-  return pageHead({ title, desc, canonical, jsonld, image, extraCss: FST_FAQ_CSS, breadcrumb: pageBreadcrumb('fst', canonical) }) + body + pageFoot('/events/fst-2026-fukuoka/');
+  return pageHead({ title, desc, canonical, jsonld, image, extraCss: FAQ_CSS, breadcrumb: pageBreadcrumb('fst', canonical) }) + body + pageFoot('/events/fst-2026-fukuoka/');
 }
 
 // ---- 書き出し / 検査 ----
