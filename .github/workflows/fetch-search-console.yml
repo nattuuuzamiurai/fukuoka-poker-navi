@@ -1,0 +1,86 @@
+name: Search Console パフォーマンスデータの週次取得
+
+# Google Search Console API(Search Analytics: query)から、対象プロパティ
+# (https://fukuokapoker.com/)のクエリ別・ページ別パフォーマンス(クリック数・表示回数・
+# CTR・平均掲載順位)を直近28日分取得し、`data/search-console/<実行日(JST)>.json` と
+# 同ディレクトリのサマリー(Markdown)を毎回コミットする。詳細は tools/fetch-search-console.js
+# のヘッダコメントを参照。
+#
+# ★このデータは分析用(マーケティング部のGEO/SEO監査)であり、サイト自体の表示には使わない。
+#   `data.js`(表示用データ)や、それを日次で書き換える import-waitinglist.yml /
+#   monitor-instagram-apify.yml とは完全に無関係(read-onlyでdata.jsに一切触れない)。
+#   そのため他ワークフローにあるような dry-run 切替・upsert・validate-data ゲートは無い
+#   (このワークフローは「新しい日付のファイルを1組増やす」だけで、既存ファイルを書き換えない)。
+#
+# 【認証】サービスアカウント鍵(JSON全体)をリポジトリシークレット GSC_SERVICE_ACCOUNT_KEY
+#   として登録し、環境変数でスクリプトに渡す。スクリプト側はメモリ上でJSONとして読み込むだけで、
+#   鍵の中身をディスクに書き出すことも、ログに出すこともしない
+#   (tools/fetch-search-console.js の loadCredentials() 参照)。
+#
+# 【対象範囲外】このワークフローはコード(スクリプト自体)のみを自動デプロイ対象とする。
+#   Google Cloud側の設定(サービスアカウント・API有効化・GSCプロパティへの権限付与)は
+#   社長が実施済みのものをそのまま使うだけで、このワークフローが変更することはない。
+
+on:
+  schedule:
+    # cronはUTC。22:00 UTC(日曜) = 07:00 JST(月曜)。
+    # 他の日次ジョブ(Waitinglist 06:23 JST / てきさすほーるでむ 06:40 JST)の後、
+    # 週の最初にまとめて取得する。
+    - cron: '0 22 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# 同時実行を防ぐ(手動実行と週次cronが重なって競合するのを避ける)
+concurrency:
+  group: fetch-search-console
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリを取得
+        uses: actions/checkout@v4
+        with:
+          # 浅いクローンだと push 直前の `git pull --rebase` がマージベースを解決できないことがある
+          # (他ワークフロー: import-waitinglist.yml / import-texaspoker.yml と同じ理由)。
+          fetch-depth: 0
+
+      - name: Node.js をセットアップ
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Search Console からパフォーマンスデータを取得
+        env:
+          GSC_SERVICE_ACCOUNT_KEY: ${{ secrets.GSC_SERVICE_ACCOUNT_KEY }}
+        run: node tools/fetch-search-console.js
+
+      - name: 差分があればコミット & プッシュ
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          committed=0
+          if test -n "$(git status --porcelain)"; then
+            git add -A
+            git commit -m "chore: Search Consoleパフォーマンスデータを取得 ($(TZ=Asia/Tokyo date +%Y-%m-%d))"
+            committed=1
+          else
+            echo "取得内容に差分なし(同日中の再実行など)。"
+          fi
+          # checkout から push までの間に main が進むと push が弾かれる。
+          # このジョブが書くのは data/search-console/ 配下の新しい日付ファイルだけなので、
+          # 他ジョブ(data.js 系)と行が衝突する可能性は実質無い。衝突したらジョブを失敗させて
+          # 人が気づけるようにする(他ワークフローと同じ方針)。
+          git pull --rebase
+          if test "$(git rev-list --count "@{u}..HEAD")" = "0"; then
+            echo "rebase で自分のコミットが空になりました(同じ内容が既に main にあります)。"
+            committed=0
+          fi
+          if test "$committed" = "0"; then
+            echo "差分なし。プッシュしません。"
+            exit 0
+          fi
+          git push
