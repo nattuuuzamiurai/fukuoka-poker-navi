@@ -31,7 +31,7 @@ const BIG_EVENTS = [
     days: ['2026-07-18', '2026-07-19', '2026-07-20'],
     featureUrl: '/events/wjpt-2026/',         // フッターのリンク先(サイトルート起点)
     hash: '#wjpt',                            // トップページ内の特集ページ(バナーのリンク先)
-    banner: 'img/wjpt/wjpt-banner.jpg',
+    banner: 'img/wjpt/wjpt-banner.webp',
     bannerAlt: 'WJPT West Japan Poker Tour 7.18-7.20 北九州',
     bannerDesc: '北九州・全21トーナメント',
     bannerClass: 'ev-wjpt',

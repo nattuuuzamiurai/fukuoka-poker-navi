@@ -801,7 +801,7 @@
      高さを詰めた分だけ文言も短くしてある(`.adslot .adCard` のCSSを参照)。 -->
 <div class="adslot">
   <a class="adCard" href="https://poker-tourney-log--family.expo.app" target="_blank" rel="noopener">
-    <img src="img/ptl-bulldog.png" alt="">
+    <img src="img/ptl-bulldog.webp" alt="" width="44" height="44">
     <div class="ac-body">
       <div class="ac-title">トーナメントの成績、記録してますか？</div>
       <!-- 「何ができるアプリか」は必ず残すこと(ここは最も露出の多い枠でCTRに効く)。
@@ -845,7 +845,7 @@
   <div id="page-majors" style="display:none"></div>
 
   <a class="adCard" style="margin:26px 0 4px" href="https://poker-tourney-log--family.expo.app" target="_blank" rel="noopener">
-    <img src="img/ptl-bulldog.png" alt="">
+    <img src="img/ptl-bulldog.webp" alt="" loading="lazy" width="56" height="56">
     <div class="ac-body">
       <div class="ac-title">今日の戦績、記録に残しませんか？</div>
       <div class="ac-desc">ポーカートナメ成績表なら buyin・順位・収支をすぐ記録。無料アプリはこちら</div>
@@ -932,7 +932,7 @@
 </footer>
 
 <div class="stickyAd" id="stickyAd">
-  <img src="img/ptl-bulldog.png" alt="">
+  <img src="img/ptl-bulldog.webp" alt="" width="38" height="38">
   <div class="sa-body">
     <div class="sa-title">成績、記録してますか？</div>
     <div class="sa-desc">ポーカートナメ成績表(無料) — buyin・順位・収支を記録</div>
@@ -958,13 +958,14 @@
 
   // ===== WJPT (West Japan Poker Tour) 大型イベント 2026/7/18-20 北九州 =====
   // 出典: 公式プレイヤーズガイド https://privatter.me/page/6a3fb763eb927
-  // 各トーナメントの詳細(ストラクチャー・プライズ等)は img/wjpt/wjpt-NN.jpg に公式シート画像を掲載。
+  // 各トーナメントの詳細(ストラクチャー・プライズ等)は img/wjpt/wjpt-NN.webp に公式シート画像を掲載
+  // (2026-09の軽量化でJPEGからWebPに変換。同じ内容・同じ解像度、ファイルサイズのみ削減)。
   const WJPT = {
     name: 'WJPT (West Japan Poker Tour)',
     area: '北九州',
     // 会期は big-events.js のレジストリを唯一の正とする(掲載期間の判定と食い違わないようにするため)
     days: bigEventDays('wjpt'),
-    banner: 'img/wjpt/wjpt-banner.jpg',
+    banner: 'img/wjpt/wjpt-banner.webp',
     guideUrl: 'https://privatter.me/page/6a3fb763eb927',
     tournaments: [
       { no:1,  day:'2026-07-18', name:'フリーロール',             buyin:'¥0（Re: ¥10,000）',        start:'10:00', latereg:'12:00', stack:'20,000',  tags:['フリーロール'] },
@@ -990,7 +991,7 @@
       { no:21, day:'2026-07-20', name:'AOF',                      buyin:'¥3,000',                   start:'19:00', latereg:'20:50', stack:'15,000',  tags:['AOF'] }
     ]
   };
-  const wjptImg = no => `img/wjpt/wjpt-${String(no).padStart(2,'0')}.jpg`;
+  const wjptImg = no => `img/wjpt/wjpt-${String(no).padStart(2,'0')}.webp`;
   const wjptDetailById = no => WJPT.tournaments.find(t => t.no === Number(no));
   let wjptDay = WJPT.days.includes(localTodayGlobal()) ? localTodayGlobal() : WJPT.days[0];
 
