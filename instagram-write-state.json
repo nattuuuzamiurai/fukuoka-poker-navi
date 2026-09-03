@@ -2,25 +2,6 @@
   "version": 1,
   "writtenBy": "tools/monitor-instagram-apify.js",
   "entries": {
-    "ig-v18-2026-09-02-nostart-fst-satellite": {
-      "id": "ig-v18-2026-09-02-nostart-fst-satellite",
-      "venueId": "v18",
-      "name": "FST SATELLITE",
-      "date": "2026-09-02",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "サテライト",
-        "FST"
-      ],
-      "source": "semi",
-      "verified": false
-    },
     "ig-v18-2026-09-03-nostart-1k-multi": {
       "id": "ig-v18-2026-09-03-nostart-1k-multi",
       "venueId": "v18",
@@ -453,24 +434,6 @@
       "source": "semi",
       "verified": false
     },
-    "ig-v20-2026-09-02-nostart-free-roll": {
-      "id": "ig-v20-2026-09-02-nostart-free-roll",
-      "venueId": "v20",
-      "name": "FREE ROLL",
-      "date": "2026-09-02",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "フリーロール"
-      ],
-      "source": "semi",
-      "verified": false
-    },
     "ig-v20-2026-09-03-nostart-c-entry-tourney": {
       "id": "ig-v20-2026-09-03-nostart-c-entry-tourney",
       "venueId": "v20",
@@ -844,24 +807,6 @@
       "reentry": false,
       "prize": null,
       "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v35-2026-09-02-1915-pt-tournament": {
-      "id": "ig-v35-2026-09-02-1915-pt-tournament",
-      "venueId": "v35",
-      "name": "ランキングPT付 バウンティ TOURNAMENT",
-      "date": "2026-09-02",
-      "start": "19:15",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "バウンティ"
-      ],
       "source": "semi",
       "verified": false
     },
@@ -1331,22 +1276,6 @@
       "name": "ハイローラー TOURNAMENT",
       "date": "2026-09-30",
       "start": "19:15",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v40-2026-09-02-nostart-post": {
-      "id": "ig-v40-2026-09-02-nostart-post",
-      "venueId": "v40",
-      "name": "ヘッズアップ祭=リング=",
-      "date": "2026-09-02",
-      "start": "",
       "buyin": null,
       "addon": null,
       "stack": null,
