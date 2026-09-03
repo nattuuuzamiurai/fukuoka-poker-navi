@@ -15803,6 +15803,24 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01M1K0W6ZBWC2R1B2MJVANRMZP",
+    "venueId": "v3",
+    "name": "m Bounty Turbo",
+    "date": "2026-09-09",
+    "start": "21:00",
+    "buyin": 2500,
+    "addon": 1000,
+    "stack": 25000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "wl-01KZQR328BQVAWCEVZ3EW0FM7Q",
     "venueId": "v3",
     "name": "m LIVE LEAGUE season1",
@@ -15837,11 +15855,11 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
-    "id": "wl-01M0JHZSE4RRY4VKNQ0G81GWY6",
+    "id": "wl-01M1K16YWKAMXFJF10205740W3",
     "venueId": "v3",
-    "name": "m Limited",
+    "name": "VS m RINA",
     "date": "2026-09-11",
-    "start": "17:10",
+    "start": "17:30",
     "buyin": 4000,
     "addon": null,
     "stack": 40000,
@@ -15905,6 +15923,24 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01M1K1F5VNMZP1R1GKTX4P320E",
+    "venueId": "v3",
+    "name": "m Super Hold'em Turbo",
+    "date": "2026-09-12",
+    "start": "21:00",
+    "buyin": 2500,
+    "addon": 1000,
+    "stack": 25000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "wl-01KZTSVB8VCN17WCWC30VFKWQA",
     "venueId": "v3",
     "name": "m PAIR MATCH",
@@ -15929,6 +15965,40 @@ const TOURNAMENTS = [
     "buyin": 4000,
     "addon": null,
     "stack": 50000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M1K1GWQCNWN5E4BK467XM5YV",
+    "venueId": "v3",
+    "name": "m DICE Poker Turbo",
+    "date": "2026-09-13",
+    "start": "21:00",
+    "buyin": 2500,
+    "addon": 1000,
+    "stack": 25000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M1K23SQ6WEX2F5W5T240NENG",
+    "venueId": "v3",
+    "name": "m GLORY",
+    "date": "2026-09-14",
+    "start": "18:00",
+    "buyin": 3500,
+    "addon": 2000,
+    "stack": 35000,
     "guarantee": null,
     "reentry": true,
     "prize": null,
@@ -15997,6 +16067,42 @@ const TOURNAMENTS = [
     "reentry": true,
     "prize": null,
     "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M1K1ZS8Z0GDZVV0A3KARRJ92",
+    "venueId": "v3",
+    "name": "m Super Hold'em Turbo",
+    "date": "2026-09-18",
+    "start": "21:00",
+    "buyin": 2500,
+    "addon": 1000,
+    "stack": 25000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M1K2AETMQ5XRR989BRQN5P8P",
+    "venueId": "v3",
+    "name": "m Monster Stack",
+    "date": "2026-09-19",
+    "start": "13:10",
+    "buyin": 4000,
+    "addon": null,
+    "stack": 60000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ディープ"
+    ],
     "source": "auto",
     "verified": false
   },
