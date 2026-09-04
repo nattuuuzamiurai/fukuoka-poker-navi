@@ -2,22 +2,6 @@
   "version": 1,
   "writtenBy": "tools/monitor-instagram-apify.js",
   "entries": {
-    "ig-v18-2026-09-03-nostart-1k-multi": {
-      "id": "ig-v18-2026-09-03-nostart-1k-multi",
-      "venueId": "v18",
-      "name": "1K MULTI",
-      "date": "2026-09-03",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
     "ig-v18-2026-09-04-nostart-free-roll": {
       "id": "ig-v18-2026-09-04-nostart-free-roll",
       "venueId": "v18",
@@ -434,22 +418,6 @@
       "source": "semi",
       "verified": false
     },
-    "ig-v20-2026-09-03-nostart-c-entry-tourney": {
-      "id": "ig-v20-2026-09-03-nostart-c-entry-tourney",
-      "venueId": "v20",
-      "name": "C ENTRY TOURNEY",
-      "date": "2026-09-03",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
     "ig-v20-2026-09-05-nostart-deep-stack": {
       "id": "ig-v20-2026-09-05-nostart-deep-stack",
       "venueId": "v20",
@@ -807,24 +775,6 @@
       "reentry": false,
       "prize": null,
       "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v35-2026-09-03-1915-free-roll": {
-      "id": "ig-v35-2026-09-03-1915-free-roll",
-      "venueId": "v35",
-      "name": "FREE ROLL",
-      "date": "2026-09-03",
-      "start": "19:15",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "フリーロール"
-      ],
       "source": "semi",
       "verified": false
     },
@@ -1283,25 +1233,6 @@
       "reentry": false,
       "prize": null,
       "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v40-2026-09-03-nostart-plo": {
-      "id": "ig-v40-2026-09-03-nostart-plo",
-      "venueId": "v40",
-      "name": "フリロPLOトナメ",
-      "date": "2026-09-03",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "フリーロール",
-        "PLO"
-      ],
       "source": "semi",
       "verified": false
     },
