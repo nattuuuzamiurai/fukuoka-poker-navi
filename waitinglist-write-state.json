@@ -318,22 +318,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M0VZWFTJZ1FNKMPDXZHZAW1B": {
-      "id": "wl-01M0VZWFTJZ1FNKMPDXZHZAW1B",
-      "venueId": "v3",
-      "name": "m STEAL",
-      "date": "2026-09-04",
-      "start": "17:10",
-      "buyin": 4000,
-      "addon": 0,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M0VZYNMBN65NEECTPA27H3SK": {
       "id": "wl-01M0VZYNMBN65NEECTPA27H3SK",
       "venueId": "v3",
@@ -375,24 +359,6 @@
       "buyin": 2500,
       "addon": 1000,
       "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M0W059PZ7BE7QAWYGFYFV4S4": {
-      "id": "wl-01M0W059PZ7BE7QAWYGFYFV4S4",
-      "venueId": "v3",
-      "name": "ｍ Hyper Deep Turbo",
-      "date": "2026-09-04",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": null,
-      "stack": 100000,
       "guarantee": null,
       "reentry": true,
       "prize": null,
