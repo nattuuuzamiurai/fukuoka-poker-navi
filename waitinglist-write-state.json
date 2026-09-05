@@ -2,22 +2,6 @@
   "version": 1,
   "writtenBy": "tools/import-waitinglist.js",
   "entries": {
-    "wl-01KZNDXBV772FY6DQS7TR0NXKT": {
-      "id": "wl-01KZNDXBV772FY6DQS7TR0NXKT",
-      "venueId": "v19",
-      "name": "Free Roll",
-      "date": "2026-09-07",
-      "start": "18:10",
-      "buyin": 0,
-      "addon": 1000,
-      "stack": 20000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01KZQR328BQVAWCEVZ3EW0FM7Q": {
       "id": "wl-01KZQR328BQVAWCEVZ3EW0FM7Q",
       "venueId": "v3",
@@ -194,24 +178,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M0VVXDQQPRP9RRF6B06AWE5J": {
-      "id": "wl-01M0VVXDQQPRP9RRF6B06AWE5J",
-      "venueId": "v3",
-      "name": "m Monster Stack",
-      "date": "2026-09-05",
-      "start": "13:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 60000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M0VVYY5ET73KB33BJV480KMN": {
       "id": "wl-01M0VVYY5ET73KB33BJV480KMN",
       "venueId": "v3",
@@ -318,22 +284,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M0VZYNMBN65NEECTPA27H3SK": {
-      "id": "wl-01M0VZYNMBN65NEECTPA27H3SK",
-      "venueId": "v3",
-      "name": "m VAULT",
-      "date": "2026-09-05",
-      "start": "17:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M0W00X9AH100NTA4RW72A48A": {
       "id": "wl-01M0W00X9AH100NTA4RW72A48A",
       "venueId": "v3",
@@ -347,24 +297,6 @@
       "reentry": true,
       "prize": null,
       "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M0W0395NQNYMA1EEHHNJ05F1": {
-      "id": "wl-01M0W0395NQNYMA1EEHHNJ05F1",
-      "venueId": "v3",
-      "name": "m DICE Poker Turbo",
-      "date": "2026-09-05",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": 1000,
-      "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
       "source": "auto",
       "verified": false
     },
@@ -671,6 +603,78 @@
       "buyin": 4000,
       "addon": null,
       "stack": 60000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ディープ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M1R52TNW25PFQ2NJG5W06FSN": {
+      "id": "wl-01M1R52TNW25PFQ2NJG5W06FSN",
+      "venueId": "v19",
+      "name": "3000 Deep Stack",
+      "date": "2026-09-12",
+      "start": "16:10",
+      "buyin": 3000,
+      "addon": 2000,
+      "stack": 40000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ディープ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M1R52TNW3DDXTTSQPX3F8F5V": {
+      "id": "wl-01M1R52TNW3DDXTTSQPX3F8F5V",
+      "venueId": "v19",
+      "name": "3000 Deep Stack",
+      "date": "2026-09-26",
+      "start": "16:10",
+      "buyin": 3000,
+      "addon": 2000,
+      "stack": 40000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ディープ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M1R52TNWCYRVXG6AVB6FT8DJ": {
+      "id": "wl-01M1R52TNWCYRVXG6AVB6FT8DJ",
+      "venueId": "v19",
+      "name": "3000 Deep Stack",
+      "date": "2026-09-19",
+      "start": "16:10",
+      "buyin": 3000,
+      "addon": 2000,
+      "stack": 40000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ディープ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M1R52TNWG0DZF2A1REGNK9XD": {
+      "id": "wl-01M1R52TNWG0DZF2A1REGNK9XD",
+      "venueId": "v19",
+      "name": "3000 Deep Stack",
+      "date": "2026-10-03",
+      "start": "16:10",
+      "buyin": 3000,
+      "addon": 2000,
+      "stack": 40000,
       "guarantee": null,
       "reentry": true,
       "prize": null,

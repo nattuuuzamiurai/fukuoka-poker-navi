@@ -16983,22 +16983,6 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
-    "id": "wl-01KZNDXBV772FY6DQS7TR0NXKT",
-    "venueId": "v19",
-    "name": "Free Roll",
-    "date": "2026-09-07",
-    "start": "18:10",
-    "buyin": 0,
-    "addon": 1000,
-    "stack": 20000,
-    "guarantee": null,
-    "reentry": true,
-    "prize": null,
-    "tags": [],
-    "source": "auto",
-    "verified": false
-  },
-  {
     "id": "wl-01M1E32H6FEBXCTHKDNB7EJZFV",
     "venueId": "v19",
     "name": "FST Satellite",
@@ -17031,6 +17015,24 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01M1R52TNW25PFQ2NJG5W06FSN",
+    "venueId": "v19",
+    "name": "3000 Deep Stack",
+    "date": "2026-09-12",
+    "start": "16:10",
+    "buyin": 3000,
+    "addon": 2000,
+    "stack": 40000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ディープ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "wl-01M18T2N3J0MM70WYH1A0YJY9Z",
     "venueId": "v19",
     "name": "2000 Turbo",
@@ -17044,6 +17046,24 @@ const TOURNAMENTS = [
     "prize": null,
     "tags": [
       "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M1R52TNWCYRVXG6AVB6FT8DJ",
+    "venueId": "v19",
+    "name": "3000 Deep Stack",
+    "date": "2026-09-19",
+    "start": "16:10",
+    "buyin": 3000,
+    "addon": 2000,
+    "stack": 40000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ディープ"
     ],
     "source": "auto",
     "verified": false
@@ -17067,6 +17087,24 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01M1R52TNW3DDXTTSQPX3F8F5V",
+    "venueId": "v19",
+    "name": "3000 Deep Stack",
+    "date": "2026-09-26",
+    "start": "16:10",
+    "buyin": 3000,
+    "addon": 2000,
+    "stack": 40000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ディープ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "wl-01M18T2N3JHRJ914NHJACE9P2P",
     "venueId": "v19",
     "name": "2000 Turbo",
@@ -17080,6 +17118,24 @@ const TOURNAMENTS = [
     "prize": null,
     "tags": [
       "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M1R52TNWG0DZF2A1REGNK9XD",
+    "venueId": "v19",
+    "name": "3000 Deep Stack",
+    "date": "2026-10-03",
+    "start": "16:10",
+    "buyin": 3000,
+    "addon": 2000,
+    "stack": 40000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ディープ"
     ],
     "source": "auto",
     "verified": false
