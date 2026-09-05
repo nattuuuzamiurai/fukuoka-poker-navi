@@ -2,24 +2,6 @@
   "version": 1,
   "writtenBy": "tools/monitor-instagram-apify.js",
   "entries": {
-    "ig-v18-2026-09-04-nostart-free-roll": {
-      "id": "ig-v18-2026-09-04-nostart-free-roll",
-      "venueId": "v18",
-      "name": "FREE ROLL",
-      "date": "2026-09-04",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "フリーロール"
-      ],
-      "source": "semi",
-      "verified": false
-    },
     "ig-v18-2026-09-06-nostart-post": {
       "id": "ig-v18-2026-09-06-nostart-post",
       "venueId": "v18",
@@ -771,22 +753,6 @@
       "buyin": 1500,
       "addon": null,
       "stack": 15000,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v35-2026-09-04-1915-refund-tournament": {
-      "id": "ig-v35-2026-09-04-1915-refund-tournament",
-      "venueId": "v35",
-      "name": "Refund TOURNAMENT",
-      "date": "2026-09-04",
-      "start": "19:15",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
       "guarantee": null,
       "reentry": false,
       "prize": null,
