@@ -400,24 +400,6 @@
       "source": "semi",
       "verified": false
     },
-    "ig-v20-2026-09-05-nostart-deep-stack": {
-      "id": "ig-v20-2026-09-05-nostart-deep-stack",
-      "venueId": "v20",
-      "name": "DEEP STACK",
-      "date": "2026-09-05",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "semi",
-      "verified": false
-    },
     "ig-v20-2026-09-08-nostart-fst": {
       "id": "ig-v20-2026-09-08-nostart-fst",
       "venueId": "v20",
@@ -757,24 +739,6 @@
       "reentry": false,
       "prize": null,
       "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v35-2026-09-05-1600-deep-stack": {
-      "id": "ig-v35-2026-09-05-1600-deep-stack",
-      "venueId": "v35",
-      "name": "DEEP STACK",
-      "date": "2026-09-05",
-      "start": "16:00",
-      "buyin": null,
-      "addon": null,
-      "stack": 50000,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
       "source": "semi",
       "verified": false
     },
@@ -1192,22 +1156,6 @@
       "name": "ハイローラー TOURNAMENT",
       "date": "2026-09-30",
       "start": "19:15",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v40-2026-09-05-nostart-post": {
-      "id": "ig-v40-2026-09-05-nostart-post",
-      "venueId": "v40",
-      "name": "トップオブザ・ドリーム",
-      "date": "2026-09-05",
-      "start": "",
       "buyin": null,
       "addon": null,
       "stack": null,
