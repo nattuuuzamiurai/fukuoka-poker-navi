@@ -28,6 +28,11 @@
  *   ―― 実際に検知できず、本番デプロイまで気づけなかった。
  *   そこで Node の `vm` モジュールで「1つの共有コンテキストに複数の<script>を順番に読み込む」を
  *   再現し、この種の名前衝突を `node --test` の範囲内で機械的に検知できるようにした。
+ *
+ * 【2026-09-06 追記】big-events.js 側の掲載打ち切り(上限側)の仕様変更(「翌日いっぱい」→「翌日 朝6:00」)
+ *   に合わせて、visiblePromoBanners(today, promos) の第1引数も 'YYYY-MM-DD' 文字列に加え Date を
+ *   受け付けるようになった(big-events.js の resolveNowAndToday 経由)。時刻の境界(5:59/6:00/6:01)を
+ *   検証するテストを追加した。
  */
 
 'use strict';
@@ -79,6 +84,40 @@ test('本番のPROMO_BANNERS: 2026-09-02時点でdream-grandopen-2026が掲載�
 test('本番のPROMO_BANNERS: dream-grandopen-2026は9/7には掲載ウィンドウから外れる', () => {
   const ids = PB.visiblePromoBanners('2026-09-07').map(p => p.id);
   assert.ok(!ids.includes('dream-grandopen-2026'), `2026-09-07になっても表示対象に残っている(実際: ${JSON.stringify(ids)})`);
+});
+
+// ============================================================
+// 2026-09-06 仕様変更: 掲載打ち切り(上限側)を「翌日いっぱい」→「翌日 朝6:00」に短縮
+// ============================================================
+test('visiblePromoBanners(): 会期当日(最終日)は時刻に関わらず終日表示される(変更なし)', () => {
+  const promos = [{ id: 'fx', days: ['2026-09-05'] }];
+  assert.deepStrictEqual(
+    PB.visiblePromoBanners(new Date(2026, 8, 5, 23, 59, 59), promos).map(p => p.id), ['fx']);
+});
+
+test('visiblePromoBanners(): 最終日の翌日 05:59 はまだ表示される', () => {
+  const promos = [{ id: 'fx', days: ['2026-09-05'] }];
+  assert.deepStrictEqual(
+    PB.visiblePromoBanners(new Date(2026, 8, 6, 5, 59, 59), promos).map(p => p.id), ['fx']);
+});
+
+test('visiblePromoBanners(): 最終日の翌日 06:00 ちょうどで非表示になる', () => {
+  const promos = [{ id: 'fx', days: ['2026-09-05'] }];
+  assert.deepStrictEqual(
+    PB.visiblePromoBanners(new Date(2026, 8, 6, 6, 0, 0), promos).map(p => p.id), []);
+});
+
+test('visiblePromoBanners(): 最終日の翌日 06:01 も非表示のまま', () => {
+  const promos = [{ id: 'fx', days: ['2026-09-05'] }];
+  assert.deepStrictEqual(
+    PB.visiblePromoBanners(new Date(2026, 8, 6, 6, 1, 0), promos).map(p => p.id), []);
+});
+
+test('本番のPROMO_BANNERS: dream-grandopen-2026は2026-09-06 05:59まで表示され、06:00には消える(社長指示の具体例そのもの)', () => {
+  const before = PB.visiblePromoBanners(new Date(2026, 8, 6, 5, 59, 59)).map(p => p.id);
+  const after = PB.visiblePromoBanners(new Date(2026, 8, 6, 6, 0, 0)).map(p => p.id);
+  assert.ok(before.includes('dream-grandopen-2026'), `05:59の時点で消えている(実際: ${JSON.stringify(before)})`);
+  assert.ok(!after.includes('dream-grandopen-2026'), `06:00になっても残っている(実際: ${JSON.stringify(after)})`);
 });
 
 test('本番のPROMO_BANNERS: 各エントリが href(実ページへのリンク)と label(カルーセルのaria-labelで使う)を持つ', () => {

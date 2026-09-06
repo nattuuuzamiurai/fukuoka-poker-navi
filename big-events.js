@@ -7,11 +7,13 @@
  *   - 静的イベントページ(events/<slug>/)のフッター … footerBigEvent()   が返す1件
  *   判定を各所に書き散らさない(終了した大会が出しっぱなしになる事故を防ぐ)。
  *
- * ■ 掲載期間ルール(社長指示・2026-07-29に14日で設定 / 2026-09-01に30日へ変更)
+ * ■ 掲載期間ルール(社長指示・2026-07-29に14日で設定 / 2026-09-01に30日へ変更 / 2026-09-06に上限を時刻化)
  *   各イベントの掲載ウィンドウは **他のイベントを一切参照せず独立** して決まる。
  *     - 掲載開始日 = そのイベントの **初日 − 30日**
- *     - 掲載終了日 = そのイベントの **最終日 + 1日**(その日は含む)
- *         … 大型大会は日付を跨いで進行することがあるため、最終日の翌日までは載せ続ける
+ *     - 掲載終了  = そのイベントの **最終日の翌日 朝6:00**(その瞬間より前は含む。2026-09-06〜)
+ *         … 大型大会は日付を跨いで進行することがあるため、深夜〜早朝の間は翌日でも載せ続けるが、
+ *           朝6:00になったら(日付が変わっていなくても)完全に消す。詳細は showCutoffInstant() /
+ *           isBeforeShowCutoff() のコメントを参照。
  *   ⇒ 掲載期間は **重なってよい**。トップのバナーは同時に複数件出る(社長了承済み)。
  *   ⇒ 逆に、どのウィンドウにも入らない期間はバナー0件になる(現在の登録内容だと 2026-08-18〜08-19)。
  *      これは仕様であってバグではない。埋めようとしないこと。
@@ -157,9 +159,13 @@ const BIG_EVENTS = [
 
 // ---- 日付ユーティリティ(YYYY-MM-DD の文字列比較で完結させる) ----
 // 端末のローカル日付。UTCに変換すると日本の深夜に前日扱いになるため必ずローカルで組み立てる。
+// Date オブジェクトを YYYY-MM-DD (ローカル日付) の文字列に変換する。localTodayGlobal() と
+// showCutoffInstant() 系(下記・2026-09-06追加)の両方から使う共通処理としてここで1つにまとめる。
+function localDateStr(dt) {
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+}
 function localTodayGlobal() {
-  const n = new Date();
-  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
+  return localDateStr(new Date());
 }
 // YYYY-MM-DD を n 日ずらす(月またぎ・年またぎは Date に任せる)
 function shiftDateStr(ymd, n) {
@@ -173,13 +179,22 @@ const eventLastDay = days => (Array.isArray(days) && days.length) ? days.reduce(
 // ★★ 掲載ウィンドウと「開催中/終了」の判定は、しきい値が意図的に1日ずれている ★★
 //   これはバグではなく社長指示による仕様(2026-07-29)。将来「ズレている」と思って揃えないこと。
 //
-//   ┌ 掲載ウィンドウ(出すか出さないか) … 最終日の【翌日】まで = eventShowUntil()
-//   │   大型大会は日付を跨いで進行することがあるため、翌日までは載せ続ける。
+//   ┌ 掲載ウィンドウ(出すか出さないか) … 最終日の【翌日 朝6:00まで】= isBeforeShowCutoff()
+//   │   大型大会は日付を跨いで進行することがあるため、翌日の朝までは載せ続ける。
 //   └ 開催中/終了(どう見せるか)        … 最終日までが開催中、【翌日から終了】 = isEventArchived()
 //       社長の言葉:「掲載してほしいだけで次の日はバナーは終了でいいです」
 //
-//   ⇒ 最終日の翌日は「バナーは出るが、終了状態(暗転・終了バッジ)で表示される」が正解。
+//   ⇒ 最終日の翌日・朝6:00より前は「バナーは出るが、終了状態(暗転・終了バッジ)で表示される」が正解。
 //     同じ日、イベント専用ページには通常どおり「このイベントは終了しました」を出す。
+//
+//   【2026-09-06 仕様変更】掲載ウィンドウの上限(=いつ完全に消すか)を「翌日いっぱい」から
+//   「翌日の朝6:00まで」に短縮した(社長指示:「次の日の朝には消していい。これは大型大会も
+//   同様。最終日が5日の掲載なら、6日の朝6時までには消してよい」)。
+//     - 変更前(〜2026-09-05): 最終日の翌日は【日付】が変わるまでずっと表示(翌々日0:00で消灯)。
+//     - 変更後(2026-09-06〜): 最終日の翌日は【時刻】が6:00になった瞬間に消灯(日付は変わっていなくても消す)。
+//   「深夜〜早朝に及ぶイベントに配慮して翌日まで残す」という元の趣旨(2026-07-29)は維持しつつ、
+//   消すタイミングだけ日付の粒度から時刻の粒度に細かくした。会期当日(初日〜最終日)の終日表示・
+//   掲載開始日(eventShowFrom)・開催中/終了の判定(isEventArchived/isEventOngoing)は今回変更していない。
 
 // 掲載開始日 = 会期初日の30日前 / 掲載終了日 = 会期最終日の翌日(どちらもその日を含む)
 // (社長指示・2026-07-29に14日で設定 → 2026-09-01に30日へ変更)
@@ -188,10 +203,55 @@ const eventShowFrom = days => {
   const first = eventFirstDay(days);
   return first ? shiftDateStr(first, -BANNER_LEAD_DAYS) : null;
 };
+// ★eventShowUntil() 自体の返り値(最終日の翌日、という「日付」)は2026-09-06以降も変えていない。
+//   「その日を何時まで表示してよいか」を決めるのは下の showCutoffInstant()/isBeforeShowCutoff() で、
+//   掲載ウィンドウの上限判定(visibleBigEvents/visiblePromoBanners)は必ずそちら経由にすること。
+//   eventShowUntil() を直接 today 文字列と比較する古いやり方(〜2026-09-05)は使わない。
 const eventShowUntil = days => {
   const last = eventLastDay(days);
   return last ? shiftDateStr(last, 1) : null;
 };
+// 掲載終了の「打ち切り時刻」。何時に消すかを表す定数(社長指示・2026-09-06)。
+const SHOW_CUTOFF_HOUR = 6;
+// 掲載を完全に打ち切る瞬間(Dateオブジェクト、ローカル時刻)。
+// 「最終日の翌日(eventShowUntilが返す日付)の SHOW_CUTOFF_HOUR:00:00」ちょうど。
+// この瞬間そのものは非表示側(isBeforeShowCutoffは厳密未満で比較する)。
+function showCutoffInstant(days) {
+  const untilDay = eventShowUntil(days);
+  if (!untilDay) return null;
+  const [y, m, d] = untilDay.split('-').map(Number);
+  return new Date(y, m - 1, d, SHOW_CUTOFF_HOUR, 0, 0, 0);
+}
+// 掲載ウィンドウの上限側(=打ち切り時刻より前か)を判定する。now省略時は実際の現在時刻。
+//   - 会期当日(初日〜最終日)は常に真になる(打ち切り時刻は最終日の翌日6:00なので、
+//     会期最終日中はどんな時刻でもそれより前 = 従来どおり終日表示。ここは特別扱いせず
+//     この関数1本で「当日は終日・翌日は朝6時で打ち切り」の両方をまかなえる)。
+//   - 最終日の翌日は 6:00 ちょうど以降(6:00, 6:01, …)は偽になる。5:59台までは真。
+function isBeforeShowCutoff(days, now) {
+  const cutoff = showCutoffInstant(days);
+  return !cutoff || (now || new Date()) < cutoff;
+}
+// visibleBigEvents(today, events) / visiblePromoBanners(today, promos) の第1引数を
+// 「日付文字列(YYYY-MM-DD・従来の使い方)」「Dateオブジェクト(2026-09-06追加。時刻の境界を
+// テストするため)」「省略(実際の現在日時)」のどれで渡されても扱えるようにする変換処理。
+//   - Dateを渡した場合         : todayStr はそのDateのローカル日付、now はそのDate自身(時刻も使う)。
+//   - 'YYYY-MM-DD' を渡した場合 : todayStr はその文字列のまま、now はその日のローカル 00:00:00。
+//     時刻が指定されていない場合は「その日の最初(0時)」とみなす。00:00は6:00より前なので、
+//     旧仕様(〜2026-09-05)で書かれた「掲載終了日(最終日+1)を渡すと含まれる」という既存テストは
+//     この解釈のもとでも変更後の仕様(6:00より前は表示)と矛盾せず、そのまま通る。
+//     時刻の境界(5:59/6:00など)そのものを検証したいテストは、文字列ではなくDateを渡すこと。
+//   - 省略した場合             : 実際の現在日時(new Date())。todayStr はそのローカル日付。
+function resolveNowAndToday(todayOrNow) {
+  if (todayOrNow instanceof Date) {
+    return { todayStr: localDateStr(todayOrNow), now: todayOrNow };
+  }
+  if (typeof todayOrNow === 'string' && todayOrNow) {
+    const [y, m, d] = todayOrNow.split('-').map(Number);
+    return { todayStr: todayOrNow, now: new Date(y, m - 1, d, 0, 0, 0, 0) };
+  }
+  const n = new Date();
+  return { todayStr: localDateStr(n), now: n };
+}
 // 会期最終日を過ぎたイベントは「終了(アーカイブ=開催当時の記録)」として扱う。
 // バナーの見た目もページ内の文言の出し分けも、日付比較を各所に書かず必ずこの関数を通すこと。
 const isEventArchived = (days, today) => {
@@ -208,6 +268,9 @@ const isEventOngoing = (days, today) => {
 // ---- 掲載期間(掲載開始日〜掲載終了日)の計算 ----
 // 各イベント独立。他イベントを参照しないので、レジストリの並び順にも依存しない。
 // 戻り値: [{ event, from, to }] を掲載開始日の昇順で返す。
+// ★ to は「最終日の翌日」という日付文字列のままで、2026-09-06以降も変えていない(参考情報・
+//   他所からの参照用に残す)。実際の掲載打ち切り判定(表示するかどうかの上限側)は
+//   visibleBigEvents() 内で to ではなく isBeforeShowCutoff() を使うこと(下記参照)。
 function bigEventWindows(events) {
   return (events || BIG_EVENTS)
     .filter(e => eventFirstDay(e.days) && eventLastDay(e.days))
@@ -217,11 +280,13 @@ function bigEventWindows(events) {
 
 // トップのバナー領域に出すイベント(0件〜複数件)。掲載ウィンドウに入っているものすべて。
 // 並び順は ①開催中 → ②まもなく(初日の近い順) → ③終了(猶予日) で、終了したものを末尾に置く。
+// 第1引数は 'YYYY-MM-DD' 文字列 / Date / 省略のいずれでもよい(resolveNowAndToday参照。2026-09-06追加)。
 function visibleBigEvents(today, events) {
-  const t = today || localTodayGlobal();
+  const { todayStr: t, now } = resolveNowAndToday(today);
   const rank = e => isEventOngoing(e.days, t) ? 0 : (isEventArchived(e.days, t) ? 2 : 1);
   return bigEventWindows(events)
-    .filter(w => t >= w.from && t <= w.to)
+    // 下限(from)は従来どおり日付文字列で比較、上限は打ち切り時刻(2026-09-06〜)で比較する。
+    .filter(w => t >= w.from && isBeforeShowCutoff(w.event.days, now))
     .map(w => w.event)
     .sort((a, b) => {
       const ra = rank(a), rb = rank(b);
@@ -291,8 +356,9 @@ function mountBigEventFooter(elId, today) {
 
 if (typeof module !== 'undefined') {
   module.exports = {
-    BIG_EVENTS, BANNER_LEAD_DAYS, localTodayGlobal, shiftDateStr,
+    BIG_EVENTS, BANNER_LEAD_DAYS, localTodayGlobal, localDateStr, shiftDateStr,
     eventFirstDay, eventLastDay, eventShowFrom, eventShowUntil,
+    SHOW_CUTOFF_HOUR, showCutoffInstant, isBeforeShowCutoff, resolveNowAndToday,
     isEventArchived, isEventOngoing,
     bigEventWindows, visibleBigEvents, footerBigEvent,
     bigEventListForIndex, bigEventById, bigEventDays

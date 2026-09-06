@@ -20,13 +20,16 @@
  *   「掲載開始日を初日の何日前にするか」というプロモ側だけのパラメータ(PROMO_LEAD_DAYS)と、
  *   プロモの一覧(PROMO_BANNERS)だけを持つ。日付比較のコードをここで書き足さないこと。
  *
- * ■ 掲載期間ルール(社長了承済み・2026-09-02)
+ * ■ 掲載期間ルール(社長了承済み・2026-09-02 / 上限の時刻化は2026-09-06)
  *     - 掲載開始日 = そのプロモの初日 − PROMO_LEAD_DAYS 日
- *     - 掲載終了日 = そのプロモの最終日 + 1日(その日は含む) … big-events.js の eventShowUntil と同じ式
+ *     - 掲載終了  = そのプロモの最終日の翌日 朝6:00(その瞬間より前は含む)
+ *         … big-events.js の isBeforeShowCutoff() と同じ式(2026-09-06〜)
  *   大型大会は「初日−30日」だが、DreaMは単発1日イベントなので14日に短縮している
- *   (DreaM: 初日2026-09-05 → 掲載開始2026-08-22、最終日2026-09-05 → 掲載終了2026-09-06)。
- *   ★ 最終日+1(=最終日の翌日)は big-events.js と同じ仕様で「バナーは出るが終了状態(暗転+
+ *   (DreaM: 初日2026-09-05 → 掲載開始2026-08-22、最終日2026-09-05 → 掲載終了2026-09-06 朝6:00)。
+ *   ★ 最終日の翌日・朝6:00より前は big-events.js と同じ仕様で「バナーは出るが終了状態(暗転+
  *     「終了」バッジ)」になる(isEventArchived は最終日を過ぎたら真を返すため)。揃えないこと。
+ *   ★2026-09-06変更: 従来は「最終日の翌日いっぱい(日付が変わるまで)」表示していたが、
+ *     社長指示により「翌日の朝6:00には消してよい」に変更した(big-events.js冒頭コメント参照)。
  *
  * ■ トップページ(index.html)側の使い方
  *   renderBigEventBanner() が visiblePromoBanners() の結果を visibleBigEvents() の
@@ -67,7 +70,12 @@ const _eventFirstDay = _BE ? _BE.eventFirstDay : eventFirstDay;
 const _eventLastDay = _BE ? _BE.eventLastDay : eventLastDay;
 const _shiftDateStr = _BE ? _BE.shiftDateStr : shiftDateStr;
 const _eventShowUntil = _BE ? _BE.eventShowUntil : eventShowUntil;
-const _localTodayGlobal = _BE ? _BE.localTodayGlobal : localTodayGlobal;
+// 掲載打ち切り(上限側)の判定は2026-09-06以降、日付だけでなく時刻(翌日6:00)まで見る。
+// 計算式そのものはbig-events.js側にしかない(このファイルで日付比較を書き足さない、という
+// ファイル冒頭の設計方針は今回も変えていない)。resolveNowAndTodayが「現在日時の解決」まで
+// まとめて引き受けるため、旧来の _localTodayGlobal 単体の別名はこの変更で不要になった。
+const _isBeforeShowCutoff = _BE ? _BE.isBeforeShowCutoff : isBeforeShowCutoff;
+const _resolveNowAndToday = _BE ? _BE.resolveNowAndToday : resolveNowAndToday;
 
 const PROMO_BANNERS = [
   {
@@ -92,14 +100,17 @@ const promoShowFrom = days => {
 
 // トップのバナー領域に出すプロモ(0件〜複数件)。掲載ウィンドウに入っているものすべてを、
 // 掲載開始日の昇順で返す(big-events.js の bigEventWindows/visibleBigEvents と同じ考え方)。
+// 第1引数 today は 'YYYY-MM-DD' 文字列 / Date / 省略のいずれでもよい
+// (big-events.js の resolveNowAndToday 参照。2026-09-06追加。既存呼び出し互換)。
 // 第2引数 promos は big-events.js の visibleBigEvents(today, events) と同じテスト用の差し替え口
 // (省略時は本番の PROMO_BANNERS を使う。テストで本番データを書き換えずに境界値を検証できる)。
 function visiblePromoBanners(today, promos) {
-  const t = today || _localTodayGlobal();
+  const { todayStr: t, now } = _resolveNowAndToday(today);
   return (promos || PROMO_BANNERS)
     .filter(p => _eventFirstDay(p.days) && _eventLastDay(p.days))
     .map(p => ({ promo: p, from: promoShowFrom(p.days), to: _eventShowUntil(p.days) }))
-    .filter(w => t >= w.from && t <= w.to)
+    // 下限(from)は従来どおり日付文字列で比較、上限は打ち切り時刻(2026-09-06〜)で比較する。
+    .filter(w => t >= w.from && _isBeforeShowCutoff(w.promo.days, now))
     .sort((a, b) => a.from.localeCompare(b.from))
     .map(w => w.promo);
 }
