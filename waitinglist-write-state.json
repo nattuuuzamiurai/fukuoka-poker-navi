@@ -162,40 +162,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M0VW61THX6MMWD3C9W5TFBQX": {
-      "id": "wl-01M0VW61THX6MMWD3C9W5TFBQX",
-      "venueId": "v3",
-      "name": "m WAVE（Mystery Bounty）",
-      "date": "2026-09-07",
-      "start": "18:00",
-      "buyin": 3500,
-      "addon": null,
-      "stack": 50000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M0VW8Z2ES0MGPM0T8R0QFTJ1": {
-      "id": "wl-01M0VW8Z2ES0MGPM0T8R0QFTJ1",
-      "venueId": "v3",
-      "name": "ｍ Hyper Deep Turbo",
-      "date": "2026-09-07",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": null,
-      "stack": 100000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M0VWA2KXYP5W943S83T0CVHM": {
       "id": "wl-01M0VWA2KXYP5W943S83T0CVHM",
       "venueId": "v3",
@@ -673,22 +639,6 @@
       "stack": 30000,
       "guarantee": null,
       "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M1VFKCHNGEKH6D7BJN9FKT7R": {
-      "id": "wl-01M1VFKCHNGEKH6D7BJN9FKT7R",
-      "venueId": "v19",
-      "name": "KO BOUNTY TOURNAMENT",
-      "date": "2026-09-07",
-      "start": "18:10",
-      "buyin": 3000,
-      "addon": null,
-      "stack": 30000,
-      "guarantee": null,
-      "reentry": true,
       "prize": null,
       "tags": [],
       "source": "auto",
