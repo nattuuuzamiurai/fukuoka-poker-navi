@@ -299,7 +299,14 @@ function buildVenue(v) {
   const titleParenParts = [];
   if (!areaInName) titleParenParts.push(v.area);
   if (badge) titleParenParts.push(badge.label);
-  const titleName = titleParenParts.length ? `${v.name}（${titleParenParts.join('・')}）` : v.name;
+  // title【末尾】に置く差別化の括弧(マーケティング部・Search Console実測 2026-09-07)。
+  // 【なぜ末尾に動かしたか】以前は titleName(=店名+差別化括弧)の直後に「のポーカートーナメント日程」を
+  // 続けていたため、CasinoX福岡今泉店(v28)のように店名+エリア+駅名で括弧が長い店では、
+  // 検索結果でtitleが切れる位置(目安30〜35文字。Googleはピクセル幅で切るため文字数は目安)より後ろに
+  // 「日程」が来てしまい、スニペット上で見えないまま表示回数だけが付く(CasinoX: 表示78・クリック0/
+  // CRownCLown中洲: 表示92・クリック1、いずれも2026-09-07時点28日間)。検索意図に直接効く語(店名+
+  // 「トーナメント日程」等)を先に出し、差別化情報(エリア・最寄り駅・バッジ)は末尾の括弧に回す。
+  const titleParen = titleParenParts.length ? `（${titleParenParts.join('・')}）` : '';
   // description の括弧は従来通り「エリア／アクセス」(こちらはアクセスの正式表記として残す。
   // station種別のバッジと情報が重なることはあるが、titleとdescriptionで役割が違うため複製ではない)。
   const parenParts = [];
@@ -314,17 +321,17 @@ function buildVenue(v) {
   let title, desc, sub;
   if (v.preopen) {
     // 未開店の店。営業中と読める文面を出さない(JSON-LDのLocalBusinessも出さない)。
-    title = `${titleName}｜オープン予定のポーカースポット | ふくおかポーカーナビ`;
+    title = `${v.name}｜オープン予定のポーカースポット${titleParen} | ふくおかポーカーナビ`;
     desc = `${descName}はオープン予定のポーカースポットです。`
       + `判明している開店時期と${v.address ? '所在地・' : ''}アクセス・公式SNSをまとめています。当サイトに掲載中の開催予定はまだありません。`;
     sub = `${esc(v.area)}のポーカースポット${v.access ? `（${esc(v.access)}）` : ''} — オープン予定`;
   } else if (rows.length) {
-    title = `${titleName}のポーカートーナメント日程 | ふくおかポーカーナビ`;
+    title = `${v.name}のポーカートーナメント日程${titleParen} | ふくおかポーカーナビ`;
     desc = `${descLead}${descName}で開催されるポーカートーナメントの日程を日付順に掲載。`
       + `開始時刻・バイイン・スタックのほか、${v.address ? '住所・' : ''}アクセス・公式SNSもまとめて確認できます。`;
     sub = `${esc(v.area)}のポーカースポット${v.access ? `（${esc(v.access)}）` : ''} — トーナメント日程・バイイン・アクセス`;
   } else {
-    title = `${titleName}｜住所・アクセス・トーナメント開催情報 | ふくおかポーカーナビ`;
+    title = `${v.name}｜住所・アクセス・トーナメント開催情報${titleParen} | ふくおかポーカーナビ`;
     desc = `${descLead}${descName}の${v.address ? '住所・' : ''}アクセス・公式SNSをまとめています。`
       + `現時点で当サイトに掲載中の開催予定はありません。最新の開催情報は店舗の公式情報・SNSをご確認ください。`;
     sub = `${esc(v.area)}のポーカースポット${v.access ? `（${esc(v.access)}）` : ''} — 住所・アクセス・開催情報`;

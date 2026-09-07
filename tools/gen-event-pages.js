@@ -96,7 +96,7 @@ function venueScheduleBlock() {
   const areas = areaList(DATA.VENUES, DATA.AREAS);
   return `
 <h2 class="day">福岡の店舗で開催されているポーカートーナメント</h2>
-<p class="lead">大型大会の期間外も、福岡県内のアミューズメントポーカー店では日々トーナメントが開催されています（当サイト掲載: ${DATA.VENUES.length}店舗）。エリアごとの日程はこちらから確認できます。</p>
+<p class="lead">大型大会の期間外も、福岡県内のアミューズメントポーカー店では日々トーナメントが開催されています（当サイト掲載: ${DATA.VENUES.length}店舗）。<a href="/">トップページで全店舗の日程を一覧</a>できるほか、エリアごとの日程はこちらから確認できます。</p>
 <ul class="evt-areas">
 ${areas.map(a => `  <li><a href="/areas/${AREA_SLUGS[a]}/">${esc(a)}（${areaVenues(DATA.VENUES, a).length}店舗）</a></li>`).join('\n')}
 </ul>`;
@@ -708,16 +708,25 @@ ${e.sched.map(([k, v]) => `    <tr><th>${esc(k)}</th><td class="start">${esc(v)}
 <a class="cta" href="/#fst">▶ サイト内のFSTサテライト（チケット獲得トーナメント）を見る<small>インタラクティブ版（日付・店舗つきで直近の開催予定を表示）</small></a>
 ${tables}
 <p class="lead" style="margin-top:14px">※ エントリー方法の「FSTチケット」は、県内各店で開催されるサテライトで獲得できるチケットを指します。サテライトの開催予定は<a href="/#fst">トップページのFSTページ</a>に掲載しています。</p>
-<h2 class="day" id="all-schedule">全日程（タイムスケジュール）</h2>
-<p class="lead">メイン会場（${esc(FST.venue)}）で行われる全${FST_SCHEDULE.tournaments.length}トーナメントのSTART・CLOSE・エントリーです。出典: 主催者公式Linktreeに掲載のPDF「EVENT SCHEDULE 2026.09.19-23」（${esc(FST.asOf)}時点）。エントリー欄が「PDF未記載」の行は、PDF側でエントリー欄が数値ではなくアイコン/バッジ表記になっており、当サイトで金額を読み取れなかった行です（推測で埋めていません）。CLOSE欄が「-」の回はレイトレジ無し（最後まで続行）です。［EC］［F100］［XPT］は公式PDFのTOURNAMENT列に付いていたバッジ表記をそのまま掲載しており、正式名称・詳細は当サイトでは確認できていません。</p>
-${schedTableFst(FST_SCHEDULE.tournaments)}
 ${mainHouseDay1Block(FST_MAIN_HOUSE_DAY1)}
 ${satelliteVenuesBlock((reg && reg.satelliteVenueIds) || [], {
   heading: 'サテライト開催店舗',
   lead: n => `下記の店舗では、FSTチケット（獲得するとMAIN EVENT・CHAMPIONSHIPにエントリーできます）が懸かったサテライト（チケット獲得トーナメント）が開催されています（当サイト掲載データより集計・${n}店舗）。日程・詳細は各店舗のページでご確認ください。`
 })}
-${faq.html}
 ${venueScheduleBlock()}
+<!-- ★ここより下(全56トーナメントの日程表)は、店舗・エリアへの内部リンクを上に出したあとに続く。
+     【なぜ内部リンクを全日程表より前に動かしたか・2026-09-07】Search Console実測(直近28日・
+     2026-09-07取得)で、このページ1枚が全ページPVの約6割を占め、他ページへの回遊が薄いことが
+     分かった(社長指摘・マーケティング部分析)。改善前の並びは「全日程(5日分×約56行の表)→
+     店舗開催Main House Day1→サテライト開催店舗→FAQ→福岡の店舗一覧(エリアリンク)」で、
+     店舗・エリアへのリンクはすべて巨大な表の下にあり、表を読んでいる途中で離脱する読者には
+     一度も見えない構成だった。他の大会ページ(WJPT/JOPT/NIPPON SERIES)は既に終了済みで
+     全日程の情報的価値が結果の記録に限られるのに対し、FSTは開催前で「全日程を確認したいだけ」の
+     訪問者が多いため、この並び替えはFST固有の対応とする(他3大会のbuildXxx()は変更していない)。 -->
+<h2 class="day" id="all-schedule">全日程（タイムスケジュール）</h2>
+<p class="lead">メイン会場（${esc(FST.venue)}）で行われる全${FST_SCHEDULE.tournaments.length}トーナメントのSTART・CLOSE・エントリーです。出典: 主催者公式Linktreeに掲載のPDF「EVENT SCHEDULE 2026.09.19-23」（${esc(FST.asOf)}時点）。エントリー欄が「PDF未記載」の行は、PDF側でエントリー欄が数値ではなくアイコン/バッジ表記になっており、当サイトで金額を読み取れなかった行です（推測で埋めていません）。CLOSE欄が「-」の回はレイトレジ無し（最後まで続行）です。［EC］［F100］［XPT］は公式PDFのTOURNAMENT列に付いていたバッジ表記をそのまま掲載しており、正式名称・詳細は当サイトでは確認できていません。</p>
+${schedTableFst(FST_SCHEDULE.tournaments)}
+${faq.html}
 <div class="links">
   ▶ <a href="${esc(FST.x)}" target="_blank" rel="noopener">公式X（@fst_202408）</a>　／　<a href="${esc(FST.linktree)}" target="_blank" rel="noopener">公式Linktree</a>　／　<a href="${esc(FST.instagram)}" target="_blank" rel="noopener">公式Instagram</a><br>
   ▶ <a href="/">福岡の他のポーカートーナメント日程を見る</a>

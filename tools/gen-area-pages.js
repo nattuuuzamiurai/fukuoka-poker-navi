@@ -219,14 +219,23 @@ function buildArea(area) {
   // ★ title / description は「掲載日程があるか」で切り替える(店舗ページと同じ理由)。
   //   0件のエリアで「日程を日付順に掲載」と書くと、検索結果に出る文が中身と一致しない。
   //   判定に「今日」を使わないのも同じ理由(実行日で分岐すると翌日に --check が落ちる)。
+  // title だけ、駅名の内訳(hints)を末尾の括弧に回す(desc/subはareaLabelのまま=先頭)。
+  // 【なぜtitleだけ動かすか・2026-09-07】北九州のように拾える駅名が多い(4件)エリアでは
+  // areaLabel(=「北九州（小倉・黒崎・平和通・折尾）」)が既に長く、直後に続けていた
+  // 「のポーカートーナメント日程」がtitleの切れる位置(目安30〜35文字。Googleはピクセル幅で
+  // 切るため文字数は目安)より後ろに来てしまう。Search Console実測(2026-09-07・直近28日)で
+  // 北九州エリアは表示92・クリック1だった。検索意図に直接効く語(エリア名+「日程」)を先に出し、
+  // 駅名の内訳は差別化情報として末尾に回す。desc/subは文章として area 主語のままの方が自然なため
+  // 従来通り(areaLabel/escAreaLabelが先頭)。
+  const titleHint = hints.length === 1 ? `${hints[0]}駅周辺／` : hints.length >= 2 ? `${hints.join('・')}／` : '';
   let title, desc, sub;
   if (rows.length) {
-    title = `${areaLabel}のポーカートーナメント日程・店舗一覧（${venues.length}店舗） | ふくおかポーカーナビ`;
+    title = `${area}のポーカートーナメント日程・店舗一覧（${titleHint}${venues.length}店舗） | ふくおかポーカーナビ`;
     desc = `${areaLabel}のアミューズメントポーカー${venues.length}店舗のトーナメント日程を、店舗をまたいで日付順にまとめています。`
       + `開始時刻・バイイン・各店のアクセスをまとめて確認できます。`;
     sub = `${escAreaLabel}のポーカー店${venues.length}店舗 — トーナメント日程・バイイン・アクセス`;
   } else {
-    title = `${areaLabel}のポーカー店一覧（${venues.length}店舗） | ふくおかポーカーナビ`;
+    title = `${area}のポーカー店一覧（${titleHint}${venues.length}店舗） | ふくおかポーカーナビ`;
     desc = `${areaLabel}のアミューズメントポーカー${venues.length}店舗の所在地・アクセス・公式SNSをまとめています。`
       + `現時点で当サイトに掲載中の開催予定はありません。最新の開催情報は各店舗の公式情報・SNSをご確認ください。`;
     sub = `${escAreaLabel}のポーカー店${venues.length}店舗 — 所在地・アクセス・開催情報`;
