@@ -1681,6 +1681,26 @@
   //
   // 個別トーナメントのブラインドストラクチャーは一次情報で確認できていないため書かない(推測を載せない)。
   //
+  // ■【2026-09-09追記・誤情報の訂正とインマネ対象人数の追加】企画部の一次情報調査で、下記2点が判明した。
+  //   出典: https://fukuoka-super-tournament.com/ (FSTの公式エントリー・マイページ管理システムと
+  //   推定される稼働中のWebアプリ。フッター等に運営会社名・公式SNSへの直接リンクの明記は見当たらず
+  //   100%の断定はできていないが、MAIN EVENTの総賞金・エントリー費が既存の確定済み一次情報
+  //   〈2026-07-29公式X投稿〉と完全一致し、全56トーナメントの日程構成もfst-schedule-data.jsと
+  //   完全一致するため確度は高いと判断。開発部が2026-09-09にcurlで同サイトの/scheduleページ・
+  //   個別トーナメント詳細ページを直接取得し裏取りした)。
+  //   1. CHAMPIONSHIPのエントリー費が誤っていた。旧「¥30,000／FSTチケット2枚／¥20,000＋FSTチケット1枚」
+  //      → 正しくは「¥30,000／FSTチケット2枚／¥15,000＋FSTチケット1枚」。/schedule ページの
+  //      "FST Championship Day1A"〜"Day1E" の entryLabel が一貫して"30,000/チケット×2 or
+  //      チケット+15,000"であることを複数回のアクセスで再確認した(¥20,000は一度も観測されず)。
+  //      MAIN EVENTのエントリー費(¥50,000／チケット2枚／¥25,000+チケット1枚)は同ページの
+  //      "Main Event Day1 A"等のentryLabel"50,000/チケット×2 or チケット+25,000"と一致しており訂正なし。
+  //   2. インマネ(ITM)対象人数(新規): MAIN EVENT=70位まで、CHAMPIONSHIP=40位まで。
+  //      "Main Event Day1 A"の詳細ページで「Total Prize ¥15,000,000」(MAIN EVENTの賞金総額と一致)
+  //      と並んで「Inprize 70th」の表記を開発部が確認した(CHAMPIONSHIPの40位は企画部確認。開発部は
+  //      該当ページがJS読み込み待ちの状態でしか取得できず、curlでは再現確認できなかった)。
+  //      順位別の具体的な配当金額(1位〜最下位)は、サイト側も「参加状況:受付準備中」で確定前のため、
+  //      当サイトには書かない(events[].itm に対象人数のみを追記する)。
+  //
   // ■ 全日程(タイムスケジュール): 主催者公式Linktree(https://linktr.ee/fukuokasupertounament)に
   //   掲載のPDF「EVENT SCHEDULE 2026.09.19-23」(メイン会場=ホテルニューオータニ博多の全56トーナメント)
   //   を社長が2026-09-01に確認・提供。データ本体は別ファイル fst-schedule-data.js に切り出してあり、
@@ -1703,9 +1723,11 @@
     events: [
       { name:'MAIN EVENT', prize:'¥15,000,000',
         entry:'¥50,000 ／ FSTチケット2枚 ／ ¥25,000＋FSTチケット1枚',
+        itm:'70位まで',
         sched:[['Day 1','9/19〜9/21'],['Day 2','9/21'],['FINAL','9/22']] },
       { name:'CHAMPIONSHIP', prize:'¥8,000,000',
-        entry:'¥30,000 ／ FSTチケット2枚 ／ ¥20,000＋FSTチケット1枚',
+        entry:'¥30,000 ／ FSTチケット2枚 ／ ¥15,000＋FSTチケット1枚',
+        itm:'40位まで',
         sched:[['Day 1','9/21〜9/23'],['FINAL','9/23']] }
     ]
   };
@@ -1870,6 +1892,7 @@
         <h3>${e.name}</h3>
         <div class="fe-prize">Prize Total ${e.prize}</div>
         <div class="fe-row"><span class="fe-k">エントリー</span><span class="fe-v">${e.entry}</span></div>
+        ${e.itm ? `<div class="fe-row"><span class="fe-k">インマネ</span><span class="fe-v">${e.itm}</span></div>` : ''}
         ${e.sched.map(([k,v]) => `<div class="fe-row"><span class="fe-k">${k}</span><span class="fe-v">${v}</span></div>`).join('')}
       </div>`).join('');
 

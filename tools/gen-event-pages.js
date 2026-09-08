@@ -688,7 +688,7 @@ function buildFst() {
   <tbody>
     <tr><th>Prize Total</th><td class="fst-prize">${esc(e.prize)}</td></tr>
     <tr><th>エントリー</th><td>${esc(e.entry)}</td></tr>
-${e.sched.map(([k, v]) => `    <tr><th>${esc(k)}</th><td class="start">${esc(v)}</td></tr>`).join('\n')}
+${e.itm ? `    <tr><th>インマネ</th><td>${esc(e.itm)}</td></tr>\n` : ''}${e.sched.map(([k, v]) => `    <tr><th>${esc(k)}</th><td class="start">${esc(v)}</td></tr>`).join('\n')}
   </tbody>
 </table></div>`).join('\n');
   // よくある質問(FAQ)。開催前で検索意欲が高まる時期(9/19〜9/23開催・掲載時点で開催前)に、
