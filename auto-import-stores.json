@@ -17,6 +17,18 @@
       "displayId": "4039056",
       "label": "CASINO Arrows 小倉店",
       "source": "waitinglist"
+    },
+    {
+      "venueId": "v22",
+      "displayId": "4012445",
+      "label": "CRownCLown",
+      "source": "waitinglist"
+    },
+    {
+      "venueId": "v27",
+      "displayId": "4069478",
+      "label": "THE DOJO",
+      "source": "waitinglist"
     }
   ]
 }
