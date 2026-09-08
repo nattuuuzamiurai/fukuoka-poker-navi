@@ -306,6 +306,9 @@
   .evtBanner.ev-jopt{--ev-bd:var(--jopt);--ev-bg:#07171d;--ev-bg2:#0e3d48;--ev-fg:var(--jopt2);--ev-ac:var(--jopt);--ev-ac2:var(--jopt2);--ev-on:#04222a}
   .evtBanner.ev-nippon{--ev-bd:var(--ns);--ev-bg:#5c0910;--ev-bg2:#a8111c;--ev-fg:#ffd9d4;--ev-ac:var(--ns);--ev-ac2:var(--ns2);--ev-on:#fff}
   .evtBanner.ev-fst{--ev-bd:var(--fst);--ev-bg:#070c22;--ev-bg2:#1a2455;--ev-fg:var(--fst2);--ev-ac:var(--fst);--ev-ac2:var(--fst2);--ev-on:#fff}
+  /* SPADIE FUKUOKA 1st(2026-09-08追加)。既存4色(ゴールド/ティール/赤/紺)と被らないパープル系。
+     専用の :root 変数は作らず(このバナー以外でSPADIEの色を使う箇所が無いため)、直接指定する。 */
+  .evtBanner.ev-spadie{--ev-bd:#8b5cf6;--ev-bg:#160b2e;--ev-bg2:#2f1a5c;--ev-fg:#c9a8ff;--ev-ac:#8b5cf6;--ev-ac2:#c9a8ff;--ev-on:#1c0f38}
   /* DreaM CASINO BAR グランドオープン記念(promo-banners.js)。専用の :root 変数は作らず、
      WJPTと同じくバナー画像(黒地×ゴールド×赤リボン)に合わせた色を直接指定する
      (このバナー以外でDreaMの色を使う箇所が無いため、変数化する理由が無い)。 */
@@ -898,10 +901,10 @@
          permanentEventLinks())から作られ、`node tools/gen-event-pages.js <repo>` を実行すると
          この1行だけが差し替わる。以前は「静的ページは自動・トップは手作業」で分かれていたため、
          片方だけ直して片方を忘れる事故が2回起きた。ズレは `--check` を付けた実行で検出できる。
-       リンク先は featureUrl(レジストリの値)。現時点では全4大会とも静的ページを持つ。
+       リンク先は featureUrl(レジストリの値)。現時点では全5大会とも静的ページを持つ。
          静的ページを持たない大会を足したときだけ、その大会はハッシュURL(/#xxx)になる。
        実行時には mountBigEventLinks() が同じ内容で描き直す(JSありの環境向けの二重の保険)。 -->
-  <div id="evtLinks" class="footer-linklist" style="margin-top:2px">大会ページ: <a href="/events/wjpt-2026/">WJPT 2026</a>　|　<a href="/events/jopt-2026-fukuoka-01/">JOPT 2026 福岡</a>　|　<a href="/events/nippon-series-2026-fukuoka/">NIPPON SERIES 福岡 2026</a>　|　<a href="/events/fst-2026-fukuoka/">FST 5.0 2026 福岡</a></div>
+  <div id="evtLinks" class="footer-linklist" style="margin-top:2px">大会ページ: <a href="/events/wjpt-2026/">WJPT 2026</a>　|　<a href="/events/jopt-2026-fukuoka-01/">JOPT 2026 福岡</a>　|　<a href="/events/nippon-series-2026-fukuoka/">NIPPON SERIES 福岡 2026</a>　|　<a href="/events/fst-2026-fukuoka/">FST 5.0 2026 福岡</a>　|　<a href="/events/spadie-fukuoka-1st/">SPADIE FUKUOKA 1st</a></div>
   <!-- 大会特集は「開催中、無ければ次の大会」を1件だけ出す。
        中身は big-events.js の mountBigEventFooter() が入れる。該当が無ければ行ごと非表示。
        ★ここはトップのバナー(visibleBigEvents)とは判定条件が違うため、
