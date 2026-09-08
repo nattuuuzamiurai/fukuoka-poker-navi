@@ -25,6 +25,16 @@
 //      社長確認(2026-09-01)により、既存の const FST.events[1].entry(index.html。CHAMPIONSHIP概要欄)と
 //      同一の「¥30,000 ／ FSTチケット2枚 ／ ¥20,000＋FSTチケット1枚」であることが判明したため、
 //      この文字列を明示的に設定している(推測ではなく確認済みの値)。
+//      【2026-09-09追記・訂正】上記「¥20,000」は誤りだった。企画部の一次情報調査
+//      (出典: https://fukuoka-super-tournament.com/ 。主催者公式と推定される稼働中のエントリーシステム。
+//      フッター等に運営会社名・SNS直接リンクの明記はなく100%の断定はできていないが、MAIN EVENT/
+//      CHAMPIONSHIPの賞金総額・エントリー費、全56トーナメントの日程構成が既存の確定済み一次情報と
+//      完全一致しており確度は高いと判断)により、正しくは「¥30,000 ／ FSTチケット2枚 ／
+//      ¥15,000＋FSTチケット1枚」と判明。開発部が同サイトの /schedule ページを直接確認し、
+//      "FST Championship Day1A"〜"Day1E" の entryLabel が一貫して
+//      "30,000/チケット×2 or チケット+15,000" であることを2026-09-09に複数回のアクセスで再確認した
+//      (¥20,000は一度も観測されず)。下記5行および index.html の const FST.events[1].entry を
+//      ¥15,000に修正した。
 // 注2: close が "-" の行は、PDFのCLOSE欄がダッシュ表記(レイトレジ無し/最後まで続行の意)だった行。
 // 注3: series は各行のTOURNAMENT列先頭に付いていた角カッコ表記のバッジ([EC]/[F100]/[XPT])を
 //      そのまま保持したもの。それぞれの正式名称・詳細は公式に未確認のため、当サイトで意味を
@@ -69,28 +79,28 @@ const FST_SCHEDULE = {
   { day:"2026-09-21", no:"1", start:"10:00", close:"12:30", name:"Main Event Day1E -After R5 Day2-", entry:"¥50,000 ／ FSTチケット2枚 ／ ¥25,000＋FSTチケット1枚", series:null, flight:"MAIN_DAY1" },
   { day:"2026-09-21", no:"21", start:"11:00", close:"16:20", name:"Classic NLH", entry:15000, series:null },
   { day:"2026-09-21", no:"1", start:"13:00", close:"-", name:"Main Event Day2", entry:3000, series:null, flight:"MAIN_DAY2" },
-  { day:"2026-09-21", no:"22", start:"14:00", close:"19:40", name:"FST Championship Day1A", entry:"¥30,000 ／ FSTチケット2枚 ／ ¥20,000＋FSTチケット1枚", series:null, flight:"CHAMP_DAY1" },
+  { day:"2026-09-21", no:"22", start:"14:00", close:"19:40", name:"FST Championship Day1A", entry:"¥30,000 ／ FSTチケット2枚 ／ ¥15,000＋FSTチケット1枚", series:null, flight:"CHAMP_DAY1" },
   { day:"2026-09-21", no:"23", start:"16:00", close:"21:40", name:"High Roller -PRIDE-", entry:200000, series:null },
   { day:"2026-09-21", no:"24", start:"16:30", close:"21:55", name:"6max NLH", entry:25000, series:null },
-  { day:"2026-09-21", no:"22", start:"20:00", close:"23:40", name:"FST Championship Day1B", entry:"¥30,000 ／ FSTチケット2枚 ／ ¥20,000＋FSTチケット1枚", series:null, flight:"CHAMP_DAY1" },
+  { day:"2026-09-21", no:"22", start:"20:00", close:"23:40", name:"FST Championship Day1B", entry:"¥30,000 ／ FSTチケット2枚 ／ ¥15,000＋FSTチケット1枚", series:null, flight:"CHAMP_DAY1" },
   { day:"2026-09-21", no:"25", start:"20:30", close:"1:00", name:"5PLO", entry:15000, series:null },
   { day:"2026-09-21", no:"26", start:"22:00", close:"1:40", name:"Night Stack", entry:20000, series:null },
   { day:"2026-09-21", no:"27", start:"1:30", close:"3:00", name:"Deepstack Hyper", entry:10000, series:null },
 
   { day:"2026-09-22", no:"28", start:"10:00", close:"14:30", name:"Road to Heads-up 550 -EC80-", entry:55000, series:"EC" },
   { day:"2026-09-22", no:"29", start:"10:30", close:"15:50", name:"FST Field of 100", entry:20000, series:"F100" },
-  { day:"2026-09-22", no:"22", start:"11:30", close:"17:10", name:"FST Championship Day1C", entry:"¥30,000 ／ FSTチケット2枚 ／ ¥20,000＋FSTチケット1枚", series:null, flight:"CHAMP_DAY1" },
+  { day:"2026-09-22", no:"22", start:"11:30", close:"17:10", name:"FST Championship Day1C", entry:"¥30,000 ／ FSTチケット2枚 ／ ¥15,000＋FSTチケット1枚", series:null, flight:"CHAMP_DAY1" },
   { day:"2026-09-22", no:"30", start:"12:00", close:"17:20", name:"XPT×FST", entry:15000, series:"XPT" },
   { day:"2026-09-22", no:"31", start:"13:00", close:"18:20", name:"LADIES Championship", entry:20000, series:null },
   { day:"2026-09-22", no:"32", start:"14:00", close:"18:20", name:"High Roller -POSEIDON-", entry:100000, series:null },
   { day:"2026-09-22", no:"1", start:"16:00", close:"-", name:"Main Event Day3 FINAL", entry:0, series:null, flight:"MAIN_FINAL" },
-  { day:"2026-09-22", no:"22", start:"17:30", close:"21:50", name:"FST Championship Day1D", entry:"¥30,000 ／ FSTチケット2枚 ／ ¥20,000＋FSTチケット1枚", series:null, flight:"CHAMP_DAY1" },
+  { day:"2026-09-22", no:"22", start:"17:30", close:"21:50", name:"FST Championship Day1D", entry:"¥30,000 ／ FSTチケット2枚 ／ ¥15,000＋FSTチケット1枚", series:null, flight:"CHAMP_DAY1" },
   { day:"2026-09-22", no:"33", start:"17:30", close:"22:55", name:"KO Bounty", entry:25000, series:null },
   { day:"2026-09-22", no:"34", start:"20:30", close:"1:00", name:"NL 2-7SD", entry:15000, series:null },
   { day:"2026-09-22", no:"35", start:"23:00", close:"1:10", name:"Midnight Turbo", entry:15000, series:null },
   { day:"2026-09-22", no:"36", start:"1:00", close:"2:30", name:"Deepstack Hyper", entry:10000, series:null },
 
-  { day:"2026-09-23", no:"22", start:"10:00", close:"11:40", name:"FST Championship Day1E -After R5 Day2-", entry:"¥30,000 ／ FSTチケット2枚 ／ ¥20,000＋FSTチケット1枚", series:null, flight:"CHAMP_DAY1" },
+  { day:"2026-09-23", no:"22", start:"10:00", close:"11:40", name:"FST Championship Day1E -After R5 Day2-", entry:"¥30,000 ／ FSTチケット2枚 ／ ¥15,000＋FSTチケット1枚", series:null, flight:"CHAMP_DAY1" },
   { day:"2026-09-23", no:"37", start:"10:00", close:"12:10", name:"FST Final Day Kickoff", entry:10000, series:null },
   { day:"2026-09-23", no:"38", start:"12:00", close:"16:30", name:"PLO", entry:15000, series:null },
   { day:"2026-09-23", no:"22", start:"12:00", close:"-", name:"FST Championship Day2 FINAL", entry:3000, series:null, flight:"CHAMP_DAY2" },
