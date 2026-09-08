@@ -2,25 +2,6 @@
   "version": 1,
   "writtenBy": "tools/monitor-instagram-apify.js",
   "entries": {
-    "ig-v18-2026-09-07-nostart-fst-satellite": {
-      "id": "ig-v18-2026-09-07-nostart-fst-satellite",
-      "venueId": "v18",
-      "name": "FST SATELLITE",
-      "date": "2026-09-07",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "サテライト",
-        "FST"
-      ],
-      "source": "semi",
-      "verified": false
-    },
     "ig-v18-2026-09-08-nostart-post": {
       "id": "ig-v18-2026-09-08-nostart-post",
       "venueId": "v18",
@@ -719,22 +700,6 @@
       "buyin": 1500,
       "addon": null,
       "stack": 15000,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v35-2026-09-07-1915-single-reebt-tournament": {
-      "id": "ig-v35-2026-09-07-1915-single-reebt-tournament",
-      "venueId": "v35",
-      "name": "Single Reebt TOURNAMENT",
-      "date": "2026-09-07",
-      "start": "19:15",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
       "guarantee": null,
       "reentry": false,
       "prize": null,
