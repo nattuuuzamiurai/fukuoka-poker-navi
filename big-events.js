@@ -154,6 +154,54 @@ const BIG_EVENTS = [
       'v2', 'v7', 'v8', 'v13', 'v14', 'v18', 'v19', 'v20', 'v21',
       'v22', 'v26', 'v27', 'v28', 'v33', 'v34', 'v35', 'v37', 'v40'
     ]
+  },
+  {
+    id: 'spadie',
+    // 大会名「SPADIE FUKUOKA 1st」・開催開始日(2026-11-12)は一次情報(PR TIMES・株式会社
+    // ユナイテッドラボ発表・2026-09-07 10:30)で確認済み。
+    //   https://prtimes.jp/main/html/rd/p/000000011.000053616.html
+    //     「この夏の熱狂を超える瞬間が、11月12日からSPADIE FUKUOKA 1st開催決定！舞台は勿論UNITEDLAB！」
+    //   → 大会名・開始日・会場(UNITEDLAB)が同一リリースで結び付いている。
+    // 会場住所(〒810-0041 福岡県福岡市中央区大名1-3-36)はUNITEDLAB公式サイト・JOPT福岡ページの
+    // 構造化データと一致(コンテンツ制作部調査・spadie-fukuoka-1st-content-brief.md参照)。
+    //
+    // ★終了日は一次情報に記載が無い。二次情報(light-three.com「9・10・11月おすすめポーカー
+    //   イベントは？」2026-09-07公開)が「11.12(木)〜11.15(日)」の4日間と報じているが、
+    //   主催者公式X(@SPADIE_FUKUOKA)による終了日の直接確認は取れていない
+    //   (コンテンツ制作部の申し送り「開発部への申し送り事項」1参照)。
+    //   下記 days は二次情報にもとづく【暫定】の4日間としている。1日だけ登録すると、掲載期間の
+    //   計算上「最終日の翌日=初日の翌日」になり、大会がまだ続いている可能性が高い11/13朝6時には
+    //   バナーが「終了」表示になってしまう(README「掲載期間ルール」参照)。二次情報が複数一致して
+    //   いること・過小表示(早すぎる終了扱い)よりは実態に近い表示を優先することから、この暫定値を
+    //   採用した。★ただしJSON-LDのendDateには使わない
+    //   (events/spadie-fukuoka-1st/index.htmlのbuildSpadie()を参照。構造化データは一次情報のみで
+    //   確定させる方針のため endDate 自体を出力していない。本文・バナーも開始日のみの表記に揃えてある)。
+    //   公式Xで終了日が確認でき次第、この days とページのtitle/H1/evt-meta/JSON-LDを
+    //   まとめて確定情報に更新すること。
+    label: 'SPADIE FUKUOKA 1st',
+    days: ['2026-11-12', '2026-11-13', '2026-11-14', '2026-11-15'],
+    featureUrl: '/events/spadie-fukuoka-1st/',
+    // ★他の大型大会(hash: '#wjpt' 等)と違い、`hash` ではなく `href` を持たせている。
+    //   buyin・大会形式・詳細スケジュールがすべて未発表で、トップページ内にインタラクティブな
+    //   専用ページ(FSTのrenderFstPage()のような日別タブ・遅延ロード等)を作れるだけの個別データが
+    //   無い。bigEventBannerHtml()(index.html)は`ev.href || ev.hash`を見るため、`href`だけを
+    //   持たせれば静的ページ(events/spadie-fukuoka-1st/)に直接リンクできる(promo-banners.jsの
+    //   プロモバナーと同じ仕組みを流用)。掲載期間・#majors・フッター「大会特集」等、BIG_EVENTSとしての
+    //   扱いは他のエントリと変わらない。情報が出そろい、インタラクティブページを作る価値が
+    //   出てきたら`hash`を足してrenderSpadiePage()を追加すればよい(その場合はPAGE_IDS/HBAR_IDS/
+    //   HEADER_MODES/route()の追加も必要になる。README「追加手順」参照)。
+    href: '/events/spadie-fukuoka-1st/',
+    banner: 'img/spadie/spadie-banner.svg',
+    bannerAlt: 'SPADIE FUKUOKA 1st 11.12〜 福岡・大名 UNITEDLAB',
+    // ★「九州初開催」は主催者・関連媒体の紹介にもとづく伝聞であり、当サイト自身の断定ではない
+    //   (法務チェックリスト・spadie-fukuoka-1st-content-brief.md参照)。バナーの短い定型キャプション
+    //   ではヘッジ文言を入れられないため、この欄では会場名という中立的な事実だけにとどめ、
+    //   「九州初」の紹介は本文(events/spadie-fukuoka-1st/index.html)の伝聞形式の文章側で扱う。
+    bannerDesc: '福岡・大名／UNITEDLAB',
+    bannerClass: 'ev-spadie'
+    // サテライト開催店舗の情報は2026-09-08時点で無いため satelliteVenueIds は設けない
+    // (申し送り事項5)。data.jsにSPADIE関連のサテライト大会が登録されたら、FST/JOPTと同じ
+    // ワンライナー(正規表現をSPADIEに読み替え)で機械走査して追加すること。
   }
 ];
 

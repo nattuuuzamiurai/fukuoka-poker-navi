@@ -40,6 +40,7 @@
  *   - img/jopt/jopt-og.jpg
  *   - img/fst/fst-og.jpg
  *   - img/nippon-series/nippon-series-og.jpg
+ *   - img/spadie/spadie-og.jpg           … 2026-09-08追加(SPADIE FUKUOKA 1st)
  *
  * 使い方:
  *   node tools/gen-ogp-images.js <リポジトリのパス>
@@ -244,13 +245,31 @@ function buildWjpt() {
   return page(body, style);
 }
 
+// ---- 6. SPADIE FUKUOKA 1stページ用OGP ----
+// ★終了日はJSON-LD(events/spadie-fukuoka-1st/index.htmlのbuildSpadie())と同じ理由で、
+//   ここでも一切表示しない。BIG.bigEventDays('spadie')は掲載期間の計算のために【暫定4日間】を
+//   持っているが(big-events.jsのコメント参照)、それをそのままdateRangeとして焼き込むと
+//   一次情報で確認していない終了日(11/15)を画像として断定的に出してしまう。
+//   そのためWJPT/FST/NIPPONと違い、日付は開始日のみの固定文字列("11.12〜")にしている
+//   (バナー本体img/spadie/spadie-banner.svg・本文のtitle/H1と表記を揃える)。
+function buildSpadie() {
+  return buildEventOgp({
+    bgFrom: '#0e0620', bgTo: '#2f1a5c',
+    imageDataUri: dataUri('img/spadie/spadie-banner.svg'), imageAlt: 'SPADIE FUKUOKA 1st',
+    title1: 'SPADIE FUKUOKA 1st',
+    lines: ['UNITEDLAB（福岡・大名）　11.12〜（終了日は公式発表待ち）'],
+    badge: '開催概要まとめ（非公式）'
+  });
+}
+
 // ---- 書き出し ----
 const TARGETS = [
   { rel: 'img/ogp/common-og.jpg', html: buildCommon() },
   { rel: 'img/wjpt/wjpt-og.jpg', html: buildWjpt() },
   { rel: 'img/jopt/jopt-og.jpg', html: buildJopt() },
   { rel: 'img/nippon-series/nippon-series-og.jpg', html: buildNippon() },
-  { rel: 'img/fst/fst-og.jpg', html: buildFst() }
+  { rel: 'img/fst/fst-og.jpg', html: buildFst() },
+  { rel: 'img/spadie/spadie-og.jpg', html: buildSpadie() }
 ];
 
 (async () => {

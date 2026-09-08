@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SPADIE FUKUOKA 1st バナー
+  当サイト(ふくおかポーカーナビ)が作成したバナーです。公式素材ではありません。
+  ロゴ・大会名等の権利は主催者に帰属します。
+  終了日は2026年9月8日時点で一次情報未確認のため、日付は開始日(11.12〜)のみを掲載しています
+  (events/spadie-fukuoka-1st/index.html・big-events.jsのコメント参照)。終了日が確認でき次第、
+  このバナーも「11.12 - 11.15」等の範囲表記に更新すること。
+  公式のバナー画像が入手できたら、このファイルを差し替えるか
+  big-events.js の spadie エントリの banner を新しいパスに変更してください(参照はそこ1箇所)。
+  寸法は既存の大型イベントバナー(WJPT/JOPT/FST/NIPPON SERIES)に合わせています(1024x412)。
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 412" width="1024" height="412"
+     role="img" aria-label="SPADIE FUKUOKA 1st 2026年11月12日から 福岡市中央区大名 UNITEDLAB">
+  <defs>
+    <linearGradient id="spBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0e0620"/>
+      <stop offset="0.52" stop-color="#2f1a5c"/>
+      <stop offset="1" stop-color="#0e0620"/>
+    </linearGradient>
+    <radialGradient id="spGlowA" cx="0.88" cy="0.10" r="0.75">
+      <stop offset="0" stop-color="#8b5cf6" stop-opacity="0.40"/>
+      <stop offset="1" stop-color="#8b5cf6" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="spGlowB" cx="0.06" cy="0.96" r="0.8">
+      <stop offset="0" stop-color="#ff6bd6" stop-opacity="0.24"/>
+      <stop offset="1" stop-color="#ff6bd6" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="spPill" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#8b5cf6"/>
+      <stop offset="1" stop-color="#c9a8ff"/>
+    </linearGradient>
+    <linearGradient id="spEdge" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#c9a8ff"/>
+      <stop offset="1" stop-color="#8b5cf6"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 背景 -->
+  <rect width="1024" height="412" fill="url(#spBg)"/>
+  <rect width="1024" height="412" fill="url(#spGlowA)"/>
+  <rect width="1024" height="412" fill="url(#spGlowB)"/>
+
+  <!-- 左: エンブレム(スペード型 + SPADIE) -->
+  <g>
+    <path d="M168 76
+             C 168 76 96 148 96 202
+             C 96 240 128 262 160 254
+             C 152 276 136 292 116 302
+             L 220 302
+             C 200 292 184 276 176 254
+             C 208 262 240 240 240 202
+             C 240 148 168 76 168 76 Z"
+          fill="none" stroke="url(#spEdge)" stroke-width="4"/>
+    <path d="M168 106
+             C 168 106 122 158 122 198
+             C 122 224 142 240 164 234
+             C 158 250 148 262 134 270
+             L 202 270
+             C 188 262 178 250 172 234
+             C 194 240 214 224 214 198
+             C 214 158 168 106 168 106 Z"
+          fill="#ffffff" fill-opacity="0.06"/>
+    <text x="168" y="346" text-anchor="middle" font-family="'Hiragino Sans','Yu Gothic UI',system-ui,sans-serif"
+          font-size="16" font-weight="700" letter-spacing="3.4" fill="#e3d3ff">SPADIE</text>
+    <!-- 大会番号(「1st」)は一次情報(PR TIMES 2026-09-07)で確認済み。出典は
+         big-events.js / spadie-fukuoka-1st-content-brief.md を参照。 -->
+    <rect x="94" y="356" width="148" height="36" rx="18" fill="url(#spPill)"/>
+    <text x="168" y="381" text-anchor="middle" font-family="'Hiragino Sans','Yu Gothic UI',system-ui,sans-serif"
+          font-size="20" font-weight="800" letter-spacing="1" fill="#1c0f38">FUKUOKA 1st</text>
+  </g>
+
+  <!-- 右: 大会名・開始日・会場 -->
+  <g>
+    <text x="306" y="106" font-family="'Hiragino Sans','Yu Gothic UI',system-ui,sans-serif"
+          font-size="24" font-weight="800" letter-spacing="3.2" fill="#e3d3ff">SPADIE POKER LEAGUE</text>
+
+    <text x="306" y="176" font-family="'Hiragino Sans','Yu Gothic UI',system-ui,sans-serif"
+          font-size="52" font-weight="800" letter-spacing="0.5" fill="#ffffff">SPADIE FUKUOKA 1st</text>
+
+    <text x="306" y="256" font-family="'Hiragino Sans','Yu Gothic UI',system-ui,sans-serif"
+          font-size="76" font-weight="800" letter-spacing="1" fill="#ffffff">11.12〜</text>
+
+    <text x="306" y="300" font-family="'Hiragino Sans','Yu Gothic UI',system-ui,sans-serif"
+          font-size="24" font-weight="700" fill="#d8c9f5">2026 FUKUOKA　／　UNITEDLAB（福岡・大名）</text>
+
+    <rect x="306" y="322" width="380" height="44" rx="22" fill="url(#spPill)"/>
+    <text x="496" y="351" text-anchor="middle" font-family="'Hiragino Sans','Yu Gothic UI',system-ui,sans-serif"
+          font-size="21" font-weight="800" letter-spacing="1" fill="#1c0f38">開催概要まとめ（非公式）</text>
+  </g>
+</svg>
