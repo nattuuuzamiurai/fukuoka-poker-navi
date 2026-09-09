@@ -18,6 +18,32 @@
         "note": "venues配列の末尾6件は2026-07-29に品質管理部が裏取りした追加分。初回29件(collectedAt: 2026-07-10)とは調査日が異なる。各件の確度(high/medium)と残課題は個々のnoteに記載。"
       }
     ],
+    "corrections": [
+      {
+        "checkedAt": "2026-09-09",
+        "count": 9,
+        "venues": [
+          "ALICE the Poker room（アリス）",
+          "テキサスホールデムAA",
+          "CasinoX（カジノックス）福岡今泉店",
+          "JOKER♠️ 福岡大橋",
+          "Poker room SKY（美野島）",
+          "ARIA 中洲（会員制ポーカーバー）",
+          "RAISE BLUE 天神",
+          "KING&QUEEN SUITED 直方店",
+          "Poker Bar IRIS"
+        ],
+        "note": "品質管理部による全35店舗の住所・SNS再検証(2026-09-09)で見つかった9件を確度別に是正。(1)最優先・緊急=ALICE the Poker room: 公式サイトURLが静岡県富士市の無関係な別店舗を指していたため削除。(2)確度高(公式情報で確認済み)=テキサスホールデムAA(公式サイト)・CasinoX福岡今泉店(不動産/求人サイト2系統一致)・JOKER♠️福岡大橋(公式Instagramのbio直接確認)の住所欠落等を追記。(3)確度中(第三者情報中心・留保あり)=Poker room SKYの部屋番号(検索スニペット経由の間接情報、addressUnverified付与。★当初は「bio直接確認」と誤記していたが2026-09-09レビュー部指摘で訂正)・ARIA中洲の建物名(oncasimonster.jp、addressUnverified付与)とxドメイン統一・RAISE BLUE天神の住所候補(第三者媒体、addressUnverified付与)・KING&QUEEN SUITED直方店のaccess(公式Instagramのbio、住所番地は引き続き未確認)。(4)軽微(表記統一)=Poker Bar IRISのinstagram欄を投稿個別URLからプロフィールURLに統一。各件の詳細・出典は個別venueのnoteとsourcesに記載。A&K(久留米)・RAFTEL CASINO福岡今泉店・DreaM CASINO BAR久留米の3店は第三者裏付けが取れず現状維持(対応不要)。"
+      },
+      {
+        "checkedAt": "2026-09-09",
+        "count": 1,
+        "venues": [
+          "Poker room SKY（美野島）"
+        ],
+        "note": "レビュー部がPR #87をNO-GO判定(9件中1件、v33 Poker room SKYのみ)。指摘: 部屋区分「-A」の確認方法を「公式Instagramのbio、一次情報のため留保フラグなし」と確定情報扱いにしていたが、実態は検索スニペット経由の間接確認で、同一PR内でv30(ARIA中洲)・v8(RAISE BLUE天神)と確度基準が一貫していなかった。開発部が再点検した結果、Instagram本体(@sky_minoshima)への直接アクセスはボット対策によりbio本文を取得できず(SSRシェルのみでbiography要素が空)、直接確認はできていないと確認。data.jsに addressUnverified: true を付与し、JSON-LDからstreetAddressを落とし、note/sourcesの文言を「間接確認のため要確認」に修正した。"
+      }
+    ],
     "caveats": [
       "ポータル(poker.dmm.com 等)・公式サイト/SNS本体はボット対策で直接取得が403のため、店舗詳細はWeb検索の要約経由。住所番地・SNSハンドル・営業時間に軽微な誤りが残る可能性あり。",
       "じゃんけんポーカー天神店=移転中の情報／RAISE BLUE=2025年11月に重要告知 → 営業状況要確認。",
@@ -188,7 +214,7 @@
       "name": "RAISE BLUE 天神",
       "area": "天神",
       "city": "福岡市中央区",
-      "address": "",
+      "address": "福岡県福岡市中央区天神3-8-11 アスティオン天神ビル4F",
       "access": "天神駅 徒歩約10分",
       "website": "",
       "x": "https://x.com/RAISEBLUE_poker",
@@ -198,9 +224,10 @@
       "holds_tournaments": true,
       "sources": [
         "https://x.com/RAISEBLUE_poker",
-        "https://www.instagram.com/raise_blue/"
+        "https://www.instagram.com/raise_blue/",
+        "https://light-three.com/hakata-poker/"
       ],
-      "note": "トーナメントを毎日開催(BLUERUSH等)。住所未確認。2025/11に重要告知あり営業状況要確認。"
+      "note": "確度中。トーナメントを毎日開催(BLUERUSH等)。2026-09-09品質管理部の再検証で、住所候補「福岡県福岡市中央区天神3-8-11 アスティオン天神ビル4F」が第三者媒体(light-three.com等)で判明したが、公式SNS(X/Instagram)での一次確認は取れていない。data.jsでは addressUnverified: true を立てたうえで掲載(要確認のヘッジ付き)。2025/11に重要告知あり営業状況要確認(未解消)。"
     },
     {
       "name": "CASINO BLOW 西中洲",
@@ -277,7 +304,7 @@
       "name": "テキサスホールデムAA",
       "area": "北九州",
       "city": "北九州市小倉北区",
-      "address": "福岡県北九州市小倉北区片野新町1-10-23 3F",
+      "address": "福岡県北九州市小倉北区片野新町1-10-23 CUBEビル3F",
       "access": "",
       "website": "https://texasaa.net/",
       "x": "https://x.com/texasaanet",
@@ -289,7 +316,7 @@
         "https://texasaa.net/",
         "https://x.com/texasaanet"
       ],
-      "note": "1部13:15〜(ミニトーナメント/練習リング)、2部17:30〜(各種トーナメント)。入場料2,000円。"
+      "note": "確度high。1部13:15〜(ミニトーナメント/練習リング)、2部17:30〜(各種トーナメント)。入場料2,000円。2026-09-09品質管理部の再検証で、公式サイト(texasaa.net)により建物名「CUBEビル」の欠落が判明し追記した(旧住所「福岡県北九州市小倉北区片野新町1-10-23 3F」)。"
     },
     {
       "name": "Poker Bar IRIS",
@@ -299,15 +326,16 @@
       "access": "JR黒崎駅周辺",
       "website": "",
       "x": "https://x.com/pokerbar_iris",
-      "instagram": "",
+      "instagram": "https://www.instagram.com/pokerbar_iris/",
       "line": "",
       "tel": "",
       "holds_tournaments": true,
       "sources": [
         "https://poker.dmm.com/details/4041424",
-        "https://x.com/pokerbar_iris"
+        "https://x.com/pokerbar_iris",
+        "https://www.instagram.com/pokerbar_iris/"
       ],
-      "note": "黒崎のポーカーバー。FUKUOKA SUPER TOURNAMENT(FST)会場を務める等トーナメント開催実績あり。"
+      "note": "軽微(表記統一)。黒崎のポーカーバー。FUKUOKA SUPER TOURNAMENT(FST)会場を務める等トーナメント開催実績あり。2026-09-09品質管理部の再検証で、data.jsのinstagram欄が投稿個別URL(/p/DaNPgcXj-3X/...)になっていたためプロフィールURLに統一した(将来の投稿削除によるリンク切れリスクを避ける)。"
     },
     {
       "name": "CASINO Arrows 小倉店",
@@ -332,7 +360,7 @@
       "area": "筑豊",
       "city": "直方市",
       "address": "",
-      "access": "",
+      "access": "直方駅 徒歩約4分",
       "website": "",
       "x": "https://x.com/king_queen1312",
       "instagram": "https://www.instagram.com/king2485queen/",
@@ -341,9 +369,10 @@
       "holds_tournaments": true,
       "sources": [
         "https://my.beyond-ss.com/pokerroom-hukuoka/",
-        "https://michisasa.com/kingqueen/"
+        "https://michisasa.com/kingqueen/",
+        "https://www.instagram.com/king2485queen/"
       ],
-      "note": "福岡市外では貴重なスポット。ハウス+大型大会サテライトを開催。黒崎(八幡西区)に系列店。住所未確認。"
+      "note": "確度high(access)。福岡市外では貴重なスポット。ハウス+大型大会サテライトを開催。黒崎(八幡西区)に系列店。2026-09-09品質管理部の再検証で、公式Instagram(@king2485queen)のbioにより「直方駅より徒歩4分」を確認しaccessに反映。住所番地は依然未確認(要確認)。"
     },
     {
       "name": "KENポーカー（久留米）",
@@ -389,17 +418,16 @@
       "city": "福岡市中央区",
       "address": "福岡県福岡市中央区渡辺通5-2-10 2F",
       "access": "天神南駅 徒歩2分",
-      "website": "https://alice2174.com/73162/",
+      "website": "",
       "x": "https://x.com/ALICE_POKERROOM",
       "instagram": "",
       "line": "",
       "tel": "",
       "holds_tournaments": true,
       "sources": [
-        "https://alice2174.com/73162/",
         "https://x.com/ALICE_POKERROOM"
       ],
-      "note": "ポーカー専門のアミューズメントスポット。入場1,000円(飲み放題込)、トーナメント参加費1,000円〜。住所はWeb検索要約のため要確認。"
+      "note": "最優先・緊急で是正(誤情報の実害あり)。ポーカー専門のアミューズメントスポット。入場1,000円(飲み放題込)、トーナメント参加費1,000円〜。住所はWeb検索要約のため要確認。2026-09-09品質管理部の再検証で、掲載していた公式サイトURL「https://alice2174.com/73162/」に実際アクセスすると静岡県富士市の無関係な別店舗(住所・電話番号とも別物)を指していることが判明したため削除した。正しい公式サイトURLは特定できておらず要再確認。住所・アクセス・Xアカウントは今回の再検証で問題なし(変更不要)。"
     },
     {
       "name": "ROOTS FUKUOKA",
@@ -443,19 +471,19 @@
       "name": "JOKER♠️ 福岡大橋",
       "area": "大橋",
       "city": "福岡市南区",
-      "address": "",
-      "access": "大橋駅周辺",
+      "address": "福岡県福岡市南区大橋1-13-12-2F",
+      "access": "大橋駅 徒歩2分",
       "website": "",
       "x": "",
       "instagram": "https://www.instagram.com/joker_pokerhouse/",
       "line": "",
-      "tel": "",
+      "tel": "090-8407-1010",
       "holds_tournaments": false,
       "sources": [
         "https://www.instagram.com/joker_pokerhouse/",
         "https://light-three.com/hakata-poker/"
       ],
-      "note": "2025/11/15開店の新しいポーカールーム。大橋駅周辺では貴重。100BB購入で初心者講習無料、学生/女性チップ半額等の割引あり。トーナメント開催の明確な記載は未確認。住所要確認。"
+      "note": "確度high。2025/11/15開店の新しいポーカールーム。大橋駅周辺では貴重。100BB購入で初心者講習無料、学生/女性チップ半額等の割引あり。トーナメント開催の明確な記載は未確認。2026-09-09品質管理部の再検証で、公式Instagram(@joker_pokerhouse)のbioを直接確認し、住所(福岡県福岡市南区大橋1-13-12-2F)・アクセス(大橋駅 徒歩2分)・電話番号(090-8407-1010)を確認・追加した。"
     },
     {
       "name": "THE DOJO",
@@ -479,7 +507,7 @@
       "name": "CasinoX（カジノックス）福岡今泉店",
       "area": "今泉",
       "city": "福岡市中央区",
-      "address": "福岡県福岡市中央区今泉1-10-15",
+      "address": "福岡県福岡市中央区今泉1-10-15 福岡アーバンタワー3F",
       "access": "天神駅 徒歩4分",
       "website": "",
       "x": "https://x.com/cajinoX",
@@ -490,9 +518,11 @@
       "sources": [
         "https://www.instagram.com/cajinox/",
         "https://light-three.com/hakata-poker/",
-        "https://poker.dmm.com/details/4021718"
+        "https://poker.dmm.com/details/4021718",
+        "不動産情報サイト(建物名「福岡アーバンタワー」記載、2026-09-09品質管理部確認)",
+        "求人サイト(勤務先住所に「福岡アーバンタワー3F」記載、2026-09-09品質管理部確認)"
       ],
-      "note": "姉弟で運営する小規模アットホーム店。女性・初心者向け。貸切イベント対応可。リング中心でトーナメント定期開催の明確な記載は未確認。"
+      "note": "確度high。姉弟で運営する小規模アットホーム店。女性・初心者向け。貸切イベント対応可。リング中心でトーナメント定期開催の明確な記載は未確認。2026-09-09品質管理部の再検証で、不動産情報サイト・求人サイトの2系統で建物名「福岡アーバンタワー3F」の記載が一致したため住所に追記した(旧住所「福岡県福岡市中央区今泉1-10-15」)。"
     },
     {
       "name": "梵 bon 西中洲",
@@ -517,26 +547,27 @@
       "name": "ARIA 中洲（会員制ポーカーバー）",
       "area": "中洲",
       "city": "福岡市博多区",
-      "address": "福岡県福岡市博多区中洲2-1-18",
+      "address": "福岡県福岡市博多区中洲2-1-18 プレイスポットしんばし別館8階",
       "access": "中洲川端駅周辺",
       "website": "https://aria-fukuoka.com/",
-      "x": "https://twitter.com/AriaPoker8",
+      "x": "https://x.com/AriaPoker8",
       "instagram": "",
       "line": "",
       "tel": "",
       "holds_tournaments": true,
       "sources": [
-        "https://light-three.com/hakata-poker/"
+        "https://light-three.com/hakata-poker/",
+        "oncasimonster.jpの記事(検索スニペット経由、直接フェッチ不可)"
       ],
-      "note": "会員制の本格リングゲーム+フリーロールトーナメント開催店。同名の(無関係な)会員制クラブ/ガールズバーが中洲に複数あるため取材時は要注意。"
+      "note": "確度中。会員制の本格リングゲーム+フリーロールトーナメント開催店。同名の(無関係な)会員制クラブ/ガールズバーが中洲に複数あるため取材時は要注意。2026-09-09品質管理部の再検証で、oncasimonster.jpの記事(検索スニペット経由、直接フェッチはできず)により建物名「プレイスポットしんばし別館8階」が欠落している可能性が判明。裏取りが第三者媒体1系統のみのため、data.jsではaddressUnverified: trueを立てて留保付きで追記した。あわせてxのURLをtwitter.comドメインからx.comドメインに統一(他店舗との表記統一、軽微)。"
     },
     {
       "name": "Poker room SKY（美野島）",
       "area": "博多",
       "city": "福岡市博多区",
-      "address": "福岡県福岡市博多区美野島2-2-2 2F",
+      "address": "福岡県福岡市博多区美野島2-2-2 2F-A",
       "access": "",
-      "website": "",
+      "website": "https://linktr.ee/pokerroomsky",
       "x": "https://x.com/sky_minoshima",
       "instagram": "https://www.instagram.com/sky_minoshima/",
       "line": "",
@@ -544,9 +575,10 @@
       "holds_tournaments": false,
       "sources": [
         "https://x.com/sky_minoshima",
-        "https://light-three.com/hakata-poker/"
+        "https://light-three.com/hakata-poker/",
+        "検索スニペット経由の間接情報(@sky_minoshimaのbio内容とされる「2-2-2-2F-A」の記載、直接フェッチはボット対策により未達)"
       ],
-      "note": "NLH〜Mixまで対応。Webコイン制(残チップを次回持ち越し可)。求人募集も活発で営業実態は活発だが、定期トーナメント開催の明確な記載は未確認。"
+      "note": "確度中。NLH〜Mixまで対応。Webコイン制(残チップを次回持ち越し可)。求人募集も活発で営業実態は活発だが、定期トーナメント開催の明確な記載は未確認。2026-09-09品質管理部の再検証で、公式Instagram(@sky_minoshima)のbio内容とされる情報に「2-2-2-2F-A」の記載があり、部屋区分「-A」が欠落している可能性が判明したため追記した(旧住所「福岡県福岡市博多区美野島2-2-2 2F」)。★2026-09-09レビュー部指摘により確認方法を再点検した結果、bioへの直接アクセスはボット対策により本文取得ができておらず、検索スニペット経由の間接確認にとどまっていたと判明(当初のnote/PR記載は「bio直接確認」としていたが誤りだった)。v30(ARIA中洲)・v8(RAISE BLUE天神)と同じ確度階層として扱い、data.jsに addressUnverified: true を付与した。"
     },
     {
       "name": "KING&QUEEN SUITED 黒崎店",
