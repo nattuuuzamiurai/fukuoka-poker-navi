@@ -2,24 +2,6 @@
   "version": 1,
   "writtenBy": "tools/monitor-instagram-apify.js",
   "entries": {
-    "ig-v18-2026-09-08-nostart-post": {
-      "id": "ig-v18-2026-09-08-nostart-post",
-      "venueId": "v18",
-      "name": "大還元フリロ",
-      "date": "2026-09-08",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "フリーロール"
-      ],
-      "source": "semi",
-      "verified": false
-    },
     "ig-v18-2026-09-09-nostart-win-the-button": {
       "id": "ig-v18-2026-09-09-nostart-win-the-button",
       "venueId": "v18",
@@ -365,24 +347,6 @@
       "source": "semi",
       "verified": false
     },
-    "ig-v20-2026-09-08-nostart-fst": {
-      "id": "ig-v20-2026-09-08-nostart-fst",
-      "venueId": "v20",
-      "name": "FST",
-      "date": "2026-09-08",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "FST"
-      ],
-      "source": "semi",
-      "verified": false
-    },
     "ig-v20-2026-09-09-nostart-free-roll": {
       "id": "ig-v20-2026-09-09-nostart-free-roll",
       "venueId": "v20",
@@ -700,22 +664,6 @@
       "buyin": 1500,
       "addon": null,
       "stack": 15000,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v35-2026-09-08-1915-standard-tournament": {
-      "id": "ig-v35-2026-09-08-1915-standard-tournament",
-      "venueId": "v35",
-      "name": "STANDARD TOURNAMENT",
-      "date": "2026-09-08",
-      "start": "19:15",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
       "guarantee": null,
       "reentry": false,
       "prize": null,
@@ -1089,22 +1037,6 @@
       "name": "ハイローラー TOURNAMENT",
       "date": "2026-09-30",
       "start": "19:15",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v40-2026-09-08-nostart-post": {
-      "id": "ig-v40-2026-09-08-nostart-post",
-      "venueId": "v40",
-      "name": "ヘッズアップ祭=リング=",
-      "date": "2026-09-08",
-      "start": "",
       "buyin": null,
       "addon": null,
       "stack": null,
