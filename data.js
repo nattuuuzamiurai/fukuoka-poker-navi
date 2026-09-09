@@ -118,19 +118,19 @@ const VENUES = [
   {
     "id": "v7",
     "slug": "fuxk-fukuoka-tenjin",
-    "name": "FUXK 福岡天神店",
+    "name": "Poker House FUXK 福岡天神店",
     "area": "天神",
-    "address": "福岡市中央区春吉3-21-18 2F",
-    "access": "天神南駅 徒歩5分",
+    "address": "福岡県福岡市中央区春吉3-21-18 ジェスト25ビル202",
+    "access": "地下鉄七隈線 天神南駅6番出口 徒歩約3分（西鉄福岡（天神）駅 徒歩約5分）",
     "x": "https://x.com/poker_fuxk",
     "line": "",
     "instagram": "https://www.instagram.com/poker_fuxk/",
-    "website": "",
+    "website": "https://fuxk-fukuoka.com/",
     "tel": "",
     "featured": false,
-    "note": "無料初心者講習あり",
-    "sourceLabel": "Instagram",
-    "sourceUrl": "https://www.instagram.com/poker_fuxk/"
+    "note": "無料初心者講習あり。営業時間15:00〜23:45(店舗からの直接申告、2026-09-09)。",
+    "sourceLabel": "店舗からの直接申告(お問い合わせフォーム、2026-09-09)",
+    "sourceUrl": "https://fuxk-fukuoka.com/"
   },
   {
     "id": "v8",
