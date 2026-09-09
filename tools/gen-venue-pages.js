@@ -187,6 +187,14 @@ function venueJsonLd(v) {
   if (v.website) j.url = v.website;
   const sameAs = [v.x, v.instagram, v.threads, v.line].filter(Boolean);
   if (sameAs.length) j.sameAs = sameAs;
+  // ★ v.hours（営業時間）は意図的に openingHoursSpecification へ変換していない(2026-09-09)。
+  //   schema.org の openingHoursSpecification は dayOfWeek(曜日)込みの構造化が前提だが、
+  //   data.js の hours は「開店時刻〜閉店時刻」のみのフリーテキストで、定休日の有無・
+  //   何曜日まで同じ時間が続くのかは確認できていない。ここで「毎日この時間」と構造化して
+  //   Google に渡すと、店舗からの直接申告(開店・閉店時刻のみ)を超える主張(曜日面の断定)を
+  //   当サイトが作り出すことになる。法務・信頼性メモの「留保付きで載せている値は
+  //   構造化データに出さない」と同じ理由で、本文表示(metaRows)に留める。
+  //   定休日等が別途確認できたら、このコメントごと再検討すること。
   return j;
 }
 
@@ -195,6 +203,9 @@ function metaRows(v) {
   rows.push(`<b>エリア</b>　${esc(v.area)}`);
   if (v.address) rows.push(`<b>住所</b>　${esc(v.address)}`);
   if (v.access) rows.push(`<b>アクセス</b>　${esc(v.access)}`);
+  // hours(営業時間)は店舗からの直接申告等、分かっている店だけ埋まる自由記述(社長指示・2026-09-09)。
+  // 空文字列の店では他の項目(住所・アクセス等)と同じく行ごと出さない。
+  if (v.hours) rows.push(`<b>営業時間</b>　${esc(v.hours)}`);
   if (v.tel) rows.push(`<b>電話</b>　<a href="tel:${esc(v.tel.replace(/[^0-9+]/g, ''))}">${esc(v.tel)}</a>`);
   if (v.website) rows.push(`<b>公式サイト</b>　<a href="${esc(v.website)}" target="_blank" rel="noopener">${esc(v.website)}</a>`);
   const sns = [];
