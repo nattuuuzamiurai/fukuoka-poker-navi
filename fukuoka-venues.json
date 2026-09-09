@@ -33,7 +33,15 @@
           "KING&QUEEN SUITED 直方店",
           "Poker Bar IRIS"
         ],
-        "note": "品質管理部による全35店舗の住所・SNS再検証(2026-09-09)で見つかった9件を確度別に是正。(1)最優先・緊急=ALICE the Poker room: 公式サイトURLが静岡県富士市の無関係な別店舗を指していたため削除。(2)確度高(公式情報で確認済み)=テキサスホールデムAA(公式サイト)・CasinoX福岡今泉店(不動産/求人サイト2系統一致)・JOKER♠️福岡大橋(公式Instagramのbio直接確認)の住所欠落等を追記。(3)確度中(第三者情報中心・留保あり)=Poker room SKYの部屋番号(公式Instagramのbio)・ARIA中洲の建物名(oncasimonster.jp、addressUnverified付与)とxドメイン統一・RAISE BLUE天神の住所候補(第三者媒体、addressUnverified付与)・KING&QUEEN SUITED直方店のaccess(公式Instagramのbio、住所番地は引き続き未確認)。(4)軽微(表記統一)=Poker Bar IRISのinstagram欄を投稿個別URLからプロフィールURLに統一。各件の詳細・出典は個別venueのnoteとsourcesに記載。A&K(久留米)・RAFTEL CASINO福岡今泉店・DreaM CASINO BAR久留米の3店は第三者裏付けが取れず現状維持(対応不要)。"
+        "note": "品質管理部による全35店舗の住所・SNS再検証(2026-09-09)で見つかった9件を確度別に是正。(1)最優先・緊急=ALICE the Poker room: 公式サイトURLが静岡県富士市の無関係な別店舗を指していたため削除。(2)確度高(公式情報で確認済み)=テキサスホールデムAA(公式サイト)・CasinoX福岡今泉店(不動産/求人サイト2系統一致)・JOKER♠️福岡大橋(公式Instagramのbio直接確認)の住所欠落等を追記。(3)確度中(第三者情報中心・留保あり)=Poker room SKYの部屋番号(検索スニペット経由の間接情報、addressUnverified付与。★当初は「bio直接確認」と誤記していたが2026-09-09レビュー部指摘で訂正)・ARIA中洲の建物名(oncasimonster.jp、addressUnverified付与)とxドメイン統一・RAISE BLUE天神の住所候補(第三者媒体、addressUnverified付与)・KING&QUEEN SUITED直方店のaccess(公式Instagramのbio、住所番地は引き続き未確認)。(4)軽微(表記統一)=Poker Bar IRISのinstagram欄を投稿個別URLからプロフィールURLに統一。各件の詳細・出典は個別venueのnoteとsourcesに記載。A&K(久留米)・RAFTEL CASINO福岡今泉店・DreaM CASINO BAR久留米の3店は第三者裏付けが取れず現状維持(対応不要)。"
+      },
+      {
+        "checkedAt": "2026-09-09",
+        "count": 1,
+        "venues": [
+          "Poker room SKY（美野島）"
+        ],
+        "note": "レビュー部がPR #87をNO-GO判定(9件中1件、v33 Poker room SKYのみ)。指摘: 部屋区分「-A」の確認方法を「公式Instagramのbio、一次情報のため留保フラグなし」と確定情報扱いにしていたが、実態は検索スニペット経由の間接確認で、同一PR内でv30(ARIA中洲)・v8(RAISE BLUE天神)と確度基準が一貫していなかった。開発部が再点検した結果、Instagram本体(@sky_minoshima)への直接アクセスはボット対策によりbio本文を取得できず(SSRシェルのみでbiography要素が空)、直接確認はできていないと確認。data.jsに addressUnverified: true を付与し、JSON-LDからstreetAddressを落とし、note/sourcesの文言を「間接確認のため要確認」に修正した。"
       }
     ],
     "caveats": [
@@ -568,9 +576,9 @@
       "sources": [
         "https://x.com/sky_minoshima",
         "https://light-three.com/hakata-poker/",
-        "公式Instagram(@sky_minoshima)のbio直接確認(2026-09-09品質管理部確認)"
+        "検索スニペット経由の間接情報(@sky_minoshimaのbio内容とされる「2-2-2-2F-A」の記載、直接フェッチはボット対策により未達)"
       ],
-      "note": "確度中。NLH〜Mixまで対応。Webコイン制(残チップを次回持ち越し可)。求人募集も活発で営業実態は活発だが、定期トーナメント開催の明確な記載は未確認。2026-09-09品質管理部の再検証で、公式Instagram(@sky_minoshima)のbioに「2-2-2-2F-A」の記載があり、部屋区分「-A」が欠落している可能性が判明したため追記した(旧住所「福岡県福岡市博多区美野島2-2-2 2F」)。"
+      "note": "確度中。NLH〜Mixまで対応。Webコイン制(残チップを次回持ち越し可)。求人募集も活発で営業実態は活発だが、定期トーナメント開催の明確な記載は未確認。2026-09-09品質管理部の再検証で、公式Instagram(@sky_minoshima)のbio内容とされる情報に「2-2-2-2F-A」の記載があり、部屋区分「-A」が欠落している可能性が判明したため追記した(旧住所「福岡県福岡市博多区美野島2-2-2 2F」)。★2026-09-09レビュー部指摘により確認方法を再点検した結果、bioへの直接アクセスはボット対策により本文取得ができておらず、検索スニペット経由の間接確認にとどまっていたと判明(当初のnote/PR記載は「bio直接確認」としていたが誤りだった)。v30(ARIA中洲)・v8(RAISE BLUE天神)と同じ確度階層として扱い、data.jsに addressUnverified: true を付与した。"
     },
     {
       "name": "KING&QUEEN SUITED 黒崎店",
