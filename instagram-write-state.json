@@ -2,22 +2,6 @@
   "version": 1,
   "writtenBy": "tools/monitor-instagram-apify.js",
   "entries": {
-    "ig-v18-2026-09-09-nostart-win-the-button": {
-      "id": "ig-v18-2026-09-09-nostart-win-the-button",
-      "venueId": "v18",
-      "name": "WIN THE BUTTON",
-      "date": "2026-09-09",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
     "ig-v18-2026-09-10-nostart-post": {
       "id": "ig-v18-2026-09-10-nostart-post",
       "venueId": "v18",
@@ -347,24 +331,6 @@
       "source": "semi",
       "verified": false
     },
-    "ig-v20-2026-09-09-nostart-free-roll": {
-      "id": "ig-v20-2026-09-09-nostart-free-roll",
-      "venueId": "v20",
-      "name": "FREE ROLL",
-      "date": "2026-09-09",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "フリーロール"
-      ],
-      "source": "semi",
-      "verified": false
-    },
     "ig-v20-2026-09-10-nostart-c-entry-tourney": {
       "id": "ig-v20-2026-09-10-nostart-c-entry-tourney",
       "venueId": "v20",
@@ -664,22 +630,6 @@
       "buyin": 1500,
       "addon": null,
       "stack": 15000,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v35-2026-09-09-1915-tournament": {
-      "id": "ig-v35-2026-09-09-1915-tournament",
-      "venueId": "v35",
-      "name": "ハイローラー TOURNAMENT",
-      "date": "2026-09-09",
-      "start": "19:15",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
       "guarantee": null,
       "reentry": false,
       "prize": null,
