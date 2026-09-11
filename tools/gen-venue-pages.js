@@ -76,38 +76,16 @@ const { VENUES, TOURNAMENTS, RECURRING, AREAS } = DATA;
 // 生成してから気づくとURLの付け替え=被リンクの喪失になるため、生成前に止める。
 shell.validateVenueSlugs(VENUES);
 
-// ---- 「未確認」の印(addressUnverified / telUnverified)と note の食い違いを止める ----
-// 【なぜ必要か】
-//   確度の低い住所・電話を JSON-LD から落とす判定は data.js のフラグが持つ(下の venueJsonLd)。
-//   一方、読者向けのヘッジは note の文章が持つ。この2つは別々に書かれるので、店を追加した人が
-//   note にだけ「住所は要確認」と書いてフラグを付け忘れると、【表示は留保・構造化データは断定】
-//   という、今回まさに直した状態にそのまま戻る。しかもその壊れ方は画面を見ても分からない。
-//   そこで「note が住所/電話の未確認に言及しているのにフラグが無い」場合は生成せずに落とす。
-//   ★ 判定そのものを note の文字列マッチで行っているわけではない(それは脆い)。
-//     出力を決めるのはあくまでフラグで、ここは【書き忘れを人間に知らせるための検査】。
-// 【address が空の店を対象外にする理由】
-//   RAISE BLUE 天神は住所データ自体を持たず note に「住所は未確認。」と書いてある。
-//   出すべき streetAddress がそもそも無いのでフラグは不要(付けても意味がない)。
-const UNVERIFIED_CHECKS = [
-  { flag: 'addressUnverified', field: 'address', re: /住所[^。]*(要確認|未確認)/ },
-  { flag: 'telUnverified',     field: 'tel',     re: /電話[^。]*(要確認|未確認)/ }
-];
-function validateUnverifiedFlags(venues) {
-  const problems = [];
-  venues.forEach(v => {
-    UNVERIFIED_CHECKS.forEach(c => {
-      if (!v[c.field] || v[c.flag]) return;
-      if (c.re.test(v.note || '')) {
-        problems.push(`${v.id} ${v.name}: note が${c.field === 'tel' ? '電話' : '住所'}の未確認に言及していますが `
-          + `"${c.flag}": true がありません（data.js に足すか、裏が取れたなら note のヘッジを外してください）`);
-      }
-    });
-  });
-  if (problems.length) {
-    throw new Error('店舗データの「未確認」の印が note と食い違っています:\n  - ' + problems.join('\n  - '));
-  }
-}
+// ---- 店舗ページの LocalBusiness(JSON-LD) ----
+// 住所の分解・「未確認」の印(addressUnverified / telUnverified)・緯度経度(lat/lng)・
+// 営業時間(hoursSpec)の変換ロジックは tools/venue-jsonld.js が所有する(node --test から
+// 検証できるよう、副作用を持つこのファイルから切り出してある。詳しい理由はそちらのヘッダーを参照)。
+// 「note が住所/電話/緯度経度/営業時間の未確認・不整合に言及しているのに印が無い」場合は
+// 生成せずに落とす(付け忘れは画面を見ても分からないため)。
+const { venueJsonLd, validateUnverifiedFlags, validateGeoFlags, validateHoursSpec } = require('./venue-jsonld.js');
 validateUnverifiedFlags(VENUES);
+validateGeoFlags(VENUES);
+validateHoursSpec(VENUES);
 
 // ---- 日程表の組み立て(生成時と閲覧時で共有する1本) ----
 // SCHEDULE_JS / SCHED / venueRange は tools/venue-schedule.js が所有する。
@@ -143,60 +121,6 @@ const VENUE_CSS = `  .vp-sub{font-size:.9em;color:var(--mut);margin-bottom:14px}
   /* .vp-fst(FSTサテライト開催中の告知)は site-shell.js の BASE_CSS 側に移設した
      (2026-08-28。エリアページでも使うため。複製すると片方だけ直して片方を忘れる)。 */
 `;
-
-// 住所を PostalAddress に分解する。data.js の address 文字列を機械的に切るだけで、
-// 無い情報は足さない(市区町村が読み取れなければ addressLocality を出さない)。
-// addressRegion は当サイトが福岡県内の店舗だけを扱うため常に福岡県。
-function addressParts(address) {
-  const a = String(address).replace(/^福岡県/, '');
-  const m = a.match(/^(.+?[市郡])/);
-  if (!m) return { street: a, locality: null };
-  return { street: a.slice(m[1].length), locality: m[1] };
-}
-
-function venueJsonLd(v) {
-  // ★ data.js に無い項目は出さない。空文字を "" のまま出すと、
-  //   検索エンジンに「値が無い」ではなく「空という値」を渡すことになる。
-  // ★ 裏が取れていない項目も出さない(addressUnverified / telUnverified)。
-  //   ページの表示テキストでは note のヘッジ付きで出しているのに、構造化データでは
-  //   同じ値を断定として渡していた。読者には「要確認」と伝えながら Google には
-  //   確定情報として渡すのは、READMEの編集方針(根拠の弱い情報は確度の差が伝わる形で出す)に反する。
-  const j = {
-    '@context': 'https://schema.org',
-    '@type': 'LocalBusiness',
-    name: v.name
-  };
-  if (v.address) {
-    const p = addressParts(v.address);
-    const addr = { '@type': 'PostalAddress' };
-    if (p.locality) addr.addressLocality = p.locality;
-    // 落とすのは streetAddress(丁目・番地・ビル名・部屋番号)だけで、address ブロックごとは落とさない。
-    //   - 実害があるのは番地レベルの誤り(無関係な建物・部屋を訪ねさせる)。市区町村までの粒度なら
-    //     当サイトが独立に持っている area / access(最寄駅)と突き合わせて裏が取れている
-    //     (例: 中洲エリア・中洲川端駅徒歩1分 ⇔ 福岡市博多区)。
-    //   - LocalBusiness にとって address は Google が必須とする項目で、ブロックごと落とすと
-    //     「不正確な住所」ではなく「住所の無い事業所」になり、エラー扱いになる。
-    //     市区町村＋県だけを残すのが「嘘をつかず、かつ壊さない」最小の落とし方。
-    if (p.street && !v.addressUnverified) addr.streetAddress = p.street;
-    addr.addressRegion = '福岡県';
-    addr.addressCountry = 'JP';
-    j.address = addr;
-  }
-  if (v.tel && !v.telUnverified) j.telephone = v.tel;
-  // url は店舗自身のサイト。持っていない店では出さない。
-  if (v.website) j.url = v.website;
-  const sameAs = [v.x, v.instagram, v.threads, v.line].filter(Boolean);
-  if (sameAs.length) j.sameAs = sameAs;
-  // ★ v.hours（営業時間）は意図的に openingHoursSpecification へ変換していない(2026-09-09)。
-  //   schema.org の openingHoursSpecification は dayOfWeek(曜日)込みの構造化が前提だが、
-  //   data.js の hours は「開店時刻〜閉店時刻」のみのフリーテキストで、定休日の有無・
-  //   何曜日まで同じ時間が続くのかは確認できていない。ここで「毎日この時間」と構造化して
-  //   Google に渡すと、店舗からの直接申告(開店・閉店時刻のみ)を超える主張(曜日面の断定)を
-  //   当サイトが作り出すことになる。法務・信頼性メモの「留保付きで載せている値は
-  //   構造化データに出さない」と同じ理由で、本文表示(metaRows)に留める。
-  //   定休日等が別途確認できたら、このコメントごと再検討すること。
-  return j;
-}
 
 function metaRows(v) {
   const rows = [];

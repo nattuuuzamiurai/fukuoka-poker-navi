@@ -97,7 +97,30 @@
           "reason": "移転前のため掲載しない[社長判断・2026-07-30]。移転が完了したら再検討する。"
         }
       ]
-    }
+    },
+    "structuredDataAdditions": [
+      {
+        "addedAt": "2026-09-12",
+        "field": "geo（緯度経度。LocalBusinessのGeoCoordinatesとして出力）",
+        "count": 30,
+        "method": "国土地理院 住所ジオコーダー(https://msearch.gsi.go.jp/address-search/AddressSearch)に、data.jsのaddressをそのまま照会。UAは「fukuokapoker.com-bot/1.0 (+https://fukuokapoker.com/contact.html)」で当サイトのボットと名乗った(ブラウザ偽装なし。調査時のcurlヘッダをそのまま実装に流さないという既存の教訓に従う)。結果はすべて1件ヒットで曖昧一致は無かった。緯度経度の実値はdata.jsのVENUES各店の\"lat\"/\"lng\"を参照(このファイルには重複して持たない)。",
+        "excluded": "addressUnverified: true の4店(RAISE BLUE天神/ALICE the Poker room/ARIA中洲/Poker room SKY)と、addressが空の1店(KING&QUEEN SUITED直方店)の計5店は対象外。住所自体の確度が低い/存在しないため、誤った緯度経度を確定情報として構造化データに出すリスクを避けた(streetAddressを落とす条件と同じ考え方)。",
+        "note": "TripleBarrel小倉店(v14)はdata.js上のaddressに「鍛治町」という誤字があり(正しい町名は「鍛冶町」)、誤字のままジオコーダーに照会すると丁目止まりの精度(番地無し)しか得られなかった。実在する正しい町名「鍛冶町」で再照会した結果を採用した(住所テキスト自体はdata.jsで変更していない。別途の修正候補として申し送る)。久留米市東町の3店(KENポーカー/A&K/DreaM CASINO BAR)は地番表記の地域で、国土地理院のデータベースに番地単位の登録が無く、街区(番)単位の精度に留まる(番地の誤りではなく、その地域のジオコーダー側のデータ粒度の限界)。"
+      },
+      {
+        "addedAt": "2026-09-12",
+        "field": "hoursSpec（data.js側の構造化営業時間。openingHoursSpecificationとして出力）",
+        "count": 4,
+        "venues": [
+          "JOKER♠️ 福岡大橋",
+          "むさぽ福岡（MUSASHI POKER ROOM 福岡店）",
+          "RAFTEL CASINO（ラフテルカジノ 福岡今泉店）",
+          "DreaM CASINO BAR"
+        ],
+        "method": "data.jsのhours(自由文)のうち、【曜日区分・定休日が完全に明確】かつ【noteに「営業時間は第三者媒体情報のため要確認。」のヘッジが無い(=確度high)】店だけを対象に、曜日ごとのopens/closesへ人が手で構造化した(data.jsのhoursSpec)。hoursの自由文をコードでパースする実装は採用していない(誤って構造化する事故をパーサの精度に頼らず無くすため)。",
+        "excluded": "hoursが入っている24店のうち20店は対象外。内訳: (1)note に営業時間確度のヘッジがある8店(m HOLD'EM中洲/ONECASINO福岡中洲/Casino bar Leje博多店/CASINO BLOW西中洲/CASINO Arrows小倉店/KENポーカー久留米/CRownCLown/梵bon西中洲) — 曜日表記自体は明確でも確度は中程度のため対象外。(2)曜日を問わない単一の時刻表記のみ、または曜日に還元できない表現を含む12店(グランドミラージュポーカー/Poker House FUXK福岡天神店/RAISE BLUE天神/PokerBar NUWLAND/TripleBarrel小倉店/Poker Bar IRIS/THE DOJO/Poker room SKY/アミューズメントバーSAVE天神店/KAJI BAR/TripleBarrel折尾店/POKER Studio DEEP BLUE)。うちPokerBar NUWLANDは「LAST(不定休)」、SAVE天神店は「祝前日」(暦依存で曜日に還元できない)、KAJI BARは「日・祝定休」(定休日に祝日を含み暦依存)を含むため、他店と同じ理由付けはできるが念のため個別に記載する。"
+      }
+    ]
   },
   "venues": [
     {
