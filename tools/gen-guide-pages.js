@@ -10,8 +10,11 @@
  *
  * 【原稿の出どころ】企画部の企画・コンテンツ制作部の執筆にもとづく
  *   guide-beginner-content-draft.md（2026-09-12時点の data.js を前提に執筆）。
- *   見出し構成（3つの選び方の軸 → 初心者講習明記6店の個別紹介 → エリア導線 →
+ *   見出し構成（目的別カテゴリー(6分類) → 初心者講習明記6店の個別紹介 → エリア導線 →
  *   全34店舗一覧表 → FAQ → トップページ誘導）はそのまま踏襲する。
+ *   ★2026-09-12改訂: 社長フィードバック「内容が薄すぎる」を受け、旧「初心者が選ぶときに
+ *   見るべき3つのポイント」(一般論)を「福岡のポーカー店を目的別に探す」(店舗名・出典つきの
+ *   具体的な紹介)に全面差し替え。
  *
  * 【data.js との突き合わせ方針】
  *   店名・スラッグ・エリア・アクセス・営業時間は data.js の VENUES からそのまま読み込む
@@ -19,11 +22,15 @@
  *   このページだけ古い情報が残る）。実際に原稿作成時点(2026-09-12)の data.js と
  *   突き合わせた結果、アクセス・営業時間は全34店舗で一致していた（全角/半角の括弧の
  *   表記ゆれのみ）ことを確認済み。
- *   一方、「初心者講習の実施明記」の有無・紹介文・「営業時間は第三者媒体の情報」という
- *   ヘッジは data.js に対応するフラグを持たない編集判断のため
+ *   一方、「初心者講習の実施明記」「目的別カテゴリーの該当・出典・紹介文」「営業時間は
+ *   第三者媒体の情報」というヘッジは data.js に対応するフラグを持たない編集判断のため
  *   （tools/venue-listing-rules.js と同じ考え方 ＝ その店の実態を人が確認していないと
  *   決められない情報を、note文字列の正規表現一致のような脆い方法で自動判定しない）、
- *   下記 HIGHLIGHT_STORES / BEGINNER_COURSE_IDS / HOURS_THIRDPARTY_IDS に直接持つ。
+ *   下記 HIGHLIGHT_STORES / BEGINNER_COURSE_IDS / HOURS_THIRDPARTY_IDS / CATEGORIES /
+ *   NOT_FOUND_IDS に直接持つ。
+ *   ★カテゴリー(CATEGORIES)の出典は主に外部レビューサイト(fukuoka-online.jp、
+ *   light-three.com等)・業界メディア・店舗公式SNSで、data.js の note(店舗の一次情報)とは
+ *   出典の性質が異なる。公開前に品質管理部での裏取りが必要（原稿冒頭の開発部向けメモを参照）。
  *   ★ data.js のスキーマ・VENUES の項目には一切手を入れない
  *     （並行して別セッションが data.js に構造化データ用フィールドを拡充している可能性があるため、
  *      このページはその読み取りだけを行い、書き込み・スキーマ変更は行わない）。
@@ -109,11 +116,100 @@ const HIGHLIGHT_STORES = [
   { id: 'v28', intro: '公式Instagramでは「女性・初心者向け」と案内されています。ただし、他の5店舗のような「初心者講習」の実施明記は当サイトでは確認できていません(2026年9月時点)。姉弟で運営する小規模な店舗で、貸切イベントにも対応しているとのことです。', noCourseBadge: true }
 ];
 
+// 「福岡のポーカー店を目的別に探す」のカテゴリー(6分類・原稿2026-09-12改訂版)。
+// 各店舗の name/area/slug は venueById(id) で data.js からそのまま引く(手書きしない)。
+// intro を持たない店舗は、カテゴリーに該当することだけを紹介し個別の説明文は付けない
+// (原稿の該当箇所がそういう書き方になっているものをそのまま反映。無理に文章を作らない)。
+// 同じ店舗が複数カテゴリーに登場することがある(例: CRownCLownは3カテゴリー)。原稿の実態どおり。
+const CATEGORIES = [
+  {
+    heading: 'トーナメントが強い・人気がある店を探すなら',
+    lead: '大会・トーナメントの盛り上がりについて、外部のレビューサイトや店舗公式SNS等で言及されている店舗です。',
+    stores: [
+      { id: 'v22', intro: '複数の紹介サイトで「連日多くのプレイヤーが集まり、白熱したトーナメントが開催されている」「ハイレベル」などと紹介されています(出典: fukuoka-online.jp、light-three.com)。' },
+      { id: 'v4', intro: '業界メディアの記事タイトルで「ポーカートーナメントで注目」と取り上げられている例が見られます(出典: 日本カジノタイムス、確度中)。' },
+      { id: 'v21', intro: 'JOPT・WJPTなど全国規模の大会のサテライトや、店舗単位の予選(DAY1)会場として継続的に開催実績があると案内されています(出典: 店舗公式情報)。' },
+      { id: 'v2', intro: '「地域最大級の6テーブル」を備え、毎日トーナメントを開催していると紹介されています(出典: 紹介記事)。' },
+      { id: 'v18', intro: 'FST(大型連動大会)のDAY1会場を務めた実績があるとされています(出典: FST公式X)。' },
+      { id: 'v34', intro: '「4卓を使ってXPTなど全国大会のサテライトを頻繁に開催している」と案内されています(出典: 店舗公式Instagram)。' }
+    ]
+  },
+  {
+    heading: 'リングゲーム、初心者でも安心して打ちたいなら',
+    lead: '「初心者でも入りやすい」「講習・接客が丁寧」といった口コミ・紹介記事が見られる店舗です(出典: 主にlight-three.com、fukuoka-online.jp等の外部レビューサイト)。中洲エリアの店舗もこのカテゴリーに含まれている点にご注目ください。',
+    stores: [
+      { id: 'v25' }, { id: 'v3' }, { id: 'v13' }, { id: 'v14' }, { id: 'v7' },
+      { id: 'v4' }, { id: 'v6' }, { id: 'v28' }, { id: 'v23' }, { id: 'v40' }, { id: 'v41' }
+    ]
+  },
+  {
+    heading: 'リングゲーム、腕試ししたい・ガチでやりたいなら',
+    lead: '遊技スタイルとして「上級者向け」「本格的」と紹介されている店舗です。「勝てる」「稼げる」といった意味ではなく、あくまでゲームの構成・雰囲気についての紹介である点にご留意ください。',
+    stores: [
+      { id: 'v22', intro: '遊技スタイルとして「上級者向け」と紹介されており、ハイローラー向けイベントを定期的に開催していると案内されています(出典: 紹介記事)。' },
+      { id: 'v30', intro: '本格的なリングゲームで、深いスタック構成を採用しているとされる一方、初心者講習も実施しており、初心者から上級者まで両対応の店舗と案内されています(出典: 紹介記事)。' },
+      { id: 'v16', intro: '「スポーツポーカー競技場」を自称しており、戦略性・心理戦を重視するスタイルという口コミが見られます(出典: 口コミ)。' }
+    ]
+  },
+  {
+    heading: 'バカラ・ブラックジャックも遊びたいなら',
+    lead: 'ポーカーのほかにバカラ・ブラックジャックなど複数のゲームを扱っていると案内されている店舗です。',
+    stores: [
+      { id: 'v5', intro: '「福岡では唯一プログレッシブポーカーができる」と案内されています(出典: 店舗紹介情報)。' },
+      { id: 'v9' }, { id: 'v3' }, { id: 'v29' }, { id: 'v39' }, { id: 'v19' }, { id: 'v37' }, { id: 'v41' }
+    ]
+  },
+  {
+    heading: 'お得にお酒も楽しみたいなら',
+    lead: '飲み放題や均一料金など、お酒に関する案内がある店舗です。金額や条件は変更されることがあるため、来店前に必ず最新情報をご確認ください。',
+    stores: [
+      { id: 'v23', intro: '入場料1,000円で飲み放題込みと案内されています(出典: 店舗公式情報)。' },
+      { id: 'v9' },
+      { id: 'v5', intro: '1,000円で時間無制限の飲み放題付きと案内されています(出典: 店舗公式情報)。' },
+      { id: 'v39' }, { id: 'v27' },
+      { id: 'v42', intro: 'ソフトドリンクは12時間500円、アルコールは12時間1,500円と案内されています(出典: 店舗公式情報)。' },
+      { id: 'v41' }
+    ]
+  },
+  {
+    heading: 'ミックスゲーム・PLOを打ちたいなら',
+    lead: 'ポーカーの中でもテキサスホールデム以外のバリエーション(PLOやミックスゲームなど)に対応していると案内されている店舗です。',
+    stores: [
+      { id: 'v33', intro: '取り扱いゲーム種類は「基本全部」とされ、ミックスゲームに対応していると案内されています(出典: 店舗公式情報)。' },
+      { id: 'v36', intro: '「6月は月・水・金でPLOトーナメントを開催」といった具体的な開催実績が案内されています(出典: 店舗公式情報)。開催曜日・頻度は月によって変わる可能性があるため、最新情報は公式でご確認ください。' },
+      { id: 'v22', intro: '「Draw、PLO」に対応していると紹介されています(出典: 紹介記事)。' },
+      { id: 'v2', intro: 'ゲーム種類は「基本全部」とされていますが、開催頻度までは確認できていないため確度は中程度です(出典: 紹介記事)。' }
+    ]
+  }
+];
+
+// 上記6カテゴリーのいずれにも、裏付けとなる外部の紹介記事・口コミが見つからなかった店舗
+// (原稿の方針: 無理に当てはめず率直に書く)。
+const NOT_FOUND_IDS = ['v17', 'v26', 'v35', 'v38', 'v20', 'v8'];
+
+// 掲載中(未開店を除く)の全店舗が CATEGORIES か NOT_FOUND_IDS のどちらかに必ず含まれることを
+// 検査する。新規開店・店舗追加は日次の自動取込(TOURNAMENTSのみ対象)では起きず人手で
+// data.js に足すため、足した人がこの生成を実行した時点で「目的別カテゴリーへの割り当てを
+// 忘れている」ことに気づけるようにする(気づかないと「該当なし」の案内にも載らないまま
+// 目的別セクションから存在ごと漏れる=閲覧者からは何も見えない欠落になる)。
+function validateCategoryCoverage() {
+  const covered = new Set();
+  CATEGORIES.forEach(c => c.stores.forEach(s => covered.add(s.id)));
+  NOT_FOUND_IDS.forEach(id => covered.add(id));
+  const missing = VENUES.filter(v => !v.preopen && !covered.has(v.id));
+  if (missing.length) {
+    throw new Error('gen-guide-pages.js: 「福岡のポーカー店を目的別に探す」のCATEGORIES/NOT_FOUND_IDSの'
+      + 'どちらにも含まれていない店舗があります: ' + missing.map(v => `${v.id} ${v.name}`).join('、')
+      + '(該当するカテゴリーに追記するか、特色が確認できていなければ NOT_FOUND_IDS に加えてください)');
+  }
+}
+validateCategoryCoverage();
+
 // エリアから探す(原稿の短い紹介文。gen-area-pages.js の AREA_CONTENT はエリアページ本体用の
 // 長い紹介文で、こちらはこのガイドページ専用の一言。役割が違うので使い回さない)。
 const AREA_INTRO = {
   '天神': '福岡随一の繁華街で、店舗数の多いエリアの一つです。',
-  '中洲': '天神と並ぶ繁華街で、天神と同じく店舗数が多いエリアです。前述の通り、初心者講習の明記がある店舗は今のところありません。',
+  '中洲': '天神と並ぶ繁華街で、天神と同じく店舗数が多いエリアです。公式な初心者講習の明記がある店舗は今のところありませんが、外部レビューでは初心者でも入りやすいと紹介されている店舗もあります。',
   '大名': '天神エリアに近い立地です。',
   '今泉': '天神から徒歩圏内の落ち着いたエリアです。',
   '大橋': '大橋駅周辺のエリアです。',
@@ -137,26 +233,54 @@ const GUIDE_CSS = `  .gd-card{background:var(--sur);border:1px solid var(--bor);
   table.gd-table td.gd-course{text-align:center;font-weight:800;color:var(--felt);white-space:nowrap}
   table.gd-table a{color:#0e6a72;font-weight:700;text-decoration:none}
   table.gd-table tr:last-child td{border-bottom:none}
+  .gd-cat{margin-bottom:6px}
+  .gd-cat h3{font-size:.95em;font-weight:800;color:var(--felt);margin:18px 0 5px}
+  .gd-cat-list{margin:0 0 4px 1.2em;font-size:.87em;line-height:1.9}
+  .gd-cat-list li{margin-bottom:5px}
+  .gd-cat-list a{color:#0e6a72;font-weight:800;text-decoration:none}
 `;
 
 // ============================================================
 // 本文の組み立て
 // ============================================================
 
-// ---- 3つの選び方の軸 ----
-const POINTS = [
-  { t: '1. 初心者講習の有無', d: 'ポーカーのルールを知らない状態で店に行くのは、誰でも少し勇気がいるものです。「初心者講習」「初心者プラン」を掲げている店舗であれば、ルールを知らないことを前提に案内してもらえる可能性が高く、最初の一歩として選びやすいと言えます。' },
-  { t: '2. アクセス(駅からの近さ)', d: 'ポーカー店の多くは夜間の営業が中心で、終電の時間帯を気にしながら帰ることも少なくありません。駅から近い店舗であれば、土地勘がなくても迷いにくく、帰りの移動も安心です。' },
-  { t: '3. 営業時間(自分の行ける時間帯か)', d: '店舗によって開店時間・閉店時間はさまざまで、平日と土日祝で営業時間が異なる店舗もあります。仕事帰りに寄れるか、休日の昼間から入れるかなど、自分の生活リズムに合う時間帯で営業しているかを事前に確認しておくと安心です。' }
-];
-function pointsBlock() {
+// ---- 福岡のポーカー店を目的別に探す(6カテゴリー。2026-09-12改訂で「3つのポイント」から差し替え) ----
+// 1店舗ぶんのリスト項目(店名リンク＋エリア＋任意の紹介文)を組み立てる。
+// intro が無い店舗は「該当することの紹介」だけに留め、文章を捏造しない(原稿の書き方どおり)。
+function categoryStoreList(stores) {
+  return `<ul class="gd-cat-list">
+${stores.map(s => {
+    const v = venueById(s.id);
+    const introPart = s.intro ? `: ${esc(s.intro)}` : '';
+    return `  <li><a href="/venues/${v.slug}/">${esc(v.name)}</a>(${esc(v.area)})${introPart}</li>`;
+  }).join('\n')}
+</ul>`;
+}
+
+// 6カテゴリーいずれにも該当が見つからなかった店舗の案内(原稿の方針: 無理に一覧化・当てはめず、
+// 「確認できていないだけ」と率直に書く)。店名は他の店舗紹介と同様に実在の店舗ページへリンクする。
+function notFoundParagraph() {
+  const names = NOT_FOUND_IDS.map(id => {
+    const v = venueById(id);
+    return `<a href="/venues/${v.slug}/">${esc(v.name)}</a>`;
+  }).join('・');
+  const listedCount = VENUES.filter(v => !v.preopen).length;
+  return `${names}については、当サイトが調査した時点では、上記のような特色を裏付ける外部の紹介記事・口コミは見つかりませんでした。特色がないという意味ではなく、当サイトが確認できていないだけですので、無理に当てはめず率直にお伝えします。これらの店舗も含めた掲載中の全${listedCount}店舗は、この後の「福岡のポーカー店 全一覧」でご覧いただけます。`;
+}
+
+function categoriesBlock() {
+  const cats = CATEGORIES.map(c => `<div class="gd-cat">
+  <h3>${esc(c.heading)}</h3>
+  <p class="lead">${esc(c.lead)}</p>
+  ${categoryStoreList(c.stores)}
+</div>`).join('\n');
   return `
-<h2 class="day">初心者が福岡のポーカー店を選ぶときに見るべき3つのポイント</h2>
-<div class="vp-cards" style="grid-template-columns:1fr">
-${POINTS.map(p => `  <div class="vp-card" style="cursor:default">
-    <div class="vp-card-name">${esc(p.t)}</div>
-    <div class="vp-card-sub">${esc(p.d)}</div>
-  </div>`).join('\n')}
+<h2 class="day">福岡のポーカー店を目的別に探す</h2>
+<p class="lead">福岡のポーカー店は、それぞれ得意なスタイルや雰囲気に特徴があります。ここでは、外部のレビューサイト・紹介記事・店舗公式SNS等で語られている内容をもとに、目的別のカテゴリーごとに店舗を整理しました。当サイトが独自に採点・順位付けしたものではなく、あくまで公開されている情報の紹介です。とくに確度が高いとまでは言えない情報には、その旨を記載しています。実際の運営状況・イベント内容は変更されることがあるため、参加前には必ず各店舗の公式サイト・SNS等で最新情報をご確認ください。</p>
+${cats}
+<div class="gd-cat">
+  <h3>上記のカテゴリーに当てはまらなかった店舗について</h3>
+  <p class="lead">${notFoundParagraph()}</p>
 </div>`;
 }
 
@@ -179,11 +303,23 @@ function highlightStoresBlock() {
       + '「中洲エリアについて」の固定文言(該当店舗なし、という前提)を書き直してください。');
   }
   const nakasuCount = areaVenues(VENUES, '中洲').filter(v => !v.preopen).length;
+  // 「初心者でも入りやすい」と外部レビューで紹介されている中洲エリアの店舗(前段の
+  // カテゴリー「リングゲーム、初心者でも安心して打ちたいなら」で紹介済み)を実データから拾い、
+  // 文中で名指しする2店を検算する(手で書いた店名が原稿・実データとズレるのを防ぐ)。
+  const nakasuFriendlyInCategory = CATEGORIES[1].stores
+    .map(s => venueById(s.id))
+    .filter(v => v.area === '中洲');
+  if (nakasuFriendlyInCategory.length < 2) {
+    throw new Error('gen-guide-pages.js: 「中洲エリアについて」の文言が名指しする2店(m HOLD\'EM 中洲・ONECASINO 福岡中洲)を'
+      + 'カテゴリーデータから拾えませんでした。CATEGORIES[1](リングゲーム、初心者でも安心して打ちたいなら)を確認してください。');
+  }
+  const nakasuFriendlyNames = nakasuFriendlyInCategory.slice(0, 2)
+    .map(v => `<a href="/venues/${v.slug}/">${esc(v.name)}</a>`).join('や ');
   return `
 <h2 class="day">初心者講習が明記されている福岡のポーカー店</h2>
 <p class="lead">以下の6店舗は、公式サイトや公式SNS等で「初心者講習」「初心者プラン」といった表記が確認できた店舗です。当サイトが独自に優劣を判定したものではなく、各店舗自身が発信している情報をそのまま紹介しています。内容は変更されることがあるため、来店前には必ず各店舗の最新の公式情報をご確認ください。</p>
 ${cards}
-<div class="disclaimer">掲載店舗数が最も多い中洲エリア(${nakasuCount}店舗)ですが、2026年9月時点で「初心者講習」の実施を明記している店舗は確認できていません。中洲エリアで初めての来店を検討する場合は、事前に各店舗の公式SNS等で初心者対応の可否を直接確認することをおすすめします。</div>`;
+<div class="disclaimer">中洲エリア(${nakasuCount}店舗)には、公式サイト・SNS等で「初心者講習」の実施を明記している店舗は2026年9月時点で確認できていません。ただし、前述の「福岡のポーカー店を目的別に探す」でご紹介した通り、外部のレビューサイトでは ${nakasuFriendlyNames} などが「初心者でも入りやすい」と紹介されている例があります。公式な講習の実施有無と、来店者からの評判は別の情報のため、中洲エリアで初めての来店を検討する場合は、事前に各店舗の公式SNS等で初心者対応の可否を直接確認することをおすすめします。</div>`;
 }
 
 // ---- エリアから探す ----
@@ -267,11 +403,11 @@ const FAQ_ITEMS = [
 ].map(x => ({ q: x.q, aHtml: esc(x.a), aText: x.a }));
 
 // ---- ページ全体 ----
-const TITLE = '福岡のポーカー店の選び方｜初心者向け比較ガイド | ふくおかポーカーナビ';
+const TITLE = '福岡のポーカー店の選び方｜目的別おすすめ・初心者向け比較ガイド | ふくおかポーカーナビ';
 
 function buildGuidePage() {
   const listedCount = VENUES.filter(v => !v.preopen).length;
-  const DESC = `福岡には${listedCount}店舗のポーカー店があり、初めてだとどこに行けばいいか迷いがちです。初心者講習の有無・アクセス・営業時間の3つの軸で、福岡でポーカーを始めるときの店舗の選び方を解説します。`;
+  const DESC = `福岡には${listedCount}店舗のポーカー店があり、初めてだとどこに行けばいいか迷いがちです。トーナメント重視・リングゲームでじっくり・お酒も楽しみたいなど目的別のおすすめ店舗と、初心者講習を実施している店舗、エリア別の探し方をまとめて紹介します。`;
 
   const webPageJsonLd = {
     '@context': 'https://schema.org',
@@ -293,9 +429,9 @@ function buildGuidePage() {
   const body = `
 <h1>福岡でポーカーを始めるなら — 初心者向け店舗の選び方</h1>
 <p class="lead">福岡県内には、天神・中洲・北九州・久留米などのエリアを中心に${listedCount}店舗のポーカー店があります。数が多い分、「初めてで何も分からないけれど、どの店に行けばいいのか」と迷う方も多いのではないでしょうか。</p>
-<p class="lead">結論から言うと、初心者が店を選ぶときに見るべきポイントは次の3つです。</p>
-<div class="disclaimer">このページでは、初心者講習の有無・アクセス・営業時間の3つの軸で福岡のポーカー店を整理し、初心者講習を掲げている店舗の紹介、エリアごとの探し方、そして掲載中の全${listedCount}店舗の一覧をまとめています。当サイトは店舗の優劣を独自に採点・ランキング化するものではなく、各店舗が公式サイト・公式SNS等で発信している情報をそのまま整理してお伝えするものです。参加前には必ず各店舗の最新の公式情報をご確認ください。<br>${POSITIONING}</div>
-${pointsBlock()}
+<p class="lead">そこでこのページでは、「トーナメント重視」「リングゲームでじっくり」「お酒も楽しみたい」など、遊び方の目的別に、各店舗がどんな特色で紹介されているかをカテゴリーごとに整理しました。あわせて、公式に初心者講習を掲げている店舗の紹介、エリアごとの探し方、掲載中の全${listedCount}店舗の一覧も用意しています。</p>
+<div class="disclaimer">当サイトは店舗の優劣を独自に採点・ランキング化するものではなく、各店舗の公式情報や、外部のレビューサイト・紹介記事で語られている内容を整理してお伝えするものです。参加前には必ず各店舗の最新の公式情報をご確認ください。<br>${POSITIONING}</div>
+${categoriesBlock()}
 ${highlightStoresBlock()}
 ${areaNavBlock()}
 ${fullList.html}
@@ -305,9 +441,9 @@ ${faq.html}
 <a class="cta" href="/">▶ 福岡のポーカートーナメント・大会日程一覧はこちら<small>日付・エリア・種類で絞り込んで表示</small></a>
 <h2 class="day">まとめ</h2>
 <ul style="margin:0 0 14px 1.3em;font-size:.9em;line-height:2">
-  <li>福岡のポーカー店選びで迷ったら、<b>初心者講習の有無・アクセス・営業時間</b>の3つを確認するのがおすすめです。</li>
-  <li>2026年9月時点で「初心者講習」「初心者プラン」の表記が確認できたのは、${HIGHLIGHT_STORES.filter(h => !h.noCourseBadge).map(h => esc(venueById(h.id).name)).join('・')}の${BEGINNER_COURSE_IDS.length}店舗です(${HIGHLIGHT_STORES.filter(h => h.noCourseBadge).map(h => esc(venueById(h.id).name)).join('・')}は「女性・初心者向け」の表記のみで、講習の実施明記はありません)。掲載店舗数が最多の中洲エリアには、該当する店舗は今のところありません。</li>
-  <li>当サイトは店舗・主催者そのものではなく、公開されている情報をもとにまとめた案内サイトです。当サイトが店舗の優劣を判定・ランキング化することはありません。掲載内容は変更されることがあるため、来店前には必ず各店舗の公式サイト・SNS等で最新情報をご確認ください。</li>
+  <li>福岡のポーカー店選びで迷ったら、まずは「トーナメント重視」「リングゲームでじっくり」「お酒も楽しみたい」など、自分の目的に合ったカテゴリーから探すのがおすすめです。</li>
+  <li>公式サイト・SNS等で「初心者講習」「初心者プラン」の実施が明記されているのは、2026年9月時点で${HIGHLIGHT_STORES.filter(h => !h.noCourseBadge).map(h => esc(venueById(h.id).name)).join('・')} の${BEGINNER_COURSE_IDS.length}店舗です(${HIGHLIGHT_STORES.filter(h => h.noCourseBadge).map(h => esc(venueById(h.id).name)).join('・')}は「女性・初心者向け」の表記のみで、講習の実施明記はありません)。中洲エリアには公式な講習明記店はありませんが、外部レビューでは初心者でも入りやすいと紹介されている店舗もあります。</li>
+  <li>当サイトは店舗・主催者そのものではなく、公式情報や外部の紹介記事・口コミをもとにまとめた案内サイトです。当サイトが店舗の優劣を判定・ランキング化することはありません。掲載内容は変更されることがあるため、来店前には必ず各店舗の公式サイト・SNS等で最新情報をご確認ください。</li>
 </ul>
 ${faq.script}`;
 
@@ -330,9 +466,17 @@ function verify(files) {
   const html = files[GUIDE_PATH] || '';
   const listedCount = VENUES.filter(v => !v.preopen).length;
   const linked = (html.match(/href="\/venues\/[^"]+\/"/g) || []).length;
-  // 店舗ページへのリンクは「全店舗一覧表(未開店を除く全件)」＋「初心者講習ハイライト(6件)」の合計。
-  if (linked !== listedCount + HIGHLIGHT_STORES.length) {
-    problems.push(`店舗ページへのリンク数が ${linked} 件(期待値: 全一覧${listedCount}件 + ハイライト${HIGHLIGHT_STORES.length}件 = ${listedCount + HIGHLIGHT_STORES.length}件)`);
+  // 店舗ページへのリンクは「全店舗一覧表(未開店を除く全件)」＋「目的別カテゴリー(6分類、延べ件数。
+  // 同じ店舗が複数カテゴリーに登場する分もそのまま数える)」＋「該当なし店舗の案内(NOT_FOUND_IDS)」＋
+  // 「初心者講習ハイライト(6件)」＋「『中洲エリアについて』が名指しする2件」の合計。
+  const categoryLinkCount = CATEGORIES.reduce((sum, c) => sum + c.stores.length, 0);
+  const nakasuMentionLinkCount = 2;
+  const expectedVenueLinks = listedCount + categoryLinkCount + NOT_FOUND_IDS.length
+    + HIGHLIGHT_STORES.length + nakasuMentionLinkCount;
+  if (linked !== expectedVenueLinks) {
+    problems.push(`店舗ページへのリンク数が ${linked} 件(期待値: 全一覧${listedCount}件 + カテゴリー延べ${categoryLinkCount}件`
+      + ` + 該当なし${NOT_FOUND_IDS.length}件 + ハイライト${HIGHLIGHT_STORES.length}件 + 中洲言及${nakasuMentionLinkCount}件`
+      + ` = ${expectedVenueLinks}件)`);
   }
   // 本文の「エリアから探す」カード(pageAreaCount件)に加えて、共通フッター(pageFootに渡した
   // FOOTER_AREA_LINKS)にも同じ対象が並ぶため、期待値は2倍になる(店舗ページ・エリアページの
