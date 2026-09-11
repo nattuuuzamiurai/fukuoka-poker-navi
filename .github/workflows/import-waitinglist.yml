@@ -157,6 +157,12 @@ jobs:
           # (閲覧者にはブラウザ側の描き直しで最新が出るため、画面を見ても気づけない)。
           node tools/gen-area-pages.js .
           node tools/gen-area-pages.js . --check
+          # 初心者向けガイドページ(/guide/beginner/)の全店舗一覧表も data.js の
+          # アクセス・営業時間をそのまま焼き込んでいるので、店舗ページ・エリアページと同じく
+          # 取込みのたびに再生成する(2026-09-12 品質管理部指摘。追加当初はどの日次ワークフローからも
+          # 呼ばれておらず、営業時間変更・新規開店があっても古いまま止まっていた)。
+          node tools/gen-guide-pages.js .
+          node tools/gen-guide-pages.js . --check
           if test -n "$(git status --porcelain)"; then
             git add -A
             if test "$committed" = "1"; then
