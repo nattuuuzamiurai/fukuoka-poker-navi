@@ -3735,6 +3735,18 @@ git rm <ファイル> && git commit -m "revert: 状態ファイルを削除し�
     ブロックごと落とすと「不正確な住所」ではなく「住所の無い事業所」になってしまう。
   - `note` が住所/電話の未確認に言及しているのに印が無い店があると、`tools/gen-venue-pages.js` が
     店名を挙げて異常終了する(印の付け忘れは画面を見ても分からないため)。**判定するのは印であって `note` の文面ではない。**
+- **`geo`(緯度経度)・`openingHoursSpecification`(営業時間)も、上と同じ「留保付きの値は構造化データに出さない」の対象。**
+  2026-09-12、マーケティング部の指摘(LocalBusinessの`geo`が無い)を受けて追加した。ロジックは `tools/venue-jsonld.js` に集約している(`gen-venue-pages.js` から分離。理由はファイル冒頭コメント)。
+  - `geo` は `data.js` の `VENUES` の `"lat"` / `"lng"`(国土地理院 住所ジオコーダーで `address` から取得)から作る。
+    `addressUnverified: true` の店・`address` が空の店には付けない(誤った緯度経度を確定情報として地図に出すリスクを避ける)。
+    `tools/venue-jsonld.js` の `validateGeoFlags` が、この対応関係が崩れていないか(付け忘れ・付けすぎ)を生成のたびに検査する。
+  - `openingHoursSpecification` は、PR #88(2026-09-09)で「`hours`(フリーテキスト)は変換しない」とした判断を維持しつつ、
+    **曜日区分・定休日が完全に明確、かつ `note` に営業時間の確度ヘッジ(「営業時間は第三者媒体情報のため要確認。」)が無い店だけ**、
+    人が `data.js` に `"hoursSpec"`(`days`/`opens`/`closes` だけを持つ構造化データ。条件・書式は `data.js` のヘッダーコメントを参照)を
+    追加し、`tools/venue-jsonld.js` がそれを機械的に変換する。**`hours` の自由文はコードでパースしない**
+    (「不定休」「LAST」「祝前日」のような曜日に還元できない表現を誤って構造化する事故を、パーサの精度に頼らず作らないことで防ぐ)。
+    条件を満たさない店は今まで通り `hours` の表示のみに留める。
+  - 出典・除外理由の詳細は `fukuoka-venues.json` の `_meta.structuredDataAdditions` に記録してある。
 - **Event 構造化データの推奨項目は「裏が取れたものだけ」埋める。** Search Console の
   「`performer` / `offers` / `image` / `organizer` がありません」は Google 自身が**重大ではない問題(＝推奨項目)**
   と位置づけており、欠けてもページや検索機能が失われない。**警告を消すために値を作らない。**
