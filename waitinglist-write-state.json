@@ -114,24 +114,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M0VWA2KXYP5W943S83T0CVHM": {
-      "id": "wl-01M0VWA2KXYP5W943S83T0CVHM",
-      "venueId": "v3",
-      "name": "m MAD shuffle Turbo",
-      "date": "2026-09-11",
-      "start": "21:00",
-      "buyin": 2000,
-      "addon": 1000,
-      "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M0W0JFP4RH3HWFMWBYHW9MJS": {
       "id": "wl-01M0W0JFP4RH3HWFMWBYHW9MJS",
       "venueId": "v3",
@@ -260,22 +242,6 @@
       "name": "m ORIGIN",
       "date": "2026-09-18",
       "start": "18:00",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M1K16YWKAMXFJF10205740W3": {
-      "id": "wl-01M1K16YWKAMXFJF10205740W3",
-      "venueId": "v3",
-      "name": "VS m RINA",
-      "date": "2026-09-11",
-      "start": "17:30",
       "buyin": 4000,
       "addon": null,
       "stack": 40000,
@@ -613,24 +579,6 @@
       "venueId": "v27",
       "name": "ヘッズアップ〜DOJO破り〜",
       "date": "2026-09-13",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M1K7AQSXP8W3R5SRY7ZEG8P3": {
-      "id": "wl-01M1K7AQSXP8W3R5SRY7ZEG8P3",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-09-11",
       "start": "12:00",
       "buyin": 5000,
       "addon": null,
