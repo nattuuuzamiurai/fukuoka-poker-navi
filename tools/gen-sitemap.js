@@ -83,6 +83,10 @@ const VENUE = { freq: 'weekly', pri: '0.7' };
 const AREA = { freq: 'weekly', pri: '0.8' };
 // 運営者情報ページ(依頼3・GEO監査2026-09-03)。更新頻度は低いページなので monthly・低priorityにする。
 const ABOUT = { freq: 'monthly', pri: '0.3' };
+// 初心者向け店舗選びガイド(/guide/beginner/。開発部2026-09-12)。「福岡 ポーカー」という
+// 広いクエリを受ける入口で、店舗ページ・エリアページへのハブも兼ねるため、エリアページと
+// 同じ扱い(weekly・0.8)にする。中身(全店舗一覧表)はdata.jsの更新に追随する。
+const GUIDE = { freq: 'weekly', pri: '0.8' };
 
 // ---- lastmod: git履歴ベースで決定論的に求める ----
 // big-events.js の各イベントの id → そのイベント固有のデータファイル(会期・共通レジストリの
@@ -186,6 +190,18 @@ function buildSitemap(REPO) {
   // (このリポジトリを使う別環境・過去のコミット等でファイルが無い場合に壊れないようにするため)。
   if (fs.existsSync(path.join(REPO, 'about.html'))) {
     urls.push({ loc: `${SITE}/about.html`, lastmod: lastmodFor(['about.html']), ...ABOUT });
+  }
+
+  // 初心者向け店舗選びガイド(開発部2026-09-12)。about.html と同じくファイルが存在するときだけ載せる。
+  // 内容の実体(本文は tools/gen-guide-pages.js に直書き、全店舗一覧表は data.js 由来)を
+  // 両方見て新しい方をlastmodにする(about.html は自分自身を参照するだけで足りるが、
+  // こちらはページ自身が生成スクリプトなので、本文の変更元であるスクリプト本体を見る)。
+  if (fs.existsSync(path.join(REPO, 'guide/beginner/index.html'))) {
+    urls.push({
+      loc: `${SITE}/guide/beginner/`,
+      lastmod: lastmodFor(['tools/gen-guide-pages.js', 'data.js']),
+      ...GUIDE
+    });
   }
 
   return `<?xml version="1.0" encoding="UTF-8"?>
