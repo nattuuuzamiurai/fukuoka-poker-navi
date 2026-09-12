@@ -114,24 +114,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M0W0JFP4RH3HWFMWBYHW9MJS": {
-      "id": "wl-01M0W0JFP4RH3HWFMWBYHW9MJS",
-      "venueId": "v3",
-      "name": "m LIVE LEAGUE ~WEEKEND~",
-      "date": "2026-09-12",
-      "start": "13:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 60000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M0W0KXCHMQVYVEQ73TJPZ88Q": {
       "id": "wl-01M0W0KXCHMQVYVEQ73TJPZ88Q",
       "venueId": "v3",
@@ -147,22 +129,6 @@
       "tags": [
         "ディープ"
       ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M0W0MX1FFPMT98QWY677ATSS": {
-      "id": "wl-01M0W0MX1FFPMT98QWY677ATSS",
-      "venueId": "v3",
-      "name": "m VAULT",
-      "date": "2026-09-12",
-      "start": "17:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
       "source": "auto",
       "verified": false
     },
@@ -249,24 +215,6 @@
       "reentry": true,
       "prize": null,
       "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M1K1F5VNMZP1R1GKTX4P320E": {
-      "id": "wl-01M1K1F5VNMZP1R1GKTX4P320E",
-      "venueId": "v3",
-      "name": "m Super Hold'em Turbo",
-      "date": "2026-09-12",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": 1000,
-      "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
       "source": "auto",
       "verified": false
     },
@@ -381,24 +329,6 @@
       "venueId": "v27",
       "name": "ヘッズアップ〜DOJO破り〜",
       "date": "2026-09-21",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M1K7AQSX3PHT7G65PEEQ9JDM": {
-      "id": "wl-01M1K7AQSX3PHT7G65PEEQ9JDM",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-09-12",
       "start": "12:00",
       "buyin": 5000,
       "addon": null,
@@ -767,24 +697,6 @@
       "reentry": true,
       "prize": null,
       "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M1R52TNW25PFQ2NJG5W06FSN": {
-      "id": "wl-01M1R52TNW25PFQ2NJG5W06FSN",
-      "venueId": "v19",
-      "name": "3000 Deep Stack",
-      "date": "2026-09-12",
-      "start": "16:10",
-      "buyin": 3000,
-      "addon": 2000,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
       "source": "auto",
       "verified": false
     },
