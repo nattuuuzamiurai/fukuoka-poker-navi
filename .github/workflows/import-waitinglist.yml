@@ -114,6 +114,10 @@ jobs:
         run: node tools/validate-data.js .
 
       - name: 差分があればコミット & プッシュ
+        env:
+          # 店舗写真フェッチ(tools/fetch-photos.js)用。未設定でも空マップを出力して続行する
+          # (HOTPEPPER_API_KEY が GitHub Secrets に未登録でもこのジョブ自体は落ちない)。
+          HOTPEPPER_API_KEY: ${{ secrets.HOTPEPPER_API_KEY }}
         run: |
           # 追加が git add -A なので、判定も未追跡ファイルを含む git status --porcelain で見る
           # (git diff --quiet だと未追跡ファイルだけの変更を「差分なし」と誤判定する)。
@@ -148,6 +152,10 @@ jobs:
           #   生成物をコミットに含めないまま rebase することで、venues/*.html の衝突も避けられる。
           # 再検査(validate-data)も rebase 後にやる。押す物そのものを検査するため。
           node tools/validate-data.js .
+          # ホットペッパー グルメの店舗写真を取得(data/photos.generated.json・.gitignore対象)。
+          # gen-venue-pages.js より必ず先に実行する(このファイルを読んで写真を焼き込むため)。
+          # HOTPEPPER_API_KEY 未設定でも空マップを出力して正常終了する(ビルドは止まらない)。
+          node tools/fetch-photos.js
           # --check は「生成物がデータと一致しているか」の検査で、ここが落ちるのは
           # 生成が中途半端に終わった場合(=コミットしてはいけない状態)。
           node tools/gen-venue-pages.js .

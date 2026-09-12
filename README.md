@@ -77,6 +77,7 @@ AdSense/PR枠が埋まるまでの間、自社アプリの導線を3か所に置
 | `tools/fetch-venue-posts-apify.js` | Apify（既製Instagramスクレイパー、pay-per-result）を呼び、指定ハンドルの最近の投稿一覧（画像URL・投稿日時・パーマリンク・キャプション）を取得する（`APIFY_API_TOKEN` が必要）。`tools/monitor-instagram-apify.js` から呼ばれる |
 | `tools/monitor-instagram-apify.js` | 公式サイトAPIが無い5店舗(v34=KING&QUEEN SUITED 黒崎店は2026-09-01付で対象外・完全手動運用に変更。詳細は下記「対象店舗」参照)のInstagram投稿を定期的に自動監視し、**その店の最新月のカレンダー1枚**をVisionで抽出して `data.js` に安全にupsertするCLIツール（詳細は下記「データ取得アーキテクチャ」）。実行: `node tools/monitor-instagram-apify.js`（`--dry-run` あり）。**Visionが返した行は1行ずつ「直せるものを直してから」検査し（`tools/validate-data.js` と同じ正規化・判定。`9:00`→`09:00` の正規化、日付書式・実在日・開始時刻の書式・金額が数値か・id重複）、それでも不正な行だけを捨てて残りは取り込む**（ジョブは落とさない。理由は下記「データ取得アーキテクチャ」の日付の検査は2層）。正規化・破棄・不採用の件数は `apify-monitor-state.json` の `lastExtraction` に記録される。**取込み・投稿・行の3つの「保存則」を常に検査する**（取込み: 形式不正+日時不正+既読+画像を見ずに対象外+判定対象 = Apifyが返した件数 / 投稿: 取り込めた+**当月取得済みでVisionを呼ばず**+カレンダーでない+過去月のカレンダー+未確認+判定済み+再投稿+大会なし+**全行が掲載ルールで除外**+人の訂正と衝突+全行不採用+Vision抽出失敗+画像DL失敗+Vision0件〈+探索モードでのみ動く「当月以降のカレンダー（採用せず）」〉 = 判定対象の投稿数 / 行: 追加+更新+変更なし+過去日+破棄+**不採用の投稿の行**+**人の行を守って見送り** = Visionが返した行数）。**合わなければ `::error::`**（=どこにも数えられない消失経路が増えた証拠）。内容が失われた投稿は `::error::`、Visionが0件の投稿は `::warning::` で報告する。**キャプションは判定にも出力にも一切使わない**（2026-08-04にキーワード判定を廃止。対象外にした投稿は `店/投稿URL/投稿日時/支配月/異なる日付の数/広がり` だけをログに出す。public リポジトリなので**本文は1文字も出さない** — 実装に `caption` 参照が無いことをテストで固定してある）。GitHub Actions `.github/workflows/monitor-instagram-apify.yml` が **JST 25日〜翌10日は毎日 / 期間外は週1回**で自動実行する（**2026-07-31時点は定期実行を無効化中。手動実行の既定は dry-run**。理由は下記「データ取得アーキテクチャ」の実行の項）。**当月ぶんのカレンダーを取得済みの店は、25日まで Vision を1回も呼ばない**（`capturedMonth`＝当月取得済みラッチ。解除は `--recapture=<venueId>`。詳細は下記「Vision呼び出しの費用（実測）と、それを減らすためにしたこと」）。**取得できたのに読もうとした投稿の全部（または画像を読めなかった割合が50%以上）が失われた回は、終了コード 3 でジョブを赤くする**（注記だけでは緑のまま通るため）。テスト: `node tools/monitor-instagram-apify.test.js` |
 | `tools/fetch-search-console.js` | **Google Search Console API（Search Analytics: query）から、クエリ別・ページ別のパフォーマンス（クリック数・表示回数・CTR・平均掲載順位）を取得するツール**（GEO/SEO監査・マーケティング部の分析用）。`data.js`（表示用データ）とは無関係の**read-only**なツールで、サイトの表示には一切影響しない。認証はサービスアカウント鍵（GSCプロパティに「制限付き」権限で追加済み）を使い、`googleapis`等の外部npmパッケージは使わず**Node標準の`crypto`/`fetch`だけでJWT Bearer Token Flowを実装**（このリポジトリに`package.json`/`node_modules`が無く、CIも`npm install`しない設計のため。他の`tools/*.js`と同じ方針）。鍵の中身は**ログに一切出さない**。実行: `GOOGLE_APPLICATION_CREDENTIALS=<鍵ファイルのパス> node tools/fetch-search-console.js`（`--days=<日数>` 既定28日、`--dry-run` あり）。CI（`.github/workflows/fetch-search-console.yml`・毎週月曜07:00 JST）ではリポジトリシークレット`GSC_SERVICE_ACCOUNT_KEY`（鍵JSON全体）を環境変数で渡す。取得結果は`data/search-console/<実行日(JST)>.json`（生データ）と同ディレクトリの`<実行日>-summary.md`（上位クエリ・上位ページ・前回スナップショットとの比較）に**毎回コミット**（既存ファイルを書き換えず増やしていくだけなので、他の取込みスクリプトのような upsert・所有権ロジックは無い） |
+| `tools/fetch-photos.js` | **ホットペッパー グルメ Webサービスから店舗写真を取得するツール**（2026-09-12、姉妹プロジェクト「久留米飲み屋ナビ」`scripts/fetch-photos.js` の移植）。`fukuoka-venues.json` の各店の `sources` からホットペッパー店舗ID（`strJxxxxxx`）を正規表現で抽出し、店名を `data.js` の `VENUES` と**完全一致**で対応付けたうえで**ID直接引き**でAPIを叩く（店名の曖昧一致はしない＝別店舗の写真を誤掲載するリスクを避ける。対応が取れなかった店名は警告に出す）。取得するのは代表写真1枚・ロゴ・店舗ページURLで、**画像ファイルは自サイトに保存せずホットリンク表示**（`gen-venue-pages.js` が `<img>` で `imgfp.hotp.jp` を直接参照する）。出力: `data/photos.generated.json`（**`.gitignore` 対象・コミットしない**。`gen-venue-pages.js` を呼ぶ日次ワークフロー内で毎回このスクリプトを先に走らせて生成する）。APIキーは `process.env.HOTPEPPER_API_KEY`。**未設定なら空マップを出力して正常終了**（Secret未登録でもビルドは壊れない）。2026-09-12時点の対象は5店舗（Casino bar Leje 博多店・KAJI BAR・CASINO BLOW 西中洲・CASINO Arrows 小倉店・梵 bon 西中洲）。テスト: `node tools/fetch-photos.test.js` |
 
 `data.js` を差し替えるだけでサイトが更新される設計。CDN/静的ホスティング（GitHub Pages 等）にそのまま置ける。
 ただし静的ページ（`events/` `venues/` `sitemap.xml`）はデータのスナップショットなので、下記の再生成が必要。
@@ -582,6 +583,27 @@ Day2に引き継がれる）。
   - 投稿URLをプログラムで自動発見する経路（プロフィールページのHTML取得）を実機確認したが、**ログインなしでは投稿一覧を含まない汎用ページが返るだけで、投稿の shortcode を取得できない**（2026-07-31の「Instagram自動巡回は中止」の判断と同じ壁）。ここを回避してまで自動収集する実装は、本README既定の「ログイン・巡回は行わない」方針に反するため行わない。
   - 結論: **oEmbed自体は実現可能だが、埋め込む投稿URLを安全に調達する手段が無い**ため、今回は写真埋め込みの実装を見送った（架空/未検証のURLを埋め込むと無関係な投稿が表示されるリスクがあるため、動作確認だけのために実データを捏造することもしていない）。将来、店舗からの直接連絡（`tools/import-venue-image.js --instagram-url` に既に使っている経路）で特定の投稿URLが得られたときに、`data.js` に保持用フィールドを1つ足して薄い生成コードを足すだけで実装できる状態にはしてある（今回は使われない新フィールドを先回りして追加することはしていない＝過剰な抽象化を避けた）。
   - 代替として、依頼3のフォールバック方針どおり**公式サイト・SNSへの目立つリンクボタン**（`.vp-sns-btn`）を実装した（上記の情報カード「公式サイト/SNS」に統合済み）。
+
+### 店舗写真 — ホットペッパー グルメAPIによる代替実装（2026-09-12〜）
+
+上の「Instagram公式投稿の埋め込み」が実現困難と判断された後、姉妹プロジェクト「久留米飲み屋ナビ」で
+既に実績のあるホットペッパー グルメ Webサービス方式（`scripts/fetch-photos.js`）を移植して写真掲載を実現した。
+
+- **仕組み**: `tools/fetch-photos.js` が `fukuoka-venues.json` の `sources` からホットペッパー店舗ID
+  （`strJxxxxxx`）を正規表現で抽出し、店名を `data.js` の `VENUES` と**完全一致**で対応付けたうえで
+  **ID直接引き**でAPIを叩く（店名の曖昧一致はしない）。取得した代表写真・ロゴ・店舗ページURLは
+  `data/photos.generated.json`（`.gitignore` 対象・コミットしない）に書き出し、`gen-venue-pages.js` が
+  それを読んで情報カードの上に写真（`.vp-photo`）を焼き込む。画像は自サイトに保存せずホットリンク表示
+  （久留米飲み屋ナビ・法務メモと同じ考え方）。詳細は `tools/fetch-photos.js` のファイル冒頭コメントを参照。
+- **対象は5店舗のみ**（2026-09-12時点、企画部調査済み）: Casino bar Leje 博多店(v5)・KAJI BAR(v39)・
+  CASINO BLOW 西中洲(v9)・CASINO Arrows 小倉店(v19)・梵 bon 西中洲(v29)。残り30店舗は
+  ホットペッパー掲載が確認できておらず、`fukuoka-venues.json` の `sources` に無理に加えていない
+  （見つかっていないものを対象に含めると、店名の曖昧一致と同じ「別実体の取り違え」リスクを持ち込むため）。
+- **`HOTPEPPER_API_KEY` はGitHub Secrets未登録の可能性がある**（社長確認中・2026-09-12時点）。
+  未設定でも `fetch-photos.js` は空マップを出力して正常終了するため、静的ページを再生成する
+  3つの日次ワークフロー（`import-waitinglist.yml` / `import-texaspoker.yml` / `monitor-instagram-apify.yml`。
+  いずれも `gen-venue-pages.js` を呼ぶため、写真の有無で生成結果がぶれないよう全部に組み込んだ）は
+  キー未登録でもビルドが壊れない。登録され次第、次回の実行から自動的に5店舗の写真が載る。
 
 ## 管理コンソールの使い方（月末の更新作業）
 
@@ -3163,15 +3185,17 @@ node tools/workflow-audit.js amend24     … リスク台帳 #24 を再現し、
 
 | ワークフロー | ステップ | `uses:` | `run:` | `run:` 内の `exit` 文 | うち非0 |
 |---|---:|---:|---:|---:|---:|
-| `.github/workflows/import-waitinglist.yml` | 6 | 2 | 4 | **4** | 2（L100 `exit "$rc"` / L182 `exit 1`） |
-| `.github/workflows/monitor-instagram-apify.yml` | 10 | 2 | 8 | **11** | 10（L345 / L475 / L537 / L547 / L564 / L615 / L660 `exit 1` / L732 `exit 3` / L736 `exit 2` / L755 `exit "$rc"`） |
+| `.github/workflows/import-waitinglist.yml` | 6 | 2 | 4 | **4** | 2（L100 `exit "$rc"` / L195 `exit 1`） |
+| `.github/workflows/monitor-instagram-apify.yml` | 10 | 2 | 8 | **11** | 10（L347 / L477 / L539 / L549 / L566 / L617 / L664 `exit 1` / L743 `exit 3` / L747 `exit 2` / L766 `exit "$rc"`） |
 
 **停止点は `exit` 文だけではない。** `bash -e` なので、**マスクされていない位置にあるコマンドはどれも step を落とす**。そこで上の `exit` 文に加えて、**両ワークフローの `run:` に現れる外部コマンドの呼び出し**をシムで1つずつ失敗させ、止まるか・マスクされるかを実測した。
 
 | ワークフロー | `node` | `git` | `grep` | `sed` | `tee` | `cat` | `date` |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| `import-waitinglist.yml` | 7 | 12 | 0 | 0 | 0 | 0 | 2 |
-| `monitor-instagram-apify.yml` | 15 | 16 | 5 | 4 | 3 | 1 | 2 |
+| `import-waitinglist.yml` | 8 | 12 | 0 | 0 | 0 | 0 | 2 |
+| `monitor-instagram-apify.yml` | 16 | 16 | 5 | 4 | 3 | 1 | 2 |
+
+（2026-09-12、店舗写真フェッチ(`node tools/fetch-photos.js`)を両ワークフローの再生成ステップに追加したぶん、`node` の呼び出し数が両方とも+1、`exit` 文の行番号(L)が後方にずれた。件数(全数)は変わっていない。`node tools/workflow-audit.js inventory` で再測して直した。★下の「ワークフロー層の停止点」詳細表(WF-W/WF-M系)にある個別のL行番号は、この行番号ずれをすべて追随できていない — 全数のカウント自体は上の2表が正で自動テスト([tools/readme-consistency.test.js](tools/readme-consistency.test.js))が守っているが、個々のプローズ中のL番号は`node tools/workflow-audit.js probe`等の再実行でしか検証できず未了。実際に本文中のexit文を探すときは行番号よりステップ名で照合すること)
 
 （数え方＝**コメント行を除いた `run:` 本文に現れる「コマンド名＋空白」の出現数**。`$( )` の中や `if`・`|` の後ろも数える — `bash -e` ではそこも失敗しうる位置なので、停止点の候補として同じ土俵に載せる。`node tools/workflow-audit.js inventory` の出力）
 
@@ -3770,6 +3794,13 @@ git rm <ファイル> && git commit -m "revert: 状態ファイルを削除し�
   「何を根拠にしたか」の記録で、消すのは「誰から・どの経路で・いつ受け取ったか」という受信経緯)。
   - 2026-09-09、FUXK福岡天神店(v7)の `sourceLabel` に「店舗からの直接申告(お問い合わせフォーム、2026-09-09)」と書いて
     本番公開してしまい、社長指摘を受けて是正した(該当PRで修正)。
+- **店舗写真(ホットペッパー グルメ)は自サイトに保存せず、提供元のサーバー上の画像を直接参照(ホットリンク)で表示する。**
+  2026-09-12、姉妹プロジェクト「久留米飲み屋ナビ」で実績のある方式を移植(`tools/fetch-photos.js`)。
+  画像そのものをダウンロード・再配布しないため著作権上のリスクを抑えられる一方、提供元のサーバーが画像を削除・変更すれば
+  当サイトの表示もそれに追随する(意図した挙動。当サイトが古い画像を独自に保持し続けることはない)。
+  写真には出典表示「写真提供: ホットペッパーグルメ」と、店舗ページへのリンク、掲載を望まない店舗向けの
+  お問い合わせ導線(`/contact.html`)を必ず添える。対象は `fukuoka-venues.json` の `sources` にホットペッパー
+  店舗ID(`strJxxxxxx`)を持つ店だけで、**店名検索の曖昧一致は使わない**(別店舗の写真の誤掲載を避けるため)。
 - 掲載は各店舗・主催者の公開情報ベース。参加前に公式確認を促す注意書きを常設。
 - `data.js` は実店舗・実データで運用中(2026-07-14〜)。35店舗・`TOURNAMENTS` 604件（＋毎週固定の `RECURRING` 27件）のトーナメント日程を掲載。
   （件数は日々増えるので、この行の数字は目安。正確な値は `node -e 'const D=require("./data.js");console.log(D.VENUES.length,D.TOURNAMENTS.length,D.RECURRING.length)'` で取れる）

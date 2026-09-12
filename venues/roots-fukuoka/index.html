@@ -181,6 +181,12 @@
   .vp-sns-btn:hover{border-color:var(--gold)}
   /* Googleマップ埋め込み(依頼2・社長承認済み)。addressUnverified の店には出さない(呼び出し側で制御)。 */
   .vp-map{display:block;width:100%;height:260px;border:0;border-radius:var(--r);box-shadow:var(--sha);margin-bottom:14px}
+  /* ホットペッパー グルメの店舗写真(2026-09-12・PR #91の情報カードの上に配置)。
+     画像は自社保存せずホットリンク(imgfp.hotp.jp を直接参照)。詳細は venueHeroPhotoHtml() のコメント参照。 */
+  .vp-photo{margin:0 0 14px}
+  .vp-photo img{display:block;width:100%;max-height:320px;object-fit:cover;border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha)}
+  .vp-photo-credit{font-size:.78em;color:var(--mut);line-height:1.7;margin:6px 2px 0}
+  .vp-photo-credit a{color:#0e6a72;font-weight:700}
   ul.vp-list{list-style:none;display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 6px}
   ul.vp-list a{display:inline-block;background:var(--sur);border:1px solid var(--bor);border-radius:20px;padding:6px 13px;font-size:.85em;font-weight:700;color:var(--felt);text-decoration:none;box-shadow:var(--sha)}
   /* .vp-cards / .vp-card(「同じエリアの他のポーカー店」「サテライト開催店舗」カード)は
