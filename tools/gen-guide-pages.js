@@ -116,69 +116,80 @@ const HIGHLIGHT_STORES = [
   { id: 'v28', intro: '公式Instagramでは「女性・初心者向け」と案内されています。ただし、他の5店舗のような「初心者講習」の実施明記は当サイトでは確認できていません(2026年9月時点)。姉弟で運営する小規模な店舗で、貸切イベントにも対応しているとのことです。', noCourseBadge: true }
 ];
 
-// 「福岡のポーカー店を目的別に探す」のカテゴリー(6分類・原稿2026-09-12改訂版)。
-// 各店舗の name/area/slug は venueById(id) で data.js からそのまま引く(手書きしない)。
-// intro を持たない店舗は、カテゴリーに該当することだけを紹介し個別の説明文は付けない
-// (原稿の該当箇所がそういう書き方になっているものをそのまま反映。無理に文章を作らない)。
-// 同じ店舗が複数カテゴリーに登場することがある(例: CRownCLownは3カテゴリー)。原稿の実態どおり。
+// 「福岡のポーカー店を目的別に探す」のカテゴリー(6分類・原稿2026-09-12改訂版〔文章圧縮・
+// カード化版〕)。各店舗の name/area/slug は venueById(id) で data.js からそのまま引く(手書きしない)。
+// 【featured】ポイント箇条書き(2〜3点)＋出典を持つ店舗(カード表示)。
+// 【chips】具体的な説明が原稿に無く、該当することだけを紹介する店舗(チップ/タグ表示)。
+//   chipsIntro はチップ一覧の直前に置く前置き文(原稿の「このほか、〜」の一文)。
+//   chips が無いカテゴリーは全店 featured のみ。
+// 同じ店舗が複数カテゴリーに登場することがある(例: CRownCLownは3カテゴリー、
+// KENポーカー(久留米)はカテゴリー1・2の両方)。原稿の実態どおり。
+// icon はカテゴリー見出しに添える小さなSVGアイコンの種類(下記 ICONS を参照)。
 const CATEGORIES = [
   {
     heading: 'トーナメントが強い・人気がある店を探すなら',
+    icon: 'trophy',
     lead: '大会・トーナメントの盛り上がりについて、外部のレビューサイトや店舗公式SNS等で言及されている店舗です。',
-    stores: [
-      { id: 'v22', intro: '複数の紹介サイトで「連日多くのプレイヤーが集まり、白熱したトーナメントが開催されている」「ハイレベル」などと紹介されています(出典: fukuoka-online.jp、light-three.com)。' },
-      { id: 'v4', intro: '業界メディアの記事タイトルで「ポーカートーナメントで注目」と取り上げられている例が見られます(出典: 日本カジノタイムス、確度中)。' },
-      { id: 'v21', intro: 'JOPT・WJPTなど全国規模の大会のサテライトや、店舗単位の予選(DAY1)会場として継続的に開催実績があると案内されています(出典: 店舗公式情報)。' },
-      { id: 'v2', intro: '「地域最大級の6テーブル」を備え、毎日トーナメントを開催していると紹介されています(出典: 紹介記事)。' },
-      { id: 'v18', intro: 'FST(大型連動大会)のDAY1会場を務めた実績があるとされています(出典: FST公式X)。' },
-      { id: 'v34', intro: '「4卓を使ってXPTなど全国大会のサテライトを頻繁に開催している」と案内されています(出典: 店舗公式Instagram)。' }
+    featured: [
+      { id: 'v22', points: ['連日プレイヤーで賑わう白熱トーナメント', 'ハイレベルな対局と評判'], source: 'fukuoka-online.jp、light-three.comより' },
+      { id: 'v5', points: ['トーナメントを毎日開催', '内容が安定しており集客力も高い'], source: '運営状況の確認情報' },
+      { id: 'v21', points: ['JOPT・WJPTなど全国大会のサテライト会場', '店舗予選(DAY1)も継続開催'], source: '店舗公式情報より' },
+      { id: 'v2', points: ['地域最大級の6テーブルを完備', '毎日トーナメントを開催'], source: '紹介記事より' },
+      { id: 'v18', points: ['FST(大型連動大会)のDAY1会場を担当'], source: 'FST公式Xより' },
+      { id: 'v34', points: ['4卓を使用する店舗', 'XPTなど全国大会のサテライトを頻繁開催'], source: '店舗公式Instagramより' }
     ]
   },
   {
     heading: 'リングゲーム、初心者でも安心して打ちたいなら',
-    lead: '「初心者でも入りやすい」「講習・接客が丁寧」といった口コミ・紹介記事が見られる店舗です(出典: 主にlight-three.com、fukuoka-online.jp等の外部レビューサイト)。中洲エリアの店舗もこのカテゴリーに含まれている点にご注目ください。',
-    stores: [
-      { id: 'v25' }, { id: 'v3' }, { id: 'v13' }, { id: 'v14' }, { id: 'v7' },
-      { id: 'v4' }, { id: 'v6' }, { id: 'v28' }, { id: 'v23' }, { id: 'v40' }, { id: 'v41' }
-    ]
+    icon: 'cards',
+    lead: 'リングゲームとは、好きなタイミングで出入りできる通常のポーカーのことです。「初心者でも入りやすい」「講習・接客が丁寧」といった口コミ・紹介記事が見られる店舗です(出典: 主にlight-three.com、fukuoka-online.jp等の外部レビューサイト)。中洲エリアの店舗もこのカテゴリーに含まれます。',
+    featured: [
+      { id: 'v21', points: ['リングゲームを毎日開催', '初心者講習も実施'], source: '運営状況の確認情報、店舗公式ライン案内' }
+    ],
+    chipsIntro: 'このほか、次の店舗も同じ理由でこのカテゴリーに含まれています。',
+    chips: ['v25', 'v3', 'v13', 'v14', 'v7', 'v4', 'v6', 'v28', 'v23', 'v40', 'v41']
   },
   {
     heading: 'リングゲーム、腕試ししたい・ガチでやりたいなら',
-    lead: '遊技スタイルとして「上級者向け」「本格的」と紹介されている店舗です。「勝てる」「稼げる」といった意味ではなく、あくまでゲームの構成・雰囲気についての紹介である点にご留意ください。',
-    stores: [
-      { id: 'v22', intro: '遊技スタイルとして「上級者向け」と紹介されており、ハイローラー向けイベントを定期的に開催していると案内されています(出典: 紹介記事)。' },
-      { id: 'v30', intro: '本格的なリングゲームで、深いスタック構成を採用しているとされる一方、初心者講習も実施しており、初心者から上級者まで両対応の店舗と案内されています(出典: 紹介記事)。' },
-      { id: 'v16', intro: '「スポーツポーカー競技場」を自称しており、戦略性・心理戦を重視するスタイルという口コミが見られます(出典: 口コミ)。' }
+    icon: 'cards',
+    lead: '※リングゲームとは、好きなタイミングで出入りできる通常のポーカーのことです。遊技スタイルとして「上級者向け」「本格的」と紹介されている店舗です。「勝てる」「稼げる」という意味ではなく、あくまでゲームの雰囲気についての紹介である点にご留意ください。',
+    featured: [
+      { id: 'v22', points: ['上級者向けの遊技スタイル', 'ハイローラー向けイベントを定期開催'], source: '紹介記事より' },
+      { id: 'v30', points: ['深いスタックの本格リングゲーム', '初心者講習もあり初級〜上級まで対応'], source: '紹介記事より' },
+      { id: 'v16', points: ['「スポーツポーカー競技場」を自称', '戦略性・心理戦を重視するスタイル'], source: '口コミより' }
     ]
   },
   {
     heading: 'バカラ・ブラックジャックも遊びたいなら',
+    icon: 'dice',
     lead: 'ポーカーのほかにバカラ・ブラックジャックなど複数のゲームを扱っていると案内されている店舗です。',
-    stores: [
-      { id: 'v5', intro: '「福岡では唯一プログレッシブポーカーができる」と案内されています(出典: 店舗紹介情報)。' },
-      { id: 'v9' }, { id: 'v3' }, { id: 'v29' }, { id: 'v39' }, { id: 'v19' }, { id: 'v37' }, { id: 'v41' }
-    ]
+    featured: [
+      { id: 'v5', points: ['福岡で唯一プログレッシブポーカーに対応'], source: '店舗紹介情報より' }
+    ],
+    chipsIntro: 'このほか、次の店舗でもバカラ・ブラックジャックが遊べると案内されています。',
+    chips: ['v9', 'v3', 'v29', 'v39', 'v19', 'v37', 'v41']
   },
   {
     heading: 'お得にお酒も楽しみたいなら',
-    lead: '飲み放題や均一料金など、お酒に関する案内がある店舗です。金額や条件は変更されることがあるため、来店前に必ず最新情報をご確認ください。',
-    stores: [
-      { id: 'v23', intro: '入場料1,000円で飲み放題込みと案内されています(出典: 店舗公式情報)。' },
-      { id: 'v9' },
-      { id: 'v5', intro: '1,000円で時間無制限の飲み放題付きと案内されています(出典: 店舗公式情報)。' },
-      { id: 'v39' }, { id: 'v27' },
-      { id: 'v42', intro: 'ソフトドリンクは12時間500円、アルコールは12時間1,500円と案内されています(出典: 店舗公式情報)。' },
-      { id: 'v41' }
-    ]
+    icon: 'glass',
+    lead: '飲み放題や均一料金など、お酒に関する案内がある店舗です。金額や条件は変わることがあるため、来店前に必ず最新情報をご確認ください。',
+    featured: [
+      { id: 'v23', points: ['入場料1,000円で飲み放題込み'], source: '店舗公式情報より' },
+      { id: 'v5', points: ['1,000円で時間無制限の飲み放題'], source: '店舗公式情報より' },
+      { id: 'v42', points: ['ソフトドリンクは12時間500円', 'アルコールは12時間1,500円'], source: '店舗公式情報より' }
+    ],
+    chipsIntro: 'このほか、次の店舗でもお酒に関する案内があります。',
+    chips: ['v9', 'v39', 'v27', 'v41']
   },
   {
     heading: 'ミックスゲーム・PLOを打ちたいなら',
-    lead: 'ポーカーの中でもテキサスホールデム以外のバリエーション(PLOやミックスゲームなど)に対応していると案内されている店舗です。',
-    stores: [
-      { id: 'v33', intro: '取り扱いゲーム種類は「基本全部」とされ、ミックスゲームに対応していると案内されています(出典: 店舗公式情報)。' },
-      { id: 'v36', intro: '「6月は月・水・金でPLOトーナメントを開催」といった具体的な開催実績が案内されています(出典: 店舗公式情報)。開催曜日・頻度は月によって変わる可能性があるため、最新情報は公式でご確認ください。' },
-      { id: 'v22', intro: '「Draw、PLO」に対応していると紹介されています(出典: 紹介記事)。' },
-      { id: 'v2', intro: 'ゲーム種類は「基本全部」とされていますが、開催頻度までは確認できていないため確度は中程度です(出典: 紹介記事)。' }
+    icon: 'shuffle',
+    lead: 'PLOやミックスゲームとは、テキサスホールデム以外のポーカーの種類のことです。ここでは、そうしたバリエーションに対応していると案内されている店舗を紹介します。',
+    featured: [
+      { id: 'v33', points: ['取り扱いゲームは「基本全部」', 'ミックスゲームにも対応'], source: '店舗公式情報より' },
+      { id: 'v36', points: ['曜日を定めてPLOトーナメントを開催', '開催曜日・頻度は月によって変動(要確認)'], source: '店舗公式情報より' },
+      { id: 'v22', points: ['Draw・PLOに対応'], source: '紹介記事より' },
+      { id: 'v2', points: ['ゲーム種類は「基本全部」', '開催頻度は未確認(要確認)'], source: '紹介記事より' }
     ]
   }
 ];
@@ -187,6 +198,12 @@ const CATEGORIES = [
 // (原稿の方針: 無理に当てはめず率直に書く)。
 const NOT_FOUND_IDS = ['v17', 'v26', 'v35', 'v38', 'v20', 'v8'];
 
+// カテゴリー内の全店舗id(featured＋chips)を1つにまとめる。verify()の件数検査・
+// validateCategoryCoverage() の両方から使う(同じ集め方を2箇所に書かない)。
+function categoryStoreIds(c) {
+  return [...c.featured.map(f => f.id), ...(c.chips || [])];
+}
+
 // 掲載中(未開店を除く)の全店舗が CATEGORIES か NOT_FOUND_IDS のどちらかに必ず含まれることを
 // 検査する。新規開店・店舗追加は日次の自動取込(TOURNAMENTSのみ対象)では起きず人手で
 // data.js に足すため、足した人がこの生成を実行した時点で「目的別カテゴリーへの割り当てを
@@ -194,7 +211,7 @@ const NOT_FOUND_IDS = ['v17', 'v26', 'v35', 'v38', 'v20', 'v8'];
 // 目的別セクションから存在ごと漏れる=閲覧者からは何も見えない欠落になる)。
 function validateCategoryCoverage() {
   const covered = new Set();
-  CATEGORIES.forEach(c => c.stores.forEach(s => covered.add(s.id)));
+  CATEGORIES.forEach(c => categoryStoreIds(c).forEach(id => covered.add(id)));
   NOT_FOUND_IDS.forEach(id => covered.add(id));
   const missing = VENUES.filter(v => !v.preopen && !covered.has(v.id));
   if (missing.length) {
@@ -233,55 +250,106 @@ const GUIDE_CSS = `  .gd-card{background:var(--sur);border:1px solid var(--bor);
   table.gd-table td.gd-course{text-align:center;font-weight:800;color:var(--felt);white-space:nowrap}
   table.gd-table a{color:#0e6a72;font-weight:700;text-decoration:none}
   table.gd-table tr:last-child td{border-bottom:none}
-  .gd-cat{margin-bottom:6px}
-  .gd-cat h3{font-size:.95em;font-weight:800;color:var(--felt);margin:18px 0 5px}
-  .gd-cat-list{margin:0 0 4px 1.2em;font-size:.87em;line-height:1.9}
-  .gd-cat-list li{margin-bottom:5px}
-  .gd-cat-list a{color:#0e6a72;font-weight:800;text-decoration:none}
+  .gd-cat{margin-bottom:14px}
+  .gd-cat h3{display:flex;align-items:center;gap:7px;font-size:.95em;font-weight:800;color:var(--felt);margin:18px 0 8px}
+  .gd-cat-ic{flex:0 0 auto;width:19px;height:19px;color:var(--gold)}
+  .gd-cat-ic svg{display:block;width:100%;height:100%}
+  .gd-card-points{margin:6px 0 4px 1.15em;padding:0;font-size:.82em;line-height:1.6;color:var(--txt)}
+  .gd-card-points li{margin-bottom:2px}
+  .gd-card-src{font-size:.72em;color:var(--mut);margin-top:4px}
 `;
+
+// ---- カテゴリー見出しのアイコン(社長指示: ストローク系のインラインSVG・絵文字は使わない) ----
+// 店舗ページ改修(PR #91 feat/venue-page-card-redesign)の ICONS/ICON_ATTR と同じ様式にそろえる
+// (fill=none・stroke=currentColor・stroke-width 1.8・角丸のシンプルなピクトグラム)。
+// ブランドロゴの模写はしない(同PRと同じ理由)。
+const ICON_ATTR = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"';
+const ICONS = {
+  // トロフィー(トーナメント)
+  trophy: `<svg ${ICON_ATTR}><path d="M7 4h10v3a5 5 0 0 1-10 0V4z"/><path d="M7 5H4.5A2.5 2.5 0 0 0 7 7.5"/><path d="M17 5h2.5A2.5 2.5 0 0 1 17 7.5"/><path d="M12 12v3"/><path d="M9 19h6"/><path d="M10.5 15h3l.8 4h-4.6l.8-4z"/></svg>`,
+  // カードマーク(リングゲーム)
+  cards: `<svg ${ICON_ATTR}><rect x="3.5" y="3" width="10" height="14" rx="1.6"/><rect x="10.5" y="7" width="10" height="14" rx="1.6"/></svg>`,
+  // サイコロ(バカラ・ブラックジャック等のサイドゲーム)
+  dice: `<svg ${ICON_ATTR}><rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="9" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="9" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="9" cy="15" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="15" r="1" fill="currentColor" stroke="none"/></svg>`,
+  // グラス(ドリンク)
+  glass: `<svg ${ICON_ATTR}><path d="M6 3h12"/><path d="M6 3c0 4.5 2.5 7 6 7s6-2.5 6-7"/><path d="M12 10v7"/><path d="M8.5 21h7"/></svg>`,
+  // シャッフル(ミックスゲーム・PLO)
+  shuffle: `<svg ${ICON_ATTR}><path d="M4 6.5h3.2c1.8 0 2.8.8 3.6 2"/><path d="M4 17.5h3.2c1.8 0 2.8-.8 3.6-2"/><path d="M14 6.5h6"/><path d="M14 17.5h6"/><path d="M17.5 4l2.5 2.5L17.5 9"/><path d="M17.5 15l2.5 2.5-2.5 2.5"/></svg>`
+};
+function catIcon(name) { return ICONS[name] ? `<span class="gd-cat-ic">${ICONS[name]}</span>` : ''; }
 
 // ============================================================
 // 本文の組み立て
 // ============================================================
 
-// ---- 福岡のポーカー店を目的別に探す(6カテゴリー。2026-09-12改訂で「3つのポイント」から差し替え) ----
-// 1店舗ぶんのリスト項目(店名リンク＋エリア＋任意の紹介文)を組み立てる。
-// intro が無い店舗は「該当することの紹介」だけに留め、文章を捏造しない(原稿の書き方どおり)。
-function categoryStoreList(stores) {
-  return `<ul class="gd-cat-list">
-${stores.map(s => {
-    const v = venueById(s.id);
-    const introPart = s.intro ? `: ${esc(s.intro)}` : '';
-    return `  <li><a href="/venues/${v.slug}/">${esc(v.name)}</a>(${esc(v.area)})${introPart}</li>`;
+// ---- 福岡のポーカー店を目的別に探す(6カテゴリー。2026-09-12改訂〔文章圧縮・カード化版〕で
+//      「3つのポイント」から差し替え) ----
+// featured: ポイント箇条書き＋出典を持つ店舗 → 店舗ページ(gen-venue-pages.js)の
+//   「同じエリアの他のポーカー店」で使っている .vp-cards/.vp-card を土台にしたカードで表示する
+//   (同じ見た目を複製せず、site-shell.js の BASE_CSS にある共通クラスをそのまま使う)。
+//   カード自体は店舗ページへのリンク(<a class="vp-card">)なので、中に箇条書き(.gd-card-points)と
+//   出典(.gd-card-src)だけをこのファイル側のCSSで足す。
+function categoryFeaturedCards(featured) {
+  // 既定の .vp-cards は minmax(150px,1fr)(店舗ページの「同じエリアの他のポーカー店」= 店名＋駅名
+  // 1行だけの軽いカード向け)。ここは箇条書き2〜3点＋出典まで入るため、既定のまま複数列に詰めると
+  // 窮屈になる。.vp-cards 自体(店舗ページ等と共有)は変えず、この一覧だけ幅を広げる
+  // (店舗ページ改修〔PR #91〕の .vp-info-grid が採る 230px と同じ値にそろえる)。
+  return `<div class="vp-cards" style="grid-template-columns:repeat(auto-fill,minmax(230px,1fr))">
+${featured.map(f => {
+    const v = venueById(f.id);
+    const pts = f.points.map(p => `<li>${esc(p)}</li>`).join('');
+    return `  <a class="vp-card" href="/venues/${v.slug}/">
+    <div class="vp-card-name">${esc(v.name)}</div>
+    <div class="vp-card-sub">${esc(v.area)}</div>
+    <ul class="gd-card-points">${pts}</ul>
+    <div class="gd-card-src">出典: ${esc(f.source)}</div>
+  </a>`;
+  }).join('\n')}
+</div>`;
+}
+
+// chips: 具体的な説明が原稿に無く、該当することだけを紹介する店舗 → 店舗ページ(gen-venue-pages.js)の
+//   「同じエリアの他のポーカー店」と同じ ul.vp-list(チップ/タグ)で表示する(文章を作らず簡素に)。
+function categoryChips(ids) {
+  return `<ul class="vp-list">
+${ids.map(id => {
+    const v = venueById(id);
+    return `  <li><a href="/venues/${v.slug}/">${esc(v.name)}（${esc(v.area)}）</a></li>`;
   }).join('\n')}
 </ul>`;
 }
 
+function categoryBlock(c) {
+  const chipsPart = c.chips && c.chips.length
+    ? `${c.chipsIntro ? `<p class="lead">${esc(c.chipsIntro)}</p>` : ''}${categoryChips(c.chips)}`
+    : '';
+  return `<div class="gd-cat">
+  <h3>${catIcon(c.icon)}${esc(c.heading)}</h3>
+  <p class="lead">${esc(c.lead)}</p>
+  ${categoryFeaturedCards(c.featured)}
+  ${chipsPart}
+</div>`;
+}
+
 // 6カテゴリーいずれにも該当が見つからなかった店舗の案内(原稿の方針: 無理に一覧化・当てはめず、
-// 「確認できていないだけ」と率直に書く)。店名は他の店舗紹介と同様に実在の店舗ページへリンクする。
-function notFoundParagraph() {
-  const names = NOT_FOUND_IDS.map(id => {
-    const v = venueById(id);
-    return `<a href="/venues/${v.slug}/">${esc(v.name)}</a>`;
-  }).join('・');
+// 「確認できていないだけ」と率直に書く)。店名はチップ形式で先に見せ、文章側は「上記の店舗」と
+// 参照する(店名を文章中に列挙すると「文字だらけ」に戻るため、社長指摘〔2026-09-12〕を踏まえて分離)。
+function notFoundBlock() {
   const listedCount = VENUES.filter(v => !v.preopen).length;
-  return `${names}については、当サイトが調査した時点では、上記のような特色を裏付ける外部の紹介記事・口コミは見つかりませんでした。特色がないという意味ではなく、当サイトが確認できていないだけですので、無理に当てはめず率直にお伝えします。これらの店舗も含めた掲載中の全${listedCount}店舗は、この後の「福岡のポーカー店 全一覧」でご覧いただけます。`;
+  return `<div class="gd-cat">
+  <h3>上記のカテゴリーに当てはまらなかった店舗について</h3>
+  ${categoryChips(NOT_FOUND_IDS)}
+  <p class="lead">上記の店舗については、当サイトが調査した時点では、上記のような特色を裏付ける外部の紹介記事・口コミは見つかりませんでした。特色がないという意味ではなく、当サイトが確認できていないだけですので、無理に当てはめず率直にお伝えします。これらの店舗も含めた掲載中の全${listedCount}店舗は、この後の「福岡のポーカー店 全一覧」でご覧いただけます。</p>
+</div>`;
 }
 
 function categoriesBlock() {
-  const cats = CATEGORIES.map(c => `<div class="gd-cat">
-  <h3>${esc(c.heading)}</h3>
-  <p class="lead">${esc(c.lead)}</p>
-  ${categoryStoreList(c.stores)}
-</div>`).join('\n');
+  const cats = CATEGORIES.map(categoryBlock).join('\n');
   return `
 <h2 class="day">福岡のポーカー店を目的別に探す</h2>
-<p class="lead">福岡のポーカー店は、それぞれ得意なスタイルや雰囲気に特徴があります。ここでは、外部のレビューサイト・紹介記事・店舗公式SNS等で語られている内容をもとに、目的別のカテゴリーごとに店舗を整理しました。当サイトが独自に採点・順位付けしたものではなく、あくまで公開されている情報の紹介です。とくに確度が高いとまでは言えない情報には、その旨を記載しています。実際の運営状況・イベント内容は変更されることがあるため、参加前には必ず各店舗の公式サイト・SNS等で最新情報をご確認ください。</p>
+<p class="lead">福岡のポーカー店は、それぞれ得意なスタイルや雰囲気が異なります。ここでは外部のレビューサイト・紹介記事・店舗公式SNS等をもとに、目的別に店舗を整理し、各店の特徴を簡潔な「ポイント」にまとめました。当サイトが独自に採点・順位付けしたものではなく、あくまで公開されている情報の紹介です。とくに確度が高いとまでは言えない情報には「(要確認)」を添えています。実際の運営状況・イベント内容は変更されることがあるため、参加前には必ず各店舗の公式サイト・SNS等で最新情報をご確認ください。</p>
 ${cats}
-<div class="gd-cat">
-  <h3>上記のカテゴリーに当てはまらなかった店舗について</h3>
-  <p class="lead">${notFoundParagraph()}</p>
-</div>`;
+${notFoundBlock()}`;
 }
 
 // ---- 初心者講習明記の6店舗 ----
@@ -306,8 +374,8 @@ function highlightStoresBlock() {
   // 「初心者でも入りやすい」と外部レビューで紹介されている中洲エリアの店舗(前段の
   // カテゴリー「リングゲーム、初心者でも安心して打ちたいなら」で紹介済み)を実データから拾い、
   // 文中で名指しする2店を検算する(手で書いた店名が原稿・実データとズレるのを防ぐ)。
-  const nakasuFriendlyInCategory = CATEGORIES[1].stores
-    .map(s => venueById(s.id))
+  const nakasuFriendlyInCategory = categoryStoreIds(CATEGORIES[1])
+    .map(id => venueById(id))
     .filter(v => v.area === '中洲');
   if (nakasuFriendlyInCategory.length < 2) {
     throw new Error('gen-guide-pages.js: 「中洲エリアについて」の文言が名指しする2店(m HOLD\'EM 中洲・ONECASINO 福岡中洲)を'
@@ -428,7 +496,7 @@ function buildGuidePage() {
 
   const body = `
 <h1>福岡でポーカーを始めるなら — 初心者向け店舗の選び方</h1>
-<p class="lead">福岡県内には、天神・中洲・北九州・久留米などのエリアを中心に${listedCount}店舗のポーカー店があります。数が多い分、「初めてで何も分からないけれど、どの店に行けばいいのか」と迷う方も多いのではないでしょうか。</p>
+<p class="lead">福岡県内には、天神・中洲・北九州・久留米などのエリアを中心に${listedCount}店舗のポーカー店があります。「お店が多すぎて、初心者はどこに行けばいいか分からない」――そう感じる方も多いのではないでしょうか。</p>
 <p class="lead">そこでこのページでは、「トーナメント重視」「リングゲームでじっくり」「お酒も楽しみたい」など、遊び方の目的別に、各店舗がどんな特色で紹介されているかをカテゴリーごとに整理しました。あわせて、公式に初心者講習を掲げている店舗の紹介、エリアごとの探し方、掲載中の全${listedCount}店舗の一覧も用意しています。</p>
 <div class="disclaimer">当サイトは店舗の優劣を独自に採点・ランキング化するものではなく、各店舗の公式情報や、外部のレビューサイト・紹介記事で語られている内容を整理してお伝えするものです。参加前には必ず各店舗の最新の公式情報をご確認ください。<br>${POSITIONING}</div>
 ${categoriesBlock()}
@@ -469,7 +537,7 @@ function verify(files) {
   // 店舗ページへのリンクは「全店舗一覧表(未開店を除く全件)」＋「目的別カテゴリー(6分類、延べ件数。
   // 同じ店舗が複数カテゴリーに登場する分もそのまま数える)」＋「該当なし店舗の案内(NOT_FOUND_IDS)」＋
   // 「初心者講習ハイライト(6件)」＋「『中洲エリアについて』が名指しする2件」の合計。
-  const categoryLinkCount = CATEGORIES.reduce((sum, c) => sum + c.stores.length, 0);
+  const categoryLinkCount = CATEGORIES.reduce((sum, c) => sum + categoryStoreIds(c).length, 0);
   const nakasuMentionLinkCount = 2;
   const expectedVenueLinks = listedCount + categoryLinkCount + NOT_FOUND_IDS.length
     + HIGHLIGHT_STORES.length + nakasuMentionLinkCount;
