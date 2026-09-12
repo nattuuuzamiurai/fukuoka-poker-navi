@@ -160,6 +160,9 @@ jobs:
 
       - name: 差分があればコミット & プッシュ
         if: steps.mode.outputs.dry_run == 'false'
+        env:
+          # 店舗写真フェッチ(tools/fetch-photos.js)用。未設定でも空マップを出力して続行する。
+          HOTPEPPER_API_KEY: ${{ secrets.HOTPEPPER_API_KEY }}
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -178,6 +181,9 @@ jobs:
           fi
           # 再生成・再検査は rebase の後(押す物そのものを検査するため)。
           node tools/validate-data.js .
+          # ホットペッパー グルメの店舗写真を取得(data/photos.generated.json・.gitignore対象)。
+          # gen-venue-pages.js より必ず先に実行する。HOTPEPPER_API_KEY未設定でも正常終了する。
+          node tools/fetch-photos.js
           node tools/gen-venue-pages.js .
           node tools/gen-venue-pages.js . --check
           node tools/gen-area-pages.js .

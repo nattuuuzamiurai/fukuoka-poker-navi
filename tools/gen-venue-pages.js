@@ -147,6 +147,12 @@ const VENUE_CSS = `  .vp-sub{font-size:.9em;color:var(--mut);margin-bottom:14px}
   .vp-sns-btn:hover{border-color:var(--gold)}
   /* Googleマップ埋め込み(依頼2・社長承認済み)。addressUnverified の店には出さない(呼び出し側で制御)。 */
   .vp-map{display:block;width:100%;height:260px;border:0;border-radius:var(--r);box-shadow:var(--sha);margin-bottom:14px}
+  /* ホットペッパー グルメの店舗写真(2026-09-12・PR #91の情報カードの上に配置)。
+     画像は自社保存せずホットリンク(imgfp.hotp.jp を直接参照)。詳細は venueHeroPhotoHtml() のコメント参照。 */
+  .vp-photo{margin:0 0 14px}
+  .vp-photo img{display:block;width:100%;max-height:320px;object-fit:cover;border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha)}
+  .vp-photo-credit{font-size:.78em;color:var(--mut);line-height:1.7;margin:6px 2px 0}
+  .vp-photo-credit a{color:#0e6a72;font-weight:700}
   ul.vp-list{list-style:none;display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 6px}
   ul.vp-list a{display:inline-block;background:var(--sur);border:1px solid var(--bor);border-radius:20px;padding:6px 13px;font-size:.85em;font-weight:700;color:var(--felt);text-decoration:none;box-shadow:var(--sha)}
   /* .vp-cards / .vp-card(「同じエリアの他のポーカー店」「サテライト開催店舗」カード)は
@@ -288,6 +294,53 @@ function venueInfoCardsHtml(v) {
     cards.push(`<div class="vp-info-card">${icon('globe')}<div><b>公式サイト・SNS</b>${websiteLine}${snsRow}</div></div>`);
   }
   return cards.join('\n');
+}
+
+// ============================================================
+// ホットペッパー グルメ Webサービスの店舗写真(2026-09-12・久留米飲み屋ナビからの移植)
+//
+// 【方針・制約(README「法務・信頼性メモ」の考え方を踏襲)】
+// - ホットペッパー グルメの無料APIから取得した店の代表写真1枚を、情報カードの上に表示する。
+//   画像は自サイトに保存せず、提供元(imgfp.hotp.jp)のURLを直接参照する <img>(ホットリンク)。
+//   **画像ファイルのホストは一切なし。**
+// - 対象は fukuoka-venues.json の sources にホットペッパー店舗ID(strJxxxxxx)を持つ店のみ。
+//   その店舗IDでの **ID直接引き** で取得(店名検索の曖昧一致による誤掲載はしない)。
+// - 写真には出典表示「写真提供: ホットペッパーグルメ」と、店舗ページ(urls.pc)への
+//   「もっと見る」リンク、掲載を望まない店舗向けの問い合わせ導線(/contact.html)を必ず添える。
+//
+// 【データの出所】tools/fetch-photos.js が data/photos.generated.json(venue id ->
+// { photo, logo, hpUrl })を生成する。このファイルは .gitignore 対象で、静的ページを
+// 再生成するワークフローの中で毎回このスクリプトより先に fetch-photos.js を走らせて作る。
+// ローカル/CIでフェッチ未実行、またはAPIキー未設定なら空マップ扱いで写真は出さない
+// (既存の情報カード・SNSボタンによる代替導線はそのまま維持されるので画面は崩れない)。
+// ============================================================
+function loadGeneratedPhotos() {
+  const file = path.join(REPO, 'data', 'photos.generated.json');
+  if (!fs.existsSync(file)) return {};
+  try {
+    const data = JSON.parse(fs.readFileSync(file, 'utf-8'));
+    return data && typeof data === 'object' ? data : {};
+  } catch (e) {
+    console.warn(`[warn] photos.generated.json の読み込みに失敗しました: ${e.message}`);
+    return {};
+  }
+}
+
+const VENUE_PHOTOS = loadGeneratedPhotos();
+
+// 店舗写真1枚(ホットペッパー グルメ)。写真が無ければ空文字(=画面は従来通り)。
+// onerror: 画像が読めなかったら figure ごと非表示にする(空クレジットだけ残るのを防ぐ)。
+function venueHeroPhotoHtml(v) {
+  const p = VENUE_PHOTOS[v.id];
+  if (!p || !p.photo) return '';
+  const moreLink = p.hpUrl
+    ? ` <a href="${esc(p.hpUrl)}" target="_blank" rel="nofollow noopener">ホットペッパーで写真をもっと見る ↗</a>`
+    : '';
+  return `
+<figure class="vp-photo">
+  <img src="${esc(p.photo)}" alt="${esc(v.name)}の写真(ホットペッパー グルメ)" loading="lazy" decoding="async" referrerpolicy="no-referrer-when-downgrade" onerror="this.parentNode.style.display='none'">
+  <figcaption class="vp-photo-credit">写真提供: ホットペッパーグルメ(提供元のサーバー上の画像を直接参照して表示しています。当サイトには保存していません)${moreLink}<br>掲載を希望されない店舗様は<a href="/contact.html">お問い合わせフォーム</a>からご連絡ください。速やかに対応いたします。</figcaption>
+</figure>`;
 }
 
 // ---- FST 5.0 サテライトを「現在開催中」と出してよいかの判定(依頼2) ----
@@ -523,7 +576,7 @@ ${sameAreaShown.map(x => `  <a class="vp-card" href="/venues/${x.slug}/">
 
   const body = `
 <h1>${esc(v.name)}</h1>
-<p class="vp-sub">${sub}</p>${badgesBlock}
+<p class="vp-sub">${sub}</p>${badgesBlock}${venueHeroPhotoHtml(v)}
 <div class="vp-info-grid">
 ${venueInfoCardsHtml(v)}
 </div>${mapBlock}${fstSatBlock}${pastSatBlock}
