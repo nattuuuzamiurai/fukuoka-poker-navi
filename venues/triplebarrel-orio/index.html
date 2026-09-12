@@ -186,7 +186,22 @@
   .vp-tags{color:var(--mut);font-size:.9em}
   .vp-warn{color:var(--red);font-size:.9em;font-weight:700}
   .vp-recur{display:inline-block;background:#eef3f1;border:1px solid var(--bor);color:var(--felt);font-size:.8em;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:5px}
-  .evt-meta a{color:#0e6a72;font-weight:700}
+  /* 店舗情報カード(2026-09-12改修・依頼1)。従来の .evt-meta(テキスト羅列)を置き換える。
+     .evt-meta 自体は大会ページ(gen-event-pages.js)と共用の site-shell.js BASE_CSS 側にあり、
+     そちらは変更しない(店舗ページ専用の見た目なのでここ(VENUE_CSS)に閉じる)。 */
+  .vp-badges{margin-bottom:10px}
+  .vp-badge{display:inline-block;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#3a2a06;font-weight:800;font-size:.8em;padding:4px 12px;border-radius:20px;margin:0 6px 6px 0}
+  .vp-info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-bottom:14px}
+  .vp-info-card{display:flex;align-items:flex-start;gap:10px;background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:12px 13px;font-size:.88em;line-height:1.65}
+  .vp-info-ic{flex:0 0 auto;width:21px;height:21px;margin-top:1px;color:var(--gold)}
+  .vp-info-ic svg{display:block;width:100%;height:100%}
+  .vp-info-card b{display:block;color:var(--felt);font-size:.86em;margin-bottom:2px}
+  .vp-info-card a{color:#0e6a72;font-weight:700;word-break:break-all}
+  .vp-sns-btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:5px}
+  .vp-sns-btn{display:inline-block;background:var(--bg);border:1px solid var(--bor);border-radius:16px;padding:4px 11px;font-size:.85em;font-weight:700;color:var(--felt);text-decoration:none}
+  .vp-sns-btn:hover{border-color:var(--gold)}
+  /* Googleマップ埋め込み(依頼2・社長承認済み)。addressUnverified の店には出さない(呼び出し側で制御)。 */
+  .vp-map{display:block;width:100%;height:260px;border:0;border-radius:var(--r);box-shadow:var(--sha);margin-bottom:14px}
   ul.vp-list{list-style:none;display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 6px}
   ul.vp-list a{display:inline-block;background:var(--sur);border:1px solid var(--bor);border-radius:20px;padding:6px 13px;font-size:.85em;font-weight:700;color:var(--felt);text-decoration:none;box-shadow:var(--sha)}
   /* .vp-cards / .vp-card(「同じエリアの他のポーカー店」「サテライト開催店舗」カード)は
@@ -209,15 +224,15 @@
 <main class="wrap"><div class="bc-wrap"><nav class="breadcrumb" aria-label="パンくずリスト"><ol><li><a href="https://fukuokapoker.com/">ふくおかポーカーナビ</a></li><li><a href="https://fukuokapoker.com/#areaNav">エリアから探す</a></li><li><a href="https://fukuokapoker.com/areas/kitakyushu/">北九州</a></li><li><span aria-current="page">TripleBarrel 折尾店</span></li></ol></nav></div>
 <h1>TripleBarrel 折尾店</h1>
 <p class="vp-sub">北九州のポーカースポット（JR折尾駅 徒歩4分（西日本シティ銀行の隣）） — トーナメント日程・バイイン・アクセス</p>
-<div class="evt-meta">
-  <b>エリア</b>　北九州<br>
-  <b>住所</b>　福岡県北九州市八幡西区折尾1丁目14-10 2F<br>
-  <b>アクセス</b>　JR折尾駅 徒歩4分（西日本シティ銀行の隣）<br>
-  <b>営業時間</b>　18:30〜翌1:00<br>
-  <b>電話</b>　<a href="tel:08033748686">080-3374-8686</a><br>
-  <b>公式サイト</b>　<a href="https://triplebarrel.jimdofree.com/" target="_blank" rel="noopener">https://triplebarrel.jimdofree.com/</a><br>
-  <b>SNS</b>　<a href="https://x.com/triple_orio" target="_blank" rel="noopener">X</a>　／　<a href="https://www.instagram.com/triple_orio/" target="_blank" rel="noopener">Instagram</a>　／　<a href="https://line.me/ti/g2/63zIY0X8gSNxLGGI1maPFT-hTd6WuON4UWwvZg" target="_blank" rel="noopener">公式LINE</a>
+<div class="vp-badges"><span class="vp-badge">初心者講習あり</span></div>
+<div class="vp-info-grid">
+<div class="vp-info-card"><span class="vp-info-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.3-7-11a7 7 0 0 1 14 0c0 4.7-7 11-7 11z"/><circle cx="12" cy="10" r="2.4"/></svg></span><div><b>住所</b>福岡県北九州市八幡西区折尾1丁目14-10 2F</div></div>
+<div class="vp-info-card"><span class="vp-info-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="12" rx="3"/><path d="M5 11h14"/><path d="M8 19l-2 2M16 19l2 2"/><circle cx="8.5" cy="14.3" r=".55" fill="currentColor" stroke="none"/><circle cx="15.5" cy="14.3" r=".55" fill="currentColor" stroke="none"/></svg></span><div><b>アクセス</b>JR折尾駅 徒歩4分（西日本シティ銀行の隣）</div></div>
+<div class="vp-info-card"><span class="vp-info-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.2V12l3.3 2"/></svg></span><div><b>営業時間</b>18:30〜翌1:00</div></div>
+<div class="vp-info-card"><span class="vp-info-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 5c.5 1.6 1.1 3 1.9 4.2.4.7.3 1.6-.3 2.2l-1.2 1.2a13.6 13.6 0 0 0 5.5 5.5l1.2-1.2c.6-.6 1.5-.7 2.2-.3 1.2.8 2.6 1.4 4.2 1.9.9.3 1.4 1.2 1 2.1l-.7 1.8c-.3.8-1.1 1.3-1.9 1.1C9 21.4 2.6 15 1.5 6.8c-.1-.8.4-1.6 1.1-1.9l1.8-.7c.9-.3 1.8.1 2.1 1z"/></svg></span><div><b>電話</b><a href="tel:08033748686">080-3374-8686</a></div></div>
+<div class="vp-info-card"><span class="vp-info-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.4 2.5 3.7 5.7 3.7 9s-1.3 6.5-3.7 9c-2.4-2.5-3.7-5.7-3.7-9S9.6 5.5 12 3z"/></svg></span><div><b>公式サイト・SNS</b><a href="https://triplebarrel.jimdofree.com/" target="_blank" rel="noopener">https://triplebarrel.jimdofree.com/</a><div class="vp-sns-btns"><a class="vp-sns-btn" href="https://x.com/triple_orio" target="_blank" rel="noopener">X</a><a class="vp-sns-btn" href="https://www.instagram.com/triple_orio/" target="_blank" rel="noopener">Instagram</a><a class="vp-sns-btn" href="https://line.me/ti/g2/63zIY0X8gSNxLGGI1maPFT-hTd6WuON4UWwvZg" target="_blank" rel="noopener">公式LINE</a></div></div></div>
 </div>
+<iframe class="vp-map" src="https://www.google.com/maps?q=%E7%A6%8F%E5%B2%A1%E7%9C%8C%E5%8C%97%E4%B9%9D%E5%B7%9E%E5%B8%82%E5%85%AB%E5%B9%A1%E8%A5%BF%E5%8C%BA%E6%8A%98%E5%B0%BE1%E4%B8%81%E7%9B%AE14-10%202F&amp;output=embed" title="TripleBarrel 折尾店の地図" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
 <div class="disclaimer"><b>TripleBarrel 折尾店について</b>　2025年1月オープン、折尾エリア初のポーカー店とされる。掲載中のTripleBarrel小倉店の姉妹店。ボードゲーム多数・初心者講習あり。営業時間は第三者媒体情報のため要確認。<br>当サイトは店舗が公開している情報を集約している媒体で、この店舗の運営者ではありません。日程・料金・営業状況は変更されることがあるため、参加前に必ず店舗の公式情報・SNSをご確認ください。主な情報源: <a href="https://x.com/triple_orio" target="_blank" rel="noopener">X</a>。<br>当サイトは店舗・主催者が公開している情報を集約する媒体であり、賭博行為の勧誘・仲介を行うものではありません。賞品・プライズの取扱いは各店舗・主催者の規定によります。</div>
 <a class="cta" href="/#venue/v40">▶ 月を切り替えて日程を見る<small>サイト内の月別カレンダー（前月・翌月に移動できます）</small></a>
 <h2 class="vp-sec" id="vp-sched-title">トーナメント日程（2026年8月〜9月の掲載分）</h2>

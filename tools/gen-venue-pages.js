@@ -131,7 +131,22 @@ const VENUE_CSS = `  .vp-sub{font-size:.9em;color:var(--mut);margin-bottom:14px}
   .vp-tags{color:var(--mut);font-size:.9em}
   .vp-warn{color:var(--red);font-size:.9em;font-weight:700}
   .vp-recur{display:inline-block;background:#eef3f1;border:1px solid var(--bor);color:var(--felt);font-size:.8em;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:5px}
-  .evt-meta a{color:#0e6a72;font-weight:700}
+  /* 店舗情報カード(2026-09-12改修・依頼1)。従来の .evt-meta(テキスト羅列)を置き換える。
+     .evt-meta 自体は大会ページ(gen-event-pages.js)と共用の site-shell.js BASE_CSS 側にあり、
+     そちらは変更しない(店舗ページ専用の見た目なのでここ(VENUE_CSS)に閉じる)。 */
+  .vp-badges{margin-bottom:10px}
+  .vp-badge{display:inline-block;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#3a2a06;font-weight:800;font-size:.8em;padding:4px 12px;border-radius:20px;margin:0 6px 6px 0}
+  .vp-info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-bottom:14px}
+  .vp-info-card{display:flex;align-items:flex-start;gap:10px;background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:12px 13px;font-size:.88em;line-height:1.65}
+  .vp-info-ic{flex:0 0 auto;width:21px;height:21px;margin-top:1px;color:var(--gold)}
+  .vp-info-ic svg{display:block;width:100%;height:100%}
+  .vp-info-card b{display:block;color:var(--felt);font-size:.86em;margin-bottom:2px}
+  .vp-info-card a{color:#0e6a72;font-weight:700;word-break:break-all}
+  .vp-sns-btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:5px}
+  .vp-sns-btn{display:inline-block;background:var(--bg);border:1px solid var(--bor);border-radius:16px;padding:4px 11px;font-size:.85em;font-weight:700;color:var(--felt);text-decoration:none}
+  .vp-sns-btn:hover{border-color:var(--gold)}
+  /* Googleマップ埋め込み(依頼2・社長承認済み)。addressUnverified の店には出さない(呼び出し側で制御)。 */
+  .vp-map{display:block;width:100%;height:260px;border:0;border-radius:var(--r);box-shadow:var(--sha);margin-bottom:14px}
   ul.vp-list{list-style:none;display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 6px}
   ul.vp-list a{display:inline-block;background:var(--sur);border:1px solid var(--bor);border-radius:20px;padding:6px 13px;font-size:.85em;font-weight:700;color:var(--felt);text-decoration:none;box-shadow:var(--sha)}
   /* .vp-cards / .vp-card(「同じエリアの他のポーカー店」「サテライト開催店舗」カード)は
@@ -152,6 +167,47 @@ function addressParts(address) {
   const m = a.match(/^(.+?[市郡])/);
   if (!m) return { street: a, locality: null };
   return { street: a.slice(m[1].length), locality: m[1] };
+}
+
+// ---- 情報カードのアイコン(依頼1・2026-09-12) ----
+// ストローク系のインラインSVG(絵文字は使わない・社長指示)。ブランドロゴ(X/Instagram等)は
+// 商標・著作権を避けるため模写せず、どの項目も同じ「汎用ピクトグラム」にしてある
+// (SNSは後述のボタン側がテキストでプラットフォーム名を示すので、アイコン単体で
+// ブランドを表現する必要が無い)。
+const ICON_ATTR = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"';
+const ICONS = {
+  pin: `<svg ${ICON_ATTR}><path d="M12 21s-7-6.3-7-11a7 7 0 0 1 14 0c0 4.7-7 11-7 11z"/><circle cx="12" cy="10" r="2.4"/></svg>`,
+  access: `<svg ${ICON_ATTR}><rect x="5" y="3" width="14" height="12" rx="3"/><path d="M5 11h14"/><path d="M8 19l-2 2M16 19l2 2"/><circle cx="8.5" cy="14.3" r=".55" fill="currentColor" stroke="none"/><circle cx="15.5" cy="14.3" r=".55" fill="currentColor" stroke="none"/></svg>`,
+  clock: `<svg ${ICON_ATTR}><circle cx="12" cy="12" r="9"/><path d="M12 7.2V12l3.3 2"/></svg>`,
+  phone: `<svg ${ICON_ATTR}><path d="M4.5 5c.5 1.6 1.1 3 1.9 4.2.4.7.3 1.6-.3 2.2l-1.2 1.2a13.6 13.6 0 0 0 5.5 5.5l1.2-1.2c.6-.6 1.5-.7 2.2-.3 1.2.8 2.6 1.4 4.2 1.9.9.3 1.4 1.2 1 2.1l-.7 1.8c-.3.8-1.1 1.3-1.9 1.1C9 21.4 2.6 15 1.5 6.8c-.1-.8.4-1.6 1.1-1.9l1.8-.7c.9-.3 1.8.1 2.1 1z"/></svg>`,
+  globe: `<svg ${ICON_ATTR}><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.4 2.5 3.7 5.7 3.7 9s-1.3 6.5-3.7 9c-2.4-2.5-3.7-5.7-3.7-9S9.6 5.5 12 3z"/></svg>`
+};
+function icon(name) { return `<span class="vp-info-ic">${ICONS[name]}</span>`; }
+
+// ---- 初心者講習バッジ(依頼4) ----
+// 【noteの自由文はパースしない、の例外】このバッジに限っては社長指示で「既存のnoteデータから
+// 抽出してよい」となっている(新しい事実を作り出すのではなく、既に書かれている文言の有無を
+// 見た目で目立たせるだけ)。抽出結果は「あり/なし」の2値のみで、講習の内容(無料か・毎日か等)を
+// 要約・断定しない(要約するとnoteの原文と表現がズレて情報源としての一次性が崩れる)。
+function beginnerBadge(v) {
+  const note = v.note || '';
+  if (/初心者講習/.test(note)) return '初心者講習あり';
+  if (/初心者/.test(note)) return '初心者歓迎';
+  return null;
+}
+
+// ---- Googleマップ埋め込み(依頼2・社長承認済み) ----
+// APIキー不要の /maps?q=<住所>&output=embed 形式。
+// ★ addressUnverified の店・住所が無い店には出さない(呼び出し側 buildVenue が判定する)。
+//   誤った場所の地図を確定情報として出すリスクを避けるため(法務・信頼性メモと同じ考え方)。
+// ★ 緯度経度(lat/lng)は2026-09-12時点で main に未マージ(PR #89 が open)のため、
+//   ここでは住所文字列から組み立てる。将来 VENUES に lat/lng が入ったら、そちらを
+//   優先するよう呼び出し側を直すこと(住所の文字列ゆれより地理的に正確なため)。
+function mapEmbedUrl(v) {
+  if (v.lat != null && v.lng != null) {
+    return `https://www.google.com/maps?q=${v.lat},${v.lng}&output=embed`;
+  }
+  return `https://www.google.com/maps?q=${encodeURIComponent(v.address)}&output=embed`;
 }
 
 function venueJsonLd(v) {
@@ -193,28 +249,45 @@ function venueJsonLd(v) {
   //   何曜日まで同じ時間が続くのかは確認できていない。ここで「毎日この時間」と構造化して
   //   Google に渡すと、店舗からの直接申告(開店・閉店時刻のみ)を超える主張(曜日面の断定)を
   //   当サイトが作り出すことになる。法務・信頼性メモの「留保付きで載せている値は
-  //   構造化データに出さない」と同じ理由で、本文表示(metaRows)に留める。
+  //   構造化データに出さない」と同じ理由で、本文表示(venueInfoCardsHtml)に留める。
   //   定休日等が別途確認できたら、このコメントごと再検討すること。
   return j;
 }
 
-function metaRows(v) {
-  const rows = [];
-  rows.push(`<b>エリア</b>　${esc(v.area)}`);
-  if (v.address) rows.push(`<b>住所</b>　${esc(v.address)}`);
-  if (v.access) rows.push(`<b>アクセス</b>　${esc(v.access)}`);
+// ---- 情報カード本体(依頼1) ----
+// 【エリアをカードに出さない理由】h1直下の .vp-sub に既にエリア(＋アクセス)を出しているため、
+//   同じ情報をもう一度カードで繰り返さない(旧 metaRows は毎回「エリア」行を出していたが、
+//   これは重複表示だった)。
+// 【公式サイトとSNSを1枚のカードにまとめる理由】依頼1の項目列挙(「住所・アクセス・営業時間・
+//   公式サイト/SNS」)が4カテゴリなので、それに合わせる。SNSは依頼3のフォールバック
+//   (「公式サイト・SNSへの目立つリンクボタンで代替してよい」)を兼ね、ボタン型で見せる。
+function venueInfoCardsHtml(v) {
+  const cards = [];
+  if (v.address) {
+    cards.push(`<div class="vp-info-card">${icon('pin')}<div><b>住所</b>${esc(v.address)}</div></div>`);
+  }
+  if (v.access) {
+    cards.push(`<div class="vp-info-card">${icon('access')}<div><b>アクセス</b>${esc(v.access)}</div></div>`);
+  }
   // hours(営業時間)は店舗からの直接申告等、分かっている店だけ埋まる自由記述(社長指示・2026-09-09)。
-  // 空文字列の店では他の項目(住所・アクセス等)と同じく行ごと出さない。
-  if (v.hours) rows.push(`<b>営業時間</b>　${esc(v.hours)}`);
-  if (v.tel) rows.push(`<b>電話</b>　<a href="tel:${esc(v.tel.replace(/[^0-9+]/g, ''))}">${esc(v.tel)}</a>`);
-  if (v.website) rows.push(`<b>公式サイト</b>　<a href="${esc(v.website)}" target="_blank" rel="noopener">${esc(v.website)}</a>`);
+  // 空文字列の店では他の項目(住所・アクセス等)と同じくカードごと出さない。
+  if (v.hours) {
+    cards.push(`<div class="vp-info-card">${icon('clock')}<div><b>営業時間</b>${esc(v.hours)}</div></div>`);
+  }
+  if (v.tel) {
+    cards.push(`<div class="vp-info-card">${icon('phone')}<div><b>電話</b><a href="tel:${esc(v.tel.replace(/[^0-9+]/g, ''))}">${esc(v.tel)}</a></div></div>`);
+  }
   const sns = [];
-  if (v.x) sns.push(`<a href="${esc(v.x)}" target="_blank" rel="noopener">X</a>`);
-  if (v.instagram) sns.push(`<a href="${esc(v.instagram)}" target="_blank" rel="noopener">Instagram</a>`);
-  if (v.threads) sns.push(`<a href="${esc(v.threads)}" target="_blank" rel="noopener">Threads</a>`);
-  if (v.line) sns.push(`<a href="${esc(v.line)}" target="_blank" rel="noopener">公式LINE</a>`);
-  if (sns.length) rows.push(`<b>SNS</b>　${sns.join('　／　')}`);
-  return rows.join('<br>\n  ');
+  if (v.x) sns.push(`<a class="vp-sns-btn" href="${esc(v.x)}" target="_blank" rel="noopener">X</a>`);
+  if (v.instagram) sns.push(`<a class="vp-sns-btn" href="${esc(v.instagram)}" target="_blank" rel="noopener">Instagram</a>`);
+  if (v.threads) sns.push(`<a class="vp-sns-btn" href="${esc(v.threads)}" target="_blank" rel="noopener">Threads</a>`);
+  if (v.line) sns.push(`<a class="vp-sns-btn" href="${esc(v.line)}" target="_blank" rel="noopener">公式LINE</a>`);
+  if (v.website || sns.length) {
+    const websiteLine = v.website ? `<a href="${esc(v.website)}" target="_blank" rel="noopener">${esc(v.website)}</a>` : '';
+    const snsRow = sns.length ? `<div class="vp-sns-btns">${sns.join('')}</div>` : '';
+    cards.push(`<div class="vp-info-card">${icon('globe')}<div><b>公式サイト・SNS</b>${websiteLine}${snsRow}</div></div>`);
+  }
+  return cards.join('\n');
 }
 
 // ---- FST 5.0 サテライトを「現在開催中」と出してよいかの判定(依頼2) ----
@@ -413,6 +486,17 @@ ${sameAreaShown.map(x => `  <a class="vp-card" href="/venues/${x.slug}/">
     ? `主な情報源: <a href="${esc(v.sourceUrl)}" target="_blank" rel="noopener">${esc(v.sourceLabel)}</a>。`
     : '';
 
+  // 初心者講習バッジ(依頼4)。
+  const bBadge = beginnerBadge(v);
+  const badgesBlock = bBadge ? `
+<div class="vp-badges"><span class="vp-badge">${esc(bBadge)}</span></div>` : '';
+
+  // Googleマップ埋め込み(依頼2・社長承認済み)。addressUnverified の店・住所が無い店には出さない
+  // (法務・信頼性メモ「留保付きで載せている値は構造化データに出さない」と同じ考え方 ＝
+  //  確度の低い住所を確定情報として地図に描くと、誤った場所を断定して示すことになる)。
+  const mapBlock = (v.address && !v.addressUnverified) ? `
+<iframe class="vp-map" src="${esc(mapEmbedUrl(v))}" title="${esc(v.name)}の地図" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>` : '';
+
   // 日程表の見出しと但し書き。3通りに分かれる。
   // 【原則】静的HTMLは再生成しない限り何ヶ月でもそのまま残る。だからここに書く文は
   //   「時間が経っても嘘にならない」ものでなければならない。
@@ -439,10 +523,10 @@ ${sameAreaShown.map(x => `  <a class="vp-card" href="/venues/${x.slug}/">
 
   const body = `
 <h1>${esc(v.name)}</h1>
-<p class="vp-sub">${sub}</p>
-<div class="evt-meta">
-  ${metaRows(v)}
-</div>${fstSatBlock}${pastSatBlock}
+<p class="vp-sub">${sub}</p>${badgesBlock}
+<div class="vp-info-grid">
+${venueInfoCardsHtml(v)}
+</div>${mapBlock}${fstSatBlock}${pastSatBlock}
 <div class="disclaimer">${noteBlock}当サイトは店舗が公開している情報を集約している媒体で、この店舗の運営者ではありません。日程・料金・営業状況は変更されることがあるため、参加前に必ず店舗の公式情報・SNSをご確認ください。${sourceBlock}<br>${POSITIONING}</div>
 <a class="cta" href="/#venue/${esc(v.id)}">▶ 月を切り替えて日程を見る<small>サイト内の月別カレンダー（前月・翌月に移動できます）</small></a>
 <h2 class="vp-sec" id="vp-sched-title">${schedTitle}</h2>

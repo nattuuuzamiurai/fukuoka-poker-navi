@@ -177,7 +177,22 @@
   .vp-tags{color:var(--mut);font-size:.9em}
   .vp-warn{color:var(--red);font-size:.9em;font-weight:700}
   .vp-recur{display:inline-block;background:#eef3f1;border:1px solid var(--bor);color:var(--felt);font-size:.8em;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:5px}
-  .evt-meta a{color:#0e6a72;font-weight:700}
+  /* 店舗情報カード(2026-09-12改修・依頼1)。従来の .evt-meta(テキスト羅列)を置き換える。
+     .evt-meta 自体は大会ページ(gen-event-pages.js)と共用の site-shell.js BASE_CSS 側にあり、
+     そちらは変更しない(店舗ページ専用の見た目なのでここ(VENUE_CSS)に閉じる)。 */
+  .vp-badges{margin-bottom:10px}
+  .vp-badge{display:inline-block;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#3a2a06;font-weight:800;font-size:.8em;padding:4px 12px;border-radius:20px;margin:0 6px 6px 0}
+  .vp-info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-bottom:14px}
+  .vp-info-card{display:flex;align-items:flex-start;gap:10px;background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:12px 13px;font-size:.88em;line-height:1.65}
+  .vp-info-ic{flex:0 0 auto;width:21px;height:21px;margin-top:1px;color:var(--gold)}
+  .vp-info-ic svg{display:block;width:100%;height:100%}
+  .vp-info-card b{display:block;color:var(--felt);font-size:.86em;margin-bottom:2px}
+  .vp-info-card a{color:#0e6a72;font-weight:700;word-break:break-all}
+  .vp-sns-btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:5px}
+  .vp-sns-btn{display:inline-block;background:var(--bg);border:1px solid var(--bor);border-radius:16px;padding:4px 11px;font-size:.85em;font-weight:700;color:var(--felt);text-decoration:none}
+  .vp-sns-btn:hover{border-color:var(--gold)}
+  /* Googleマップ埋め込み(依頼2・社長承認済み)。addressUnverified の店には出さない(呼び出し側で制御)。 */
+  .vp-map{display:block;width:100%;height:260px;border:0;border-radius:var(--r);box-shadow:var(--sha);margin-bottom:14px}
   ul.vp-list{list-style:none;display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 6px}
   ul.vp-list a{display:inline-block;background:var(--sur);border:1px solid var(--bor);border-radius:20px;padding:6px 13px;font-size:.85em;font-weight:700;color:var(--felt);text-decoration:none;box-shadow:var(--sha)}
   /* .vp-cards / .vp-card(「同じエリアの他のポーカー店」「サテライト開催店舗」カード)は
@@ -200,14 +215,14 @@
 <main class="wrap"><div class="bc-wrap"><nav class="breadcrumb" aria-label="パンくずリスト"><ol><li><a href="https://fukuokapoker.com/">ふくおかポーカーナビ</a></li><li><a href="https://fukuokapoker.com/#areaNav">エリアから探す</a></li><li><span aria-current="page">POKER Studio DEEP BLUE</span></li></ol></nav></div>
 <h1>POKER Studio DEEP BLUE</h1>
 <p class="vp-sub">京築のポーカースポット（JR行橋駅 徒歩約4分） — トーナメント日程・バイイン・アクセス</p>
-<div class="evt-meta">
-  <b>エリア</b>　京築<br>
-  <b>住所</b>　福岡県行橋市中央3丁目5-36 田町ビル3F<br>
-  <b>アクセス</b>　JR行橋駅 徒歩約4分<br>
-  <b>営業時間</b>　19:00〜24:00<br>
-  <b>公式サイト</b>　<a href="https://www.poker-deepblue.com/" target="_blank" rel="noopener">https://www.poker-deepblue.com/</a><br>
-  <b>SNS</b>　<a href="https://www.instagram.com/deepblue824/" target="_blank" rel="noopener">Instagram</a>
+<div class="vp-badges"><span class="vp-badge">初心者歓迎</span></div>
+<div class="vp-info-grid">
+<div class="vp-info-card"><span class="vp-info-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.3-7-11a7 7 0 0 1 14 0c0 4.7-7 11-7 11z"/><circle cx="12" cy="10" r="2.4"/></svg></span><div><b>住所</b>福岡県行橋市中央3丁目5-36 田町ビル3F</div></div>
+<div class="vp-info-card"><span class="vp-info-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="12" rx="3"/><path d="M5 11h14"/><path d="M8 19l-2 2M16 19l2 2"/><circle cx="8.5" cy="14.3" r=".55" fill="currentColor" stroke="none"/><circle cx="15.5" cy="14.3" r=".55" fill="currentColor" stroke="none"/></svg></span><div><b>アクセス</b>JR行橋駅 徒歩約4分</div></div>
+<div class="vp-info-card"><span class="vp-info-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.2V12l3.3 2"/></svg></span><div><b>営業時間</b>19:00〜24:00</div></div>
+<div class="vp-info-card"><span class="vp-info-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.4 2.5 3.7 5.7 3.7 9s-1.3 6.5-3.7 9c-2.4-2.5-3.7-5.7-3.7-9S9.6 5.5 12 3z"/></svg></span><div><b>公式サイト・SNS</b><a href="https://www.poker-deepblue.com/" target="_blank" rel="noopener">https://www.poker-deepblue.com/</a><div class="vp-sns-btns"><a class="vp-sns-btn" href="https://www.instagram.com/deepblue824/" target="_blank" rel="noopener">Instagram</a></div></div></div>
 </div>
+<iframe class="vp-map" src="https://www.google.com/maps?q=%E7%A6%8F%E5%B2%A1%E7%9C%8C%E8%A1%8C%E6%A9%8B%E5%B8%82%E4%B8%AD%E5%A4%AE3%E4%B8%81%E7%9B%AE5-36%20%E7%94%B0%E7%94%BA%E3%83%93%E3%83%AB3F&amp;output=embed" title="POKER Studio DEEP BLUEの地図" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
 <div class="disclaimer"><b>POKER Studio DEEP BLUEについて</b>　2025年5月オープン。公式サイトが「行橋初のカジノ専門店」を掲げる。公式サイトによると風俗営業5号許可を取得済みで、チップの換金・景品交換は一切なし。トーナメント定期開催（日程はInstagramで告知）。初心者プランあり。<br>当サイトは店舗が公開している情報を集約している媒体で、この店舗の運営者ではありません。日程・料金・営業状況は変更されることがあるため、参加前に必ず店舗の公式情報・SNSをご確認ください。主な情報源: <a href="https://www.instagram.com/deepblue824/" target="_blank" rel="noopener">Instagram</a>。<br>当サイトは店舗・主催者が公開している情報を集約する媒体であり、賭博行為の勧誘・仲介を行うものではありません。賞品・プライズの取扱いは各店舗・主催者の規定によります。</div>
 <a class="cta" href="/#venue/v41">▶ 月を切り替えて日程を見る<small>サイト内の月別カレンダー（前月・翌月に移動できます）</small></a>
 <h2 class="vp-sec" id="vp-sched-title">トーナメント日程（毎週の定期開催）</h2>
