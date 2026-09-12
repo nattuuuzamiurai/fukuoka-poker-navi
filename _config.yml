@@ -57,6 +57,7 @@ exclude:
   - admin.html
   - dev-server.py
   - ogp-design-spec.md
+  - guide-beginner-content-draft.md
 
   # 自動化スクリプト一式(CIワークフローがリポジトリ内から直接実行するため
   # ファイル自体は削除できない。配信からのみ除外する)
