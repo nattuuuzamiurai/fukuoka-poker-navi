@@ -74,17 +74,29 @@ test('申し送り4: 第4章(専門家の見解にとどまる論点)は .wc-opi
   assert.match(ch4Section, /専門家の見解の紹介にとどまります/);
 });
 
+// 正規表現の特殊文字をエスケープする(標準的なイディオム)。
+// ★以前このテストはエスケープの文字クラスを書き間違えており(`[.*+?^${}()|[\\]\\\\]`)、
+//   実質どの文字もエスケープしないまま通っていた。"."/"?" はエスケープを誤ってもURL中では
+//   たまたまマッチが成立してしまう(quantifier化しても結果的に一致する)ため見た目には気づけず、
+//   クエリに"?"を含む時事通信のURLを足したときに初めて不一致で失敗して発覚した。
+function escapeRegExp(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 test('申し送り5: 外部リンクのrel属性が既存サイトのポリシーどおりに分かれている', () => {
   const html = buildPage(REPO);
   // 一次情報・客観報道はrel="noopener"のみ(nofollowを付けない)
+  // ★時事通信のURLはクエリに"&"を含むため、実際のHTML上では"&amp;"にエスケープされている。
+  //   href文字列はHTMLエスケープ後の値でマッチさせる(生のURLのままだと一致しない)。
   const primarySources = [
     'https://news.yahoo.co.jp/articles/837533c37fd47e502f542257367b3938745e4bdb',
+    'https://www.jiji.com/jc/article?k=2025122200659&amp;g=soc',
     'https://www.nikkei.com/article/DGXZQOUD22AXX0S5A221C2000000/',
     'https://www.npa.go.jp/bureau/safetylife/hoan/yugijoueigilyou.html',
     'https://pokerguild.jp/pokerweb/coin_pokerroom/'
   ];
   for (const url of primarySources) {
-    const re = new RegExp(`href="${url.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&')}"[^>]*rel="([^"]*)"`);
+    const re = new RegExp(`href="${escapeRegExp(url)}"[^>]*rel="([^"]*)"`);
     const m = html.match(re);
     assert.ok(m, `${url} へのリンクが見つかりません`);
     assert.equal(m[1], 'noopener', `${url} は rel="noopener" のみを期待(実際: ${m[1]})`);
@@ -98,7 +110,7 @@ test('申し送り5: 外部リンクのrel属性が既存サイトのポリシ�
     'https://dime.jp/genre/2071156/'
   ];
   for (const url of secondarySources) {
-    const re = new RegExp(`href="${url.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&')}"[^>]*rel="([^"]*)"`);
+    const re = new RegExp(`href="${escapeRegExp(url)}"[^>]*rel="([^"]*)"`);
     const m = html.match(re);
     assert.ok(m, `${url} へのリンクが見つかりません`);
     assert.equal(m[1], 'nofollow noopener', `${url} は rel="nofollow noopener" を期待(実際: ${m[1]})`);
