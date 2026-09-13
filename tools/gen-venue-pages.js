@@ -139,6 +139,9 @@ const VENUE_CSS = `  .vp-sub{font-size:.9em;color:var(--mut);margin-bottom:14px}
   /* リング開催ブロック */
   .vp-ring{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:13px 15px;margin-bottom:14px;font-size:.9em;line-height:1.8}
   .vp-ring b{color:var(--felt)}
+  /* 閉店の可能性がある店の注記(2026-09-13新設・"closed":trueの店だけ)。preopen("オープン予定")の
+     逆方向。h1直下に目立つ形で出す(.vp-sub〔灰色の小さい文字〕だけでは目立たないため)。 */
+  .vp-closed-notice{background:#fdecea;border:1px solid var(--red);border-radius:var(--r);box-shadow:var(--sha);padding:12px 15px;margin-bottom:14px;font-size:.9em;line-height:1.8;color:var(--red);font-weight:700}
   /* .vp-fst(FSTサテライト開催中の告知)は site-shell.js の BASE_CSS 側に移設した
      (2026-08-28。エリアページでも使うため。複製すると片方だけ直して片方を忘れる)。 */
 `;
@@ -470,6 +473,11 @@ ${sameAreaShown.map(x => `  <a class="vp-card" href="/venues/${x.slug}/">
   const badgesBlock = bBadge ? `
 <div class="vp-badges"><span class="vp-badge">${esc(bBadge)}</span></div>` : '';
 
+  // 閉店の可能性がある店の注記(2026-09-13新設)。★断定しない(一次情報の裏取りが未了のため)。
+  // note 側のヘッジ(addressUnverified 等)と同じトーンで「可能性があります(要確認)」に留める。
+  const closedNoticeBlock = v.closed ? `
+<div class="vp-closed-notice">⚠ この店舗は閉店した可能性があります(要確認)。最新の営業状況は店舗の公式情報・SNS等でご確認ください。</div>` : '';
+
   // Googleマップ埋め込み(依頼2・社長承認済み)。addressUnverified の店・住所が無い店には出さない
   // (法務・信頼性メモ「留保付きで載せている値は構造化データに出さない」と同じ考え方 ＝
   //  確度の低い住所を確定情報として地図に描くと、誤った場所を断定して示すことになる)。
@@ -502,7 +510,7 @@ ${sameAreaShown.map(x => `  <a class="vp-card" href="/venues/${x.slug}/">
 
   const body = `
 <h1>${esc(v.name)}</h1>
-<p class="vp-sub">${sub}</p>${badgesBlock}${venueHeroPhotoHtml(v)}
+<p class="vp-sub">${sub}</p>${closedNoticeBlock}${badgesBlock}${venueHeroPhotoHtml(v)}
 <div class="vp-info-grid">
 ${venueInfoCardsHtml(v)}
 </div>${mapBlock}${fstSatBlock}${pastSatBlock}
@@ -559,8 +567,9 @@ ${SCHEDULE_JS}
 
   return pageHead({
     title, desc, canonical,
-    // 未開店の店では LocalBusiness を出さない(営業中の事業所として宣言しないため)。
-    jsonld: v.preopen ? null : venueJsonLd(v),
+    // 未開店の店・閉店した可能性がある店(2026-09-13追加)では LocalBusiness を出さない
+    // (営業中の事業所として構造化データで断定しないため)。
+    jsonld: (v.preopen || v.closed) ? null : venueJsonLd(v),
     breadcrumb: venueBreadcrumb(v, canonical),
     // OGP画像(依頼5・2026-08-28)。店舗ごとの専用画像は持たないため、image を省略して
     // pageHead の既定値(サイト共通OGP・img/ogp/common-og.jpg)に任せる。

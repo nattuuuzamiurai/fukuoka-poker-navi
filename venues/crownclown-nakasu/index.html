@@ -217,6 +217,9 @@
   /* リング開催ブロック */
   .vp-ring{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:13px 15px;margin-bottom:14px;font-size:.9em;line-height:1.8}
   .vp-ring b{color:var(--felt)}
+  /* 閉店の可能性がある店の注記(2026-09-13新設・"closed":trueの店だけ)。preopen("オープン予定")の
+     逆方向。h1直下に目立つ形で出す(.vp-sub〔灰色の小さい文字〕だけでは目立たないため)。 */
+  .vp-closed-notice{background:#fdecea;border:1px solid var(--red);border-radius:var(--r);box-shadow:var(--sha);padding:12px 15px;margin-bottom:14px;font-size:.9em;line-height:1.8;color:var(--red);font-weight:700}
   /* .vp-fst(FSTサテライト開催中の告知)は site-shell.js の BASE_CSS 側に移設した
      (2026-08-28。エリアページでも使うため。複製すると片方だけ直して片方を忘れる)。 */
 </style>

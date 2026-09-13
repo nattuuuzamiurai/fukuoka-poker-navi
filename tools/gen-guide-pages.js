@@ -153,9 +153,11 @@ const CATEGORIES = [
     heading: 'リングゲーム、腕試ししたい・ガチでやりたいなら',
     icon: 'cards',
     lead: '※リングゲームとは、好きなタイミングで出入りできる通常のポーカーのことです。遊技スタイルとして「上級者向け」「本格的」と紹介されている店舗です。「勝てる」「稼げる」という意味ではなく、あくまでゲームの雰囲気についての紹介である点にご留意ください。',
+    // 【2026-09-13・v30(ARIA中洲)を削除】社長情報により閉店した可能性がある(data.js側で
+    // "closed": true・要確認)。chipsに落とすのではなく、閉店の可能性がある店を積極的に
+    // おすすめする形自体をやめるため、このカテゴリーから削除した(他カテゴリーにも未掲載)。
     featured: [
       { id: 'v22', points: ['上級者向けの遊技スタイル', 'ハイローラー向けイベントを定期開催'], source: '紹介記事より' },
-      { id: 'v30', points: ['深いスタックの本格リングゲーム', '初心者講習もあり初級〜上級まで対応'], source: '紹介記事より' },
       { id: 'v16', points: ['「スポーツポーカー競技場」を自称', '戦略性・心理戦を重視するスタイル'], source: '口コミより' }
     ]
   },
@@ -203,16 +205,19 @@ function categoryStoreIds(c) {
   return [...c.featured.map(f => f.id), ...(c.chips || [])];
 }
 
-// 掲載中(未開店を除く)の全店舗が CATEGORIES か NOT_FOUND_IDS のどちらかに必ず含まれることを
-// 検査する。新規開店・店舗追加は日次の自動取込(TOURNAMENTSのみ対象)では起きず人手で
-// data.js に足すため、足した人がこの生成を実行した時点で「目的別カテゴリーへの割り当てを
-// 忘れている」ことに気づけるようにする(気づかないと「該当なし」の案内にも載らないまま
-// 目的別セクションから存在ごと漏れる=閲覧者からは何も見えない欠落になる)。
+// 掲載中(未開店・閉店の可能性がある店を除く)の全店舗が CATEGORIES か NOT_FOUND_IDS の
+// どちらかに必ず含まれることを検査する。新規開店・店舗追加は日次の自動取込(TOURNAMENTSのみ
+// 対象)では起きず人手で data.js に足すため、足した人がこの生成を実行した時点で「目的別
+// カテゴリーへの割り当てを忘れている」ことに気づけるようにする(気づかないと「該当なし」の
+// 案内にも載らないまま目的別セクションから存在ごと漏れる=閲覧者からは何も見えない欠落になる)。
+// ★ "closed": true(閉店した可能性がある店。2026-09-13新設)は対象外にする。閉店の可能性が
+//   ある店を目的別カテゴリーで積極的におすすめしない方針のため、CATEGORIES/NOT_FOUND_IDS
+//   どちらにも載っていなくてもここでは異常にしない。
 function validateCategoryCoverage() {
   const covered = new Set();
   CATEGORIES.forEach(c => categoryStoreIds(c).forEach(id => covered.add(id)));
   NOT_FOUND_IDS.forEach(id => covered.add(id));
-  const missing = VENUES.filter(v => !v.preopen && !covered.has(v.id));
+  const missing = VENUES.filter(v => !v.preopen && !v.closed && !covered.has(v.id));
   if (missing.length) {
     throw new Error('gen-guide-pages.js: 「福岡のポーカー店を目的別に探す」のCATEGORIES/NOT_FOUND_IDSの'
       + 'どちらにも含まれていない店舗があります: ' + missing.map(v => `${v.id} ${v.name}`).join('、')
@@ -338,7 +343,7 @@ function categoryBlock(c) {
 // 「確認できていないだけ」と率直に書く)。店名はチップ形式で先に見せ、文章側は「上記の店舗」と
 // 参照する(店名を文章中に列挙すると「文字だらけ」に戻るため、社長指摘〔2026-09-12〕を踏まえて分離)。
 function notFoundBlock() {
-  const listedCount = VENUES.filter(v => !v.preopen).length;
+  const listedCount = VENUES.filter(v => !v.preopen && !v.closed).length;
   return `<div class="gd-cat">
   <h3>上記のカテゴリーに当てはまらなかった店舗について</h3>
   ${categoryChips(NOT_FOUND_IDS)}
@@ -373,7 +378,7 @@ function highlightStoresBlock() {
     throw new Error('gen-guide-pages.js: 中洲エリアに初心者講習明記の店舗が見つかりました。'
       + '「中洲エリアについて」の固定文言(該当店舗なし、という前提)を書き直してください。');
   }
-  const nakasuCount = areaVenues(VENUES, '中洲').filter(v => !v.preopen).length;
+  const nakasuCount = areaVenues(VENUES, '中洲').filter(v => !v.preopen && !v.closed).length;
   // 「初心者でも入りやすい」と外部レビューで紹介されている中洲エリアの店舗(前段の
   // カテゴリー「リングゲーム、初心者でも安心して打ちたいなら」で紹介済み)を実データから拾い、
   // 文中で名指しする2店を検算する(手で書いた店名が原稿・実データとズレるのを防ぐ)。
@@ -424,7 +429,7 @@ ${smallAreasNote}`;
 // このページの手直しは不要(再生成するだけで追随する)。
 function fullListBlock() {
   const order = AREAS.slice();
-  const listed = VENUES.filter(v => !v.preopen).slice().sort((a, b) => {
+  const listed = VENUES.filter(v => !v.preopen && !v.closed).slice().sort((a, b) => {
     const ia = order.indexOf(a.area), ib = order.indexOf(b.area);
     return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib);
   });
@@ -477,7 +482,7 @@ const FAQ_ITEMS = [
 const TITLE = '福岡のポーカー店の選び方｜目的別おすすめ・初心者向け比較ガイド | ふくおかポーカーナビ';
 
 function buildGuidePage() {
-  const listedCount = VENUES.filter(v => !v.preopen).length;
+  const listedCount = VENUES.filter(v => !v.preopen && !v.closed).length;
   const DESC = `福岡には${listedCount}店舗のポーカー店があり、初めてだとどこに行けばいいか迷いがちです。トーナメント重視・リングゲームでじっくり・お酒も楽しみたいなど目的別のおすすめ店舗と、初心者講習を実施している店舗、エリア別の探し方をまとめて紹介します。`;
 
   const webPageJsonLd = {
@@ -535,7 +540,7 @@ function verify(files) {
   const problems = [];
   if (!files[GUIDE_PATH]) problems.push(`${GUIDE_PATH} が生成物に含まれていない`);
   const html = files[GUIDE_PATH] || '';
-  const listedCount = VENUES.filter(v => !v.preopen).length;
+  const listedCount = VENUES.filter(v => !v.preopen && !v.closed).length;
   const linked = (html.match(/href="\/venues\/[^"]+\/"/g) || []).length;
   // 店舗ページへのリンクは「全店舗一覧表(未開店を除く全件)」＋「目的別カテゴリー(6分類、延べ件数。
   // 同じ店舗が複数カテゴリーに登場する分もそのまま数える)」＋「該当なし店舗の案内(NOT_FOUND_IDS)」＋
