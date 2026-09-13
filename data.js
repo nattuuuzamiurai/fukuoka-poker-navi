@@ -31,15 +31,43 @@
  * VENUES の "hours" は営業時間の表示文言（社長指示・2026-09-09）。address/access/tel/website と
  * 同じ「分かっている店だけ埋める・空文字列は非表示」の運用にする(全店舗の裏取りができていない
  * ため、確認できた店だけ埋め、未確認の店は "" のまま残す)。
- * ★ フリーテキストなので JSON-LD の openingHoursSpecification には変換しない。曜日ごとの
- *   休業日が未確認の値を「毎日この時間」と構造化して Google に渡すと、留保なしの断定に
- *   なってしまう(法務・信頼性メモの「留保付きで載せている値は構造化データに出さない」と
- *   同じ考え方。表示テキスト(店舗静的ページの「営業時間」欄)には今まで通り出す)。
+ * ★ フリーテキストなので、それ自体は JSON-LD の openingHoursSpecification には変換しない。
+ *   曜日ごとの休業日が未確認の値を「毎日この時間」と構造化して Google に渡すと、留保なしの
+ *   断定になってしまう(法務・信頼性メモの「留保付きで載せている値は構造化データに出さない」
+ *   と同じ考え方。表示テキスト(店舗静的ページの「営業時間」欄)には今まで通り出す)。
  * ★ 確度は店ごとに異なる。店舗自身からの直接申告・公式サイト等の一次情報はそのまま載せ、
  *   第三者媒体経由・複数媒体の突き合わせによる情報は note に「営業時間は第三者媒体情報の
  *   ため要確認。」のヘッジを添える(住所/電話の "Unverified" と同じ考え方だが、hours は
- *   専用のフラグを持たない — JSON-LD に出さない方針が確度によらず一律のため、フラグで
- *   出し分ける必要が無い)。
+ *   専用のフラグを持たない — フラグで出し分ける必要が無かった。下の "hoursSpec" 追加で
+ *   この前提が変わったので、note のヘッジ文字列を hoursSpec を作ってよいかの判定に使う)。
+ *
+ * VENUES の "lat" / "lng"（緯度経度）は JSON-LD(LocalBusiness)の geo(GeoCoordinates)の元データ
+ * (マーケティング部指摘・2026-09-12、国土地理院 住所ジオコーダー(https://msearch.gsi.go.jp/)で
+ * address から機械的に取得。出典・取得方法は fukuoka-venues.json 側の各店 note に記録)。
+ * ★ "addressUnverified": true の店、address が空の店には付けない(住所自体の確度が低い/
+ *   存在しないのに緯度経度だけ確定情報として出すと、誤った場所を地図に断定して示すことになる。
+ *   考え方は streetAddress を落とす条件と同じ)。tools/venue-jsonld.js の validateGeoFlags が
+ *   この対応関係を検査する(付け忘れ・付けすぎのどちらも異常終了させる)。
+ *
+ * VENUES の "hoursSpec" は "hours"(フリーテキスト)のうち【曜日区分・定休日が完全に明確で、
+ * かつ確度が高い(note に「営業時間は第三者媒体情報のため要確認。」のヘッジが無い)店だけ】、
+ * 人が手で構造化した営業時間(2026-09-12)。tools/venue-jsonld.js が機械的に
+ * openingHoursSpecification に変換する(days・opens・closes の3項目だけを持つ単純な形にして
+ * あるので、変換側はコードで曜日名 → schema.org の URI に対応づけるだけで済む。"hours" の
+ * 自由文をコードでパースしていない — 「不定休」「LAST」「祝前日」のような曜日に還元できない
+ * 表現を誤って構造化する事故を、パーサの精度に頼らず【そもそも作らない】ことで防ぐ)。
+ * ★ hoursSpec を追加してよい条件(すべて満たすときだけ):
+ *   1. 曜日または定休日の指定だけで全営業日・全休業日の別が一意に決まる(「12:00〜24:00」の
+ *      ような曜日を問わない表記のみの店、"祝前日" のように暦に依存し曜日に還元できない
+ *      表現を含む店は対象外)
+ *   2. note に hours の確度ヘッジ(「営業時間は第三者媒体情報のため要確認。」)が無い
+ *      (このヘッジが付いている店は、たとえ曜日表記が明確でも対象外。曜日の書式が
+ *      整っていることと、その内容が正しく確認されていることは別問題のため)
+ *   ★ closes が "00:00" のように opens より小さい値のときは【翌日に日をまたいで閉店する】
+ *     という意味(schema.org の一般的な表現。24:00 という非標準の時刻は使わず、
+ *     常に 00:00〜23:59 の範囲の値で統一している)。
+ *   条件を外れる店(判断に迷う店を含む)は hoursSpec を付けず、今まで通り hours の表示のみに
+ *   留める。裏取りが進んで条件を満たしたら追加すること。
  * ============================================================ */
 
 const VENUES = [
@@ -50,6 +78,8 @@ const VENUES = [
     "area": "天神",
     "address": "福岡市中央区春吉3-21-19 ARBRE天神4F",
     "access": "天神南駅 徒歩3分",
+    "lat": 33.589283,
+    "lng": 130.404373,
     "hours": "",
     "x": "https://x.com/kkpoker_fukuoka",
     "line": "https://line.me/R/ti/p/@564bcfmm",
@@ -68,6 +98,8 @@ const VENUES = [
     "area": "中洲",
     "address": "福岡市博多区中洲3-7-24 ゲイツビル3F",
     "access": "中洲川端駅4番出口直結",
+    "lat": 33.593967,
+    "lng": 130.405731,
     "hours": "平日17:00〜翌1:00／土日祝13:00〜翌1:00",
     "x": "https://x.com/m_holdem_nakasu",
     "line": "https://line.me/R/ti/p/@717sybzr",
@@ -86,6 +118,8 @@ const VENUES = [
     "area": "中洲",
     "address": "福岡市博多区中洲4-7-7 中洲リッチビル2F",
     "access": "中洲川端駅 徒歩2分",
+    "lat": 33.593075,
+    "lng": 130.405487,
     "hours": "18:00〜翌5:00(年中無休)",
     "x": "https://x.com/onecasino477",
     "line": "",
@@ -104,6 +138,8 @@ const VENUES = [
     "area": "中洲",
     "address": "福岡市博多区中洲3-7-10 若松ビル4F",
     "access": "中洲川端駅 徒歩2分",
+    "lat": 33.593086,
+    "lng": 130.406158,
     "hours": "月〜土18:00〜翌1:00／日15:00〜翌1:00",
     "x": "https://x.com/Leje0118",
     "line": "",
@@ -122,6 +158,8 @@ const VENUES = [
     "area": "天神",
     "address": "福岡市中央区今泉1-17-16",
     "access": "西鉄福岡（天神）駅 徒歩4分",
+    "lat": 33.586334,
+    "lng": 130.398788,
     "hours": "平日・日曜19:00〜24:00／週末・祝前日19:00〜翌1:00",
     "x": "https://x.com/poker_mirage",
     "line": "",
@@ -140,6 +178,8 @@ const VENUES = [
     "area": "天神",
     "address": "福岡県福岡市中央区春吉3-21-18 ジェスト25ビル202",
     "access": "地下鉄七隈線 天神南駅6番出口 徒歩約3分（西鉄福岡（天神）駅 徒歩約5分）",
+    "lat": 33.589241,
+    "lng": 130.404282,
     "hours": "15:00〜23:45",
     "x": "https://x.com/poker_fuxk",
     "line": "",
@@ -177,6 +217,8 @@ const VENUES = [
     "area": "中洲",
     "address": "福岡市中央区西中洲1-21 GIOビル2F",
     "access": "中洲川端駅 徒歩5分",
+    "lat": 33.589836,
+    "lng": 130.404984,
     "hours": "18:00〜翌1:00(日曜定休)",
     "x": "https://x.com/C_nishinakasu",
     "line": "",
@@ -195,6 +237,8 @@ const VENUES = [
     "area": "北九州",
     "address": "北九州市小倉北区京町2-4-27 ロックビル3F",
     "access": "小倉駅 徒歩2分",
+    "lat": 33.886395,
+    "lng": 130.881302,
     "hours": "17:00〜LAST(不定休)",
     "x": "https://x.com/nuwimazine/",
     "line": "https://line.me/ti/g2/EwUI6uosdn9CCxtRAkjqSZDtqUCLov41j16XWQ",
@@ -213,6 +257,8 @@ const VENUES = [
     "area": "北九州",
     "address": "北九州市小倉北区鍛治町1-7-4 鍛治町会館3F",
     "access": "JR小倉駅 徒歩約4分",
+    "lat": 33.88298,
+    "lng": 130.88385,
     "hours": "18:30〜翌1:00",
     "x": "https://x.com/triplebarrel__",
     "line": "https://line.me/ti/g2/WBBZUGsa_Jw5Cyi62zO38rl0q7zvFEafNzqwMg",
@@ -231,6 +277,8 @@ const VENUES = [
     "area": "北九州",
     "address": "北九州市小倉南区北方2-24-1",
     "access": "小倉競馬場前 徒歩1分",
+    "lat": 33.845661,
+    "lng": 130.877884,
     "hours": "",
     "x": "https://x.com/texasholdem3000",
     "line": "",
@@ -251,6 +299,8 @@ const VENUES = [
     "area": "北九州",
     "address": "福岡県北九州市小倉北区片野新町1-10-23 CUBEビル3F",
     "access": "",
+    "lat": 33.862808,
+    "lng": 130.883148,
     "hours": "",
     "x": "https://x.com/texasaanet",
     "line": "",
@@ -269,6 +319,8 @@ const VENUES = [
     "area": "北九州",
     "address": "北九州市八幡西区黒崎2-6-3 2F",
     "access": "JR黒崎駅周辺",
+    "lat": 33.864304,
+    "lng": 130.767731,
     "hours": "19:00〜翌1:00",
     "x": "https://x.com/pokerbar_iris",
     "line": "",
@@ -287,6 +339,8 @@ const VENUES = [
     "area": "北九州",
     "address": "北九州市小倉北区堺町1-9-20 ナカノビル3F",
     "access": "モノレール平和通駅 徒歩5分",
+    "lat": 33.88205,
+    "lng": 130.884018,
     "hours": "月〜金18:00〜翌1:00／土日15:00〜翌1:00",
     "x": "https://x.com/CASINO_Arrows",
     "line": "https://line.me/R/ti/p/@491tzwch",
@@ -323,6 +377,8 @@ const VENUES = [
     "area": "久留米",
     "address": "福岡県久留米市東町32-3",
     "access": "西鉄久留米駅 徒歩5分",
+    "lat": 33.312359,
+    "lng": 130.518097,
     "hours": "平日18:00〜24:00／土日祝15:00〜24:00",
     "x": "",
     "line": "https://line.me/ti/g2/JROMKCR0N5",
@@ -343,6 +399,8 @@ const VENUES = [
     "area": "中洲",
     "address": "福岡県福岡市博多区中洲3-7-15 TM30 BUILDING 2F",
     "access": "中洲川端駅 徒歩1分",
+    "lat": 33.593391,
+    "lng": 130.405762,
     "hours": "平日18:00〜翌1:00／休日14:00〜翌1:00",
     "x": "https://x.com/rownlown",
     "line": "",
@@ -382,6 +440,8 @@ const VENUES = [
     "area": "大名",
     "address": "福岡県福岡市中央区大名一丁目12-46 エムズクロス福岡大名6F",
     "access": "地下鉄天神駅 徒歩7分",
+    "lat": 33.588223,
+    "lng": 130.394958,
     "hours": "",
     "x": "",
     "line": "",
@@ -401,6 +461,8 @@ const VENUES = [
     "area": "天神",
     "address": "福岡県福岡市中央区天神3-3-5-1 フルフルビル3F",
     "access": "天神駅 徒歩2分",
+    "lat": 33.592216,
+    "lng": 130.397354,
     "hours": "",
     "x": "https://x.com/72SevenTwo3351",
     "line": "",
@@ -419,7 +481,13 @@ const VENUES = [
     "area": "大橋",
     "address": "福岡県福岡市南区大橋1-13-12-2F",
     "access": "大橋駅 徒歩2分",
+    "lat": 33.557728,
+    "lng": 130.426407,
     "hours": "平日15:00〜翌0:00／土日祝12:00〜翌0:00",
+    "hoursSpec": [
+      { "days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "opens": "15:00", "closes": "00:00" },
+      { "days": ["Saturday", "Sunday", "PublicHolidays"], "opens": "12:00", "closes": "00:00" }
+    ],
     "x": "https://x.com/joker_oohashi",
     "line": "https://line.me/R/ti/p/@362lsztx",
     "instagram": "https://www.instagram.com/joker_pokerhouse/",
@@ -438,6 +506,8 @@ const VENUES = [
     "area": "大橋",
     "address": "福岡県福岡市南区大橋4-2-3 ライフビル2F",
     "access": "大橋駅周辺",
+    "lat": 33.555256,
+    "lng": 130.428314,
     "hours": "12:00〜24:00",
     "x": "https://x.com/dojofukuoka",
     "line": "https://line.me/R/ti/p/@856zasqq",
@@ -458,6 +528,8 @@ const VENUES = [
     "area": "今泉",
     "address": "福岡県福岡市中央区今泉1-10-15 福岡アーバンタワー3F",
     "access": "天神駅 徒歩4分",
+    "lat": 33.586384,
+    "lng": 130.401108,
     "hours": "",
     "x": "https://x.com/cajinoX",
     "line": "",
@@ -476,6 +548,8 @@ const VENUES = [
     "area": "中洲",
     "address": "福岡県福岡市中央区西中洲1-21 6F",
     "access": "天神南駅周辺",
+    "lat": 33.589836,
+    "lng": 130.404984,
     "hours": "20:00〜翌4:00(月曜定休)",
     "x": "https://x.com/bon_nishinakasu",
     "line": "",
@@ -536,6 +610,8 @@ const VENUES = [
     "area": "北九州",
     "address": "福岡県北九州市八幡西区黒崎2-6-17 ケイズプレイス黒崎Ⅱ2F",
     "access": "JR黒崎駅 徒歩5分",
+    "lat": 33.86438,
+    "lng": 130.767273,
     "hours": "",
     "x": "https://x.com/king806queen",
     "line": "",
@@ -554,6 +630,8 @@ const VENUES = [
     "area": "久留米",
     "address": "福岡県久留米市東町38-19 富田屋ビル3F",
     "access": "西鉄久留米駅 徒歩1分",
+    "lat": 33.312969,
+    "lng": 130.52002,
     "hours": "",
     "x": "https://x.com/AandK_poker",
     "line": "",
@@ -572,7 +650,13 @@ const VENUES = [
     "area": "大名",
     "address": "福岡県福岡市中央区大名1丁目3-29 Daimyo582 2階",
     "access": "地下鉄空港線 赤坂駅 徒歩5分（天神駅 徒歩8分）",
+    "lat": 33.586521,
+    "lng": 130.393204,
     "hours": "平日15:00〜24:00／土日12:00〜24:00(年中無休)",
+    "hoursSpec": [
+      { "days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "opens": "15:00", "closes": "00:00" },
+      { "days": ["Saturday", "Sunday"], "opens": "12:00", "closes": "00:00" }
+    ],
     "x": "https://x.com/634poker_fuk",
     "line": "",
     "instagram": "",
@@ -590,7 +674,13 @@ const VENUES = [
     "area": "今泉",
     "address": "福岡県福岡市中央区今泉1丁目23-4 新天神ビル301",
     "access": "西鉄福岡（天神）駅 徒歩圏内",
+    "lat": 33.587154,
+    "lng": 130.400604,
     "hours": "平日17:00〜24:00／土日祝14:00〜24:00",
+    "hoursSpec": [
+      { "days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "opens": "17:00", "closes": "00:00" },
+      { "days": ["Saturday", "Sunday", "PublicHolidays"], "opens": "14:00", "closes": "00:00" }
+    ],
     "x": "https://x.com/casinoRAFTEL",
     "line": "",
     "instagram": "https://www.instagram.com/raftelcasino/",
@@ -608,6 +698,8 @@ const VENUES = [
     "area": "天神",
     "address": "福岡県福岡市中央区天神3-6-16 オフィスニューガイアCRAIR 8F",
     "access": "地下鉄空港線 天神駅 徒歩5分（赤坂駅 徒歩8分）",
+    "lat": 33.592873,
+    "lng": 130.395065,
     "hours": "月〜木・日・祝20:00〜翌3:00／金・土・祝前日20:00〜翌5:00",
     "x": "https://x.com/bar_save_",
     "line": "",
@@ -626,6 +718,8 @@ const VENUES = [
     "area": "北九州",
     "address": "福岡県北九州市小倉北区鍛冶町1-5-11 4F",
     "access": "北九州モノレール 平和通駅 徒歩3分（JR小倉駅 徒歩約5分）",
+    "lat": 33.883224,
+    "lng": 130.883499,
     "hours": "月〜土21:00〜翌3:00(日・祝定休)",
     "x": "",
     "line": "",
@@ -644,6 +738,8 @@ const VENUES = [
     "area": "北九州",
     "address": "福岡県北九州市八幡西区折尾1丁目14-10 2F",
     "access": "JR折尾駅 徒歩4分（西日本シティ銀行の隣）",
+    "lat": 33.864853,
+    "lng": 130.715622,
     "hours": "18:30〜翌1:00",
     "x": "https://x.com/triple_orio",
     "line": "https://line.me/ti/g2/63zIY0X8gSNxLGGI1maPFT-hTd6WuON4UWwvZg",
@@ -662,6 +758,8 @@ const VENUES = [
     "area": "京築",
     "address": "福岡県行橋市中央3丁目5-36 田町ビル3F",
     "access": "JR行橋駅 徒歩約4分",
+    "lat": 33.728561,
+    "lng": 130.972794,
     "hours": "19:00〜24:00",
     "x": "",
     "line": "",
@@ -680,7 +778,13 @@ const VENUES = [
     "area": "久留米",
     "address": "福岡県久留米市東町38-24",
     "access": "",
+    "lat": 33.312969,
+    "lng": 130.52002,
     "hours": "平日18:00〜24:00／土日祝12:00〜24:00",
+    "hoursSpec": [
+      { "days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "opens": "18:00", "closes": "00:00" },
+      { "days": ["Saturday", "Sunday", "PublicHolidays"], "opens": "12:00", "closes": "00:00" }
+    ],
     "x": "",
     "line": "",
     "instagram": "https://www.instagram.com/dream.casinobar/",
