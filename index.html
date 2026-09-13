@@ -109,6 +109,14 @@
         "@type": "Answer",
         "text": "いいえ、当サイトは各店舗・大会の主催者ではなく、公式媒体でもありません。当サイトは店舗・主催者が公開している情報を集約する媒体であり、賭博行為の勧誘・仲介を行うものではありません。最新情報や参加条件は、必ず各店舗・大会の公式サイト・SNS等でご確認ください。"
       }
+    },
+    {
+      "@type": "Question",
+      "name": "初めてで、どの店に行けばいいか分かりません。",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "福岡のポーカー店の選び方(トーナメント重視・リングゲーム・お酒重視など目的別のおすすめ、初心者講習ありの店舗紹介)をまとめた初心者向けガイドページをご用意しています。エリアや目的に応じてお店を探したい方はそちらもご覧ください。"
+      }
     }
   ]
 }
@@ -156,6 +164,14 @@
   .areaNav .an-label{font-size:.78em;font-weight:800;color:#cfe3dd;margin-bottom:7px}
   .areaNav ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px;padding:0;margin:0}
   .areaNav ul a{display:inline-block;background:var(--sur);border:1px solid var(--bor);border-radius:20px;padding:6px 13px;font-size:.85em;font-weight:700;color:var(--felt);text-decoration:none;box-shadow:var(--sha)}
+
+  /* 初心者向けガイドページへのCTA(2026-09-13新設)。tools/site-shell.js の BASE_CSS .cta と
+     同じ配色・役割だが、あちらは生成ページの .wrap(max-width:900px)内で使われるのに対し、
+     このindex.htmlは .hero/.areaNav と同じ「.wrapを介さないフルブリード帯」の設計のため、
+     class名は共通(.cta)でも index.html側でこのファイル独自にスタイルを定義している
+     (2ファイルで .cta という同名クラスを別定義で持つが、対象ページが重ならないため衝突しない)。 */
+  .cta{display:block;background:linear-gradient(135deg,var(--felt),var(--felt2));color:#fff;font-weight:800;text-decoration:none;padding:13px 16px;text-align:center;box-shadow:var(--sha)}
+  .cta small{display:block;font-weight:600;font-size:.8em;color:#cfe3dd;margin-top:3px}
 
   /* FILTER BAR */
   .filters{background:var(--sur);border-bottom:1px solid var(--bor);box-shadow:var(--sha)}
@@ -770,6 +786,14 @@
   </div>
 </div>
 
+<!-- 初心者向けガイドページへのCTA(2026-09-13新設・マーケティング部分析にもとづく)。
+     Search Console実測で「福岡 ポーカー」のインプレッションが実質0件だったのは、
+     「店を選ぶための紹介記事」という検索意図に応えるページが無かったことが一因。
+     ガイドページ(/guide/beginner/、生成元 tools/gen-guide-pages.js)への導線を、
+     エリア導線の直後という目立つ位置に置く。手で書いた1本のリンクで、自動同期の対象ではない
+     (index.html側の他の自動同期ブロック(#areaNav-list等)とは無関係)。 -->
+<a class="cta" href="guide/beginner/">▶ 初めての方へ：福岡のポーカー店の選び方<small>トーナメント重視・リングゲームなど目的別に紹介</small></a>
+
 <div class="filters">
   <div class="dstrip-row">
     <!-- 月の切り替え(社長指示・2026-07-30「7のところ押したら何月って選択できるように」)。
@@ -887,6 +911,10 @@
   <summary>このサイトは大会の公式情報ですか？</summary>
   <div class="faq-a">いいえ、当サイトは各店舗・大会の主催者ではなく、公式媒体でもありません。当サイトは店舗・主催者が公開している情報を集約する媒体であり、賭博行為の勧誘・仲介を行うものではありません。最新情報や参加条件は、必ず各店舗・大会の公式サイト・SNS等でご確認ください。</div>
 </details>
+<details class="faq-item">
+  <summary>初めてで、どの店に行けばいいか分かりません。</summary>
+  <div class="faq-a">福岡のポーカー店の選び方(トーナメント重視・リングゲーム・お酒重視など目的別のおすすめ、初心者講習ありの店舗紹介)をまとめた<a href="guide/beginner/">初心者向けガイド</a>をご用意しています。エリアや目的に応じてお店を探したい方はそちらもご覧ください。</div>
+</details>
 <!-- FAQ_SECTION:END -->
 </main>
 
@@ -929,7 +957,7 @@
          `node tools/gen-venue-pages.js <repo>` を実行するとこの1行だけが差し替わる。
          店舗を足せば自動で増える。ズレは `--check` を付けた実行で検出できる。 -->
   <div id="venueLinks" class="footer-linklist" style="margin-top:6px">店舗ページ: 【天神】<a href="/venues/kkpoker-fukuoka/">KKPOKER FUKUOKA</a>・<a href="/venues/grand-mirage-poker/">グランドミラージュポーカー</a>・<a href="/venues/fuxk-fukuoka-tenjin/">Poker House FUXK 福岡天神店</a>・<a href="/venues/raise-blue-tenjin/">RAISE BLUE 天神</a>・<a href="/venues/alice-the-poker-room/">ALICE the Poker room（アリス）</a>・<a href="/venues/seventwo-tenjin/">72 -SevenTwo-</a>・<a href="/venues/save-tenjin/">アミューズメントバー SAVE天神店</a>　【中洲】<a href="/venues/m-holdem-nakasu/">m HOLD'EM 中洲</a>・<a href="/venues/onecasino-fukuoka-nakasu/">ONECASINO 福岡中洲</a>・<a href="/venues/casino-bar-leje-hakata/">Casino bar Leje 博多店</a>・<a href="/venues/casino-blow-nishi-nakasu/">CASINO BLOW 西中洲</a>・<a href="/venues/crownclown-nakasu/">CRownCLown（クラウンクラウン）</a>・<a href="/venues/bon-nishi-nakasu/">梵 bon 西中洲</a>・<a href="/venues/aria-nakasu/">ARIA 中洲</a>　【大名】<a href="/venues/roots-fukuoka/">ROOTS FUKUOKA</a>・<a href="/venues/musashi-poker-room-fukuoka/">むさぽ福岡（MUSASHI POKER ROOM 福岡店）</a>　【今泉】<a href="/venues/casinox-fukuoka-imaizumi/">CasinoX（カジノックス）福岡今泉店</a>・<a href="/venues/raftel-casino-fukuoka-imaizumi/">RAFTEL CASINO（ラフテルカジノ 福岡今泉店）</a>　【大橋】<a href="/venues/joker-fukuoka-ohashi/">JOKER♠️ 福岡大橋</a>・<a href="/venues/the-dojo-fukuoka/">THE DOJO</a>　【博多】<a href="/venues/poker-room-sky/">Poker room SKY</a>　【北九州】<a href="/venues/pokerbar-nuwland/">PokerBar NUWLAND</a>・<a href="/venues/triplebarrel-kokura/">TripleBarrel 小倉店</a>・<a href="/venues/texas-holdem-3000/">てきさすほーるでむ。</a>・<a href="/venues/texas-holdem-aa/">テキサスホールデムAA</a>・<a href="/venues/poker-bar-iris/">Poker Bar IRIS</a>・<a href="/venues/casino-arrows-kokura/">CASINO Arrows 小倉店</a>・<a href="/venues/king-queen-suited-kurosaki/">KING&amp;QUEEN SUITED 黒崎店</a>・<a href="/venues/kaji-bar-kokura/">KAJI BAR</a>・<a href="/venues/triplebarrel-orio/">TripleBarrel 折尾店</a>　【京築】<a href="/venues/poker-studio-deep-blue-yukuhashi/">POKER Studio DEEP BLUE</a>　【筑豊】<a href="/venues/king-queen-suited-nogata/">KING&amp;QUEEN SUITED 直方店</a>　【久留米】<a href="/venues/ken-poker-kurume/">KENポーカー（久留米）</a>・<a href="/venues/ace-and-king-kurume/">A&amp;K（Ace and King）</a>・<a href="/venues/dream-casinobar-kurume/">DreaM CASINO BAR</a></div>
-  <div><a href="about.html">運営者情報</a>　|　<a href="contact.html">お問い合わせ</a>　|　<a href="contact.html">店舗の掲載・PRについて</a>　|　<a href="privacy.html">プライバシーポリシー</a></div>
+  <div><a href="guide/beginner/">初心者向け店舗の選び方</a>　|　<a href="about.html">運営者情報</a>　|　<a href="contact.html">お問い合わせ</a>　|　<a href="contact.html">店舗の掲載・PRについて</a>　|　<a href="privacy.html">プライバシーポリシー</a></div>
   <!-- フッターの免責文は1文に圧縮している(社長指示・2026-09-01)。元は4文あり、
        2〜4文目(賭博の勧誘・仲介ではない/プライズの扱いは各店舗規定による/バナーの著作権は
        各主催者に帰属)は削除ではなく privacy.html 第7条に移設済み。3・4文目は以前レビュー部の

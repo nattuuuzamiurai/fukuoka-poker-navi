@@ -79,6 +79,9 @@ const AREA_CSS = `  .vp-sub{font-size:.9em;color:var(--mut);margin-bottom:14px}
   .vp-tags{color:var(--mut);font-size:.9em}
   .vp-warn{color:var(--red);font-size:.9em;font-weight:700}
   .vp-recur{display:inline-block;background:#eef3f1;border:1px solid var(--bor);color:var(--felt);font-size:.8em;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:5px}
+  /* 閉店の可能性がある店のバッジ(2026-09-13新設)。.vp-recur(オープン予定等・中立トーン)と
+     同じ大きさ・出し方だが、注意を引くよう赤系にしている(preopenの逆方向)。 */
+  .vp-closed-badge{display:inline-block;background:#fdecea;border:1px solid var(--red);color:var(--red);font-size:.8em;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:5px}
   .ap-venue a{color:#0e6a72;font-weight:700;text-decoration:none}
   .ap-cards{display:grid;gap:10px;margin:4px 0 6px}
   .ap-card{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:12px 14px}
@@ -133,7 +136,10 @@ function venueCards(venues) {
     if (v.access) meta.push(esc(v.access));
     if (v.address) meta.push(esc(v.address));
     // 未開店の店は一覧に出しつつ、営業中と読めないように印を付ける(店舗ページ側と同じ扱い)。
-    const tag = v.preopen ? '<span class="vp-recur">オープン予定</span>' : '';
+    // 閉店した可能性がある店(2026-09-13新設)も同様に一覧から消さずバッジで残す
+    // (読者が「あの店はどうなった?」と検索してきたときに正しい情報を出すため)。
+    const tag = v.preopen ? '<span class="vp-recur">オープン予定</span>'
+      : v.closed ? '<span class="vp-closed-badge">閉店の可能性あり</span>' : '';
     return `  <div class="ap-card">
     <div class="nm"><a href="/venues/${v.slug}/">${esc(v.name)}</a>${tag}</div>
     ${meta.length ? `<div class="mt">${meta.join('<br>')}</div>` : ''}
