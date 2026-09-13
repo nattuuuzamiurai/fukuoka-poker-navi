@@ -654,6 +654,8 @@ jobs:
         if: steps.mode.outputs.dry_run == 'false'
         env:
           DRY_RUN: ${{ steps.mode.outputs.dry_run }}
+          # 店舗写真フェッチ(tools/fetch-photos.js)用。未設定でも空マップを出力して続行する。
+          HOTPEPPER_API_KEY: ${{ secrets.HOTPEPPER_API_KEY }}
         run: |
           # 【dry-run の二重の安全・その2】上の if が将来の編集で壊れても、
           # 'false' 以外(dry-run・空・想定外の値)ならここで必ず止まる(git に触る前に落とす)。
@@ -689,6 +691,9 @@ jobs:
           #   (例: Waitinglist取込みが同日に v3 の日程を足していると、その店のページが古いまま押される)。
           #   生成物をコミットに含めないまま rebase することで、venues/*.html の衝突も避けられる。
           node tools/validate-data.js .
+          # ホットペッパー グルメの店舗写真を取得(data/photos.generated.json・.gitignore対象)。
+          # gen-venue-pages.js より必ず先に実行する。HOTPEPPER_API_KEY未設定でも正常終了する。
+          node tools/fetch-photos.js
           node tools/gen-venue-pages.js .
           node tools/gen-venue-pages.js . --check
           # エリアページ(/areas/<slug>/)も日程を静的に焼き込んでいるので、店舗ページと同じく

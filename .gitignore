@@ -5,3 +5,7 @@ __pycache__/
 
 # macOS
 .DS_Store
+
+# tools/fetch-photos.js が生成するホットペッパー グルメの店舗写真キャッシュ。
+# CIで(gen-venue-pages.js を呼ぶ各ワークフローの中で)毎回生成する成果物なのでコミットしない。
+data/photos.generated.json
