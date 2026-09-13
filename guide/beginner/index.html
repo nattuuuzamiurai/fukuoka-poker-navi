@@ -186,6 +186,13 @@
   .gd-card-points{margin:6px 0 4px 1.15em;padding:0;font-size:.82em;line-height:1.6;color:var(--txt)}
   .gd-card-points li{margin-bottom:2px}
   .gd-card-src{font-size:.72em;color:var(--mut);margin-top:4px}
+  /* 【品質管理部指摘・2026-09-13】categoryChips()/NOT_FOUND_IDS が出す <ul class="vp-list"> の
+     チップ/タグ表示は tools/gen-venue-pages.js の VENUE_CSS に定義があるが、こちらの
+     GUIDE_CSS への移植を忘れていた(無地の黒丸箇条書き+下線リンクとして表示されていた)。
+     VENUE_CSSの定義とまったく同じ2行をそのまま持ってくる(複製元と食い違うと事故になるため、
+     値を変えずにコピーする)。 */
+  ul.vp-list{list-style:none;display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 6px}
+  ul.vp-list a{display:inline-block;background:var(--sur);border:1px solid var(--bor);border-radius:20px;padding:6px 13px;font-size:.85em;font-weight:700;color:var(--felt);text-decoration:none;box-shadow:var(--sha)}
   /* 目次(ジャンプリンク・2026-09-13新設)。既存の地味なテキストリンクの見た目を踏襲するだけで、
      カードデザインは持たない(依頼どおり見た目を変えない範囲に留める)。 */
   ul.gd-toc{list-style:none;margin:0 0 14px;padding:0;font-size:.88em;line-height:1.9}
