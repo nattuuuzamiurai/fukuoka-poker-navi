@@ -101,6 +101,38 @@ const AREA_PAGES = new Set(areaList(VENUES, AREAS));
 // フッターの「エリアから探す」リンク行(依頼3)。全店舗ページで内容は共通なので1回だけ組み立てる。
 const FOOTER_AREA_LINKS = footerAreaLinksHtml(VENUES, AREAS);
 
+// ---- 関連ガイド(/guide/beginner/)への内部リンク(2026-09-13・マーケティング部分析) ----
+// 【背景】ガイドページへのリンクがサイト全体でトップページのCTA・フッターのみで、
+//   店舗ページ・エリアページからのリンクが無くリンクジュースが薄いという指摘への対応。
+// 【データの出どころ】この店がどの目的別カテゴリー(トーナメント/リング等)に属すかは、
+//   tools/guide-categories.js の CATEGORIES(gen-guide-pages.js の「福岡のポーカー店を
+//   目的別に探す」と同一データ)を唯一の情報源とする。data.js に別フィールドとして複製
+//   しない(複製すると CATEGORIES を直したときに data.js 側を直し忘れて食い違う事故が
+//   起きるため。詳細は guide-categories.js のヘッダーコメントを参照)。
+// 【closed:true の店にリンクが出ない理由】ARIA中洲(v30)のように閉店した可能性がある店は
+//   gen-guide-pages.js 側で CATEGORIES/NOT_FOUND_IDS のどちらにも登録しない方針
+//   (閉店の可能性がある店を積極的におすすめする形自体をやめるため)。ここでの対応表は
+//   CATEGORIES をそのまま読むだけなので、その方針がここにも自動的に及ぶ
+//   (手作業でこのファイル側に除外リストを作る必要が無い)。
+const { CATEGORIES: GUIDE_CATEGORIES, categoryStoreIds } = require('./guide-categories.js');
+const GUIDE_CATEGORIES_BY_VENUE = new Map();
+GUIDE_CATEGORIES.forEach(c => {
+  categoryStoreIds(c).forEach(id => {
+    if (!GUIDE_CATEGORIES_BY_VENUE.has(id)) GUIDE_CATEGORIES_BY_VENUE.set(id, []);
+    GUIDE_CATEGORIES_BY_VENUE.get(id).push(c);
+  });
+});
+
+// 店舗ページ下部の「関連ガイド」リンク。1店が複数カテゴリーに属する場合(例: CRownCLownは
+// 3カテゴリー)は、その数だけ行を並べる(同じ見た目・出し方の「同じエリアのポーカー店」
+// リンク行〔下記 areaBlock〕と同じ、地味すぎず目立ちすぎない .lead 段落にそろえてある)。
+function guideLinksHtml(v) {
+  const cats = GUIDE_CATEGORIES_BY_VENUE.get(v.id);
+  if (!cats || !cats.length) return '';
+  return cats.map(c => `
+<p class="lead">▶ <a href="/guide/beginner/#${esc(c.id)}">福岡のポーカー店の選び方（${esc(c.shortLabel)}編）</a></p>`).join('');
+}
+
 // ---- 店舗ページ本体 ----
 const VENUE_CSS = `  .vp-sub{font-size:.9em;color:var(--mut);margin-bottom:14px}
   h2.vp-sec{font-size:1.05em;font-weight:800;color:var(--felt);margin:26px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--gold)}
@@ -519,7 +551,7 @@ ${venueInfoCardsHtml(v)}
 <h2 class="vp-sec" id="vp-sched-title">${schedTitle}</h2>
 <p class="lead" id="vp-sched-note">${schedNote}</p>
 <div id="vp-sched">${schedHtml}</div>${ringBlock ? `
-<h2 class="vp-sec">リングゲーム</h2>${ringBlock}` : ''}${areaBlock}
+<h2 class="vp-sec">リングゲーム</h2>${ringBlock}` : ''}${areaBlock}${guideLinksHtml(v)}
 <div class="links">
   ▶ <a href="/">福岡のポーカートーナメント日程を日付順に見る（全${VENUES.length}店舗）</a><br>
   ▶ <a href="/#venue/${esc(v.id)}">${esc(v.name)} の月別カレンダー</a>
@@ -635,6 +667,21 @@ function verify(files) {
     const linked = (inner.match(/href="\/venues\/[^"]+\/"/g) || []).length;
     if (linked !== VENUES.length) {
       problems.push(`index.html #venueLinks のリンク数が ${linked} 件（VENUES は ${VENUES.length} 件）`);
+    }
+  }
+  // 「関連ガイド」リンク(guideLinksHtml)の件数検査。店舗ページ全体で出た
+  // /guide/beginner/#<カテゴリーid> へのリンク総数が、guide-categories.js の
+  // CATEGORIES から機械的に導ける期待値(店舗1件が属するカテゴリー数の総和)と一致するかを見る。
+  // ズレたら「一部の店だけリンクが出ていない/重複して出ている」ことにここで気づける。
+  {
+    const expectedGuideLinks = VENUES.reduce((sum, v) => sum + (GUIDE_CATEGORIES_BY_VENUE.get(v.id) || []).length, 0);
+    const actualGuideLinks = VENUES.reduce((sum, v) => {
+      const html = files[`venues/${v.slug}/index.html`] || '';
+      return sum + (html.match(/href="\/guide\/beginner\/#[^"]+"/g) || []).length;
+    }, 0);
+    if (actualGuideLinks !== expectedGuideLinks) {
+      problems.push(`店舗ページの「関連ガイド」リンク数が ${actualGuideLinks} 件`
+        + `(期待値: guide-categories.js の所属カテゴリー総数 ${expectedGuideLinks} 件)`);
     }
   }
   if (problems.length) {

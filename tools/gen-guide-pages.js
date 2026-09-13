@@ -67,6 +67,10 @@ const shell = require('./site-shell.js');
 const { SITE, POSITIONING, esc, pageHead, FAQ_CSS, faqBlock } = shell;
 const { sitemapFile } = require('./gen-sitemap.js');
 const { AREA_SLUGS, areaVenues, areaList, footerAreaLinksHtml } = require('./area-schedule.js');
+// CATEGORIES(「福岡のポーカー店を目的別に探す」6分類)は tools/guide-categories.js が
+// 唯一の所有者(2026-09-13切り出し。理由は同ファイルのヘッダーコメントを参照)。
+// 店舗静的ページ(gen-venue-pages.js)の「関連ガイド」リンクも同じ CATEGORIES を読む。
+const { CATEGORIES, categoryStoreIds } = require('./guide-categories.js');
 
 // ---- データ読み込み(読むだけ。data.js・big-events.js には一切書き込まない) ----
 const DATA = require(path.join(REPO, 'data.js'));
@@ -125,91 +129,13 @@ const HIGHLIGHT_STORES = [
 // 同じ店舗が複数カテゴリーに登場することがある(例: CRownCLownは3カテゴリー、
 // KENポーカー(久留米)はカテゴリー1・2の両方)。原稿の実態どおり。
 // icon はカテゴリー見出しに添える小さなSVGアイコンの種類(下記 ICONS を参照)。
-const CATEGORIES = [
-  {
-    id: 'cat-tournament',
-    heading: 'トーナメントが強い・人気がある店を探すなら',
-    icon: 'trophy',
-    lead: '大会・トーナメントの盛り上がりについて、外部のレビューサイトや店舗公式SNS等で言及されている店舗です。',
-    featured: [
-      { id: 'v22', points: ['連日プレイヤーで賑わう白熱トーナメント', 'ハイレベルな対局と評判'], source: 'fukuoka-online.jp、light-three.comより' },
-      { id: 'v5', points: ['トーナメントを毎日開催', '内容が安定しており集客力も高い'], source: '運営状況の確認情報' },
-      { id: 'v21', points: ['JOPT・WJPTなど全国大会のサテライト会場', '店舗予選(DAY1)も継続開催'], source: '店舗公式情報より' },
-      { id: 'v2', points: ['地域最大級の6テーブルを完備', '毎日トーナメントを開催'], source: '紹介記事より' },
-      { id: 'v18', points: ['FST(大型連動大会)のDAY1会場を担当'], source: 'FST公式Xより' },
-      { id: 'v34', points: ['4卓を使用する店舗', 'XPTなど全国大会のサテライトを頻繁開催'], source: '店舗公式Instagramより' }
-    ]
-  },
-  {
-    id: 'ring-beginner',
-    heading: 'リングゲーム、初心者でも安心して打ちたいなら',
-    icon: 'cards',
-    lead: 'リングゲームとは、好きなタイミングで出入りできる通常のポーカーのことです。「初心者でも入りやすい」「講習・接客が丁寧」といった口コミ・紹介記事が見られる店舗です(出典: 主にlight-three.com、fukuoka-online.jp等の外部レビューサイト)。中洲エリアの店舗もこのカテゴリーに含まれます。',
-    // 【2026-09-13・社長指摘によりfeatured→chips統合】以前はv21のみfeaturedのカード表示で、
-    // 残り11店舗がchipsという、カード1枚+文字だけの列挙という偏った見た目だった。
-    // カテゴリー内バランスを取るため、v21もchipsに統合した(featuredは空)。
-    featured: [],
-    chips: ['v21', 'v25', 'v3', 'v13', 'v14', 'v7', 'v4', 'v6', 'v28', 'v23', 'v40', 'v41']
-  },
-  {
-    id: 'ring-advanced',
-    heading: 'リングゲーム、腕試ししたい・ガチでやりたいなら',
-    icon: 'cards',
-    lead: '※リングゲームとは、好きなタイミングで出入りできる通常のポーカーのことです。遊技スタイルとして「上級者向け」「本格的」と紹介されている店舗です。「勝てる」「稼げる」という意味ではなく、あくまでゲームの雰囲気についての紹介である点にご留意ください。',
-    // 【2026-09-13・v30(ARIA中洲)を削除】社長情報により閉店した可能性がある(data.js側で
-    // "closed": true・要確認)。chipsに落とすのではなく、閉店の可能性がある店を積極的に
-    // おすすめする形自体をやめるため、このカテゴリーから削除した(他カテゴリーにも未掲載)。
-    featured: [
-      { id: 'v22', points: ['上級者向けの遊技スタイル', 'ハイローラー向けイベントを定期開催'], source: '紹介記事より' },
-      { id: 'v16', points: ['「スポーツポーカー競技場」を自称', '戦略性・心理戦を重視するスタイル'], source: '口コミより' }
-    ]
-  },
-  {
-    id: 'cat-baccarat',
-    heading: 'バカラ・ブラックジャックも遊びたいなら',
-    icon: 'dice',
-    lead: 'ポーカーのほかにバカラ・ブラックジャックなど複数のゲームを扱っていると案内されている店舗です。',
-    // 【2026-09-13・社長指摘によりfeatured→chips統合】上のリングゲームカテゴリーと同じ理由で、
-    // v5もchipsに統合した(featuredは空)。
-    featured: [],
-    chips: ['v5', 'v9', 'v3', 'v29', 'v39', 'v19', 'v37', 'v41']
-  },
-  {
-    id: 'cat-drink',
-    heading: 'お得にお酒も楽しみたいなら',
-    icon: 'glass',
-    lead: '飲み放題や均一料金など、お酒に関する案内がある店舗です。金額や条件は変わることがあるため、来店前に必ず最新情報をご確認ください。',
-    featured: [
-      { id: 'v23', points: ['入場料1,000円で飲み放題込み'], source: '店舗公式情報より' },
-      { id: 'v5', points: ['1,000円で時間無制限の飲み放題'], source: '店舗公式情報より' },
-      { id: 'v42', points: ['ソフトドリンクは12時間500円', 'アルコールは12時間1,500円'], source: '店舗公式情報より' }
-    ],
-    chipsIntro: 'このほか、次の店舗でもお酒に関する案内があります。',
-    chips: ['v9', 'v39', 'v27', 'v41']
-  },
-  {
-    id: 'cat-mix',
-    heading: 'ミックスゲーム・PLOを打ちたいなら',
-    icon: 'shuffle',
-    lead: 'PLOやミックスゲームとは、テキサスホールデム以外のポーカーの種類のことです。ここでは、そうしたバリエーションに対応していると案内されている店舗を紹介します。',
-    featured: [
-      { id: 'v33', points: ['取り扱いゲームは「基本全部」', 'ミックスゲームにも対応'], source: '店舗公式情報より' },
-      { id: 'v36', points: ['曜日を定めてPLOトーナメントを開催', '開催曜日・頻度は月によって変動(要確認)'], source: '店舗公式情報より' },
-      { id: 'v22', points: ['Draw・PLOに対応'], source: '紹介記事より' },
-      { id: 'v2', points: ['ゲーム種類は「基本全部」', '開催頻度は未確認(要確認)'], source: '紹介記事より' }
-    ]
-  }
-];
+// ★ CATEGORIES 本体・categoryStoreIds() は tools/guide-categories.js に切り出し済み
+//   (2026-09-13・店舗ページの「関連ガイド」リンクからも参照するため。切り出しの理由は
+//   同ファイルのヘッダーコメントを参照。ファイル冒頭の require で読み込んでいる)。
 
 // 上記6カテゴリーのいずれにも、裏付けとなる外部の紹介記事・口コミが見つからなかった店舗
 // (原稿の方針: 無理に当てはめず率直に書く)。
 const NOT_FOUND_IDS = ['v17', 'v26', 'v35', 'v38', 'v20', 'v8'];
-
-// カテゴリー内の全店舗id(featured＋chips)を1つにまとめる。verify()の件数検査・
-// validateCategoryCoverage() の両方から使う(同じ集め方を2箇所に書かない)。
-function categoryStoreIds(c) {
-  return [...c.featured.map(f => f.id), ...(c.chips || [])];
-}
 
 // 掲載中(未開店・閉店の可能性がある店を除く)の全店舗が CATEGORIES か NOT_FOUND_IDS の
 // どちらかに必ず含まれることを検査する。新規開店・店舗追加は日次の自動取込(TOURNAMENTSのみ

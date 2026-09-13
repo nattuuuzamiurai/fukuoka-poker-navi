@@ -209,12 +209,17 @@ const AREA_CONTENT = {
 };
 
 // エリア紹介ブロック(該当が無いエリアでは何も出さない=構成が壊れない)。
+// 【末尾のガイドページ導線(2026-09-13新設・内部リンク追加)】ガイドページ(/guide/beginner/)への
+// リンクがこれまでトップページのCTA・フッターのみで、エリアページからの導線が無かった
+// (マーケティング部の分析で挙がっていた項目)。7エリア分の文章(AREA_CONTENT)をそれぞれ
+// 手で直すのではなく、全エリア共通の1文をここで機械的に追記する(エリアが増えても
+// AREA_CONTENT に本文さえ足せば自動でこの1文も付く)。
 function areaContentBlock(area) {
   const text = AREA_CONTENT[area];
   if (!text) return '';
   return `
 <h2 class="vp-sec">${esc(area)}エリアについて</h2>
-<p class="lead">${esc(text)}</p>`;
+<p class="lead">${esc(text)} 目的別の選び方は<a href="/guide/beginner/">福岡のポーカー店ガイド</a>もご覧ください。</p>`;
 }
 
 function buildArea(area) {
@@ -442,6 +447,19 @@ function verify(files) {
     const linked = (nm[2].match(/href="\/areas\/[^"]+\/"/g) || []).length;
     if (linked !== PAGE_AREAS.length) {
       problems.push(`index.html #areaNav-list のリンク数が ${linked} 件（対象エリアは ${PAGE_AREAS.length} 件）`);
+    }
+  }
+  // ガイドページ(/guide/beginner/)への導線(2026-09-13新設)。AREA_CONTENT が本文を持つ
+  // エリアのページ全てに1本ずつ出ているはずで、それ以外の本数は想定していない。
+  {
+    const areasWithContent = PAGE_AREAS.filter(a => AREA_CONTENT[a]);
+    const guideLinked = areasWithContent.reduce((sum, a) => {
+      const html = files[`areas/${AREA_SLUGS[a]}/index.html`] || '';
+      return sum + (html.match(/href="\/guide\/beginner\/"/g) || []).length;
+    }, 0);
+    if (guideLinked !== areasWithContent.length) {
+      problems.push(`エリアページの「福岡のポーカー店ガイド」へのリンク数が ${guideLinked} 件`
+        + `(期待値: AREA_CONTENT を持つエリア ${areasWithContent.length} 件)`);
     }
   }
   if (problems.length) {
