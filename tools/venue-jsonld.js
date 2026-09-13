@@ -34,6 +34,16 @@
  *   ★ "hours" の自由文はコード側でパースしない。「不定休」「LAST」「祝前日」のような
  *     曜日に還元できない表現を誤って構造化データに落とす事故を、パーサの精度に頼らず
  *     【そもそも作らない】ことで防ぐ(README 法務・信頼性メモと同じ考え方)。
+ *
+ * 【alternateName(店舗の別表記)を追加した理由・2026-09-13】
+ *   「久留米 ポーカー ケンポーカー」等の裸の店名検索で、当サイトの該当ページより
+ *   店舗自身のSNSが上位に出る問題への対策。KENポーカー久留米は当サイト表記が
+ *   「KENポーカー（久留米）」のみである一方、店舗自身のX・Instagramの表示名は
+ *   ローマ字全大文字の「KEN POKER」で、当サイトの本文にこの表記が一度も出てこないことを
+ *   確認した。data.js の "altNames"(裏付けが取れた表記だけを人が追加する配列)を
+ *   schema.org の alternateName にそのまま渡す。★ 表記の裏取りはしない
+ *   (何が店舗の実際の表示名かはこのファイルの関知するところではなく、data.js を書く人が
+ *   確認する。ここは渡された値をそのまま出すだけ)。
  */
 
 // schema.org の DayOfWeek 列挙値(常に完全なURLで出す。Google のサンプルに合わせた表記)。
@@ -196,6 +206,12 @@ function venueJsonLd(v) {
     '@type': 'LocalBusiness',
     name: v.name
   };
+  // alternateName(店舗が自身のSNS等で使っている別表記)。data.js の altNames は
+  // 裏付けが取れた表記だけを人が追加する配列(2026-09-13新設。裸の店名検索対策)。
+  // 1件だけなら文字列、複数あれば配列でそのまま出す(schema.org の一般的な出し方)。
+  if (Array.isArray(v.altNames) && v.altNames.length) {
+    j.alternateName = v.altNames.length === 1 ? v.altNames[0] : v.altNames.slice();
+  }
   if (v.address) {
     const p = addressParts(v.address);
     const addr = { '@type': 'PostalAddress' };

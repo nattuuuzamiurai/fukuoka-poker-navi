@@ -3794,6 +3794,13 @@ git rm <ファイル> && git commit -m "revert: 状態ファイルを削除し�
     (「不定休」「LAST」「祝前日」のような曜日に還元できない表現を誤って構造化する事故を、パーサの精度に頼らず作らないことで防ぐ)。
     条件を満たさない店は今まで通り `hours` の表示のみに留める。
   - 出典・除外理由の詳細は `fukuoka-venues.json` の `_meta.structuredDataAdditions` に記録してある。
+- **`alternateName`(店舗の別表記)は、裸の店名検索(例:「久留米 ポーカー ケンポーカー」)で店舗自身のSNSに
+  負ける対策として2026-09-13追加**。`data.js` の `VENUES` の `"altNames"`(店舗自身がSNS等で実際に
+  使っている表示名の配列。**裏付けの無い表記を推測で追加しない**)を `tools/venue-jsonld.js` がそのまま
+  `alternateName` に変換する(1件なら文字列・複数なら配列)。同時に `tools/gen-venue-pages.js` が
+  `.vp-sub` の末尾に「（SNS表記: ◯◯）」と控えめに1回だけ表示する。第1号はKENポーカー久留米
+  (`v21`。当サイト表記「KENポーカー（久留米）」に対し、X・InstagramともSNS表示名は「KEN POKER」
+  であることを確認済み)。裏が取れていない店には付けない(大多数の店は今まで通り持たない)。
 - **Event 構造化データの推奨項目は「裏が取れたものだけ」埋める。** Search Console の
   「`performer` / `offers` / `image` / `organizer` がありません」は Google 自身が**重大ではない問題(＝推奨項目)**
   と位置づけており、欠けてもページや検索機能が失われない。**警告を消すために値を作らない。**
