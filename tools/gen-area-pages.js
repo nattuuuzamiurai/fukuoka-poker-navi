@@ -219,7 +219,7 @@ function areaContentBlock(area) {
   if (!text) return '';
   return `
 <h2 class="vp-sec">${esc(area)}エリアについて</h2>
-<p class="lead">${esc(text)} 目的別の選び方は<a href="/guide/beginner/">福岡のポーカー店ガイド</a>もご覧ください。</p>`;
+<p class="lead">${esc(text)}目的別の選び方は<a href="/guide/beginner/">福岡のポーカー店ガイド</a>もご覧ください。</p>`;
 }
 
 function buildArea(area) {
