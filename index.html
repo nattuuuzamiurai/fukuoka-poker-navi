@@ -109,6 +109,14 @@
         "@type": "Answer",
         "text": "いいえ、当サイトは各店舗・大会の主催者ではなく、公式媒体でもありません。当サイトは店舗・主催者が公開している情報を集約する媒体であり、賭博行為の勧誘・仲介を行うものではありません。最新情報や参加条件は、必ず各店舗・大会の公式サイト・SNS等でご確認ください。"
       }
+    },
+    {
+      "@type": "Question",
+      "name": "初めてで、どの店に行けばいいか分かりません。",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "福岡のポーカー店の選び方(トーナメント重視・リングゲーム・お酒重視など目的別のおすすめ、初心者講習ありの店舗紹介)をまとめた初心者向けガイドページをご用意しています。エリアや目的に応じてお店を探したい方はそちらもご覧ください。"
+      }
     }
   ]
 }
@@ -156,6 +164,14 @@
   .areaNav .an-label{font-size:.78em;font-weight:800;color:#cfe3dd;margin-bottom:7px}
   .areaNav ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px;padding:0;margin:0}
   .areaNav ul a{display:inline-block;background:var(--sur);border:1px solid var(--bor);border-radius:20px;padding:6px 13px;font-size:.85em;font-weight:700;color:var(--felt);text-decoration:none;box-shadow:var(--sha)}
+
+  /* 初心者向けガイドページへのCTA(2026-09-13新設)。tools/site-shell.js の BASE_CSS .cta と
+     同じ配色・役割だが、あちらは生成ページの .wrap(max-width:900px)内で使われるのに対し、
+     このindex.htmlは .hero/.areaNav と同じ「.wrapを介さないフルブリード帯」の設計のため、
+     class名は共通(.cta)でも index.html側でこのファイル独自にスタイルを定義している
+     (2ファイルで .cta という同名クラスを別定義で持つが、対象ページが重ならないため衝突しない)。 */
+  .cta{display:block;background:linear-gradient(135deg,var(--felt),var(--felt2));color:#fff;font-weight:800;text-decoration:none;padding:13px 16px;text-align:center;box-shadow:var(--sha)}
+  .cta small{display:block;font-weight:600;font-size:.8em;color:#cfe3dd;margin-top:3px}
 
   /* FILTER BAR */
   .filters{background:var(--sur);border-bottom:1px solid var(--bor);box-shadow:var(--sha)}
@@ -770,6 +786,14 @@
   </div>
 </div>
 
+<!-- 初心者向けガイドページへのCTA(2026-09-13新設・マーケティング部分析にもとづく)。
+     Search Console実測で「福岡 ポーカー」のインプレッションが実質0件だったのは、
+     「店を選ぶための紹介記事」という検索意図に応えるページが無かったことが一因。
+     ガイドページ(/guide/beginner/、生成元 tools/gen-guide-pages.js)への導線を、
+     エリア導線の直後という目立つ位置に置く。手で書いた1本のリンクで、自動同期の対象ではない
+     (index.html側の他の自動同期ブロック(#areaNav-list等)とは無関係)。 -->
+<a class="cta" href="guide/beginner/">▶ 初めての方へ：福岡のポーカー店の選び方<small>トーナメント重視・リングゲームなど目的別に紹介</small></a>
+
 <div class="filters">
   <div class="dstrip-row">
     <!-- 月の切り替え(社長指示・2026-07-30「7のところ押したら何月って選択できるように」)。
@@ -886,6 +910,10 @@
 <details class="faq-item">
   <summary>このサイトは大会の公式情報ですか？</summary>
   <div class="faq-a">いいえ、当サイトは各店舗・大会の主催者ではなく、公式媒体でもありません。当サイトは店舗・主催者が公開している情報を集約する媒体であり、賭博行為の勧誘・仲介を行うものではありません。最新情報や参加条件は、必ず各店舗・大会の公式サイト・SNS等でご確認ください。</div>
+</details>
+<details class="faq-item">
+  <summary>初めてで、どの店に行けばいいか分かりません。</summary>
+  <div class="faq-a">福岡のポーカー店の選び方(トーナメント重視・リングゲーム・お酒重視など目的別のおすすめ、初心者講習ありの店舗紹介)をまとめた<a href="guide/beginner/">初心者向けガイド</a>をご用意しています。エリアや目的に応じてお店を探したい方はそちらもご覧ください。</div>
 </details>
 <!-- FAQ_SECTION:END -->
 </main>

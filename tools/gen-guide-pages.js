@@ -127,6 +127,7 @@ const HIGHLIGHT_STORES = [
 // icon はカテゴリー見出しに添える小さなSVGアイコンの種類(下記 ICONS を参照)。
 const CATEGORIES = [
   {
+    id: 'cat-tournament',
     heading: 'トーナメントが強い・人気がある店を探すなら',
     icon: 'trophy',
     lead: '大会・トーナメントの盛り上がりについて、外部のレビューサイトや店舗公式SNS等で言及されている店舗です。',
@@ -140,6 +141,7 @@ const CATEGORIES = [
     ]
   },
   {
+    id: 'ring-beginner',
     heading: 'リングゲーム、初心者でも安心して打ちたいなら',
     icon: 'cards',
     lead: 'リングゲームとは、好きなタイミングで出入りできる通常のポーカーのことです。「初心者でも入りやすい」「講習・接客が丁寧」といった口コミ・紹介記事が見られる店舗です(出典: 主にlight-three.com、fukuoka-online.jp等の外部レビューサイト)。中洲エリアの店舗もこのカテゴリーに含まれます。',
@@ -150,6 +152,7 @@ const CATEGORIES = [
     chips: ['v21', 'v25', 'v3', 'v13', 'v14', 'v7', 'v4', 'v6', 'v28', 'v23', 'v40', 'v41']
   },
   {
+    id: 'ring-advanced',
     heading: 'リングゲーム、腕試ししたい・ガチでやりたいなら',
     icon: 'cards',
     lead: '※リングゲームとは、好きなタイミングで出入りできる通常のポーカーのことです。遊技スタイルとして「上級者向け」「本格的」と紹介されている店舗です。「勝てる」「稼げる」という意味ではなく、あくまでゲームの雰囲気についての紹介である点にご留意ください。',
@@ -162,6 +165,7 @@ const CATEGORIES = [
     ]
   },
   {
+    id: 'cat-baccarat',
     heading: 'バカラ・ブラックジャックも遊びたいなら',
     icon: 'dice',
     lead: 'ポーカーのほかにバカラ・ブラックジャックなど複数のゲームを扱っていると案内されている店舗です。',
@@ -171,6 +175,7 @@ const CATEGORIES = [
     chips: ['v5', 'v9', 'v3', 'v29', 'v39', 'v19', 'v37', 'v41']
   },
   {
+    id: 'cat-drink',
     heading: 'お得にお酒も楽しみたいなら',
     icon: 'glass',
     lead: '飲み放題や均一料金など、お酒に関する案内がある店舗です。金額や条件は変わることがあるため、来店前に必ず最新情報をご確認ください。',
@@ -183,6 +188,7 @@ const CATEGORIES = [
     chips: ['v9', 'v39', 'v27', 'v41']
   },
   {
+    id: 'cat-mix',
     heading: 'ミックスゲーム・PLOを打ちたいなら',
     icon: 'shuffle',
     lead: 'PLOやミックスゲームとは、テキサスホールデム以外のポーカーの種類のことです。ここでは、そうしたバリエーションに対応していると案内されている店舗を紹介します。',
@@ -261,6 +267,13 @@ const GUIDE_CSS = `  .gd-card{background:var(--sur);border:1px solid var(--bor);
   .gd-card-points{margin:6px 0 4px 1.15em;padding:0;font-size:.82em;line-height:1.6;color:var(--txt)}
   .gd-card-points li{margin-bottom:2px}
   .gd-card-src{font-size:.72em;color:var(--mut);margin-top:4px}
+  /* 目次(ジャンプリンク・2026-09-13新設)。既存の地味なテキストリンクの見た目を踏襲するだけで、
+     カードデザインは持たない(依頼どおり見た目を変えない範囲に留める)。 */
+  ul.gd-toc{list-style:none;margin:0 0 14px;padding:0;font-size:.88em;line-height:1.9}
+  ul.gd-toc li{padding-left:1.1em;position:relative}
+  ul.gd-toc li::before{content:'▸';position:absolute;left:0;color:var(--gold)}
+  ul.gd-toc a{color:#0e6a72;font-weight:700;text-decoration:none}
+  ul.gd-toc a:hover{text-decoration:underline}
 `;
 
 // ---- カテゴリー見出しのアイコン(社長指示: ストローク系のインラインSVG・絵文字は使わない) ----
@@ -331,12 +344,28 @@ function categoryBlock(c) {
   const chipsPart = c.chips && c.chips.length
     ? `${c.chipsIntro ? `<p class="lead">${esc(c.chipsIntro)}</p>` : ''}${categoryChips(c.chips)}`
     : '';
+  // id属性(2026-09-13新設)は下の目次(categoryTocBlock)からのジャンプ先。
+  const idAttr = c.id ? ` id="${esc(c.id)}"` : '';
   return `<div class="gd-cat">
-  <h3>${catIcon(c.icon)}${esc(c.heading)}</h3>
+  <h3${idAttr}>${catIcon(c.icon)}${esc(c.heading)}</h3>
   <p class="lead">${esc(c.lead)}</p>
   ${categoryFeaturedCards(c.featured)}
   ${chipsPart}
 </div>`;
+}
+
+// ---- 目次(ジャンプリンク・2026-09-13新設) ----
+// 【なぜ足すか】マーケティング部の分析(Search Console実測)により、「福岡 ポーカー」
+// 「福岡 ポーカー リング」のインプレッションが実質0件だったことを踏まえ、検索結果からの
+// クリック後にリングゲーム等の目的別カテゴリーへすぐ辿り着けるようにする(回遊性・
+// クローラビリティの改善で、見た目のカードデザイン自体は変えない)。
+// 全カテゴリーに id を持たせている前提(無ければ生成しない=リンク切れを作らない)。
+function categoryTocBlock() {
+  const items = CATEGORIES.filter(c => c.id);
+  if (!items.length) return '';
+  return `<ul class="gd-toc">
+${items.map(c => `  <li><a href="#${esc(c.id)}">${esc(c.heading)}</a></li>`).join('\n')}
+</ul>`;
 }
 
 // 6カテゴリーいずれにも該当が見つからなかった店舗の案内(原稿の方針: 無理に一覧化・当てはめず、
@@ -356,6 +385,7 @@ function categoriesBlock() {
   return `
 <h2 class="day">福岡のポーカー店を目的別に探す</h2>
 <p class="lead">福岡のポーカー店は、それぞれ得意なスタイルや雰囲気が異なります。ここでは外部のレビューサイト・紹介記事・店舗公式SNS等をもとに、目的別に店舗を整理し、各店の特徴を簡潔な「ポイント」にまとめました。当サイトが独自に採点・順位付けしたものではなく、あくまで公開されている情報の紹介です。とくに確度が高いとまでは言えない情報には「(要確認)」を添えています。実際の運営状況・イベント内容は変更されることがあるため、参加前には必ず各店舗の公式サイト・SNS等で最新情報をご確認ください。</p>
+${categoryTocBlock()}
 ${cats}
 ${notFoundBlock()}`;
 }
@@ -475,20 +505,40 @@ const FAQ_ITEMS = [
   {
     q: '一人で行っても大丈夫ですか?',
     a: '多くの店舗が一人での来店を受け入れているとみられますが、詳細は店舗によって異なります。不安な場合は、来店前に公式SNS等で一人でも参加できるか確認しておくと安心です。'
+  },
+  // 【2026-09-13新設・マーケティング部分析】Search Console実測で「福岡 ポーカー リング」の
+  // インプレッションが実質0件だったことを踏まえ、上の目的別カテゴリー(リングゲーム2分類)への
+  // 内部リンクを兼ねたFAQを追加する。他の項目と違いリンクを含むため、あらかじめ aHtml/aText を
+  // 直接持たせる(下の.map()でaのみの項目とまとめてesc()すると、意図したリンクタグまでエスケープ
+  // されてしまうため)。
+  {
+    q: '福岡でリングゲームができるポーカー店はどこですか？',
+    aHtml: 'リングゲーム(好きなタイミングで出入りできる通常のポーカー)を提供している店舗は、上記「福岡のポーカー店を目的別に探す」の<a href="#ring-beginner">リングゲーム、初心者でも安心して打ちたいなら</a>と<a href="#ring-advanced">リングゲーム、腕試ししたい・ガチでやりたいなら</a>でまとめて紹介しています。',
+    aText: 'リングゲーム(好きなタイミングで出入りできる通常のポーカー)を提供している店舗は、「福岡のポーカー店を目的別に探す」の「リングゲーム、初心者でも安心して打ちたいなら」「リングゲーム、腕試ししたい・ガチでやりたいなら」でまとめて紹介しています。'
   }
-].map(x => ({ q: x.q, aHtml: esc(x.a), aText: x.a }));
+].map(x => (x.aHtml !== undefined ? x : { q: x.q, aHtml: esc(x.a), aText: x.a }));
 
 // ---- ページ全体 ----
-const TITLE = '福岡のポーカー店の選び方｜目的別おすすめ・初心者向け比較ガイド | ふくおかポーカーナビ';
+// 【2026-09-13・マーケティング部分析にもとづくタイトル/description差し替え】
+//   Search Console実測で「福岡 ポーカー」「福岡 ポーカー リング」のインプレッションが
+//   実質0件。従来の文言は「比較ガイド」を前面に出していたが、検索意図(トーナメント/
+//   リングゲームで店を選びたい)に直接応える語を先頭に寄せる。
+//   ★ og:title/og:description は tools/site-shell.js の pageHead() が title/desc を
+//     そのまま使う配線になっているため、この2つを直せば自動的に揃う(twitter系メタは
+//     twitter:title/description 自体を持たず og: にフォールバックするので追加変更不要)。
+//     WebPage の JSON-LD(name/description)も下で同じ文言に揃える
+//     (表示テキストと構造化データの文言がズレると、検索結果と実際のページ内容が
+//     食い違って見える事故になるため)。
+const TITLE = '福岡のポーカー店ガイド｜トーナメント・リングゲーム目的別に紹介 | ふくおかポーカーナビ';
 
 function buildGuidePage() {
   const listedCount = VENUES.filter(v => !v.preopen && !v.closed).length;
-  const DESC = `福岡には${listedCount}店舗のポーカー店があり、初めてだとどこに行けばいいか迷いがちです。トーナメント重視・リングゲームでじっくり・お酒も楽しみたいなど目的別のおすすめ店舗と、初心者講習を実施している店舗、エリア別の探し方をまとめて紹介します。`;
+  const DESC = `福岡には${listedCount}店舗のポーカー店があります。トーナメントが強い店、リングゲームを初心者から打てる店・上級者向けの店など、目的別におすすめを紹介。初心者講習ありの店舗やエリア別の探し方もまとめました。`;
 
   const webPageJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
-    name: '福岡でポーカーを始めるなら — 初心者向け店舗の選び方',
+    name: TITLE,
     description: DESC,
     url: CANONICAL,
     inLanguage: 'ja',
