@@ -416,23 +416,36 @@ function buildVenue(v) {
   const descLead = badge && badge.kind === 'fst' ? 'FST 5.0のサテライト（チケット獲得トーナメント）を開催中の店舗です。'
     : badge && badge.kind === 'ring' ? 'リングゲームも開催している店舗です。'
     : '';
+  // altNames(店舗が自身のSNS等で使っている別表記)を .vp-sub 末尾に控えめに1回だけ添える
+  // (2026-09-13新設・裸の店名検索対策)。JSON-LDのalternateName(tools/venue-jsonld.js)と
+  // 同じ data.js の値をそのまま使う(表記の裏取りはしない・data.js を書く人が確認済みの値のみ)。
+  const altNamesNote = Array.isArray(v.altNames) && v.altNames.length
+    ? `（SNS表記: ${v.altNames.map(esc).join('・')}）`
+    : '';
   let title, desc, sub;
   if (v.preopen) {
     // 未開店の店。営業中と読める文面を出さない(JSON-LDのLocalBusinessも出さない)。
     title = `${v.name}｜オープン予定のポーカースポット${titleParen} | ふくおかポーカーナビ`;
     desc = `${descName}はオープン予定のポーカースポットです。`
       + `判明している開店時期と${v.address ? '所在地・' : ''}アクセス・公式SNSをまとめています。当サイトに掲載中の開催予定はまだありません。`;
-    sub = `${esc(v.area)}のポーカースポット${v.access ? `（${esc(v.access)}）` : ''} — オープン予定`;
+    sub = `${esc(v.area)}のポーカースポット${v.access ? `（${esc(v.access)}）` : ''} — オープン予定${altNamesNote}`;
   } else if (rows.length) {
-    title = `${v.name}のポーカートーナメント日程${titleParen} | ふくおかポーカーナビ`;
-    desc = `${descLead}${descName}で開催されるポーカートーナメントの日程を日付順に掲載。`
+    // ★ 2026-09-13改訂(裸の店名検索対策)。以前は「◯◯のポーカートーナメント日程」のように
+    //   日程情報を主役にした構成で、「その店は何?」という裸の店名検索の検索意図に対して
+    //   弱いという指摘への対応。店名＋「｜」の直後に「店舗情報」を明示し、日程はその一部として
+    //   後ろに回す(他2分岐〔preopen・掲載0件〕は元々この構成だったので、3分岐で構成をそろえる
+    //   形になる)。titleParen(エリア・差別化バッジ)は今まで通り末尾に残す(情報は落とさない)。
+    title = `${v.name}｜店舗情報・トーナメント日程${titleParen} | ふくおかポーカーナビ`;
+    // description も書き出しを店名(descName)からにする。descLead(FSTサテライト開催中等の
+    // 時々変わる告知)は書き出しを奪わないよう1文目の後ろに回す(情報は落とさない)。
+    desc = `${descName}で開催されるポーカートーナメントの日程を日付順に掲載。${descLead}`
       + `開始時刻・バイイン・スタックのほか、${v.address ? '住所・' : ''}アクセス・公式SNSもまとめて確認できます。`;
-    sub = `${esc(v.area)}のポーカースポット${v.access ? `（${esc(v.access)}）` : ''} — トーナメント日程・バイイン・アクセス`;
+    sub = `${esc(v.area)}のポーカースポット${v.access ? `（${esc(v.access)}）` : ''} — トーナメント日程・バイイン・アクセス${altNamesNote}`;
   } else {
     title = `${v.name}｜住所・アクセス・トーナメント開催情報${titleParen} | ふくおかポーカーナビ`;
-    desc = `${descLead}${descName}の${v.address ? '住所・' : ''}アクセス・公式SNSをまとめています。`
+    desc = `${descName}の${v.address ? '住所・' : ''}アクセス・公式SNSをまとめています。${descLead}`
       + `現時点で当サイトに掲載中の開催予定はありません。最新の開催情報は店舗の公式情報・SNSをご確認ください。`;
-    sub = `${esc(v.area)}のポーカースポット${v.access ? `（${esc(v.access)}）` : ''} — 住所・アクセス・開催情報`;
+    sub = `${esc(v.area)}のポーカースポット${v.access ? `（${esc(v.access)}）` : ''} — 住所・アクセス・開催情報${altNamesNote}`;
   }
 
   // 同じエリアの他店。内部リンクを増やしつつ、読者にとっても「近くの別の店」になる。

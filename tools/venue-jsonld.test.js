@@ -15,6 +15,8 @@
  *      検知すること
  *   6. hoursSpec を持たない店(hours だけの店)は openingHoursSpecification を出さないこと
  *      (PR #88 の判断を維持する回帰防止)
+ *   7. altNames → alternateName の変換(単数は文字列・複数は配列)、altNames を持たない店は
+ *      alternateName を出さないこと(2026-09-13新設)
  */
 
 'use strict';
@@ -193,7 +195,30 @@ test('validateHoursSpec: hoursSpec を持たない店は対象外(素通り)', (
 });
 
 // ============================================================
-// 5. validateUnverifiedFlags(既存ロジックの移設・回帰防止)
+// 5. altNames → alternateName
+// ============================================================
+test('venueJsonLd: altNames が1件なら alternateName は文字列で出す', () => {
+  const j = venueJsonLd(baseVenue({ altNames: ['KEN POKER'] }));
+  assert.equal(j.alternateName, 'KEN POKER');
+});
+
+test('venueJsonLd: altNames が複数なら alternateName は配列で出す', () => {
+  const j = venueJsonLd(baseVenue({ altNames: ['KEN POKER', 'ケンポーカー'] }));
+  assert.deepStrictEqual(j.alternateName, ['KEN POKER', 'ケンポーカー']);
+});
+
+test('venueJsonLd: altNames が無い店は alternateName を出さない', () => {
+  const j = venueJsonLd(baseVenue());
+  assert.equal(j.alternateName, undefined);
+});
+
+test('venueJsonLd: altNames が空配列の店は alternateName を出さない', () => {
+  const j = venueJsonLd(baseVenue({ altNames: [] }));
+  assert.equal(j.alternateName, undefined);
+});
+
+// ============================================================
+// 6. validateUnverifiedFlags(既存ロジックの移設・回帰防止)
 // ============================================================
 test('validateUnverifiedFlags: note が住所未確認に言及しているのにフラグが無ければ異常終了', () => {
   assert.throws(() => validateUnverifiedFlags([baseVenue({ note: '住所は未確認。' })]), /住所の未確認/);
