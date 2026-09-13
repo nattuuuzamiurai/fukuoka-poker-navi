@@ -58,6 +58,25 @@ test('申し送り2: 免責文言とサイト共通ポジショニング文が�
   assert.match(html, /当サイトは店舗・主催者が公開している情報を集約する媒体であり、賭博行為の勧誘・仲介を行うものではありません/);
 });
 
+test('NO-GO差し戻し対応(2026-09-14): .disclaimer は冒頭(H1直後・最初の見出しより前)にも存在する', () => {
+  const html = buildPage(REPO);
+  const h1 = html.indexOf('<h1>');
+  const firstH2 = html.indexOf('<h2', h1);
+  assert.ok(h1 >= 0 && firstH2 > h1, '<h1> または最初の<h2>が見つかりません');
+  const introSection = html.slice(h1, firstH2);
+  assert.match(introSection, /class="disclaimer"/, '冒頭に.disclaimerが見つかりません(「結論」だけ読んだ読者の目に免責文言が触れない構成になっている)');
+  assert.match(introSection, /特定のアミューズメントポーカー店・サービスの合法性を当サイトが判定・保証するものではありません/);
+  // 末尾の.disclaimerと二重掲載であることも確認する(末尾を消してしまう回帰を防ぐ)
+  const disclaimerCount = (html.match(/class="disclaimer"/g) || []).length;
+  assert.equal(disclaimerCount, 2, `.disclaimer は冒頭+末尾の2箇所にあるはずですが${disclaimerCount}箇所でした`);
+});
+
+test('NO-GO差し戻し対応(2026-09-14): 検査(verify)は冒頭の.disclaimerが欠けたら例外を投げる', () => {
+  const html = buildPage(REPO);
+  const injected = html.replace('<div class="disclaimer">本記事は、特定のアミューズメントポーカー店', '<div class="tba-removed">本記事は、特定のアミューズメントポーカー店');
+  assert.throws(() => verify(injected), /冒頭/);
+});
+
 test('申し送り3: 最終確認日の記載が2箇所(冒頭の告知・末尾)にある', () => {
   const html = buildPage(REPO);
   const hits = html.match(/最終確認日[:：]\s*2026年9月14日/g) || [];
