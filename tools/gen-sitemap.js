@@ -87,6 +87,10 @@ const ABOUT = { freq: 'monthly', pri: '0.3' };
 // 広いクエリを受ける入口で、店舗ページ・エリアページへのハブも兼ねるため、エリアページと
 // 同じ扱い(weekly・0.8)にする。中身(全店舗一覧表)はdata.jsの更新に追随する。
 const GUIDE = { freq: 'weekly', pri: '0.8' };
+// 「ウェブコイン」規制の解説記事(/guide/webcoin-regulation/。開発部2026-09-14)。
+// 上記ガイドと違い店舗横断の一覧ではなく、日次のdata.js更新には追随しない読み物記事のため
+// changefreqはmonthly(頻繁に変わる想定ではないが、続報での更新を前提にしているためaboutより高い頻度)。
+const WEBCOIN = { freq: 'monthly', pri: '0.6' };
 
 // ---- lastmod: git履歴ベースで決定論的に求める ----
 // big-events.js の各イベントの id → そのイベント固有のデータファイル(会期・共通レジストリの
@@ -201,6 +205,17 @@ function buildSitemap(REPO) {
       loc: `${SITE}/guide/beginner/`,
       lastmod: lastmodFor(['tools/gen-guide-pages.js', 'data.js']),
       ...GUIDE
+    });
+  }
+
+  // 「ウェブコイン」規制の解説記事(開発部2026-09-14)。about.html/guide/beginnerと同じく
+  // ファイルが存在するときだけ載せる。本文は tools/gen-guide-webcoin-regulation.js に直書きで
+  // data.jsには依存しないため、lastmodはそのファイル自身の最終更新コミット日時のみを見る。
+  if (fs.existsSync(path.join(REPO, 'guide/webcoin-regulation/index.html'))) {
+    urls.push({
+      loc: `${SITE}/guide/webcoin-regulation/`,
+      lastmod: lastmodFor(['tools/gen-guide-webcoin-regulation.js']),
+      ...WEBCOIN
     });
   }
 
