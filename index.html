@@ -173,13 +173,32 @@
   .areaNav ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px;padding:0;margin:0}
   .areaNav ul a{display:inline-block;background:var(--sur);border:1px solid var(--bor);border-radius:20px;padding:6px 13px;font-size:.85em;font-weight:700;color:var(--felt);text-decoration:none;box-shadow:var(--sha)}
 
-  /* 初心者向けガイドページへのCTA(2026-09-13新設)。tools/site-shell.js の BASE_CSS .cta と
-     同じ配色・役割だが、あちらは生成ページの .wrap(max-width:900px)内で使われるのに対し、
-     このindex.htmlは .hero/.areaNav と同じ「.wrapを介さないフルブリード帯」の設計のため、
-     class名は共通(.cta)でも index.html側でこのファイル独自にスタイルを定義している
-     (2ファイルで .cta という同名クラスを別定義で持つが、対象ページが重ならないため衝突しない)。 */
-  .cta{display:block;background:linear-gradient(135deg,var(--felt),var(--felt2));color:#fff;font-weight:800;text-decoration:none;padding:13px 16px;text-align:center;box-shadow:var(--sha)}
+  /* 初心者向けガイドページへのCTA(2026-09-13新設、2026-09-14デザイン強化)。
+     tools/site-shell.js の BASE_CSS .cta と同じ配色・役割だが、あちらは生成ページの
+     .wrap(max-width:900px)内で使われるのに対し、このindex.htmlは .hero/.areaNav と同じ
+     「.wrapを介さないフルブリード帯」の設計のため、class名は共通(.cta)でも index.html側で
+     このファイル独自にスタイルを定義している(2ファイルで .cta という同名クラスを別定義で
+     持つが、対象ページが重ならないため衝突しない)。
+     【2026-09-14改修】社長指示「案内があまり目立たない、デザインに甲乙つけてわかりやすく」。
+     角丸が無く直上の .areaNav(緑帯)と地続きに見えていたのが原因のため、
+     - サイト基調の角丸カード(border-radius:var(--r))化 + 上下にmarginを取って独立させる
+     - 上端にゴールドの帯(border-top)を足してアクセントにする(既存の --gold をそのまま使用、
+       新しい色は増やさない)
+     - 「▶」の文字矢印を、店舗/ガイドページと同じ様式のインラインSVG(コンパス+矢印)に差し替える
+     の3点を行った。煽り文句・点滅は追加しない(編集方針どおり)。 */
+  .cta{display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,var(--felt),var(--felt2));color:#fff;text-decoration:none;padding:14px 16px;text-align:left;box-shadow:var(--sha);border-radius:var(--r);border-top:3px solid var(--gold);margin:14px 16px 0}
+  .cta-ic{flex:0 0 auto;width:36px;height:36px;border-radius:50%;background:rgba(217,164,65,.18);border:1px solid rgba(217,164,65,.55);display:flex;align-items:center;justify-content:center;color:var(--gold2)}
+  .cta-ic svg{width:20px;height:20px}
+  .cta-body{flex:1;min-width:0}
+  .cta-title{display:block;font-weight:800}
   .cta small{display:block;font-weight:600;font-size:.8em;color:#cfe3dd;margin-top:3px}
+  .cta-arrow{flex:0 0 auto;width:20px;height:20px;color:var(--gold2)}
+  @media(max-width:360px){
+    .cta{padding:12px 13px;gap:9px}
+    .cta-ic{width:30px;height:30px}
+    .cta-ic svg{width:17px;height:17px}
+    .cta-arrow{width:17px;height:17px}
+  }
 
   /* FILTER BAR */
   .filters{background:var(--sur);border-bottom:1px solid var(--bor);box-shadow:var(--sha)}
@@ -794,13 +813,24 @@
   </div>
 </div>
 
-<!-- 初心者向けガイドページへのCTA(2026-09-13新設・マーケティング部分析にもとづく)。
+<!-- 初心者向けガイドページへのCTA(2026-09-13新設・マーケティング部分析にもとづく、
+     2026-09-14デザイン強化)。
      Search Console実測で「福岡 ポーカー」のインプレッションが実質0件だったのは、
      「店を選ぶための紹介記事」という検索意図に応えるページが無かったことが一因。
      ガイドページ(/guide/beginner/、生成元 tools/gen-guide-pages.js)への導線を、
      エリア導線の直後という目立つ位置に置く。手で書いた1本のリンクで、自動同期の対象ではない
-     (index.html側の他の自動同期ブロック(#areaNav-list等)とは無関係)。 -->
-<a class="cta" href="guide/beginner/">▶ 初めての方へ：福岡のポーカー店の選び方<small>トーナメント重視・リングゲームなど目的別に紹介</small></a>
+     (index.html側の他の自動同期ブロック(#areaNav-list等)とは無関係)。
+     アイコンは店舗/ガイドページ(tools/gen-venue-pages.js・tools/gen-guide-pages.js の ICONS)と
+     同じ様式(viewBox 0 0 24 24, stroke=currentColor, stroke-width 1.8)のインラインSVGで統一。
+     左のコンパスは「進む先を示す道しるべ」、右の矢印は遷移を表す(装飾はaria-hiddenで隠す)。 -->
+<a class="cta" href="guide/beginner/">
+  <span class="cta-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.3 8.7l-2 4.6-4.6 2 2-4.6 4.6-2z"/></svg></span>
+  <span class="cta-body">
+    <span class="cta-title">初めての方へ：福岡のポーカー店の選び方</span>
+    <small>トーナメント重視・リングゲームなど目的別に紹介</small>
+  </span>
+  <span class="cta-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+</a>
 
 <div class="filters">
   <div class="dstrip-row">
