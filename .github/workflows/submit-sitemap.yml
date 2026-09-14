@@ -1,0 +1,49 @@
+name: sitemap.xml をGoogle Search Consoleに再送信
+
+# Google Search Console API(sitemaps.submit)を呼び、対象プロパティ
+# (https://fukuokapoker.com/)に sitemap.xml の更新を通知する。詳細は
+# tools/submit-sitemap.js のヘッダコメントを参照。
+#
+# ★これは「サイトマップを見に来てください」という軽い通知であり、
+#   ページ単体のインデックス登録リクエストとは別物(そちらのAPIは非公開)。
+#   実際にいつ・どこまでcrawlされるかはGoogle側の判断による。
+#
+# 【認証】.github/workflows/fetch-search-console.yml と同じリポジトリシークレット
+#   GSC_SERVICE_ACCOUNT_KEY(サービスアカウント鍵JSON全体)を使う。
+#   このワークフローはファイルを一切書き換えない(git commit/pushのステップは無い)ため、
+#   fetch-search-console.yml と違い `permissions: contents: write` は不要。
+#
+# 【手動実行】新しいページを追加した直後など、週次を待たずにすぐ通知したい時のために
+#   workflow_dispatch を有効にしてある(`gh workflow run submit-sitemap.yml` 等)。
+
+on:
+  schedule:
+    # cronはUTC。22:10 UTC(日曜) = 07:10 JST(月曜)。
+    # fetch-search-console.yml(07:00 JST)の直後、週の最初にまとめて実行する。
+    - cron: '10 22 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# 同時実行を防ぐ(手動実行と週次cronが重なって競合するのを避ける)
+concurrency:
+  group: submit-sitemap
+  cancel-in-progress: false
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリを取得
+        uses: actions/checkout@v4
+
+      - name: Node.js をセットアップ
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: sitemap.xml の再送信をGoogleに通知
+        env:
+          GSC_SERVICE_ACCOUNT_KEY: ${{ secrets.GSC_SERVICE_ACCOUNT_KEY }}
+        run: node tools/submit-sitemap.js

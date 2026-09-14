@@ -20,7 +20,8 @@
  * 【依存ライブラリなし】このリポジトリの他のtools/*.jsと同じく、npmパッケージを使わない
  * (package.json/node_modulesが無く、CIもnpm installを行わない設計のため)。
  * `googleapis`は使わず、JWT Bearer Token Flow(RS256署名 + トークン交換)を
- * Node標準の crypto / fetch だけで実装する。
+ * Node標準の crypto / fetch だけで実装する(認証まわりの共通ロジックは tools/gsc-auth.js に
+ * 切り出してあり、tools/submit-sitemap.js と共有する)。
  *
  * 使い方:
  *   node tools/fetch-search-console.js                    … 直近28日分を取得して保存
@@ -39,10 +40,9 @@
 
 const fs = require('fs');
 const path = require('path');
-const crypto = require('crypto');
+const { loadCredentials, getAccessToken } = require('./gsc-auth');
 
 const SCOPE = 'https://www.googleapis.com/auth/webmasters.readonly';
-const TOKEN_URI_DEFAULT = 'https://oauth2.googleapis.com/token';
 const SEARCH_ANALYTICS_URL = (siteUrl) =>
   `https://www.googleapis.com/webmasters/v3/sites/${encodeURIComponent(siteUrl)}/searchAnalytics/query`;
 
@@ -84,83 +84,6 @@ function parseArgs(argv) {
     throw new Error(`--days は正の整数で指定してください(実際: ${JSON.stringify(args.days)})`);
   }
   return args;
-}
-
-// ---------- 認証(サービスアカウント JWT Bearer Token Flow) ----------
-
-/** 鍵ファイルの中身(JSON)を、環境変数の2通りのどちらかから読み込む。中身をログに出さない。 */
-function loadCredentials() {
-  const inlineJson = process.env.GSC_SERVICE_ACCOUNT_KEY;
-  if (inlineJson && inlineJson.trim()) {
-    let parsed;
-    try {
-      parsed = JSON.parse(inlineJson);
-    } catch (e) {
-      throw new Error('GSC_SERVICE_ACCOUNT_KEY の中身をJSONとして読み込めませんでした(値そのものはログに出しません)。');
-    }
-    return { credentials: parsed, source: 'GSC_SERVICE_ACCOUNT_KEY(環境変数)' };
-  }
-
-  const keyPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
-  if (keyPath && keyPath.trim()) {
-    if (!fs.existsSync(keyPath)) {
-      throw new Error(`GOOGLE_APPLICATION_CREDENTIALS が指すファイルが見つかりません: ${keyPath}`);
-    }
-    let parsed;
-    try {
-      parsed = JSON.parse(fs.readFileSync(keyPath, 'utf8'));
-    } catch (e) {
-      throw new Error(`鍵ファイルをJSONとして読み込めませんでした(パス: ${keyPath})。中身はログに出しません。`);
-    }
-    return { credentials: parsed, source: `GOOGLE_APPLICATION_CREDENTIALS(${keyPath})` };
-  }
-
-  throw new Error(
-    'サービスアカウント鍵が見つかりません。GSC_SERVICE_ACCOUNT_KEY(JSON文字列)か ' +
-    'GOOGLE_APPLICATION_CREDENTIALS(ファイルパス)のいずれかを環境変数に設定してください。'
-  );
-}
-
-function base64url(input) {
-  return Buffer.from(input).toString('base64url');
-}
-
-/** サービスアカウント鍵からアクセストークンを取得する(JWT Bearer Token Flow)。 */
-async function getAccessToken(credentials) {
-  if (!credentials.client_email || !credentials.private_key) {
-    throw new Error('鍵ファイルに client_email / private_key が見つかりません(サービスアカウント鍵のJSONか確認してください)。');
-  }
-  const tokenUri = credentials.token_uri || TOKEN_URI_DEFAULT;
-  const nowSec = Math.floor(Date.now() / 1000);
-  const header = { alg: 'RS256', typ: 'JWT' };
-  const claimSet = {
-    iss: credentials.client_email,
-    scope: SCOPE,
-    aud: tokenUri,
-    iat: nowSec,
-    exp: nowSec + 3600,
-  };
-  const signingInput = `${base64url(JSON.stringify(header))}.${base64url(JSON.stringify(claimSet))}`;
-  const signature = crypto.createSign('RSA-SHA256').update(signingInput).sign(credentials.private_key);
-  const jwt = `${signingInput}.${signature.toString('base64url')}`;
-
-  const res = await fetch(tokenUri, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-      assertion: jwt,
-    }),
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`アクセストークンの取得に失敗しました(HTTP ${res.status}): ${text}`);
-  }
-  const data = await res.json();
-  if (!data.access_token) {
-    throw new Error('トークン応答に access_token がありませんでした。');
-  }
-  return data.access_token;
 }
 
 // ---------- Search Console API ----------
@@ -299,7 +222,7 @@ async function main() {
   console.log(`対象プロパティ: ${args.site}`);
   console.log(`集計期間: ${startDate} 〜 ${endDate}(${args.days}日間、反映ラグ${DATA_LAG_DAYS}日を考慮)`);
 
-  const accessToken = await getAccessToken(credentials);
+  const accessToken = await getAccessToken(credentials, SCOPE);
 
   const [totalsRes, queryRes, pageRes] = await Promise.all([
     searchAnalyticsQuery(accessToken, args.site, { startDate, endDate, dimensions: [] }),
