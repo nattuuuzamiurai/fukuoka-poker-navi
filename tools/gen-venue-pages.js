@@ -158,9 +158,15 @@ const VENUE_CSS = `  .vp-sub{font-size:.9em;color:var(--mut);margin-bottom:14px}
   /* Googleマップ埋め込み(依頼2・社長承認済み)。addressUnverified の店には出さない(呼び出し側で制御)。 */
   .vp-map{display:block;width:100%;height:260px;border:0;border-radius:var(--r);box-shadow:var(--sha);margin-bottom:14px}
   /* ホットペッパー グルメの店舗写真(2026-09-12・PR #91の情報カードの上に配置)。
-     画像は自社保存せずホットリンク(imgfp.hotp.jp を直接参照)。詳細は venueHeroPhotoHtml() のコメント参照。 */
+     画像は自社保存せずホットリンク(imgfp.hotp.jp を直接参照)。詳細は venueHeroPhotoHtml() のコメント参照。
+     【2026-09-16・object-fit を cover→contain に変更】正方形に近いロゴ画像(例: KKPOKER FUKUOKAの
+     盾型ロゴ)を横長の枠に cover で当てると大きくズームされ絵柄が見切れる、と社長から指摘。
+     contain なら全体が必ず収まる。余白ができる場合は var(--sur)(他のカードと同じ白地)で
+     埋め、透明PNGのロゴでも背景が透けない・浮かない見た目にする。横長の実写真(ホットペッパー由来)は
+     元々 max-height 内に収まる比率のものが多く、contain にしても見え方は変わらない(letterbox が
+     発生しない)。 */
   .vp-photo{margin:0 0 14px}
-  .vp-photo img{display:block;width:100%;max-height:320px;object-fit:cover;border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha)}
+  .vp-photo img{display:block;width:100%;max-height:320px;object-fit:contain;background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha)}
   .vp-photo-credit{font-size:.78em;color:var(--mut);line-height:1.7;margin:6px 2px 0}
   .vp-photo-credit a{color:#0e6a72;font-weight:700}
   /* 料金・システム(2026-09-16新設。data.js の "pricing" をそのまま列挙するだけの単純な表)。 */
@@ -536,6 +542,9 @@ ${sameAreaShown.map(x => `  <a class="vp-card" href="/venues/${x.slug}/">
 <div class="vp-ring"><b>${esc(v.name)}はリングゲームを開催しています。</b>${v.ringNote ? esc(v.ringNote) : 'レート・詳細は店舗にご確認ください。'}</div>` : '';
 
   // 料金・システム(2026-09-16新設)。data.js に pricing が無い店は今まで通りセクションごと出ない。
+  // 【表示位置(2026-09-16修正)】以前はトーナメント日程表の後ろに出していたが、店舗によっては
+  // 日程表が長く、料金・システムが画面の一番下まで流れて気づかれにくいと社長から指摘。
+  // mapBlock の直後(日程表より前)に移動した(body 組み立て部分を参照)。
   const pricingBlock = venuePricingHtml(v);
 
   // ★ note は data.js の文面をそのまま出す。
@@ -592,14 +601,14 @@ ${sameAreaShown.map(x => `  <a class="vp-card" href="/venues/${x.slug}/">
 <p class="vp-sub">${sub}</p>${closedNoticeBlock}${badgesBlock}${venueHeroPhotoHtml(v)}
 <div class="vp-info-grid">
 ${venueInfoCardsHtml(v)}
-</div>${mapBlock}${fstSatBlock}${pastSatBlock}
+</div>${mapBlock}${pricingBlock ? `
+<h2 class="vp-sec">料金・システム</h2>${pricingBlock}` : ''}${fstSatBlock}${pastSatBlock}
 <div class="disclaimer">${noteBlock}当サイトは店舗が公開している情報を集約している媒体で、この店舗の運営者ではありません。日程・料金・営業状況は変更されることがあるため、参加前に必ず店舗の公式情報・SNSをご確認ください。${sourceBlock}<br>${POSITIONING}</div>
 <a class="cta" href="/#venue/${esc(v.id)}">▶ 月を切り替えて日程を見る<small>サイト内の月別カレンダー（前月・翌月に移動できます）</small></a>
 <h2 class="vp-sec" id="vp-sched-title">${schedTitle}</h2>
 <p class="lead" id="vp-sched-note">${schedNote}</p>
 <div id="vp-sched">${schedHtml}</div>${ringBlock ? `
-<h2 class="vp-sec">リングゲーム</h2>${ringBlock}` : ''}${pricingBlock ? `
-<h2 class="vp-sec">料金・システム</h2>${pricingBlock}` : ''}${areaBlock}${guideLinksHtml(v)}
+<h2 class="vp-sec">リングゲーム</h2>${ringBlock}` : ''}${areaBlock}${guideLinksHtml(v)}
 <div class="links">
   ▶ <a href="/">福岡のポーカートーナメント日程を日付順に見る（全${VENUES.length}店舗）</a><br>
   ▶ <a href="/#venue/${esc(v.id)}">${esc(v.name)} の月別カレンダー</a>
