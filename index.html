@@ -668,6 +668,20 @@
   .tc-buyin b.unknown{font-size:.68em;font-weight:700;color:var(--mut);display:block;max-width:80px;line-height:1.3;text-align:right}
   .tc-buyin b.free{font-size:.78em;font-weight:800;color:var(--grn);display:block;max-width:80px;line-height:1.3;text-align:right}
   .tc-buyin span{display:block;font-size:.64em;color:var(--mut);font-weight:600}
+  /* 店舗アイコン(2026-09-16新設)。「一目でどの店舗かわかるように」との社長要望で
+     tc-buyin のさらに右に配置。大会名・バイイン額の視認性を妨げないよう小さめ(36px)の
+     円形にとどめる。.vc-thumb(トップの店舗カード用サムネイル)と同じ venueThumbHtml() を
+     共有するが、こちらは丸型・固定サイズなので個別にスタイルを当てる。
+     【object-fit は contain(品質管理部の指摘で cover→contain へ修正・2026-09-16)】
+     36x36の正方形コンテナだから正方形ロゴ(31件中30件)なら cover でも contain でも
+     見た目は同じ、という当初の判断は「全店が正方形」という前提が誤りだった。
+     img/venues/pokerbar-nuwland.png は 704x828 の縦長画像で、cover だと円全体が
+     ほぼ緑一色になりワードマーク「NUWLAND」が見えなくなる実害を確認。.vp-photo・
+     .vc-thumb と同じ理由・同じ対処(contain)で統一する。 */
+  .tc-thumb{position:relative;width:36px;height:36px;border-radius:50%;overflow:hidden;flex-shrink:0;align-self:center;background:linear-gradient(135deg,var(--felt),var(--felt2))}
+  .tc-thumb .vc-thumb-ph{font-size:15px}
+  .tc-thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
+  .tc-thumb:has(img) .vc-thumb-ph{display:none}
   .tc-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px;align-items:center}
   /* コントラスト比の是正(2026-08-27点検): 実測でWCAG AA(4.5:1)をわずかに下回っていたため、
      背景はそのままに文字色だけ濃くしてある(見た目のトーンは変えない)。 */
@@ -689,13 +703,41 @@
 
   /* VENUE STRIP */
   .venues{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
-  .vcard{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:14px 15px}
+  /* 2026-09-16改修: 店舗ごとに説明文の長さ・SNSアイコンの数(0〜3個)がバラバラで
+     カードの高さが揃わない、という社長指摘への対応。flex-columnにしてCTAボタンを
+     margin-top:autoで下端に揃え、他の要素はカードごとの内容量に関わらず高さを固定化する。 */
+  .vcard{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:14px 15px;display:flex;flex-direction:column}
   .vcard.feat{border-color:var(--gold)}
+  /* 店舗サムネイル(2026-09-16新設)。data.js の "photo"(店舗ページのヒーロー写真と同じ画像)が
+     あれば表示、無ければグラデーション地に♠マークのプレースホルダーで代替する。
+     写真の有無で見た目が極端に変わらないよう、どちらも同じ16:9の枠に収める。
+     ♠マークは <span> で先に置いておき、img が後から重なる形にする(スタッキング順で
+     写真が上に乗る)。onerror で img だけ消せば、下の♠プレースホルダーがそのまま見える
+     (読み込み失敗時にカード全体が崩れないようにするため。venueHeroPhotoHtml() の
+     onerror方針と同じ考え方)。
+     【object-fit は contain(2026-09-16実装時に cover→contain へ変更)】"名刺サイズなら
+     coverで統一感を優先してよい"という前提で当初は cover にしたが、実際の data.js の
+     "photo" を確認すると 31店舗中30店舗が正方形のロゴ画像(競合サイトからの移植、
+     PR #103)で、横長の実写真はほぼ無かった。16:9の枠に正方形ロゴを cover で当てると
+     店舗ページのヒーロー写真(依頼1)と同じ理由で上下が切れ、KING&QUEEN SUITED 黒崎店の
+     ように上下にテキストが配置されたロゴは文字が欠ける実例を確認した。そのため依頼1と
+     同じ考え方で contain に統一する。 :has() で「写真が実際に乗っているときだけ」
+     背後の♠プレースホルダーを隠す(手前のimgをonerrorで消せばプレースホルダーが
+     自動で再度見える設計はそのまま活かす。:has()非対応の古いブラウザではプレースホルダーが
+     わずかに透けて見えるだけで、崩れはしない)。 */
+  .vc-thumb{position:relative;aspect-ratio:16/9;border-radius:10px;overflow:hidden;margin-bottom:10px;background:linear-gradient(135deg,var(--felt),var(--felt2));display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .vc-thumb-ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.32);font-size:2.4em;font-weight:800;line-height:1}
+  .vc-thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
+  .vc-thumb:has(img) .vc-thumb-ph{display:none}
   .vc-name{font-weight:800;font-size:.98em;display:flex;align-items:center;gap:6px}
   .vc-name .star{color:var(--gold)}
-  .vc-area{font-size:.76em;color:var(--mut);margin-top:3px}
-  .vc-links{display:flex;gap:7px;margin-top:11px;flex-wrap:wrap}
-  .vc-cta{display:inline-block;margin-top:11px}
+  /* アクセス文言の長さが店舗ごとにバラバラなため1行に丸めて省略(カード高さの統一)。
+     .vc-area は店舗ページ(renderVenuePage)側でも使う共通クラスだが、そちらは.vcardの
+     子要素ではないため ".vcard .vc-area" と親要素を限定してここだけに効かせる。 */
+  .vcard .vc-area{font-size:.76em;color:var(--mut);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* SNSアイコン0件の店でも高さがガクッと詰まらないよう最低高さを確保 */
+  .vc-links{display:flex;gap:7px;margin-top:11px;flex-wrap:wrap;min-height:24px}
+  .vc-cta{display:inline-block;margin-top:auto;padding-top:11px}
   .vlink{font-size:.72em;font-weight:700;padding:5px 10px;border-radius:7px;background:var(--chip);color:#6b6055}
   .vlink.web{background:linear-gradient(135deg,var(--felt),var(--felt2));color:#fff}
   .vlink.x{background:#111;color:#fff}
@@ -724,7 +766,9 @@
        グリッドがコンテナからはみ出して横スクロールが発生する。0 を許可して確実に4列に収める。 */
     .venues{grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
     .vcard{padding:9px 4px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60px;cursor:pointer;min-width:0}
-    .vcard .vc-area,.vcard .vc-links,.vcard .vc-cta{display:none}
+    /* この幅では店名の視認性を優先し、写真プレースホルダーも含めテキスト以外は出さない
+       (社長指示: 追加する場合は極小サイズにすること。ここでは追加しない判断とした)。 */
+    .vcard .vc-thumb,.vcard .vc-area,.vcard .vc-links,.vcard .vc-cta{display:none}
     .vc-name{font-size:.68em;line-height:1.25;justify-content:center;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
   }
 
@@ -1350,6 +1394,18 @@
     // 社長の指示によりトップ(ページ最上部)のまま開くよう廃止した(2026-07-23)。
   }
 
+  // 店舗サムネイル(2026-09-16新設)。トップの店舗カード(.vc-thumb)とトーナメントカードの
+  // 店舗アイコン(.tc-thumb)の両方から使う共通部品。data.js の "photo" があれば表示、
+  // 無ければ♠マークのプレースホルダーで代替する(写真の有無で見た目が極端に変わらないように)。
+  // img は onerror で自分自身だけを消す(親要素の表示は変えない)。そうすると背後に重ねてある
+  // プレースホルダーの♠がそのまま見える形になり、読み込み失敗時もレイアウトが崩れない。
+  function venueThumbHtml(v, cls){
+    const photo = v && v.photo
+      ? `<img src="${v.photo}" alt="" loading="lazy" decoding="async" onerror="this.remove()">`
+      : '';
+    return `<div class="${cls}" aria-hidden="true"><span class="vc-thumb-ph">♠</span>${photo}</div>`;
+  }
+
   // トーナメント1件のカード。
   // ★ t.name / t.tags / t.start は外部由来の文字列(店舗の告知テキスト・Waitinglist APIの自動取込)なので、
   //   必ず escHtml() を通してから埋め込む。2026-07-30に日次の自動取込を入れて
@@ -1368,8 +1424,13 @@
     if (v.line) sns.push(`<a class="ticon line" href="${v.line}" target="_blank" rel="noopener" aria-label="公式LINE"><svg viewBox="0 0 24 24" width="14" height="14" fill="#fff"><path d="M12 3C6.5 3 2 6.6 2 11c0 3.6 3 6.7 7.1 7.7-.3 1.1-.9 3.1-1 3.5-.1.5.2.5.4.4.2-.1 3.1-2.1 4.3-2.9.4 0 .8.1 1.2.1 5.5 0 10-3.6 10-8S17.5 3 12 3z"/></svg></a>`);
     const started = isStarted(t);
     // 店舗詳細ページでは会場名が見出しに出ているため、カード内の店舗表示は省略する
-    const venueHtml = (opts && opts.hideVenue) ? ''
+    const hideVenue = !!(opts && opts.hideVenue);
+    const venueHtml = hideVenue ? ''
       : `<div class="tc-venue"><span class="vpin" aria-hidden="true">📍</span><a href="#venue/${encodeURIComponent(t.venueId||'')}">${escHtml(v.name||'')}</a><span class="area">${escHtml(v.area||'')}</span></div>`;
+    // 店舗アイコン(2026-09-16新設)。「一目でどの店舗かわかるように」との社長要望。
+    // hideVenue(店舗詳細ページ内の月別カレンダー)では同じ店の写真を毎回出す必要が無いので、
+    // venueHtml と同じ扱いで出さない。
+    const thumbHtml = hideVenue ? '' : venueThumbHtml(v, 'tc-thumb');
     return `<div class="tcard${v.featured?' feat':''}${started?' started':''}">
       <div class="tc-top">
         <div class="tc-time"><b>${escHtml(t.start||'不明')}</b><span>${started?'開始済み':'START'}</span></div>
@@ -1378,6 +1439,7 @@
           ${venueHtml}
         </div>
         <div class="tc-buyin">${t.buyin?`<b>${escHtml(fmt(t.buyin))}</b>`:((t.tags||[]).some(tg=>tg.includes('フリーロール'))?'<b class="free">フリーロール</b>':'<b class="unknown">詳細は店舗SNSを確認</b>')}<span>${escHtml(t.addon?('+AO '+fmt(t.addon)):(t.stack?('STACK '+t.stack.toLocaleString()):''))}</span></div>
+        ${thumbHtml}
       </div>
       <div class="tc-meta">${tags.join('')}</div>
       <div class="tc-foot">
@@ -2321,8 +2383,9 @@
       //   (静的ページの欠落自体は gen-venue-pages.js が slug 未設定で異常終了して知らせる)。
       const vurl = v.slug ? `/venues/${v.slug}/` : `#venue/${v.id}`;
       return `<div class="vcard${v.featured?' feat':''}" onclick="if(!event.target.closest('a')) location.href='${vurl}'">
-        <div class="vc-name">${v.featured?'<span class="star">★</span>':''}${v.name}</div>
-        <div class="vc-area">${v.area}　|　${v.access||''}</div>
+        ${venueThumbHtml(v, 'vc-thumb')}
+        <div class="vc-name">${v.featured?'<span class="star">★</span>':''}${escHtml(v.name)}</div>
+        <div class="vc-area">${escHtml(v.area)}　|　${escHtml(v.access||'')}</div>
         <div class="vc-area" style="margin-top:4px;color:var(--felt);font-weight:700">今後の開催 ${upcoming}件</div>
         <div class="vc-links">${links.join('')}</div>
         <a class="abtn pri vc-cta" href="${vurl}">店舗詳細を見る →</a>
