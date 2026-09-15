@@ -697,6 +697,7 @@
   .vc-links{display:flex;gap:7px;margin-top:11px;flex-wrap:wrap}
   .vc-cta{display:inline-block;margin-top:11px}
   .vlink{font-size:.72em;font-weight:700;padding:5px 10px;border-radius:7px;background:var(--chip);color:#6b6055}
+  .vlink.web{background:linear-gradient(135deg,var(--felt),var(--felt2));color:#fff}
   .vlink.x{background:#111;color:#fff}
   .vlink.line{background:#06c755;color:#fff}
   .vlink.ig{background:linear-gradient(45deg,#f09433,#dc2743,#bc1888);color:#fff}
@@ -1417,7 +1418,7 @@
       .sort((a,b)=> a.date.localeCompare(b.date) || startKey(a).localeCompare(startKey(b)));
 
     const links = [];
-    if (v.website) links.push(`<a class="vlink" href="${v.website}" target="_blank" rel="noopener">公式</a>`);
+    if (v.website) links.push(`<a class="vlink web" href="${v.website}" target="_blank" rel="noopener" aria-label="公式サイト"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></a>`);
     if (v.x) links.push(`<a class="vlink x" href="${v.x}" target="_blank" rel="noopener">X</a>`);
     if (v.line) links.push(`<a class="vlink line" href="${v.line}" target="_blank" rel="noopener">LINE</a>`);
     if (v.instagram) links.push(`<a class="vlink ig" href="${v.instagram}" target="_blank" rel="noopener" aria-label="Instagram"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#fff" stroke-width="2" style="vertical-align:middle"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r="1.1" fill="#fff" stroke="none"/></svg></a>`);
@@ -2301,7 +2302,7 @@
     document.getElementById('venue-cnt').textContent = VENUES.length + '店舗';
     document.getElementById('venues').innerHTML = sorted.map(v => {
       const links = [];
-      if (v.website) links.push(`<a class="vlink" href="${v.website}" target="_blank" rel="noopener">公式</a>`);
+      if (v.website) links.push(`<a class="vlink web" href="${v.website}" target="_blank" rel="noopener" aria-label="公式サイト"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></a>`);
       if (v.x) links.push(`<a class="vlink x" href="${v.x}" target="_blank" rel="noopener">X</a>`);
       if (v.line) links.push(`<a class="vlink line" href="${v.line}" target="_blank" rel="noopener">LINE</a>`);
       if (v.instagram) links.push(`<a class="vlink ig" href="${v.instagram}" target="_blank" rel="noopener" aria-label="Instagram"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#fff" stroke-width="2" style="vertical-align:middle"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r="1.1" fill="#fff" stroke="none"/></svg></a>`);
