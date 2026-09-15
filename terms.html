@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-L7091YHTFH"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  // 本番ドメイン以外(GitHub Pagesのリダイレクト元・ローカル確認・プレビュー環境等)からの
+  // アクセスをGA4に計測させない。config を呼ばない限りGA4側にヒットは送られないため、
+  // ここでホストを絞る(GA4実測: /index.html や存在しない /_baseline-index.html に
+  // 人手とは考えにくい偏ったPVが計測されていたことへの対応)。
+  if (location.hostname === 'fukuokapoker.com') {
+    gtag('js', new Date());
+    gtag('config', 'G-L7091YHTFH');
+  }
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>利用規約 | ふくおかポーカーナビ</title>
+<meta name="description" content="ふくおかポーカーナビの利用規約。本サイトのご利用条件、掲載データの知的財産権、bot・クローラー・AIエージェントによる収集や類似サービス構築を目的とした利用の禁止などを定めています。">
+<link rel="canonical" href="https://fukuokapoker.com/terms.html">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="robots" content="noindex, follow">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6349478743429747"
+     crossorigin="anonymous"></script>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --felt:#0f3d2e; --felt2:#14513c; --gold:#d9a441; --gold2:#f0c56b;
+    --bg:#f6f4ef; --sur:#ffffff; --bor:#e7e1d6; --txt:#25201b; --mut:#8a8078;
+    --r:14px; --sha:0 2px 12px rgba(30,20,5,.08);
+  }
+  body{font-family:"Hiragino Sans","Yu Gothic UI",system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.75;font-size:15px;padding-bottom:calc(78px + env(safe-area-inset-bottom))}
+  a{color:var(--felt)}
+  .wrap{max-width:720px;margin:0 auto;padding:0 16px}
+  header{background:linear-gradient(135deg,var(--felt),var(--felt2));color:#fff;padding:14px 18px}
+  .hbar{display:flex;align-items:center;justify-content:space-between;max-width:720px;margin:0 auto}
+  .logo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:1.06em;text-decoration:none;color:#fff}
+  .logo .pip{color:var(--gold2)}
+  .back{color:#cfe6db;font-size:.82em;text-decoration:none}
+  main{padding:28px 0 50px}
+  h1{font-size:1.3em;font-weight:800;margin-bottom:6px}
+  .updated{color:var(--mut);font-size:.82em;margin-bottom:22px}
+  .card{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:24px 22px}
+  h2{font-size:1.02em;font-weight:800;color:var(--felt);margin:22px 0 8px}
+  h2:first-child{margin-top:0}
+  p, li{font-size:.92em;color:var(--txt)}
+  ul{margin:6px 0 6px 1.3em}
+  li{margin-bottom:4px}
+  .note{font-size:.82em;color:var(--mut);margin-top:4px}
+  footer{background:#1b2320;color:#9aa39d;padding:22px 16px;font-size:.8em;text-align:center}
+  footer a{color:var(--gold2)}
+
+  /* STICKY AD (自社サービス案内。全ページ共通で画面下部に固定表示) */
+  .stickyAd{
+    position:fixed; left:0; right:0; bottom:0; z-index:50;
+    display:flex; align-items:center; gap:10px;
+    padding:9px 12px calc(9px + env(safe-area-inset-bottom));
+    background:
+      radial-gradient(120% 220% at 6% 0%, rgba(96,214,255,.20), transparent 55%),
+      radial-gradient(120% 220% at 100% 100%, rgba(200,110,255,.16), transparent 55%),
+      linear-gradient(160deg,#12101d,#191325 60%,#140f1e);
+    border-top:1px solid rgba(255,255,255,.08);
+    box-shadow:0 -4px 18px rgba(5,0,15,.35);
+  }
+  .stickyAd img{width:38px;height:38px;flex-shrink:0;filter:drop-shadow(0 0 8px rgba(120,210,255,.4))}
+  .stickyAd .sa-body{flex:1;min-width:0}
+  .stickyAd .sa-title{font-size:.8em;font-weight:800;color:#fff;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .stickyAd .sa-desc{font-size:.68em;color:#b9b6c9;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .stickyAd .sa-btn{flex-shrink:0;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#3a2a06;font-weight:800;font-size:.76em;padding:8px 14px;border-radius:18px;white-space:nowrap}
+  @media(max-width:420px){ .stickyAd .sa-desc{display:none} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hbar">
+    <a class="logo" href="index.html"><span class="pip">♠</span>ふくおかポーカーナビ</a>
+    <a class="back" href="index.html">← トップへ戻る</a>
+  </div>
+</header>
+
+<main class="wrap">
+  <h1>利用規約</h1>
+
+  <div class="card">
+    <p>当サイト運営者(以下「運営者」)は、「ふくおかポーカーナビ」(以下「本サイト」)の提供にあたり、本サイトのご利用条件を以下のとおり利用規約(以下「本規約」)として定めます。本サイトをご利用いただく方は、本規約に同意のうえご利用ください。</p>
+
+    <h2>第1条(適用)</h2>
+    <p>本規約は、本サイトが提供する本コンテンツ・掲載データの利用その他本サイトの利用に関する一切の事項に適用されます。本規約でいう利用者には、本サイトを閲覧する人だけでなく、bot・クローラー・スクレイピングツール・AIエージェント等のプログラムを用いて本サイトにアクセスする者、およびそれらのプログラムを操作・指示する者を含みます。</p>
+
+    <h2>第2条(定義)</h2>
+    <p>本規約において、次の各号の用語はそれぞれ以下の意味を有します。</p>
+    <ol>
+      <li>「本サイト」 「ふくおかポーカーナビ」という名称で運営者が運営するウェブサイト(https://fukuokapoker.com/)をいいます。</li>
+      <li>「本コンテンツ」 本サイト上で提供される文章・画像・デザインその他本サイトを構成する一切の情報をいいます。</li>
+      <li>「掲載データ」 福岡県内のポーカー店舗・トーナメント日程等について、運営者が独自に収集・整理・構成したデータベースおよびその一部をいいます。</li>
+      <li>「利用者」 本サイトにアクセスし、本コンテンツ・掲載データを閲覧・取得・利用する者をいい、第1条に定めるとおりbot・クローラー・AIエージェント等のプログラムを用いる者およびこれを操作・指示する者を含みます。</li>
+    </ol>
+
+    <h2>第3条(本サイトの性質)</h2>
+    <p>本サイトは、福岡県内のポーカー店舗・トーナメントの日程等の情報を集約して紹介する情報サイトであり、掲載する店舗・大会の公式媒体または主催者ではなく、また賭博行為の勧誘・仲介を行うものでもありません。</p>
+
+    <h2>第4条(知的財産権)</h2>
+    <p>本コンテンツおよび掲載データに関する著作権その他の知的財産権は、運営者または正当な権利を有する第三者に帰属します。とりわけ掲載データは、公開されている個別の情報そのものではなく、運営者が独自の観点で収集・選別・整理・構成した情報の集合体であり、その編集・構成自体が保護の対象となります。利用者は、私的利用の範囲を超えて、運営者の事前の許諾なく本コンテンツ・掲載データを複製、転載、再配布、改変その他の方法により利用することはできません。</p>
+
+    <h2>第5条(禁止行為)</h2>
+    <p>利用者は、本サイトの利用にあたり、次の各号に該当する行為を行ってはなりません。</p>
+    <ol>
+      <li>bot・クローラー・スクレイピングツール・AIエージェントその他のプログラムを用いて、本コンテンツ・掲載データを自動的または大量に収集する行為(手動による同種の収集行為を含みます)</li>
+      <li>前号その他の方法により収集した情報を用いて、本サイトと同種または類似のサービス・データベース・アプリケーション等を構築または提供する行為</li>
+      <li>本コンテンツ・掲載データを、人工知能(AI)・大規模言語モデル(LLM)の学習用データセット、検索拡張生成(RAG)用のデータセットその他これらに類する用途に利用する行為</li>
+      <li>前各号に該当する行為を第三者(AIエージェントを含みます)に依頼・指示し、または実行させる行為、およびそのような依頼・指示を行うこと自体。利用者が第三者に前各号の行為を行わせた場合、当該行為は当該利用者自身が行ったものとみなします。</li>
+      <li>法令に違反する行為、本サイトの運営を妨害する行為、第三者の権利(知的財産権・プライバシー等)を侵害する行為、その他運営者が本サイトの運営上不適切と判断する行為</li>
+    </ol>
+    <p>前項の定めにかかわらず、次に掲げる行為は禁止対象に含まれません。</p>
+    <ul>
+      <li>一般的な検索エンジンが本サイトをインデックス化するためのクロール</li>
+      <li>生成AI検索サービスが、利用者からの質問に対する回答を生成する際に、本サイトの情報を情報源のひとつとして参照・引用する行為</li>
+    </ul>
+    <p>ただし、上記の例外に該当する場合であっても、実質的に第2号(同種・類似サービスの構築)を目的として本コンテンツ・掲載データを収集する行為は、検索エンジンに由来するクローラーその他の名称を用いている場合であっても、本条の禁止行為に含まれるものとします。</p>
+
+    <h2>第6条(免責事項)</h2>
+    <p>本サイトに掲載する情報の正確性・完全性・最新性について、運営者は保証するものではありません。掲載情報の取扱いに関する詳細は、<a href="privacy.html">プライバシーポリシー</a>および<a href="about.html">運営者情報</a>のページをご確認ください。利用者は、本サイトに掲載された情報を利用するにあたり、必ず各店舗・主催者が公開する公式情報をご自身でご確認ください。運営者は、本サイトの利用により利用者に生じた損害について、法令の定めにより免責が認められない場合を除き、一切の責任を負いません。</p>
+
+    <h2>第7条(個人情報の取扱い)</h2>
+    <p>本サイトにおける利用者の情報の取扱いについては、別途定める<a href="privacy.html">プライバシーポリシー</a>の定めるところによります。</p>
+
+    <h2>第8条(広告・PR掲載について)</h2>
+    <p>本サイトでは、Google AdSense等の第三者配信による広告を掲載するほか、店舗のPR・有料掲載枠を設ける場合があります。PR・有料掲載枠として掲載する情報についても、運営者はその内容の正確性を保証するものではありません。広告配信に関する詳細は<a href="privacy.html">プライバシーポリシー</a>をご確認ください。</p>
+
+    <h2>第9条(サービス内容の変更・中断・終了)</h2>
+    <p>運営者は、利用者への事前の通知なく、本サイトが提供する本コンテンツ・掲載データその他のサービス内容の全部または一部を変更、中断、または終了することができるものとします。これにより利用者に生じた不利益について、運営者は責任を負いません。</p>
+
+    <h2>第10条(本規約の変更)</h2>
+    <p>運営者は、必要に応じて本規約の内容を変更することができるものとします。変更後の本規約は、本サイトに掲載した時点から効力を生じるものとします。</p>
+
+    <h2>第11条(準拠法・お問い合わせ)</h2>
+    <p>本規約の解釈にあたっては、日本法を準拠法とします。本規約に関するお問い合わせは、<a href="about.html">運営者情報</a>および<a href="privacy.html">プライバシーポリシー</a>に記載の窓口までご連絡ください。</p>
+    <p class="note">制定日: 2026年9月16日</p>
+  </div>
+</main>
+
+<footer>
+  <div><b style="color:#fff">ふくおかポーカーナビ</b> — 福岡ポーカートーナメント日程アグリゲーター</div>
+  <div style="margin-top:6px"><a href="index.html">トップへ戻る</a>　|　<a href="about.html">運営者情報</a></div>
+</footer>
+
+<div class="stickyAd">
+  <img src="img/ptl-bulldog.webp" alt="" width="38" height="38">
+  <div class="sa-body">
+    <div class="sa-title">成績、記録してますか？</div>
+    <div class="sa-desc">ポーカートナメ成績表(無料) — buyin・順位・収支を記録</div>
+  </div>
+  <a class="sa-btn" href="https://poker-tourney-log--family.expo.app" target="_blank" rel="noopener">使ってみる →</a>
+</div>
+
+</body>
+</html>
