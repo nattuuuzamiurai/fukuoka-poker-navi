@@ -163,6 +163,13 @@ const VENUE_CSS = `  .vp-sub{font-size:.9em;color:var(--mut);margin-bottom:14px}
   .vp-photo img{display:block;width:100%;max-height:320px;object-fit:cover;border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha)}
   .vp-photo-credit{font-size:.78em;color:var(--mut);line-height:1.7;margin:6px 2px 0}
   .vp-photo-credit a{color:#0e6a72;font-weight:700}
+  /* 料金・システム(2026-09-16新設。data.js の "pricing" をそのまま列挙するだけの単純な表)。 */
+  .vp-pricing{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+  .vp-price-row{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:10px 13px;font-size:.9em;line-height:1.6}
+  .vp-price-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .vp-price-name{font-weight:800;color:var(--felt)}
+  .vp-price-amount{font-weight:800;color:var(--felt);white-space:nowrap}
+  .vp-price-note{color:var(--mut);font-size:.88em;margin-top:3px}
   ul.vp-list{list-style:none;display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 6px}
   ul.vp-list a{display:inline-block;background:var(--sur);border:1px solid var(--bor);border-radius:20px;padding:6px 13px;font-size:.85em;font-weight:700;color:var(--felt);text-decoration:none;box-shadow:var(--sha)}
   /* .vp-cards / .vp-card(「同じエリアの他のポーカー店」「サテライト開催店舗」カード)は
@@ -289,9 +296,18 @@ function loadGeneratedPhotos() {
 
 const VENUE_PHOTOS = loadGeneratedPhotos();
 
-// 店舗写真1枚(ホットペッパー グルメ)。写真が無ければ空文字(=画面は従来通り)。
+// 店舗写真1枚。data.js の "photo"(自社でリポジトリに保存済みのローカル画像。2026-09-16新設・
+// 社長承認済み)があればそちらを優先する。無ければ従来通りホットペッパー グルメの写真
+// (VENUE_PHOTOS、無ければ写真なし)。★ ローカル画像はホットリンクではないので、
+// ホットペッパー写真のような出典クレジット・削除依頼導線は付けない(仕組みが異なるため)。
 // onerror: 画像が読めなかったら figure ごと非表示にする(空クレジットだけ残るのを防ぐ)。
 function venueHeroPhotoHtml(v) {
+  if (v.photo) {
+    return `
+<figure class="vp-photo">
+  <img src="${esc(v.photo)}" alt="${esc(v.name)}の写真" loading="lazy" decoding="async" onerror="this.parentNode.style.display='none'">
+</figure>`;
+  }
   const p = VENUE_PHOTOS[v.id];
   if (!p || !p.photo) return '';
   const moreLink = p.hpUrl
@@ -302,6 +318,21 @@ function venueHeroPhotoHtml(v) {
   <img src="${esc(p.photo)}" alt="${esc(v.name)}の写真(ホットペッパー グルメ)" loading="lazy" decoding="async" referrerpolicy="no-referrer-when-downgrade" onerror="this.parentNode.style.display='none'">
   <figcaption class="vp-photo-credit">写真提供: ホットペッパーグルメ(提供元のサーバー上の画像を直接参照して表示しています。当サイトには保存していません)${moreLink}<br>掲載を希望されない店舗様は<a href="/contact.html">お問い合わせフォーム</a>からご連絡ください。速やかに対応いたします。</figcaption>
 </figure>`;
+}
+
+// ---- 料金・システム(2026-09-16新設・社長指示) ----
+// data.js の "pricing"({name, price, note}の配列)をそのまま列挙するだけ。店ごとに項目名・
+// 粒度がバラバラなため、固定カテゴリへの正規化・要約はしない(noteBlock と同じ考え方)。
+function venuePricingHtml(v) {
+  if (!Array.isArray(v.pricing) || !v.pricing.length) return '';
+  const rows = v.pricing.map(p => {
+    const noteLine = p.note
+      ? `<div class="vp-price-note">${esc(p.note).replace(/\n/g, '<br>')}</div>`
+      : '';
+    return `<div class="vp-price-row"><div class="vp-price-head"><span class="vp-price-name">${esc(p.name)}</span><span class="vp-price-amount">${esc(p.price)}</span></div>${noteLine}</div>`;
+  }).join('\n');
+  return `
+<div class="vp-pricing">${rows}</div>`;
 }
 
 // ---- FST 5.0 サテライトを「現在開催中」と出してよいかの判定(依頼2) ----
@@ -504,6 +535,9 @@ ${sameAreaShown.map(x => `  <a class="vp-card" href="/venues/${x.slug}/">
   const ringBlock = v.ring === true ? `
 <div class="vp-ring"><b>${esc(v.name)}はリングゲームを開催しています。</b>${v.ringNote ? esc(v.ringNote) : 'レート・詳細は店舗にご確認ください。'}</div>` : '';
 
+  // 料金・システム(2026-09-16新設)。data.js に pricing が無い店は今まで通りセクションごと出ない。
+  const pricingBlock = venuePricingHtml(v);
+
   // ★ note は data.js の文面をそのまま出す。
   //   「住所は第三者情報のため要確認。」のような留保はREADMEの編集方針に沿って
   //   data.js 側で既に整えてあるので、生成スクリプトが要約・言い換えしてはいけない
@@ -564,7 +598,8 @@ ${venueInfoCardsHtml(v)}
 <h2 class="vp-sec" id="vp-sched-title">${schedTitle}</h2>
 <p class="lead" id="vp-sched-note">${schedNote}</p>
 <div id="vp-sched">${schedHtml}</div>${ringBlock ? `
-<h2 class="vp-sec">リングゲーム</h2>${ringBlock}` : ''}${areaBlock}${guideLinksHtml(v)}
+<h2 class="vp-sec">リングゲーム</h2>${ringBlock}` : ''}${pricingBlock ? `
+<h2 class="vp-sec">料金・システム</h2>${pricingBlock}` : ''}${areaBlock}${guideLinksHtml(v)}
 <div class="links">
   ▶ <a href="/">福岡のポーカートーナメント日程を日付順に見る（全${VENUES.length}店舗）</a><br>
   ▶ <a href="/#venue/${esc(v.id)}">${esc(v.name)} の月別カレンダー</a>

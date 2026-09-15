@@ -51,7 +51,8 @@
   "telephone": "092-401-6177",
   "url": "https://web.pokerroom634.com/fukuoka/",
   "sameAs": [
-    "https://x.com/634poker_fuk"
+    "https://x.com/634poker_fuk",
+    "https://www.instagram.com/musashipoker_fukuoka/"
   ],
   "geo": {
     "@type": "GeoCoordinates",
@@ -234,6 +235,13 @@
   .vp-photo img{display:block;width:100%;max-height:320px;object-fit:cover;border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha)}
   .vp-photo-credit{font-size:.78em;color:var(--mut);line-height:1.7;margin:6px 2px 0}
   .vp-photo-credit a{color:#0e6a72;font-weight:700}
+  /* 料金・システム(2026-09-16新設。data.js の "pricing" をそのまま列挙するだけの単純な表)。 */
+  .vp-pricing{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+  .vp-price-row{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:10px 13px;font-size:.9em;line-height:1.6}
+  .vp-price-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .vp-price-name{font-weight:800;color:var(--felt)}
+  .vp-price-amount{font-weight:800;color:var(--felt);white-space:nowrap}
+  .vp-price-note{color:var(--mut);font-size:.88em;margin-top:3px}
   ul.vp-list{list-style:none;display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 6px}
   ul.vp-list a{display:inline-block;background:var(--sur);border:1px solid var(--bor);border-radius:20px;padding:6px 13px;font-size:.85em;font-weight:700;color:var(--felt);text-decoration:none;box-shadow:var(--sha)}
   /* .vp-cards / .vp-card(「同じエリアの他のポーカー店」「サテライト開催店舗」カード)は
@@ -259,12 +267,15 @@
 <main class="wrap"><div class="bc-wrap"><nav class="breadcrumb" aria-label="パンくずリスト"><ol><li><a href="https://fukuokapoker.com/">ふくおかポーカーナビ</a></li><li><a href="https://fukuokapoker.com/#areaNav">エリアから探す</a></li><li><a href="https://fukuokapoker.com/areas/daimyo/">大名</a></li><li><span aria-current="page">むさぽ福岡（MUSASHI POKER ROOM 福岡店）</span></li></ol></nav></div>
 <h1>むさぽ福岡（MUSASHI POKER ROOM 福岡店）</h1>
 <p class="vp-sub">大名のポーカースポット（地下鉄空港線 赤坂駅 徒歩5分（天神駅 徒歩8分）） — 住所・アクセス・開催情報</p>
+<figure class="vp-photo">
+  <img src="/img/venues/musashi-poker-room-fukuoka.jpg" alt="むさぽ福岡（MUSASHI POKER ROOM 福岡店）の写真" loading="lazy" decoding="async" onerror="this.parentNode.style.display='none'">
+</figure>
 <div class="vp-info-grid">
 <div class="vp-info-card"><span class="vp-info-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.3-7-11a7 7 0 0 1 14 0c0 4.7-7 11-7 11z"/><circle cx="12" cy="10" r="2.4"/></svg></span><div><b>住所</b>福岡県福岡市中央区大名1丁目3-29 Daimyo582 2階</div></div>
 <div class="vp-info-card"><span class="vp-info-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="12" rx="3"/><path d="M5 11h14"/><path d="M8 19l-2 2M16 19l2 2"/><circle cx="8.5" cy="14.3" r=".55" fill="currentColor" stroke="none"/><circle cx="15.5" cy="14.3" r=".55" fill="currentColor" stroke="none"/></svg></span><div><b>アクセス</b>地下鉄空港線 赤坂駅 徒歩5分（天神駅 徒歩8分）</div></div>
 <div class="vp-info-card"><span class="vp-info-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.2V12l3.3 2"/></svg></span><div><b>営業時間</b>平日15:00〜24:00／土日12:00〜24:00(年中無休)</div></div>
 <div class="vp-info-card"><span class="vp-info-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 5c.5 1.6 1.1 3 1.9 4.2.4.7.3 1.6-.3 2.2l-1.2 1.2a13.6 13.6 0 0 0 5.5 5.5l1.2-1.2c.6-.6 1.5-.7 2.2-.3 1.2.8 2.6 1.4 4.2 1.9.9.3 1.4 1.2 1 2.1l-.7 1.8c-.3.8-1.1 1.3-1.9 1.1C9 21.4 2.6 15 1.5 6.8c-.1-.8.4-1.6 1.1-1.9l1.8-.7c.9-.3 1.8.1 2.1 1z"/></svg></span><div><b>電話</b><a href="tel:0924016177">092-401-6177</a></div></div>
-<div class="vp-info-card"><span class="vp-info-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.4 2.5 3.7 5.7 3.7 9s-1.3 6.5-3.7 9c-2.4-2.5-3.7-5.7-3.7-9S9.6 5.5 12 3z"/></svg></span><div><b>公式サイト・SNS</b><a href="https://web.pokerroom634.com/fukuoka/" target="_blank" rel="noopener">https://web.pokerroom634.com/fukuoka/</a><div class="vp-sns-btns"><a class="vp-sns-btn" href="https://x.com/634poker_fuk" target="_blank" rel="noopener">X</a></div></div></div>
+<div class="vp-info-card"><span class="vp-info-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.4 2.5 3.7 5.7 3.7 9s-1.3 6.5-3.7 9c-2.4-2.5-3.7-5.7-3.7-9S9.6 5.5 12 3z"/></svg></span><div><b>公式サイト・SNS</b><a href="https://web.pokerroom634.com/fukuoka/" target="_blank" rel="noopener">https://web.pokerroom634.com/fukuoka/</a><div class="vp-sns-btns"><a class="vp-sns-btn" href="https://x.com/634poker_fuk" target="_blank" rel="noopener">X</a><a class="vp-sns-btn" href="https://www.instagram.com/musashipoker_fukuoka/" target="_blank" rel="noopener">Instagram</a></div></div></div>
 </div>
 <iframe class="vp-map" src="https://www.google.com/maps?q=33.586521,130.393204&amp;output=embed" title="むさぽ福岡（MUSASHI POKER ROOM 福岡店）の地図" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
 <div class="disclaimer"><b>むさぽ福岡（MUSASHI POKER ROOM 福岡店）について</b>　全国チェーンMUSASHI POKER ROOMの福岡店。2026年4月25日オープン。トーナメント随時開催（日程は公式Xで告知）。<br>当サイトは店舗が公開している情報を集約している媒体で、この店舗の運営者ではありません。日程・料金・営業状況は変更されることがあるため、参加前に必ず店舗の公式情報・SNSをご確認ください。主な情報源: <a href="https://x.com/634poker_fuk" target="_blank" rel="noopener">X</a>。<br>当サイトは店舗・主催者が公開している情報を集約する媒体であり、賭博行為の勧誘・仲介を行うものではありません。賞品・プライズの取扱いは各店舗・主催者の規定によります。</div>
@@ -272,17 +283,28 @@
 <h2 class="vp-sec" id="vp-sched-title">トーナメント日程</h2>
 <p class="lead" id="vp-sched-note">※ JavaScriptが有効な環境では、読み込み時に最新の掲載データから<b>今日以降</b>の日程に差し替わります。</p>
 <div id="vp-sched"><div class="vp-empty">現在このサイトに掲載している開催予定はありません。<br>開催状況は店舗の公式情報・SNSをご確認ください。</div></div>
+<h2 class="vp-sec">料金・システム</h2>
+<div class="vp-pricing"><div class="vp-price-row"><div class="vp-price-head"><span class="vp-price-name">1ドリンクオーダー制</span><span class="vp-price-amount">600円〜</span></div></div>
+<div class="vp-price-row"><div class="vp-price-head"><span class="vp-price-name">施設利用料</span><span class="vp-price-amount">平日 500円 / 土日祝 1,000円</span></div></div>
+<div class="vp-price-row"><div class="vp-price-head"><span class="vp-price-name">ソフトドリンク飲み放題</span><span class="vp-price-amount">平日 1,000円 / 土日祝 1,500円</span></div></div>
+<div class="vp-price-row"><div class="vp-price-head"><span class="vp-price-name">アルコール飲み放題</span><span class="vp-price-amount">平日 2,000円 / 土日祝 2,500円</span></div></div>
+<div class="vp-price-row"><div class="vp-price-head"><span class="vp-price-name">リングゲーム料金　チップ貸与（購入）</span><span class="vp-price-amount">1M$ ＝ 20円</span></div><div class="vp-price-note">● 短時間・初めての方に<br>減らした分だけ退店時にチップを購入して頂きます。<br>純増分のチップは預け入れされます。</div></div>
+<div class="vp-price-row"><div class="vp-price-head"><span class="vp-price-name">リングゲーム料金　預けチップ引出し</span><span class="vp-price-amount">2,000円 (1日)</span></div><div class="vp-price-note">● 何時間でも遊び放題<br>過去に預けたチップを引き出して遊ぶプランです。<br>長時間遊ぶならこちらがお得です。</div></div></div>
 <h2 class="vp-sec">同じエリア（大名）の他のポーカー店</h2>
 <div class="vp-cards">
+  <a class="vp-card" href="/venues/bon-daimyo/">
+    <div class="vp-card-name">梵 Daimyo</div>
+    <div class="vp-card-sub">大名</div>
+  </a>
   <a class="vp-card" href="/venues/roots-fukuoka/">
     <div class="vp-card-name">ROOTS FUKUOKA</div>
     <div class="vp-card-sub">地下鉄天神駅 徒歩7分</div>
   </a>
 </div>
-<p class="lead">▶ <a href="/areas/daimyo/">大名のポーカー店2店舗の日程をまとめて見る</a></p>
+<p class="lead">▶ <a href="/areas/daimyo/">大名のポーカー店3店舗の日程をまとめて見る</a></p>
 <p class="lead">▶ <a href="/guide/beginner/#cat-mix">福岡のポーカー店の選び方（ミックス・PLO編）</a></p>
 <div class="links">
-  ▶ <a href="/">福岡のポーカートーナメント日程を日付順に見る（全35店舗）</a><br>
+  ▶ <a href="/">福岡のポーカートーナメント日程を日付順に見る（全38店舗）</a><br>
   ▶ <a href="/#venue/v36">むさぽ福岡（MUSASHI POKER ROOM 福岡店） の月別カレンダー</a>
 </div></main>
 <footer>
