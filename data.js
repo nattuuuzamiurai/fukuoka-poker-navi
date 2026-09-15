@@ -550,7 +550,7 @@ const VENUES = [
     "lat": 33.312359,
     "lng": 130.518097,
     "hours": "平日18:00〜24:00／土日祝15:00〜24:00",
-    "x": "",
+    "x": "https://x.com/kurumekenpoker5",
     "line": "https://line.me/ti/g2/JROMKCR0N5",
     "instagram": "https://www.instagram.com/kurume_ken_poker/",
     "website": "",
