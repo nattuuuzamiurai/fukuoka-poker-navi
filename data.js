@@ -243,7 +243,7 @@ const VENUES = [
     "line": "",
     "instagram": "https://www.instagram.com/poker_fuxk/",
     "website": "https://fuxk-fukuoka.com/",
-    "tel": "092-60-01771",
+    "tel": "092-600-1771",
     "photo": "/img/venues/fuxk-fukuoka-tenjin.jpg",
     "featured": false,
     "note": "無料初心者講習あり。",
