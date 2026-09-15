@@ -86,6 +86,20 @@
  * ★ 裏付けの無い表記を推測で追加しないこと(このサイトの既存方針。店舗自身のSNSの
  *   表示名を実際に確認できた場合だけ追加する)。裏が取れていない店には付けない
  *   (大多数の店は今まで通り altNames を持たない)。
+ *
+ * VENUES の "photo" は店舗ページ上部に出す店舗写真1枚のローカル画像パス(2026-09-16新設、
+ * 社長承認済み)。tools/fetch-photos.js が扱う「ホットペッパー グルメの写真(自社保存せず
+ * ホットリンク、data/photos.generated.json経由)」とは別の仕組みで、こちらは img/venues/
+ * 配下にリポジトリへ保存済みの画像を指す(外部サーバーへのホットリンクはしない)。
+ * 両方セットされている店は "photo"(ローカル画像)を優先する(tools/gen-venue-pages.js
+ * venueHeroPhotoHtml() を参照)。持たない店は今まで通り写真なし(または後者のみ)。
+ *
+ * VENUES の "pricing" は入場料・チップ購入/引き出し・飲み放題などの料金体系
+ * (2026-09-16新設、社長指示・社長承認済み)。配列の各要素は { name, price, note }
+ * の3項目のみを持つ単純な形(店ごとに項目名・粒度がバラバラなため、固定カテゴリへの
+ * 正規化・要約はしない。取得元の表記をほぼそのまま構造化しているだけ)。note は無ければ
+ * null。付けると店舗静的ページに「料金・システム」セクションが出る。持たない店は
+ * 今まで通りこのセクション自体を出さない。
  * ============================================================ */
 
 const VENUES = [
@@ -103,7 +117,8 @@ const VENUES = [
     "line": "https://line.me/R/ti/p/@564bcfmm",
     "instagram": "https://www.instagram.com/kkpoker_fukuoka/",
     "website": "",
-    "tel": "",
+    "tel": "092-753-5093",
+    "photo": "/img/venues/kkpoker-fukuoka.jpg",
     "featured": false,
     "note": "KKPOKER系・6卓RFID。2026年7月20日以降の日程は、開始時刻・参加費に誤りが残っている可能性があります。参加前に公式Xの告知をご確認ください。",
     "sourceLabel": "X",
@@ -121,9 +136,10 @@ const VENUES = [
     "hours": "平日17:00〜翌1:00／土日祝13:00〜翌1:00",
     "x": "https://x.com/m_holdem_nakasu",
     "line": "https://line.me/R/ti/p/@717sybzr",
-    "instagram": "",
+    "instagram": "https://www.instagram.com/mholdemnakasu/",
     "website": "https://mpj-portal.jp/official/nakasu/",
-    "tel": "",
+    "tel": "092-600-2166",
+    "photo": "/img/venues/m-holdem-nakasu.png",
     "featured": false,
     "note": "サミー系・2025/6開店。営業時間は第三者媒体情報のため要確認。",
     "sourceLabel": "",
@@ -133,7 +149,10 @@ const VENUES = [
     "id": "v4",
     "slug": "onecasino-fukuoka-nakasu",
     "name": "ONECASINO 福岡中洲",
-    "altNames": ["ONE CASINO", "ワンカジノ"],
+    "altNames": [
+      "ONE CASINO",
+      "ワンカジノ"
+    ],
     "area": "中洲",
     "address": "福岡市博多区中洲4-7-7 中洲リッチビル2F",
     "access": "中洲川端駅 徒歩2分",
@@ -145,6 +164,7 @@ const VENUES = [
     "instagram": "https://www.instagram.com/onecasino_fuk/",
     "website": "",
     "tel": "092-292-9917",
+    "photo": "/img/venues/onecasino-fukuoka-nakasu.jpg",
     "featured": false,
     "note": "木曜フリーロールあり。営業時間は第三者媒体情報のため要確認。",
     "sourceLabel": "",
@@ -154,7 +174,9 @@ const VENUES = [
     "id": "v5",
     "slug": "casino-bar-leje-hakata",
     "name": "Casino bar Leje 博多店",
-    "altNames": ["カジノバーレジェ博多"],
+    "altNames": [
+      "カジノバーレジェ博多"
+    ],
     "area": "中洲",
     "address": "福岡市博多区中洲3-7-10 若松ビル4F",
     "access": "中洲川端駅 徒歩2分",
@@ -166,10 +188,23 @@ const VENUES = [
     "instagram": "https://www.instagram.com/leje.hakata/",
     "website": "https://www.lejehakata.com/",
     "tel": "092-291-9200",
+    "photo": "/img/venues/casino-bar-leje-hakata.jpg",
     "featured": false,
     "note": "入場1,000円飲み放題。毎週固定の曜日別トーナメントスケジュールあり(月〜日で内容が決まっている)。営業時間は第三者媒体情報のため要確認。",
     "sourceLabel": "X",
-    "sourceUrl": "https://x.com/Leje0118"
+    "sourceUrl": "https://x.com/Leje0118",
+    "pricing": [
+      {
+        "name": "Charge",
+        "price": "￥1,000",
+        "note": "チャージでゲーム中はフリードリンクメニューに書かれているアルコールやソフトドリンクは飲み放題となります。​(ビール・焼酎・cocktail各種)\n※一部フリードリンク対象外あり"
+      },
+      {
+        "name": "チップ購入",
+        "price": "￥1,000～",
+        "note": "チップ購入は1,000円単位($20)\n$150 5,000円 (2,500円分お得)\n$400 10,000円 (10,000円分お得)\n$1500 30,000円 (45,000円分お得)\n$3000 50,000円 (100,000円分お得)"
+      }
+    ]
   },
   {
     "id": "v6",
@@ -195,7 +230,9 @@ const VENUES = [
     "id": "v7",
     "slug": "fuxk-fukuoka-tenjin",
     "name": "Poker House FUXK 福岡天神店",
-    "altNames": ["ポーカーハウス FUXK"],
+    "altNames": [
+      "ポーカーハウス FUXK"
+    ],
     "area": "天神",
     "address": "福岡県福岡市中央区春吉3-21-18 ジェスト25ビル202",
     "access": "地下鉄七隈線 天神南駅6番出口 徒歩約3分（西鉄福岡（天神）駅 徒歩約5分）",
@@ -206,11 +243,24 @@ const VENUES = [
     "line": "",
     "instagram": "https://www.instagram.com/poker_fuxk/",
     "website": "https://fuxk-fukuoka.com/",
-    "tel": "",
+    "tel": "092-600-1771",
+    "photo": "/img/venues/fuxk-fukuoka-tenjin.jpg",
     "featured": false,
     "note": "無料初心者講習あり。",
     "sourceLabel": "店舗確認済み",
-    "sourceUrl": "https://fuxk-fukuoka.com/"
+    "sourceUrl": "https://fuxk-fukuoka.com/",
+    "pricing": [
+      {
+        "name": "ENTRANCE(入場料含む)",
+        "price": "¥6,000(100BB)",
+        "note": "LADY ¥2,000(100BB)"
+      },
+      {
+        "name": "チップ購入",
+        "price": "¥2,000~",
+        "note": "200点(100BB) ¥2,000\n400点(200BB) ¥4,000\n800点(400BB) ¥5,000"
+      }
+    ]
   },
   {
     "id": "v8",
@@ -224,12 +274,25 @@ const VENUES = [
     "line": "",
     "instagram": "https://www.instagram.com/raise_blue/",
     "website": "",
-    "tel": "",
+    "tel": "092-406-3294",
+    "photo": "/img/venues/raise-blue-tenjin.jpg",
     "featured": false,
     "addressUnverified": true,
     "note": "営業継続を確認済み(2026-07-14)。住所は第三者媒体(light-three.com等)による情報で公式SNSでの一次確認が取れておらず未確認。定休日は不明(2026年7月・8月のカレンダーはいずれも月・火曜とも営業実績あり。旧note「月・火曜定休」は2026年7月カレンダーからの推測記載だったが、その後の月も含め実態と矛盾するため2026-08-18に削除)。営業時間は第三者媒体情報のため要確認。",
     "sourceLabel": "X",
-    "sourceUrl": "https://x.com/RAISEBLUE_poker"
+    "sourceUrl": "https://x.com/RAISEBLUE_poker",
+    "pricing": [
+      {
+        "name": "入場料",
+        "price": "¥1,000",
+        "note": "時間無制限・飲み放題付"
+      },
+      {
+        "name": "チップ価値",
+        "price": "10,000chip　10,000円",
+        "note": "1chip = 1円"
+      }
+    ]
   },
   {
     "id": "v9",
@@ -246,16 +309,26 @@ const VENUES = [
     "instagram": "https://www.instagram.com/casino_nishinakasu/",
     "website": "https://blow-casino.com/shop/detail.html?id=251",
     "tel": "092-733-8899",
+    "photo": "/img/venues/casino-blow-nishi-nakasu.jpg",
     "featured": false,
     "note": "カジノバー。2026年9月の公式X投稿で火・木曜に「DAILY TOURNAMENT」の開催を確認(時間・詳細は非公開、来店前にスタッフへ要確認)。投稿時点で9月後半の日程は未公開。営業時間は第三者媒体情報のため要確認。",
     "sourceLabel": "X",
-    "sourceUrl": "https://x.com/C_nishinakasu"
+    "sourceUrl": "https://x.com/C_nishinakasu",
+    "pricing": [
+      {
+        "name": "入場料",
+        "price": "¥1,000",
+        "note": "カジノプレイ中のアルコールドリンク・ソフトドリンクが飲み放題！"
+      }
+    ]
   },
   {
     "id": "v13",
     "slug": "pokerbar-nuwland",
     "name": "PokerBar NUWLAND",
-    "altNames": ["ぬNUWLAND"],
+    "altNames": [
+      "ぬNUWLAND"
+    ],
     "area": "北九州",
     "address": "北九州市小倉北区京町2-4-27 ロックビル3F",
     "access": "小倉駅 徒歩2分",
@@ -267,6 +340,7 @@ const VENUES = [
     "instagram": "https://www.instagram.com/nuwland310/",
     "website": "https://nuwland.com/",
     "tel": "",
+    "photo": "/img/venues/pokerbar-nuwland.png",
     "featured": false,
     "note": "NLH中心・毎日開催。営業時間は第三者媒体情報のため要確認。",
     "sourceLabel": "X",
@@ -276,7 +350,10 @@ const VENUES = [
     "id": "v14",
     "slug": "triplebarrel-kokura",
     "name": "TripleBarrel 小倉店",
-    "altNames": ["トリプルバレル", "トリプルバレル小倉"],
+    "altNames": [
+      "トリプルバレル",
+      "トリプルバレル小倉"
+    ],
     "area": "北九州",
     "address": "北九州市小倉北区鍛治町1-7-4 鍛治町会館3F",
     "access": "JR小倉駅 徒歩約4分",
@@ -288,10 +365,33 @@ const VENUES = [
     "instagram": "https://www.instagram.com/triplebarrel_kokura/",
     "website": "https://triplebarrel.jimdofree.com/",
     "tel": "080-9109-4036",
+    "photo": "/img/venues/triplebarrel-kokura.jpg",
     "featured": false,
     "note": "『オルカ』主催トーナメント毎日。営業時間は第三者媒体情報のため要確認。",
     "sourceLabel": "公式LINE",
-    "sourceUrl": "https://line.me/ti/g2/WBBZUGsa_Jw5Cyi62zO38rl0q7zvFEafNzqwMg"
+    "sourceUrl": "https://line.me/ti/g2/WBBZUGsa_Jw5Cyi62zO38rl0q7zvFEafNzqwMg",
+    "pricing": [
+      {
+        "name": "施設利用料",
+        "price": "¥1,000",
+        "note": null
+      },
+      {
+        "name": "ソフトドリンク飲み放題",
+        "price": "¥3,000",
+        "note": "施設利用料込み"
+      },
+      {
+        "name": "アルコールドリンク飲み放題",
+        "price": "¥4,500",
+        "note": "施設利用料込み"
+      },
+      {
+        "name": "チップ購入",
+        "price": "¥1,000",
+        "note": "10,000点 (20BB)\nチップ預かり・引き出し: ¥500"
+      }
+    ]
   },
   {
     "id": "v16",
@@ -308,12 +408,25 @@ const VENUES = [
     "instagram": "https://www.instagram.com/texasholdem3000/",
     "website": "https://texaspoker.pro/",
     "tel": "080-6340-3000",
+    "photo": "/img/venues/texas-holdem-3000.jpg",
     "featured": false,
     "note": "リング/トーナメント両方",
     "sourceLabel": "公式スケジュールページ",
     "sourceUrl": "https://texaspoker.pro/sc/sche3.cgi?year=2026&mon=7",
     "ring": true,
-    "ringNote": "公式スケジュールページにリングゲーム枠の記載がありますが、レート等の詳細は分かりません。レート・詳細は店舗にご確認ください。"
+    "ringNote": "公式スケジュールページにリングゲーム枠の記載がありますが、レート等の詳細は分かりません。レート・詳細は店舗にご確認ください。",
+    "pricing": [
+      {
+        "name": "入場料",
+        "price": "660円～",
+        "note": "60min：660円\nフリータイム：2,400円"
+      },
+      {
+        "name": "リングチップ",
+        "price": "2,200円～",
+        "note": "120BB：2,200円\n400BB：5,500円\n900BB：11000円"
+      }
+    ]
   },
   {
     "id": "v17",
@@ -327,13 +440,26 @@ const VENUES = [
     "hours": "",
     "x": "https://x.com/texasaanet",
     "line": "",
-    "instagram": "",
+    "instagram": "https://www.instagram.com/aa_texas_aa/",
     "website": "https://texasaa.net/",
-    "tel": "",
+    "tel": "090-1130-0101",
+    "photo": "/img/venues/texas-holdem-aa.jpg",
     "featured": false,
     "note": "1部13:15/2部17:30・入場2,000円",
     "sourceLabel": "",
-    "sourceUrl": ""
+    "sourceUrl": "",
+    "pricing": [
+      {
+        "name": "入場料",
+        "price": "¥2,000～",
+        "note": "フリータイム(飲み放題付き)\n一般　¥2,000 or チップ20,000点\n学生　¥500 or チップ5,000点\n女性無料"
+      },
+      {
+        "name": "チップ",
+        "price": "¥2,600",
+        "note": "20,000点(100BB)"
+      }
+    ]
   },
   {
     "id": "v18",
@@ -369,19 +495,34 @@ const VENUES = [
     "line": "https://line.me/R/ti/p/@491tzwch",
     "instagram": "https://www.instagram.com/casino_arrows2025/",
     "website": "",
-    "tel": "",
+    "tel": "070-5819-9837",
+    "photo": "/img/venues/casino-arrows-kokura.jpg",
     "featured": false,
     "note": "2025/8開店。毎週固定の曜日別トーナメントスケジュールあり(月木土日のみ開催、火水金は要確認)。営業時間は第三者媒体情報のため要確認。",
     "sourceLabel": "X",
-    "sourceUrl": "https://x.com/CASINO_Arrows"
+    "sourceUrl": "https://x.com/CASINO_Arrows",
+    "pricing": [
+      {
+        "name": "Entrance",
+        "price": "¥2,000",
+        "note": "女性:¥1,000"
+      },
+      {
+        "name": "チップ",
+        "price": "¥3,000～",
+        "note": "$200 ¥3,000\n$500 ¥5,000\n$1,000 + Entrance Ticket ¥10,000"
+      }
+    ]
   },
   {
     "id": "v20",
     "slug": "king-queen-suited-nogata",
     "name": "KING&QUEEN SUITED 直方店",
-    "altNames": ["キングアンドクイーン"],
+    "altNames": [
+      "キングアンドクイーン"
+    ],
     "area": "筑豊",
-    "address": "",
+    "address": "福岡県直方市古町16-25",
     "access": "直方駅 徒歩約4分",
     "hours": "",
     "x": "https://x.com/king_queen1312",
@@ -389,16 +530,20 @@ const VENUES = [
     "instagram": "https://www.instagram.com/king2485queen/",
     "website": "",
     "tel": "080-7987-1213",
+    "photo": "/img/venues/king-queen-suited-nogata.jpg",
     "featured": false,
-    "note": "ハウス+大型サテライト・黒崎に系列店。日・月定休。水=フリーロール、金=華金トナメ、土=DEEP STACKが毎週固定。住所は未確認(公式Instagramのbioで「直方駅より徒歩4分」を2026-09-09確認、番地は依然不明)。",
+    "note": "ハウス+大型サテライト・黒崎に系列店。日・月定休。水=フリーロール、金=華金トナメ、土=DEEP STACKが毎週固定。住所は未確認(公式Instagramのbioで「直方駅より徒歩4分」を2026-09-09確認。番地を含む住所は他媒体の掲載情報のため未確認。)。",
     "sourceLabel": "Instagram",
-    "sourceUrl": "https://www.instagram.com/king2485queen/"
+    "sourceUrl": "https://www.instagram.com/king2485queen/",
+    "addressUnverified": true
   },
   {
     "id": "v21",
     "slug": "ken-poker-kurume",
     "name": "KENポーカー（久留米）",
-    "altNames": ["KEN POKER"],
+    "altNames": [
+      "KEN POKER"
+    ],
     "area": "久留米",
     "address": "福岡県久留米市東町32-3",
     "access": "西鉄久留米駅 徒歩5分",
@@ -410,12 +555,35 @@ const VENUES = [
     "instagram": "https://www.instagram.com/kurume_ken_poker/",
     "website": "",
     "tel": "0942-33-0305",
+    "photo": "/img/venues/ken-poker-kurume.jpg",
     "featured": false,
     "note": "初心者講習あり。JOPT/WJPT・MASAKICHI SUPER LEAGUE系。卓状況はオープンチャットで更新中。住所・電話番号は裏取り済み。営業時間は第三者媒体情報のため要確認。",
     "sourceLabel": "公式ライン",
     "sourceUrl": "https://line.me/ti/g2/JROMKCR0N5",
     "ring": null,
-    "ringNote": "自社データにて「BLIND RING」という項目名は確認できていますが、詳細は「別紙参照」とされているのみで、リングゲームの実施有無・レートは当サイトでは確認できていません。レート・詳細は店舗にご確認ください。"
+    "ringNote": "自社データにて「BLIND RING」という項目名は確認できていますが、詳細は「別紙参照」とされているのみで、リングゲームの実施有無・レートは当サイトでは確認できていません。レート・詳細は店舗にご確認ください。",
+    "pricing": [
+      {
+        "name": "飲み放題",
+        "price": "平日2000円・土日祝3000円",
+        "note": null
+      },
+      {
+        "name": "入場料",
+        "price": "平日3000円・土日祝4000円",
+        "note": "15,000点チップ付き"
+      },
+      {
+        "name": "チップ購入",
+        "price": "3,000円～",
+        "note": "15,000点(75BB) 3,000円\n45,000点(225BB) 6,000円\n90,000点(450BB) 9,000円\n120,000点(600BB) 10,000円"
+      },
+      {
+        "name": "チップ引き出し(MAX 30,000点)",
+        "price": "1,000円～",
+        "note": "1回目　1,000円\n2回目　1,500円\n3回目　2,000円"
+      }
+    ]
   },
   {
     "id": "v22",
@@ -429,15 +597,28 @@ const VENUES = [
     "hours": "平日18:00〜翌1:00／休日14:00〜翌1:00",
     "x": "https://x.com/rownlown",
     "line": "",
-    "instagram": "",
+    "instagram": "https://www.instagram.com/crownclownw/",
     "website": "",
-    "tel": "",
+    "tel": "092-710-6300",
+    "photo": "/img/venues/crownclown-nakasu.jpg",
     "featured": false,
     "note": "RFID導入の本格ポーカールーム。ハイローラー等イベント定期開催。営業時間は第三者媒体情報のため要確認。",
     "sourceLabel": "X",
     "sourceUrl": "https://x.com/rownlown",
     "ring": null,
-    "ringNote": "20,000ポイント以上のチップ購入という価格体系の情報がありますが（公開情報より）、SB/BBの表記が無く、リングゲームの実施有無自体を当サイトでは確認できていません。レート・詳細は店舗にご確認ください。"
+    "ringNote": "20,000ポイント以上のチップ購入という価格体系の情報がありますが（公開情報より）、SB/BBの表記が無く、リングゲームの実施有無自体を当サイトでは確認できていません。レート・詳細は店舗にご確認ください。",
+    "pricing": [
+      {
+        "name": "入店料",
+        "price": "¥1,000",
+        "note": null
+      },
+      {
+        "name": "1ドリンク",
+        "price": "¥330〜",
+        "note": null
+      }
+    ]
   },
   {
     "id": "v23",
@@ -491,9 +672,10 @@ const VENUES = [
     "hours": "",
     "x": "https://x.com/72SevenTwo3351",
     "line": "",
-    "instagram": "",
+    "instagram": "https://www.instagram.com/72.seventwo/",
     "website": "",
-    "tel": "",
+    "tel": "080-3376-7030",
+    "photo": "/img/venues/seventwo-tenjin.jpg",
     "featured": false,
     "note": "白基調の明るい内装。実績に応じ国内外トーナメント出場権を得る昇格制度あり。自主トーナメント・FSTサテライトを開催。",
     "sourceLabel": "X",
@@ -510,14 +692,33 @@ const VENUES = [
     "lng": 130.426407,
     "hours": "平日15:00〜翌0:00／土日祝12:00〜翌0:00",
     "hoursSpec": [
-      { "days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "opens": "15:00", "closes": "00:00" },
-      { "days": ["Saturday", "Sunday", "PublicHolidays"], "opens": "12:00", "closes": "00:00" }
+      {
+        "days": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday"
+        ],
+        "opens": "15:00",
+        "closes": "00:00"
+      },
+      {
+        "days": [
+          "Saturday",
+          "Sunday",
+          "PublicHolidays"
+        ],
+        "opens": "12:00",
+        "closes": "00:00"
+      }
     ],
     "x": "https://x.com/joker_oohashi",
     "line": "https://line.me/R/ti/p/@362lsztx",
     "instagram": "https://www.instagram.com/joker_pokerhouse/",
     "website": "",
     "tel": "090-8407-1010",
+    "photo": "/img/venues/joker-fukuoka-ohashi.jpg",
     "featured": false,
     "note": "2025/11開店の新店。学生/女性割引あり。DAYTIME/NIGHTTIMEの2部制でトーナメント開催中(週替わり)。",
     "sourceLabel": "X",
@@ -538,7 +739,8 @@ const VENUES = [
     "line": "https://line.me/R/ti/p/@856zasqq",
     "instagram": "https://www.instagram.com/the_dojo_fukuoka/",
     "website": "",
-    "tel": "",
+    "tel": "092-403-7172",
+    "photo": "/img/venues/the-dojo-fukuoka.jpg",
     "featured": false,
     "note": "2025/12開店。DJL(店内リーグ戦)・FPC・FSTサテライト・ミステリーバウンティ等を定期開催。「SUPER DOJO RING DAY」はリングゲーム企画のため掲載対象外。営業時間は第三者媒体情報のため要確認。",
     "sourceLabel": "X",
@@ -560,7 +762,8 @@ const VENUES = [
     "line": "",
     "instagram": "https://www.instagram.com/cajinox/",
     "website": "",
-    "tel": "",
+    "tel": "092-406-3969",
+    "photo": "/img/venues/casinox-fukuoka-imaizumi.jpg",
     "featured": false,
     "note": "姉弟運営の小規模店。女性・初心者向け。貸切イベント可。曜日固定の定期開催ではなく、毎月カレンダー画像で告知するタイプ(2026年8月の再確認で判明)。日程は毎月カレンダー投稿を確認し個別入力すること。",
     "sourceLabel": "Instagram",
@@ -580,7 +783,8 @@ const VENUES = [
     "line": "",
     "instagram": "https://www.instagram.com/bon_nishinakasu/",
     "website": "",
-    "tel": "",
+    "tel": "080-2359-0789",
+    "photo": "/img/venues/bon-nishi-nakasu.jpg",
     "featured": false,
     "note": "ポーカー・シーシャ・フード複合ラウンジ。定期トーナメントは要確認。営業時間は第三者媒体情報のため要確認。",
     "sourceLabel": "",
@@ -613,14 +817,15 @@ const VENUES = [
     "slug": "poker-room-sky",
     "name": "Poker room SKY",
     "area": "博多",
-    "address": "福岡県福岡市博多区美野島2-2-2 2F-A",
+    "address": "福岡県福岡市博多区美野島2-2-2 メゾンドリエール博多2F-A",
     "access": "",
     "hours": "12:00〜24:00",
     "x": "https://x.com/sky_minoshima",
     "line": "",
     "instagram": "https://www.instagram.com/sky_minoshima/",
     "website": "https://linktr.ee/pokerroomsky",
-    "tel": "",
+    "tel": "050-1195-6044",
+    "photo": "/img/venues/poker-room-sky.jpg",
     "featured": false,
     "addressUnverified": true,
     "note": "NLH〜Mix対応・Webコイン制。曜日固定の毎週パターンではなく、月替わりのカレンダー画像で毎月告知(2026年9月のカレンダーで、月曜=フリーロール/火曜=FREEZE OUT+FST5.0サテライトは概ね続くものの、金曜のJOPT福岡サテライトは1度も開催されず、月内でも例外日(9/21月・9/29火など)がある月替わり告知タイプと判明。2026-09-01にRECURRING登録を解消)。日曜定休ではない(9/6・9/27にSPADIE店舗DAY1やFREE ROLLが日曜開催された実績あり)。日程は毎月カレンダー投稿を確認しTOURNAMENTSに個別入力すること。住所の部屋番号「2F-A」は検索スニペット経由の間接確認(公式Instagram(@sky_minoshima)への直接アクセスはボット対策により本文が取得できず、bioの直接確認はできていない)のため要確認(2026-09-09レビュー部指摘を受け開発部が確認方法を再点検)。",
@@ -643,11 +848,24 @@ const VENUES = [
     "line": "",
     "instagram": "https://www.instagram.com/king806queenkurosaki/",
     "website": "",
-    "tel": "",
+    "tel": "090-2963-1312",
+    "photo": "/img/venues/king-queen-suited-kurosaki.jpg",
     "featured": false,
     "note": "直方店の系列店。4卓でXPT等サテライトを頻繁に開催。水休は継続。曜日固定の毎週パターンではなく、月替わりのカレンダー画像で毎月告知(月曜は月前半FSTサテライト/後半チップエントリートーナメントに分かれる、金曜はリングゲームの月もある等、月によって内容が変わる。2026年9月のカレンダーで確認)。日程は毎月カレンダー投稿を確認し個別入力すること。",
     "sourceLabel": "Instagram",
-    "sourceUrl": "https://www.instagram.com/king806queenkurosaki/"
+    "sourceUrl": "https://www.instagram.com/king806queenkurosaki/",
+    "pricing": [
+      {
+        "name": "入場料",
+        "price": "¥1,500～",
+        "note": "女性・学生　¥1,500\n男性　¥2,000"
+      },
+      {
+        "name": "チップ購入",
+        "price": "¥2,000～",
+        "note": "10,000点　¥2,000\n20,000点　¥4,000"
+      }
+    ]
   },
   {
     "id": "v35",
@@ -664,6 +882,7 @@ const VENUES = [
     "instagram": "https://www.instagram.com/ace_and_king259/",
     "website": "",
     "tel": "080-3967-8543",
+    "photo": "/img/venues/ace-and-king-kurume.jpg",
     "featured": false,
     "note": "2026年7月Grand Open。西鉄久留米駅徒歩1分。初心者講習毎日・FREEROLL実績あり。KENポーカー(久留米)と同エリアの別店舗。7月は特別企画が多く日程が密なため、開始時刻・参加費に誤りが残っている可能性があります。参加前に店舗の公式情報をご確認ください。",
     "sourceLabel": "Instagram",
@@ -680,18 +899,68 @@ const VENUES = [
     "lng": 130.393204,
     "hours": "平日15:00〜24:00／土日12:00〜24:00(年中無休)",
     "hoursSpec": [
-      { "days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "opens": "15:00", "closes": "00:00" },
-      { "days": ["Saturday", "Sunday"], "opens": "12:00", "closes": "00:00" }
+      {
+        "days": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday"
+        ],
+        "opens": "15:00",
+        "closes": "00:00"
+      },
+      {
+        "days": [
+          "Saturday",
+          "Sunday"
+        ],
+        "opens": "12:00",
+        "closes": "00:00"
+      }
     ],
     "x": "https://x.com/634poker_fuk",
     "line": "",
-    "instagram": "",
+    "instagram": "https://www.instagram.com/musashipoker_fukuoka/",
     "website": "https://web.pokerroom634.com/fukuoka/",
     "tel": "092-401-6177",
+    "photo": "/img/venues/musashi-poker-room-fukuoka.jpg",
     "featured": false,
     "note": "全国チェーンMUSASHI POKER ROOMの福岡店。2026年4月25日オープン。トーナメント随時開催（日程は公式Xで告知）。",
     "sourceLabel": "X",
-    "sourceUrl": "https://x.com/634poker_fuk"
+    "sourceUrl": "https://x.com/634poker_fuk",
+    "pricing": [
+      {
+        "name": "1ドリンクオーダー制",
+        "price": "600円〜",
+        "note": null
+      },
+      {
+        "name": "施設利用料",
+        "price": "平日 500円 / 土日祝 1,000円",
+        "note": null
+      },
+      {
+        "name": "ソフトドリンク飲み放題",
+        "price": "平日 1,000円 / 土日祝 1,500円",
+        "note": null
+      },
+      {
+        "name": "アルコール飲み放題",
+        "price": "平日 2,000円 / 土日祝 2,500円",
+        "note": null
+      },
+      {
+        "name": "リングゲーム料金　チップ貸与（購入）",
+        "price": "1M$ ＝ 20円",
+        "note": "● 短時間・初めての方に\n減らした分だけ退店時にチップを購入して頂きます。\n純増分のチップは預け入れされます。"
+      },
+      {
+        "name": "リングゲーム料金　預けチップ引出し",
+        "price": "2,000円 (1日)",
+        "note": "● 何時間でも遊び放題\n過去に預けたチップを引き出して遊ぶプランです。\n長時間遊ぶならこちらがお得です。"
+      }
+    ]
   },
   {
     "id": "v37",
@@ -704,14 +973,33 @@ const VENUES = [
     "lng": 130.400604,
     "hours": "平日17:00〜24:00／土日祝14:00〜24:00",
     "hoursSpec": [
-      { "days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "opens": "17:00", "closes": "00:00" },
-      { "days": ["Saturday", "Sunday", "PublicHolidays"], "opens": "14:00", "closes": "00:00" }
+      {
+        "days": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday"
+        ],
+        "opens": "17:00",
+        "closes": "00:00"
+      },
+      {
+        "days": [
+          "Saturday",
+          "Sunday",
+          "PublicHolidays"
+        ],
+        "opens": "14:00",
+        "closes": "00:00"
+      }
     ],
     "x": "https://x.com/casinoRAFTEL",
     "line": "",
     "instagram": "https://www.instagram.com/raftelcasino/",
     "website": "",
-    "tel": "",
+    "tel": "092-406-7870",
+    "photo": "/img/venues/raftel-casino-fukuoka-imaizumi.jpg",
     "featured": false,
     "note": "2026年3月28日オープン。ポーカー5卓＋ブラックジャック・バカラ。",
     "sourceLabel": "Instagram",
@@ -741,28 +1029,50 @@ const VENUES = [
     "id": "v39",
     "slug": "kaji-bar-kokura",
     "name": "KAJI BAR",
-    "altNames": ["カジバー"],
+    "altNames": [
+      "カジバー"
+    ],
     "area": "北九州",
     "address": "福岡県北九州市小倉北区鍛冶町1-5-11 4F",
     "access": "北九州モノレール 平和通駅 徒歩3分（JR小倉駅 徒歩約5分）",
     "lat": 33.883224,
     "lng": 130.883499,
     "hours": "月〜土21:00〜翌3:00(日・祝定休)",
-    "x": "",
+    "x": "https://x.com/KAJIBAR1",
     "line": "",
     "instagram": "https://www.instagram.com/kajibar_9876/",
     "website": "https://kajibarkokura.owst.jp/",
     "tel": "093-521-9876",
+    "photo": "/img/venues/kaji-bar-kokura.jpg",
     "featured": false,
     "note": "2019年10月オープンのアミューズメントバー。ポーカーのほかブラックジャック・ルーレット・バカラ・ダーツ等。トーナメント開催は未確認。",
     "sourceLabel": "",
-    "sourceUrl": ""
+    "sourceUrl": "",
+    "pricing": [
+      {
+        "name": "【カジノゲーム専用プラン】単品1ドリンクオーダーシステム",
+        "price": "2,530円(税込)",
+        "note": "施設利用料・ワンドリンク代含む"
+      },
+      {
+        "name": "【カジノゲーム専用プラン】ソフトドリンク飲み放題システム",
+        "price": "3,300円(税込)",
+        "note": "施設利用料含む"
+      },
+      {
+        "name": "【カジノゲーム専用プラン】ALL飲み放題システム",
+        "price": "4,950円(税込)",
+        "note": "施設利用料含む"
+      }
+    ]
   },
   {
     "id": "v40",
     "slug": "triplebarrel-orio",
     "name": "TripleBarrel 折尾店",
-    "altNames": ["トリプルバレル折尾店"],
+    "altNames": [
+      "トリプルバレル折尾店"
+    ],
     "area": "北九州",
     "address": "福岡県北九州市八幡西区折尾1丁目14-10 2F",
     "access": "JR折尾駅 徒歩4分（西日本シティ銀行の隣）",
@@ -774,10 +1084,33 @@ const VENUES = [
     "instagram": "https://www.instagram.com/triple_orio/",
     "website": "https://triplebarrel.jimdofree.com/",
     "tel": "080-3374-8686",
+    "photo": "/img/venues/triplebarrel-orio.jpg",
     "featured": false,
     "note": "2025年1月オープン、折尾エリア初のポーカー店とされる。掲載中のTripleBarrel小倉店の姉妹店。ボードゲーム多数・初心者講習あり。営業時間は第三者媒体情報のため要確認。",
     "sourceLabel": "X",
-    "sourceUrl": "https://x.com/triple_orio"
+    "sourceUrl": "https://x.com/triple_orio",
+    "pricing": [
+      {
+        "name": "施設利用料",
+        "price": "¥1,000",
+        "note": null
+      },
+      {
+        "name": "ソフトドリンク飲み放題",
+        "price": "¥3,000",
+        "note": "施設利用料込み"
+      },
+      {
+        "name": "アルコールドリンク飲み放題",
+        "price": "¥4,500",
+        "note": "施設利用料込み"
+      },
+      {
+        "name": "チップ購入",
+        "price": "¥1,000",
+        "note": "10,000点 (20BB)\nチップ預かり・引き出し: ¥500"
+      }
+    ]
   },
   {
     "id": "v41",
@@ -810,20 +1143,126 @@ const VENUES = [
     "lng": 130.52002,
     "hours": "平日18:00〜24:00／土日祝12:00〜24:00",
     "hoursSpec": [
-      { "days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "opens": "18:00", "closes": "00:00" },
-      { "days": ["Saturday", "Sunday", "PublicHolidays"], "opens": "12:00", "closes": "00:00" }
+      {
+        "days": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday"
+        ],
+        "opens": "18:00",
+        "closes": "00:00"
+      },
+      {
+        "days": [
+          "Saturday",
+          "Sunday",
+          "PublicHolidays"
+        ],
+        "opens": "12:00",
+        "closes": "00:00"
+      }
     ],
     "x": "",
     "line": "",
     "instagram": "https://www.instagram.com/dream.casinobar/",
     "website": "",
     "tel": "",
+    "photo": "/img/venues/dream-casinobar-kurume.jpg",
     "featured": false,
     "note": "2026年9月1日グランドオープン。入場料(1ドリンク付)1,500円、ソフトドリンク飲み放題(12時間)500円、アルコール飲み放題(12時間)1,500円。ポーカートーナメントも定期開催(フリーロール30,000保証、KO Bounty60,000保証など)。",
     "sourceLabel": "Instagram",
     "sourceUrl": "https://www.instagram.com/dream.casinobar/",
     "ring": true,
-    "ringNote": "通常リング レート50-100。点数5,000点=1,500円/10,000点=3,000円/20,000点=6,000円。まとめ買い割引あり(40,000点10,000円・90,000点20,000円・140,000点30,000円・200,000点40,000円・300,000点50,000円)。(公式Instagramより)"
+    "ringNote": "通常リング レート50-100。点数5,000点=1,500円/10,000点=3,000円/20,000点=6,000円。まとめ買い割引あり(40,000点10,000円・90,000点20,000円・140,000点30,000円・200,000点40,000円・300,000点50,000円)。(公式Instagramより)",
+    "pricing": [
+      {
+        "name": "入場料",
+        "price": "¥1,500",
+        "note": "1ドリンク付き"
+      },
+      {
+        "name": "ソフトドリンク飲み放題",
+        "price": "¥500",
+        "note": "12時間"
+      },
+      {
+        "name": "アルコール飲み放題",
+        "price": "¥1,500",
+        "note": "12時間"
+      },
+      {
+        "name": "通常チップ料金",
+        "price": "¥1,500～",
+        "note": "5,000点　¥1,500\n10,000点　¥3,000\n20,000点　¥6,000\n40,000点　¥10,000\n90,000点　¥20,000\n140,000点　¥30,000\n200,000点　¥40,000\n300,000点　¥50,000"
+      },
+      {
+        "name": "チップ引き出し量",
+        "price": "¥1,000～",
+        "note": "100BB 10,000点　¥1,000\n200BB 20,000点　¥2,000\n300BB 30,000点　¥3,000\n¥4,000以降は引き出し無料！"
+      }
+    ]
+  },
+  {
+    "id": "v43",
+    "slug": "bon-daimyo",
+    "name": "梵 Daimyo",
+    "area": "大名",
+    "address": "福岡県福岡市中央区大名2丁目1-42",
+    "addressUnverified": true,
+    "access": "",
+    "hours": "",
+    "x": "https://x.com/Bondaimyo",
+    "line": "",
+    "instagram": "https://www.instagram.com/bon_daimyo/",
+    "website": "",
+    "tel": "070-5815-8255",
+    "photo": "/img/venues/bon-daimyo.jpg",
+    "featured": false,
+    "note": "他媒体の掲載情報をもとに追加した店舗です。トーナメント開催状況・営業時間は当サイトでは確認できていません。住所は他媒体の掲載情報のため未確認。最新情報は公式X・Instagramをご確認ください。",
+    "sourceLabel": "X",
+    "sourceUrl": "https://x.com/Bondaimyo"
+  },
+  {
+    "id": "v44",
+    "slug": "sbm-haruyoshi",
+    "name": "sbm HARUYOSHI",
+    "area": "天神",
+    "address": "福岡県福岡市中央区渡辺通5-2-9 2F",
+    "addressUnverified": true,
+    "access": "",
+    "hours": "",
+    "x": "https://x.com/sbmPoker0120",
+    "line": "",
+    "instagram": "https://www.instagram.com/standbyme_fukuoka/",
+    "website": "",
+    "tel": "092-401-0804",
+    "photo": "/img/venues/sbm-haruyoshi.jpg",
+    "featured": false,
+    "note": "他媒体の掲載情報をもとに追加した店舗です。トーナメント開催状況・営業時間は当サイトでは確認できていません。住所は他媒体の掲載情報のため未確認。最新情報は公式X・Instagramをご確認ください。",
+    "sourceLabel": "X",
+    "sourceUrl": "https://x.com/sbmPoker0120"
+  },
+  {
+    "id": "v45",
+    "slug": "nutsbar",
+    "name": "Nutsbar",
+    "area": "中洲",
+    "address": "福岡県福岡市博多区上川端町10-255 2階",
+    "addressUnverified": true,
+    "access": "",
+    "hours": "",
+    "x": "https://x.com/Nutsbar72",
+    "line": "",
+    "instagram": "https://www.instagram.com/72nutsbar/",
+    "website": "",
+    "tel": "092-285-9391",
+    "photo": "/img/venues/nutsbar.jpg",
+    "featured": false,
+    "note": "他媒体の掲載情報をもとに追加した店舗です。トーナメント開催状況・営業時間は当サイトでは確認できていません。住所は他媒体の掲載情報のため未確認。最新情報は公式X・Instagramをご確認ください。",
+    "sourceLabel": "X",
+    "sourceUrl": "https://x.com/Nutsbar72"
   }
 ];
 

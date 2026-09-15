@@ -233,6 +233,13 @@
   .vp-photo img{display:block;width:100%;max-height:320px;object-fit:cover;border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha)}
   .vp-photo-credit{font-size:.78em;color:var(--mut);line-height:1.7;margin:6px 2px 0}
   .vp-photo-credit a{color:#0e6a72;font-weight:700}
+  /* 料金・システム(2026-09-16新設。data.js の "pricing" をそのまま列挙するだけの単純な表)。 */
+  .vp-pricing{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+  .vp-price-row{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:10px 13px;font-size:.9em;line-height:1.6}
+  .vp-price-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .vp-price-name{font-weight:800;color:var(--felt)}
+  .vp-price-amount{font-weight:800;color:var(--felt);white-space:nowrap}
+  .vp-price-note{color:var(--mut);font-size:.88em;margin-top:3px}
   ul.vp-list{list-style:none;display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 6px}
   ul.vp-list a{display:inline-block;background:var(--sur);border:1px solid var(--bor);border-radius:20px;padding:6px 13px;font-size:.85em;font-weight:700;color:var(--felt);text-decoration:none;box-shadow:var(--sha)}
   /* .vp-cards / .vp-card(「同じエリアの他のポーカー店」「サテライト開催店舗」カード)は
@@ -258,6 +265,9 @@
 <main class="wrap"><div class="bc-wrap"><nav class="breadcrumb" aria-label="パンくずリスト"><ol><li><a href="https://fukuokapoker.com/">ふくおかポーカーナビ</a></li><li><a href="https://fukuokapoker.com/#areaNav">エリアから探す</a></li><li><a href="https://fukuokapoker.com/areas/kurume/">久留米</a></li><li><span aria-current="page">DreaM CASINO BAR</span></li></ol></nav></div>
 <h1>DreaM CASINO BAR</h1>
 <p class="vp-sub">久留米のポーカースポット — トーナメント日程・バイイン・アクセス</p>
+<figure class="vp-photo">
+  <img src="/img/venues/dream-casinobar-kurume.jpg" alt="DreaM CASINO BARの写真" loading="lazy" decoding="async" onerror="this.parentNode.style.display='none'">
+</figure>
 <div class="vp-info-grid">
 <div class="vp-info-card"><span class="vp-info-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.3-7-11a7 7 0 0 1 14 0c0 4.7-7 11-7 11z"/><circle cx="12" cy="10" r="2.4"/></svg></span><div><b>住所</b>福岡県久留米市東町38-24</div></div>
 <div class="vp-info-card"><span class="vp-info-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.2V12l3.3 2"/></svg></span><div><b>営業時間</b>平日18:00〜24:00／土日祝12:00〜24:00</div></div>
@@ -283,6 +293,12 @@
 <h3 class="vp-day">9月13日（日）</h3><div class="sched-wrap"><table class="sched"><thead><tr><th>開始</th><th>トーナメント</th><th>バイイン</th><th>スタック</th></tr></thead><tbody><tr><td class="start">14:00</td><td>フリーロール<span class="gtd">GTD 30,000</span>　<span class="vp-tags">フリーロール</span></td><td class="buyin">フリーロール</td><td class="buyin">—</td></tr><tr><td class="start">19:00</td><td>KOバウンティ<span class="gtd">GTD 60,000</span>　<span class="vp-tags">バウンティ</span></td><td class="buyin">詳細は店舗SNSを確認</td><td class="buyin">—</td></tr></tbody></table></div></div>
 <h2 class="vp-sec">リングゲーム</h2>
 <div class="vp-ring"><b>DreaM CASINO BARはリングゲームを開催しています。</b>通常リング レート50-100。点数5,000点=1,500円/10,000点=3,000円/20,000点=6,000円。まとめ買い割引あり(40,000点10,000円・90,000点20,000円・140,000点30,000円・200,000点40,000円・300,000点50,000円)。(公式Instagramより)</div>
+<h2 class="vp-sec">料金・システム</h2>
+<div class="vp-pricing"><div class="vp-price-row"><div class="vp-price-head"><span class="vp-price-name">入場料</span><span class="vp-price-amount">¥1,500</span></div><div class="vp-price-note">1ドリンク付き</div></div>
+<div class="vp-price-row"><div class="vp-price-head"><span class="vp-price-name">ソフトドリンク飲み放題</span><span class="vp-price-amount">¥500</span></div><div class="vp-price-note">12時間</div></div>
+<div class="vp-price-row"><div class="vp-price-head"><span class="vp-price-name">アルコール飲み放題</span><span class="vp-price-amount">¥1,500</span></div><div class="vp-price-note">12時間</div></div>
+<div class="vp-price-row"><div class="vp-price-head"><span class="vp-price-name">通常チップ料金</span><span class="vp-price-amount">¥1,500～</span></div><div class="vp-price-note">5,000点　¥1,500<br>10,000点　¥3,000<br>20,000点　¥6,000<br>40,000点　¥10,000<br>90,000点　¥20,000<br>140,000点　¥30,000<br>200,000点　¥40,000<br>300,000点　¥50,000</div></div>
+<div class="vp-price-row"><div class="vp-price-head"><span class="vp-price-name">チップ引き出し量</span><span class="vp-price-amount">¥1,000～</span></div><div class="vp-price-note">100BB 10,000点　¥1,000<br>200BB 20,000点　¥2,000<br>300BB 30,000点　¥3,000<br>¥4,000以降は引き出し無料！</div></div></div>
 <h2 class="vp-sec">同じエリア（久留米）の他のポーカー店</h2>
 <div class="vp-cards">
   <a class="vp-card" href="/venues/ken-poker-kurume/">
@@ -298,7 +314,7 @@
 <p class="lead">▶ <a href="/guide/beginner/#ring-beginner">福岡のポーカー店の選び方（リング・初心者編）</a></p>
 <p class="lead">▶ <a href="/guide/beginner/#cat-drink">福岡のポーカー店の選び方（ドリンク編）</a></p>
 <div class="links">
-  ▶ <a href="/">福岡のポーカートーナメント日程を日付順に見る（全35店舗）</a><br>
+  ▶ <a href="/">福岡のポーカートーナメント日程を日付順に見る（全38店舗）</a><br>
   ▶ <a href="/#venue/v42">DreaM CASINO BAR の月別カレンダー</a>
 </div></main>
 <footer>

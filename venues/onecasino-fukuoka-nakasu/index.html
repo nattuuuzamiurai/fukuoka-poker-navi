@@ -215,6 +215,13 @@
   .vp-photo img{display:block;width:100%;max-height:320px;object-fit:cover;border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha)}
   .vp-photo-credit{font-size:.78em;color:var(--mut);line-height:1.7;margin:6px 2px 0}
   .vp-photo-credit a{color:#0e6a72;font-weight:700}
+  /* 料金・システム(2026-09-16新設。data.js の "pricing" をそのまま列挙するだけの単純な表)。 */
+  .vp-pricing{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+  .vp-price-row{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:10px 13px;font-size:.9em;line-height:1.6}
+  .vp-price-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .vp-price-name{font-weight:800;color:var(--felt)}
+  .vp-price-amount{font-weight:800;color:var(--felt);white-space:nowrap}
+  .vp-price-note{color:var(--mut);font-size:.88em;margin-top:3px}
   ul.vp-list{list-style:none;display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 6px}
   ul.vp-list a{display:inline-block;background:var(--sur);border:1px solid var(--bor);border-radius:20px;padding:6px 13px;font-size:.85em;font-weight:700;color:var(--felt);text-decoration:none;box-shadow:var(--sha)}
   /* .vp-cards / .vp-card(「同じエリアの他のポーカー店」「サテライト開催店舗」カード)は
@@ -240,6 +247,9 @@
 <main class="wrap"><div class="bc-wrap"><nav class="breadcrumb" aria-label="パンくずリスト"><ol><li><a href="https://fukuokapoker.com/">ふくおかポーカーナビ</a></li><li><a href="https://fukuokapoker.com/#areaNav">エリアから探す</a></li><li><a href="https://fukuokapoker.com/areas/nakasu/">中洲</a></li><li><span aria-current="page">ONECASINO 福岡中洲</span></li></ol></nav></div>
 <h1>ONECASINO 福岡中洲</h1>
 <p class="vp-sub">中洲のポーカースポット（中洲川端駅 徒歩2分） — 住所・アクセス・開催情報（SNS表記: ONE CASINO・ワンカジノ）</p>
+<figure class="vp-photo">
+  <img src="/img/venues/onecasino-fukuoka-nakasu.jpg" alt="ONECASINO 福岡中洲の写真" loading="lazy" decoding="async" onerror="this.parentNode.style.display='none'">
+</figure>
 <div class="vp-info-grid">
 <div class="vp-info-card"><span class="vp-info-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.3-7-11a7 7 0 0 1 14 0c0 4.7-7 11-7 11z"/><circle cx="12" cy="10" r="2.4"/></svg></span><div><b>住所</b>福岡市博多区中洲4-7-7 中洲リッチビル2F</div></div>
 <div class="vp-info-card"><span class="vp-info-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="12" rx="3"/><path d="M5 11h14"/><path d="M8 19l-2 2M16 19l2 2"/><circle cx="8.5" cy="14.3" r=".55" fill="currentColor" stroke="none"/><circle cx="15.5" cy="14.3" r=".55" fill="currentColor" stroke="none"/></svg></span><div><b>アクセス</b>中洲川端駅 徒歩2分</div></div>
@@ -276,10 +286,10 @@
     <div class="vp-card-sub">中洲川端駅周辺</div>
   </a>
 </div>
-<p class="lead">▶ <a href="/areas/nakasu/">中洲のポーカー店7店舗の日程をまとめて見る</a></p>
+<p class="lead">▶ <a href="/areas/nakasu/">中洲のポーカー店8店舗の日程をまとめて見る</a></p>
 <p class="lead">▶ <a href="/guide/beginner/#ring-beginner">福岡のポーカー店の選び方（リング・初心者編）</a></p>
 <div class="links">
-  ▶ <a href="/">福岡のポーカートーナメント日程を日付順に見る（全35店舗）</a><br>
+  ▶ <a href="/">福岡のポーカートーナメント日程を日付順に見る（全38店舗）</a><br>
   ▶ <a href="/#venue/v4">ONECASINO 福岡中洲 の月別カレンダー</a>
 </div></main>
 <footer>

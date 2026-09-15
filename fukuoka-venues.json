@@ -16,6 +16,16 @@
           "POKER Studio DEEP BLUE"
         ],
         "note": "venues配列の末尾6件は2026-07-29に品質管理部が裏取りした追加分。初回29件(collectedAt: 2026-07-10)とは調査日が異なる。各件の確度(high/medium)と残課題は個々のnoteに記載。"
+      },
+      {
+        "collectedAt": "2026-09-15",
+        "count": 3,
+        "venues": [
+          "梵 Daimyo",
+          "sbm HARUYOSHI",
+          "Nutsbar"
+        ],
+        "note": "外部の店舗情報サイトにのみ掲載され、当サイト未掲載だった3店舗を新規追加(詳細はcorrectionsエントリ参照)。住所は当該情報源の掲載情報のみに基づくためaddressUnverified: true とし、note に未確認の旨を明記。電話番号・X・Instagram・店舗写真(img/venues/配下に保存)も同情報源の掲載情報。トーナメント開催状況・営業時間は当サイトでは未確認。詳細な出典・取得日時は社内記録として別途保管。"
       }
     ],
     "corrections": [
@@ -42,6 +52,41 @@
           "Poker room SKY（美野島）"
         ],
         "note": "レビュー部がPR #87をNO-GO判定(9件中1件、v33 Poker room SKYのみ)。指摘: 部屋区分「-A」の確認方法を「公式Instagramのbio、一次情報のため留保フラグなし」と確定情報扱いにしていたが、実態は検索スニペット経由の間接確認で、同一PR内でv30(ARIA中洲)・v8(RAISE BLUE天神)と確度基準が一貫していなかった。開発部が再点検した結果、Instagram本体(@sky_minoshima)への直接アクセスはボット対策によりbio本文を取得できず(SSRシェルのみでbiography要素が空)、直接確認はできていないと確認。data.jsに addressUnverified: true を付与し、JSON-LDからstreetAddressを落とし、note/sourcesの文言を「間接確認のため要確認」に修正した。"
+      },
+      {
+        "checkedAt": "2026-09-15",
+        "count": 28,
+        "venues": [
+          "KKPOKER FUKUOKA",
+          "RAISE BLUE 天神",
+          "Poker House FUXK 福岡天神店",
+          "72 -SevenTwo-",
+          "CasinoX（カジノックス）福岡今泉店",
+          "RAFTEL CASINO（ラフテルカジノ 福岡今泉店）",
+          "むさぽ福岡（MUSASHI POKER ROOM 福岡店）",
+          "CASINO BLOW 西中洲",
+          "ONECASINO 福岡中洲",
+          "Casino bar Leje 博多店",
+          "CRownCLown（クラウンクラウン）",
+          "m HOLD'EM 中洲",
+          "梵 bon 西中洲",
+          "Poker room SKY（美野島）",
+          "JOKER♠️ 福岡大橋",
+          "THE DOJO",
+          "TripleBarrel 小倉店",
+          "TripleBarrel 折尾店",
+          "CASINO Arrows 小倉店",
+          "KAJI BAR",
+          "てきさすほーるでむ。",
+          "KING&QUEEN SUITED 直方店",
+          "KING&QUEEN SUITED 黒崎店",
+          "PokerBar NUWLAND",
+          "テキサスホールデムAA",
+          "KENポーカー（久留米）",
+          "A&K（Ace and King）",
+          "DreaM CASINO BAR"
+        ],
+        "note": "外部の店舗情報サイトのデータを店名・住所・電話番号で突き合わせ、上記28件を既存店舗と同一店舗と判定。各件について: (1) 店舗写真1枚をダウンロードしてリポジトリ内 img/venues/<slug>.(jpg|png) に保存し(ホットリンクなし)、data.js に \"photo\" として追加。(2) 既存の address/tel/x/instagram が空、または addressUnverified 付きの項目に限り、同情報源掲載の値で補完(既に確度高く裏取り済みの値は上書きしていない)。電話番号を新規補完: KKPOKER FUKUOKA・RAISE BLUE天神・Poker House FUXK福岡天神店・72-SevenTwo-・CasinoX福岡今泉店・RAFTEL CASINO福岡今泉店・CRownCLown・m HOLD'EM中洲・梵bon西中洲・Poker room SKY・THE DOJO・CASINO Arrows小倉店・KING&QUEEN SUITED黒崎店・テキサスホールデムAA(計14件)。Instagramを新規補完: 72-SevenTwo-・むさぽ福岡・CRownCLown・m HOLD'EM中洲・テキサスホールデムAA(計5件)。Xを新規補完: KAJI BAR(1件)。住所を更新: KING&QUEEN SUITED直方店(番地不明だった住所を補完、addressUnverified付与・note修正)、Poker room SKY(建物名「メゾンドリエール博多」を追記、addressUnverifiedは従来通り維持)。(3) 同情報源の店舗詳細ページに掲載されている料金体系(入場料・チップ購入/引き出し・飲み放題の有無等)を data.js の \"pricing\"({name, price, note}の配列、正規化せずほぼそのまま構造化)として15件に追加: KENポーカー（久留米）・DreaM CASINO BAR・CASINO BLOW西中洲・CRownCLown・Poker House FUXK福岡天神店・むさぽ福岡・RAISE BLUE天神・Casino bar Leje博多店・TripleBarrel小倉店・TripleBarrel折尾店・CASINO Arrows小倉店・KAJI BAR・てきさすほーるでむ。・KING&QUEEN SUITED黒崎店・テキサスホールデムAA。出典元の名称・URLは読者向けページ(sourceLabel/sourceUrl・note)には出さず中立的な表記に留めた(既存店の主な情報源(sourceLabel/sourceUrl)は変更していない)。詳細な出典・取得日時は社内記録として別途保管。"
       }
     ],
     "caveats": [
@@ -759,6 +804,57 @@
         "https://www.instagram.com/deepblue824/"
       ],
       "note": "確度high。2025年5月オープン。★許認可・換金・「行橋初」・オープン時期の根拠はいずれも店舗公式サイトのトップページ https://www.poker-deepblue.com/ で、店舗自身が「当店は管轄の警察に届け出をした遊技設備を設置して営業しています。また、風俗営業５号許可も受けています」「当店は『風営法第5号』を取得して営業を行なっています」「当店では、チップの換金・景品の交換等は一切行っておりません」「行橋初のカジノ専門店。」と明記している。オープン時期は同サイト沿革欄「2025/5 本格ポーカーバーが福岡県行橋市内にＯＰＥＮ」で裏付け済み(あわせて「2026/1 行橋店ポーカーテーブルリニューアル」「2025/10 店長就任イベント開催」の記載あり)。★sourcesの https://www.poker-deepblue.com/services-3 は運営会社(株式会社大和海心)の会社概要ページであり、同ページの「風営法５号に準ずる営業及び運営」は定款の事業目的の記載で、店舗が許可を保有している証拠ではない。許認可の根拠として引用しないこと(2026-07-29のレビューでこの混同が指摘された)。★同ページの運営店舗一覧には「行橋アミューズメントポーカーbar」という表記もあり、掲載名「POKER Studio DEEP BLUE」との関係(改称か別店舗か)は未整理。★第三者事業者の許認可状態を当サイトの声で断定しないため、公開note(data.js)では「公式サイトによると」「公式サイトが『行橋初のカジノ専門店』を掲げる」と帰属を明示する表現にしている。営業時間19:00〜24:00。2026年1月にポーカーテーブルをリニューアル。18歳未満入店不可、ポーカーをしない飲みのみの来店は不可。決済は現金・キャリア決済・クレジットカード。初心者プランあり。★トーナメントの曜日・時刻・参加費は非公開で、公式Q&Aも「告知はInstagramで行う」としているため月次日程はInstagram確認が必要。住所は公式サイト本文が「行橋市中3丁目5-36」だが、同ページのGoogleマップ導線・日本郵便・国土地理院ジオコーダのいずれからも正式表記は「中央3-5-36」と確認したためそちらを採用(公式サイト本文は「央」の脱字と判断)。店舗の電話番号は公式サイト・SNSのどこにも記載なし。新エリア「京築」の第1号店。"
+    },
+    {
+      "name": "梵 Daimyo",
+      "area": "大名",
+      "city": "福岡市中央区",
+      "address": "福岡県福岡市中央区大名2丁目1-42",
+      "access": "",
+      "website": "",
+      "x": "https://x.com/Bondaimyo",
+      "instagram": "https://www.instagram.com/bon_daimyo/",
+      "line": "",
+      "tel": "070-5815-8255",
+      "holds_tournaments": false,
+      "sources": [
+        "https://x.com/Bondaimyo"
+      ],
+      "note": "外部の店舗情報サイトに掲載されていた情報をもとに追加した店舗です。当サイトでは未確認のため2026-09-15時点でholds_tournaments=falseとしているが、これは「開催しない」の確認ではなく「当サイトで未確認」の意味(要再調査)。住所はaddressUnverified扱い。"
+    },
+    {
+      "name": "sbm HARUYOSHI",
+      "area": "天神",
+      "city": "福岡市中央区",
+      "address": "福岡県福岡市中央区渡辺通5-2-9 2F",
+      "access": "",
+      "website": "",
+      "x": "https://x.com/sbmPoker0120",
+      "instagram": "https://www.instagram.com/standbyme_fukuoka/",
+      "line": "",
+      "tel": "092-401-0804",
+      "holds_tournaments": false,
+      "sources": [
+        "https://x.com/sbmPoker0120"
+      ],
+      "note": "外部の店舗情報サイトに掲載されていた情報をもとに追加した店舗です。当サイトでは未確認のため2026-09-15時点でholds_tournaments=falseとしているが、これは「開催しない」の確認ではなく「当サイトで未確認」の意味(要再調査)。住所はaddressUnverified扱い。ALICE the Poker room（アリス、v23。渡辺通5-2-10）とは番地が異なる別店舗として扱った(店名の関連は確認できていない)。"
+    },
+    {
+      "name": "Nutsbar",
+      "area": "中洲",
+      "city": "福岡市博多区",
+      "address": "福岡県福岡市博多区上川端町10-255 2階",
+      "access": "",
+      "website": "",
+      "x": "https://x.com/Nutsbar72",
+      "instagram": "https://www.instagram.com/72nutsbar/",
+      "line": "",
+      "tel": "092-285-9391",
+      "holds_tournaments": false,
+      "sources": [
+        "https://x.com/Nutsbar72"
+      ],
+      "note": "外部の店舗情報サイトに掲載されていた情報をもとに追加した店舗です。当サイトでは未確認のため2026-09-15時点でholds_tournaments=falseとしているが、これは「開催しない」の確認ではなく「当サイトで未確認」の意味(要再調査)。住所はaddressUnverified扱い。"
     }
   ]
 }
