@@ -19665,7 +19665,7 @@ const TOURNAMENTS = [
   {
     "id": "wl-01M25JSW29GGKRT9VH28CYRZZT",
     "venueId": "v3",
-    "name": "m VAULT",
+    "name": "m VAULT✨New✨",
     "date": "2026-09-27",
     "start": "17:10",
     "buyin": 4000,
