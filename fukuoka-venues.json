@@ -25,7 +25,7 @@
           "sbm HARUYOSHI",
           "Nutsbar"
         ],
-        "note": "同業の店舗情報アグリゲーター(上記correctionsと同一の取得元)にのみ掲載され、当サイト未掲載だった3店舗を新規追加(社長承認済み・詳細はcorrectionsエントリ参照)。住所は当該サイトの掲載情報のみに基づくため addressUnverified: true とし、note に未確認の旨を明記。電話番号・X・Instagram・店舗写真(img/venues/配下に保存)は同サイト掲載情報。トーナメント開催状況・営業時間は当サイトでは未確認。取得元: https://fukuoka-poker.world-wide-t.com/ (2026-09-15/16取得)。"
+        "note": "外部の店舗情報サイトにのみ掲載され、当サイト未掲載だった3店舗を新規追加(詳細はcorrectionsエントリ参照)。住所は当該情報源の掲載情報のみに基づくためaddressUnverified: true とし、note に未確認の旨を明記。電話番号・X・Instagram・店舗写真(img/venues/配下に保存)も同情報源の掲載情報。トーナメント開催状況・営業時間は当サイトでは未確認。詳細な出典・取得日時は社内記録として別途保管。"
       }
     ],
     "corrections": [
@@ -86,7 +86,7 @@
           "A&K（Ace and King）",
           "DreaM CASINO BAR"
         ],
-        "note": "社長承認済みの方針(著作権/データ流用リスクは経営管理オフィスが事前説明済み、社長が明示的に選択・承認)にもとづき、同業の店舗情報アグリゲーター(店舗一覧・店舗詳細を公開APIで提供している福岡県内ポーカー店紹介サイト)のデータを店名・住所・電話番号で突き合わせ、上記28件を既存店舗と同一店舗と判定。各件について: (1) 店舗写真1枚をダウンロードしてリポジトリ内 img/venues/<slug>.(jpg|png) に保存し(ホットリンクなし)、data.js に \"photo\" として追加。(2) 既存の address/tel/x/instagram が空、または addressUnverified 付きの項目に限り、同サイト掲載の値で補完(既に確度高く裏取り済みの値は上書きしていない)。電話番号を新規補完: KKPOKER FUKUOKA・RAISE BLUE天神・Poker House FUXK福岡天神店・72-SevenTwo-・CasinoX福岡今泉店・RAFTEL CASINO福岡今泉店・CRownCLown・m HOLD'EM中洲・梵bon西中洲・Poker room SKY・THE DOJO・CASINO Arrows小倉店・KING&QUEEN SUITED黒崎店・テキサスホールデムAA(計14件)。Instagramを新規補完: 72-SevenTwo-・むさぽ福岡・CRownCLown・m HOLD'EM中洲・テキサスホールデムAA(計5件)。Xを新規補完: KAJI BAR(1件)。住所を更新: KING&QUEEN SUITED直方店(番地不明だった住所を補完、addressUnverified付与・note修正)、Poker room SKY(建物名「メゾンドリエール博多」を追記、addressUnverifiedは従来通り維持)。(3) 同サイトの店舗詳細ページに掲載されている料金体系(入場料・チップ購入/引き出し・飲み放題の有無等)を data.js の \"pricing\"({name, price, note}の配列、正規化せずほぼそのまま構造化)として15件に追加: KENポーカー（久留米）・DreaM CASINO BAR・CASINO BLOW西中洲・CRownCLown・Poker House FUXK福岡天神店・むさぽ福岡・RAISE BLUE天神・Casino bar Leje博多店・TripleBarrel小倉店・TripleBarrel折尾店・CASINO Arrows小倉店・KAJI BAR・てきさすほーるでむ。・KING&QUEEN SUITED黒崎店・テキサスホールデムAA。出典サイト名は読者向けページ(sourceLabel/sourceUrl・note)には出さず中立的な表記に留めた(既存店の主な情報源(sourceLabel/sourceUrl)は変更していない)。取得元: https://fukuoka-poker.world-wide-t.com/ (api/rooms.php・api/rooms.php?id=<id>、2026-09-15/16取得)。"
+        "note": "外部の店舗情報サイトのデータを店名・住所・電話番号で突き合わせ、上記28件を既存店舗と同一店舗と判定。各件について: (1) 店舗写真1枚をダウンロードしてリポジトリ内 img/venues/<slug>.(jpg|png) に保存し(ホットリンクなし)、data.js に \"photo\" として追加。(2) 既存の address/tel/x/instagram が空、または addressUnverified 付きの項目に限り、同情報源掲載の値で補完(既に確度高く裏取り済みの値は上書きしていない)。電話番号を新規補完: KKPOKER FUKUOKA・RAISE BLUE天神・Poker House FUXK福岡天神店・72-SevenTwo-・CasinoX福岡今泉店・RAFTEL CASINO福岡今泉店・CRownCLown・m HOLD'EM中洲・梵bon西中洲・Poker room SKY・THE DOJO・CASINO Arrows小倉店・KING&QUEEN SUITED黒崎店・テキサスホールデムAA(計14件)。Instagramを新規補完: 72-SevenTwo-・むさぽ福岡・CRownCLown・m HOLD'EM中洲・テキサスホールデムAA(計5件)。Xを新規補完: KAJI BAR(1件)。住所を更新: KING&QUEEN SUITED直方店(番地不明だった住所を補完、addressUnverified付与・note修正)、Poker room SKY(建物名「メゾンドリエール博多」を追記、addressUnverifiedは従来通り維持)。(3) 同情報源の店舗詳細ページに掲載されている料金体系(入場料・チップ購入/引き出し・飲み放題の有無等)を data.js の \"pricing\"({name, price, note}の配列、正規化せずほぼそのまま構造化)として15件に追加: KENポーカー（久留米）・DreaM CASINO BAR・CASINO BLOW西中洲・CRownCLown・Poker House FUXK福岡天神店・むさぽ福岡・RAISE BLUE天神・Casino bar Leje博多店・TripleBarrel小倉店・TripleBarrel折尾店・CASINO Arrows小倉店・KAJI BAR・てきさすほーるでむ。・KING&QUEEN SUITED黒崎店・テキサスホールデムAA。出典元の名称・URLは読者向けページ(sourceLabel/sourceUrl・note)には出さず中立的な表記に留めた(既存店の主な情報源(sourceLabel/sourceUrl)は変更していない)。詳細な出典・取得日時は社内記録として別途保管。"
       }
     ],
     "caveats": [
@@ -818,10 +818,9 @@
       "tel": "070-5815-8255",
       "holds_tournaments": false,
       "sources": [
-        "https://fukuoka-poker.world-wide-t.com/",
         "https://x.com/Bondaimyo"
       ],
-      "note": "同業の店舗情報アグリゲーター(取得元は上記sources参照)にのみ掲載されていた店舗。当サイトでは未確認のため2026-09-15時点でholds_tournaments=falseとしているが、これは「開催しない」の確認ではなく「当サイトで未確認」の意味(要再調査)。住所はaddressUnverified扱い。"
+      "note": "外部の店舗情報サイトに掲載されていた情報をもとに追加した店舗です。当サイトでは未確認のため2026-09-15時点でholds_tournaments=falseとしているが、これは「開催しない」の確認ではなく「当サイトで未確認」の意味(要再調査)。住所はaddressUnverified扱い。"
     },
     {
       "name": "sbm HARUYOSHI",
@@ -836,10 +835,9 @@
       "tel": "092-401-0804",
       "holds_tournaments": false,
       "sources": [
-        "https://fukuoka-poker.world-wide-t.com/",
         "https://x.com/sbmPoker0120"
       ],
-      "note": "同業の店舗情報アグリゲーター(取得元は上記sources参照)にのみ掲載されていた店舗。当サイトでは未確認のため2026-09-15時点でholds_tournaments=falseとしているが、これは「開催しない」の確認ではなく「当サイトで未確認」の意味(要再調査)。住所はaddressUnverified扱い。ALICE the Poker room（アリス、v23。渡辺通5-2-10）とは番地が異なる別店舗として扱った(店名の関連は確認できていない)。"
+      "note": "外部の店舗情報サイトに掲載されていた情報をもとに追加した店舗です。当サイトでは未確認のため2026-09-15時点でholds_tournaments=falseとしているが、これは「開催しない」の確認ではなく「当サイトで未確認」の意味(要再調査)。住所はaddressUnverified扱い。ALICE the Poker room（アリス、v23。渡辺通5-2-10）とは番地が異なる別店舗として扱った(店名の関連は確認できていない)。"
     },
     {
       "name": "Nutsbar",
@@ -854,10 +852,9 @@
       "tel": "092-285-9391",
       "holds_tournaments": false,
       "sources": [
-        "https://fukuoka-poker.world-wide-t.com/",
         "https://x.com/Nutsbar72"
       ],
-      "note": "同業の店舗情報アグリゲーター(取得元は上記sources参照)にのみ掲載されていた店舗。当サイトでは未確認のため2026-09-15時点でholds_tournaments=falseとしているが、これは「開催しない」の確認ではなく「当サイトで未確認」の意味(要再調査)。住所はaddressUnverified扱い。"
+      "note": "外部の店舗情報サイトに掲載されていた情報をもとに追加した店舗です。当サイトでは未確認のため2026-09-15時点でholds_tournaments=falseとしているが、これは「開催しない」の確認ではなく「当サイトで未確認」の意味(要再調査)。住所はaddressUnverified扱い。"
     }
   ]
 }
