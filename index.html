@@ -671,10 +671,17 @@
   /* 店舗アイコン(2026-09-16新設)。「一目でどの店舗かわかるように」との社長要望で
      tc-buyin のさらに右に配置。大会名・バイイン額の視認性を妨げないよう小さめ(36px)の
      円形にとどめる。.vc-thumb(トップの店舗カード用サムネイル)と同じ venueThumbHtml() を
-     共有するが、こちらは丸型・固定サイズなので個別にスタイルを当てる。 */
+     共有するが、こちらは丸型・固定サイズなので個別にスタイルを当てる。
+     【object-fit は contain(品質管理部の指摘で cover→contain へ修正・2026-09-16)】
+     36x36の正方形コンテナだから正方形ロゴ(31件中30件)なら cover でも contain でも
+     見た目は同じ、という当初の判断は「全店が正方形」という前提が誤りだった。
+     img/venues/pokerbar-nuwland.png は 704x828 の縦長画像で、cover だと円全体が
+     ほぼ緑一色になりワードマーク「NUWLAND」が見えなくなる実害を確認。.vp-photo・
+     .vc-thumb と同じ理由・同じ対処(contain)で統一する。 */
   .tc-thumb{position:relative;width:36px;height:36px;border-radius:50%;overflow:hidden;flex-shrink:0;align-self:center;background:linear-gradient(135deg,var(--felt),var(--felt2))}
   .tc-thumb .vc-thumb-ph{font-size:15px}
-  .tc-thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+  .tc-thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
+  .tc-thumb:has(img) .vc-thumb-ph{display:none}
   .tc-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px;align-items:center}
   /* コントラスト比の是正(2026-08-27点検): 実測でWCAG AA(4.5:1)をわずかに下回っていたため、
      背景はそのままに文字色だけ濃くしてある(見た目のトーンは変えない)。 */
