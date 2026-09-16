@@ -35,6 +35,19 @@
  *     曜日に還元できない表現を誤って構造化データに落とす事故を、パーサの精度に頼らず
  *     【そもそも作らない】ことで防ぐ(README 法務・信頼性メモと同じ考え方)。
  *
+ * 【priceRange(料金帯)を追加した理由・2026-09-16】
+ *   マーケティング部のSEO調査で LocalBusiness に priceRange が無いという指摘(PR #103で
+ *   data.js に "pricing"〔入場料・チップ購入/引き出し等の料金体系。{name, price, note}の配列〕を
+ *   追加済みだが、表示用HTML〔venuePricingHtml()〕にのみ使われ JSON-LD には未反映だった)。
+ *   ★ "pricing" の "price" は店ごとに書式がバラバラ(単一額・範囲・平日/土日祝別・男女/学生別など)
+ *     で、自動パースして priceRange を生成するのは "hours" と同じ理由でリスクがある
+ *     (誤ったパースの結果を確定情報として Google に渡すことになる)。
+ *   同じ考え方を踏襲し、"pricing" からは自動生成せず、【確度が高く簡潔にまとめられる店だけ】
+ *   人が data.js に "priceRangeSpec"(schema.org の priceRange にそのまま渡す文字列1つ。
+ *   例: "¥3,000〜¥4,000"。詳しい条件は data.js のヘッダーコメントを参照)を追加し、
+ *   このファイルはそれをそのまま出すだけにする。値が無い店(大多数)は priceRange を出さない
+ *   (安全側のデフォルト)。
+ *
  * 【alternateName(店舗の別表記)を追加した理由・2026-09-13】
  *   「久留米 ポーカー ケンポーカー」等の裸の店名検索で、当サイトの該当ページより
  *   店舗自身のSNSが上位に出る問題への対策。KENポーカー久留米は当サイト表記が
@@ -183,6 +196,29 @@ function validateHoursSpec(venues) {
   }
 }
 
+// ---- priceRangeSpec の形を止める ----
+// 【なぜ必要か】
+//   priceRangeSpec は人が手で書く構造化データ(hoursSpecと同じ考え方)。typoで空文字や
+//   非文字列が入ったまま JSON-LD に出ると、壊れた priceRange を確定情報として渡すことになる。
+//   また、根拠となる pricing が無いのに priceRangeSpec だけ付く(pricing 削除時の消し忘れ等)は
+//   「表示は無いのに構造化データだけ数字が残る」食い違いなので、hoursSpec/hours の対応関係の
+//   検査と同じ考え方で検知する。
+function validatePriceRangeSpec(venues) {
+  const problems = [];
+  venues.forEach(v => {
+    if (v.priceRangeSpec === undefined) return;
+    if (!Array.isArray(v.pricing) || !v.pricing.length) {
+      problems.push(`${v.id} ${v.name}: pricing が無いのに priceRangeSpec があります`);
+    }
+    if (typeof v.priceRangeSpec !== 'string' || !v.priceRangeSpec.trim()) {
+      problems.push(`${v.id} ${v.name}: priceRangeSpec は空でない文字列にしてください`);
+    }
+  });
+  if (problems.length) {
+    throw new Error('店舗データの priceRangeSpec(料金帯の構造化データ)が壊れています:\n  - ' + problems.join('\n  - '));
+  }
+}
+
 // hoursSpec(data.js) → openingHoursSpecification(JSON-LD)の配列に変換するだけ。
 // 曜日名 → schema.org の URI に対応づける以外の判断は持たない(自由文のパースはしない)。
 function openingHoursFromSpec(hoursSpec) {
@@ -246,6 +282,12 @@ function venueJsonLd(v) {
   if (Array.isArray(v.hoursSpec) && v.hoursSpec.length) {
     j.openingHoursSpecification = openingHoursFromSpec(v.hoursSpec);
   }
+  // priceRange(料金帯)。v.pricing(店舗ページ表示用の自由記述の配列)はここでは一切パースしない。
+  // v.priceRangeSpec(確度が高く簡潔にまとめられる店だけ人が追加する文字列)がある店だけ、
+  // それをそのまま渡す。
+  if (typeof v.priceRangeSpec === 'string' && v.priceRangeSpec.trim()) {
+    j.priceRange = v.priceRangeSpec;
+  }
   return j;
 }
 
@@ -255,6 +297,7 @@ module.exports = {
   validateUnverifiedFlags,
   validateGeoFlags,
   validateHoursSpec,
+  validatePriceRangeSpec,
   openingHoursFromSpec,
   venueJsonLd
 };

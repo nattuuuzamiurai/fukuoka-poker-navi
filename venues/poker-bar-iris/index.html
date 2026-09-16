@@ -211,9 +211,24 @@
      contain なら全体が必ず収まる。余白ができる場合は var(--sur)(他のカードと同じ白地)で
      埋め、透明PNGのロゴでも背景が透けない・浮かない見た目にする。横長の実写真(ホットペッパー由来)は
      元々 max-height 内に収まる比率のものが多く、contain にしても見え方は変わらない(letterbox が
-     発生しない)。 */
+     発生しない)。
+     【2026-09-16・aspect-ratio を追加してCLS対策(マーケティング部SEO調査・PR #103/#108のフォロー
+     アップ)】従来は width/height属性もaspect-ratioも無く、height:auto相当だったため、画像の
+     読み込みが完了するまで高さが確定せずレイアウトシフト(CLS)が起きうる状態だった。トップページの
+     店舗カード(.vc-thumb・aspect-ratio:16/9)・トーナメント一覧アイコン(.tc-thumb)は既に固定比率で
+     対策済みなのに、ここだけ対策漏れだった指摘への対応。.vc-thumbと同じ 16/9 にそろえる。
+     ★ max-height:320px は残す。aspect-ratio と max-height を両方指定した場合、CSSの計算順は
+       「width(100%)→aspect-ratioからheightを算出→max-heightで上限クランプ」であり、どちらの値が
+       最終的に効いても【画像の実サイズを見ずに算出できる】ため、幅の狭い画面(aspect-ratioが効く)・
+       広い画面(max-heightが効く)のどちらでもCLSは起きない(高さが常にCSSだけで決まる)。
+     ★ 正方形に近いロゴ画像は 16:9 の横長枠の中で contain 表示され、左右に余白ができる
+       (= ピラーボックス)。以前(aspect-ratio無し)は画像の実サイズがそのまま枠になっていたため
+       正方形は正方形のまま出ていたが、この変更で見え方は変わる。余白は他カードと同じ
+       var(--sur)(白地)で埋まるため浮いた印象にはならない、と確認済み(ローカル確認)。
+       横長の実写真(ホットペッパー由来)は元々 16:9 に近い比率が多く、この変更後もほぼ違和感なく
+       表示される。 */
   .vp-photo{margin:0 0 14px}
-  .vp-photo img{display:block;width:100%;max-height:320px;object-fit:contain;background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha)}
+  .vp-photo img{display:block;width:100%;aspect-ratio:16/9;max-height:320px;object-fit:contain;background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha)}
   .vp-photo-credit{font-size:.78em;color:var(--mut);line-height:1.7;margin:6px 2px 0}
   .vp-photo-credit a{color:#0e6a72;font-weight:700}
   /* 料金・システム(2026-09-16新設。data.js の "pricing" をそのまま列挙するだけの単純な表)。 */

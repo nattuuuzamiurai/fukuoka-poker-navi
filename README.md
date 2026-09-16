@@ -3805,6 +3805,16 @@ git rm <ファイル> && git commit -m "revert: 状態ファイルを削除し�
   `.vp-sub` の末尾に「（SNS表記: ◯◯）」と控えめに1回だけ表示する。第1号はKENポーカー久留米
   (`v21`。当サイト表記「KENポーカー（久留米）」に対し、X・InstagramともSNS表示名は「KEN POKER」
   であることを確認済み)。裏が取れていない店には付けない(大多数の店は今まで通り持たない)。
+- **`priceRange`(料金帯)は、マーケティング部のSEO調査(PR #103のフォローアップ)で2026-09-16追加**。
+  `data.js` の `"pricing"`(入場料・チップ購入/引き出し等、店ごとに書式がバラバラな自由記述の配列。
+  PR #103で追加済みだが表示用HTMLのみに使われ構造化データには未反映だった)からは**自動パースしない**
+  (`hours`→`hoursSpec` と同じ理由。書式がバラバラな値を機械的にパースすると誤変換のリスクがある)。
+  `"hoursSpec"` と同じ設計思想で、確度が高く簡潔にまとめられる店だけ人が `data.js` に
+  `"priceRangeSpec"`(schema.org の `priceRange` にそのまま渡す文字列1つ。条件は `data.js` の
+  ヘッダーコメントを参照)を追加し、`tools/venue-jsonld.js` がそれをそのまま出す。値が無い店
+  (大多数)は `priceRange` を出さない。第1号はKENポーカー久留米(`v21`。入場料が「平日3000円・
+  土日祝4000円」と明確なため `"¥3,000〜¥4,000"` を設定)。`pricing` が無いのに `priceRangeSpec`
+  だけ残る食い違い(消し忘れ)は `tools/venue-jsonld.js` の `validatePriceRangeSpec` が検知する。
 - **Event 構造化データの推奨項目は「裏が取れたものだけ」埋める。** Search Console の
   「`performer` / `offers` / `image` / `organizer` がありません」は Google 自身が**重大ではない問題(＝推奨項目)**
   と位置づけており、欠けてもページや検索機能が失われない。**警告を消すために値を作らない。**

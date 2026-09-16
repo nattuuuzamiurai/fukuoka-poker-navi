@@ -17,6 +17,9 @@
  *      (PR #88 の判断を維持する回帰防止)
  *   7. altNames → alternateName の変換(単数は文字列・複数は配列)、altNames を持たない店は
  *      alternateName を出さないこと(2026-09-13新設)
+ *   8. priceRangeSpec → priceRange の変換(2026-09-16新設)。priceRangeSpec を持たない店は
+ *      priceRange を出さないこと・pricing からの自動生成をしないこと
+ *   9. validatePriceRangeSpec が壊れた priceRangeSpec(pricing無し・空文字・非文字列)を検知すること
  */
 
 'use strict';
@@ -24,7 +27,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const jsonld = require('./venue-jsonld.js');
-const { addressParts, venueJsonLd, validateUnverifiedFlags, validateGeoFlags, validateHoursSpec, openingHoursFromSpec, DAY_URI } = jsonld;
+const { addressParts, venueJsonLd, validateUnverifiedFlags, validateGeoFlags, validateHoursSpec, validatePriceRangeSpec, openingHoursFromSpec, DAY_URI } = jsonld;
 
 function baseVenue(overrides) {
   return Object.assign({
@@ -218,7 +221,57 @@ test('venueJsonLd: altNames が空配列の店は alternateName を出さない'
 });
 
 // ============================================================
-// 6. validateUnverifiedFlags(既存ロジックの移設・回帰防止)
+// 6. priceRangeSpec → priceRange
+// ============================================================
+test('venueJsonLd: priceRangeSpec があれば priceRange を出す', () => {
+  const j = venueJsonLd(baseVenue({
+    pricing: [{ name: '入場料', price: '平日3000円・土日祝4000円', note: null }],
+    priceRangeSpec: '¥3,000〜¥4,000'
+  }));
+  assert.equal(j.priceRange, '¥3,000〜¥4,000');
+});
+
+test('venueJsonLd: priceRangeSpec が無い店は pricing があっても priceRange を出さない(自動生成しない)', () => {
+  const j = venueJsonLd(baseVenue({
+    pricing: [{ name: '入場料', price: '平日3000円・土日祝4000円', note: null }]
+  }));
+  assert.equal(j.priceRange, undefined);
+});
+
+test('venueJsonLd: pricing も priceRangeSpec も無い店は priceRange を出さない', () => {
+  const j = venueJsonLd(baseVenue());
+  assert.equal(j.priceRange, undefined);
+});
+
+test('validatePriceRangeSpec: pricing が無いのに priceRangeSpec があれば異常終了', () => {
+  assert.throws(() => validatePriceRangeSpec([baseVenue({ priceRangeSpec: '¥3,000〜¥4,000' })]),
+    /pricing が無いのに priceRangeSpec/);
+});
+
+test('validatePriceRangeSpec: priceRangeSpec が空文字なら異常終了', () => {
+  assert.throws(() => validatePriceRangeSpec([baseVenue({
+    pricing: [{ name: '入場料', price: '1000円', note: null }], priceRangeSpec: ''
+  })]), /空でない文字列/);
+});
+
+test('validatePriceRangeSpec: priceRangeSpec が文字列でなければ異常終了', () => {
+  assert.throws(() => validatePriceRangeSpec([baseVenue({
+    pricing: [{ name: '入場料', price: '1000円', note: null }], priceRangeSpec: 3000
+  })]), /空でない文字列/);
+});
+
+test('validatePriceRangeSpec: priceRangeSpec を持たない店は対象外(素通り)', () => {
+  assert.doesNotThrow(() => validatePriceRangeSpec([baseVenue(), baseVenue({ id: 'v2', pricing: [] })]));
+});
+
+test('validatePriceRangeSpec: 正常なデータは通る', () => {
+  assert.doesNotThrow(() => validatePriceRangeSpec([baseVenue({
+    pricing: [{ name: '入場料', price: '3000円', note: null }], priceRangeSpec: '¥3,000〜¥4,000'
+  })]));
+});
+
+// ============================================================
+// 7. validateUnverifiedFlags(既存ロジックの移設・回帰防止)
 // ============================================================
 test('validateUnverifiedFlags: note が住所未確認に言及しているのにフラグが無ければ異常終了', () => {
   assert.throws(() => validateUnverifiedFlags([baseVenue({ note: '住所は未確認。' })]), /住所の未確認/);
