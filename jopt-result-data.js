@@ -3,7 +3,7 @@
  *
  * 【なぜ独立したファイルなのか】
  *   もとは tools/gen-event-pages.js の中の定数だったが、OGP画像生成(tools/gen-ogp-images.js・
- *   依頼5・2026-08-28)でも同じ値(優勝者名・エントリー数)を焼き込む必要が生じた。
+ *   2026-08-28)でも同じ値(優勝者名・エントリー数)を焼き込む必要が生じた。
  *   gen-event-pages.js は require されただけで生成・書き込み・検査まで実行するCLIスクリプトで、
  *   他のスクリプトから安全に require できない(README「そのまま require しない」を参照)ため、
  *   値そのものを jopt-data.js / nippon-series-data.js と同じ並びの独立データファイルに切り出した。

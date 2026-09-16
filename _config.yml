@@ -6,7 +6,7 @@
 # デフォルト設定でリポジトリ直下がほぼそのまま本番配信され、社内向けドキュメント
 # (README.md)・管理コンソール(admin.html)・自動化スクリプト一式(tools/)・
 # パイプラインの内部状態ファイル(*.json)まで https://fukuokapoker.com/ から
-# 誰でも直接閲覧できてしまっていた(2026-09、開発部が発見)。
+# 誰でも直接閲覧できてしまっていた(2026-09に発覚)。
 #
 # 【対処方針】
 # .github/workflows/*.yml は actions/checkout でリポジトリ全体をチェックアウトし、
@@ -58,6 +58,15 @@ exclude:
   - dev-server.py
   - ogp-design-spec.md
   - guide-beginner-content-draft.md
+  - area-content-brief.md
+
+  # 【exclude漏れの再発防止・2026-09-16】上記のような原稿ブリーフ/ドラフト系のmdファイルは
+  # front matterを持たない素のMarkdownで作ることが多く、Jekyllのデフォルト挙動では
+  # 除外リストに載せない限りそのまま_siteにコピーされ、https://fukuokapoker.com/<ファイル名>
+  # として実際に公開されてしまう(area-content-brief.mdが個別追加漏れで実際に公開されていた
+  # 事例あり)。個別ファイル名の列挙だけに頼らず、命名パターンでも二重に拾う。
+  - "*-content-brief.md"
+  - "*-content-draft.md"
 
   # 自動化スクリプト一式(CIワークフローがリポジトリ内から直接実行するため
   # ファイル自体は削除できない。配信からのみ除外する)

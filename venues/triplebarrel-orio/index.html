@@ -120,7 +120,7 @@
   /* 「まだ発表されていない」ことの告知(FST)。終了(.archived)と区別できる色にする */
   .tba{font-size:.86em;line-height:1.7;color:#26424e;background:#eef6f8;border:1px solid #cfe3e9;border-radius:10px;padding:11px 13px;margin-bottom:14px}
   .tba b{color:#14333d}
-  /* パンくずリスト(依頼2・2026-08-28)。events/venues/areas の全静的ページ共通。
+  /* パンくずリスト(2026-08-28導入)。events/venues/areas の全静的ページ共通。
      横に長くなる店舗名・大会名でも折り返さず、必要なら横スクロールで逃がす(狭い画面での実装コストを避けるため)。
      .bc-wrap はスクロールしない外側の器(2026-08-28追記): 右端のフェード(下記::after)を
      スクロール位置に関わらず同じ場所に固定して重ねるための包含ブロック。 */
@@ -156,7 +156,7 @@
   ul.evt-areas{list-style:none;display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 6px;padding:0}
   ul.evt-areas a{display:inline-block;background:var(--sur);border:1px solid var(--bor);border-radius:20px;padding:6px 13px;font-size:.85em;font-weight:700;color:var(--felt);text-decoration:none;box-shadow:var(--sha)}
   /* 店舗カード(店舗ページの「同じエリアの他のポーカー店」・イベントページの「サテライト開催店舗」で共用)。
-     社長方針・2026-08-27(大型大会は一時的なので、店舗どうしの内部リンクでリピートを作る)。
+     2026-08-27導入(大型大会は一時的なので、店舗どうしの内部リンクでリピートを作る)。
      ここに1つだけ置く(gen-venue-pages.js / gen-event-pages.js の両方から使うため複製しない)。 */
   .vp-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin:2px 0 6px}
   .vp-card{display:block;background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:12px 13px;text-decoration:none;color:inherit}
@@ -174,7 +174,7 @@
   /* 大会ページ一覧・エリア別リンク行(pageFoot の permanentEventLinks・areaLinksHtml)。
      JSを実行しないクローラがevents/venues/areasページに辿り着く唯一の経路(このファイル冒頭の
      コメント参照)なのでリンクの中身・件数は変更しないが、閲覧者向けの見た目としては優先度が低いため
-     縮小・ミュートする(社長指示・2026-09-01。index.htmlの同種の行と揃える)。色は同じ#1b2320背景で
+     縮小・ミュートする(2026-09-01。index.htmlの同種の行と揃える)。色は同じ#1b2320背景で
      WCAG AA 4.5:1を満たす#858d87(index.html footer .disc で確認済みの値)を流用する。 */
   footer .footer-linklist{font-size:.68em;color:#858d87}
   footer .footer-linklist a{color:#858d87}

@@ -36,7 +36,7 @@
  *   RECURRING の展開は2箇所にあり、生成するフィールドも既に違う。
  *     - tools/venue-schedule.js の vpRows()  … 静的な店舗ページ(生成時のNode + 閲覧時のブラウザ)
  *     - index.html の expandRecurring()      … トップのSPA(閲覧時のブラウザ)
- *   同じ判定を2つ書くと必ず片方が古くなる。PR #15 が潰した不整合の再導入になるので、
+ *   同じ判定を2つ書くと必ず片方が古くなる。過去に実際に起きた不整合の再導入になるので、
  *   判定は【このファイル1本】に寄せ、3つの実行環境がすべて同じバイト列を読む形にした。
  *     - Node          … tools/venue-schedule.js が require する
  *     - 店舗ページ    … 生成HTMLが <script src="/recurring-dedupe.js"> で読む

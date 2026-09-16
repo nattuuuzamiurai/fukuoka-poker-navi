@@ -78,8 +78,8 @@ const WC_CSS = `  .wc-toc{list-style:none;margin:0 0 16px;padding:0;font-size:.8
   .wc-toc a{color:#0e6a72;font-weight:700;text-decoration:none}
   .wc-toc a:hover{text-decoration:underline}
   .wc-rule{background:var(--sur);border:1px solid var(--bor);border-left:4px solid var(--gold);border-radius:10px;padding:12px 15px;margin:8px 0 14px;font-weight:800;color:var(--felt);font-size:.95em;line-height:1.7}
-  /* 第4章(専門家の見解にとどまる論点)を、確定事実の章と視覚的に区別するための箱
-     (レビュー部申し送り4)。破線の枠は「まだ確定していない」ことを示す目的で選んでいる。
+  /* 第4章(専門家の見解にとどまる論点)を、確定事実の章と視覚的に区別するための箱。
+     破線の枠は「まだ確定していない」ことを示す目的で選んでいる。
      色は新しい色を増やさず、サイト内で既に使っている値(#7a5711=table.sched .gtdの文字色、
      #0e6a72=サイト共通のリンク色)を再利用する。 */
   .wc-opinion{background:#f7f5f0;border:1px dashed #c9beac;border-radius:10px;padding:13px 15px;margin-bottom:14px;font-size:.88em;line-height:1.85;color:var(--txt)}
