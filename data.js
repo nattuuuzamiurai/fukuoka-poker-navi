@@ -19724,20 +19724,18 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
-    "id": "wl-01M25EKMVSDDQAMBD3J3W8TBEN",
+    "id": "wl-01M2N7JHQB547RC429JJE7KMNJ",
     "venueId": "v3",
-    "name": "m ULTIMA",
+    "name": "VS m AOI 卒業トーナメント🌸",
     "date": "2026-09-25",
-    "start": "17:10",
+    "start": "17:30",
     "buyin": 4000,
     "addon": null,
-    "stack": 60000,
+    "stack": 40000,
     "guarantee": null,
     "reentry": true,
     "prize": null,
-    "tags": [
-      "ディープ"
-    ],
+    "tags": [],
     "source": "auto",
     "verified": false
   },

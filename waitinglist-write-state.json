@@ -34,22 +34,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01KZTSYPAF2F8EGB1311W85NJC": {
-      "id": "wl-01KZTSYPAF2F8EGB1311W85NJC",
-      "venueId": "v3",
-      "name": "【3.5K 飲み放題！】m Booze up",
-      "date": "2026-09-16",
-      "start": "18:00",
-      "buyin": 3500,
-      "addon": 1500,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01KZTSYPAF6QEATTD68YD082WS": {
       "id": "wl-01KZTSYPAF6QEATTD68YD082WS",
       "venueId": "v3",
@@ -301,24 +285,6 @@
       "venueId": "v27",
       "name": "ヘッズアップ〜DOJO破り〜",
       "date": "2026-09-17",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M1K7AQSXEQ5X0CHX82DTGQ1C": {
-      "id": "wl-01M1K7AQSXEQ5X0CHX82DTGQ1C",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-09-16",
       "start": "12:00",
       "buyin": 5000,
       "addon": null,
@@ -712,24 +678,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M22G7B13X463PJCJBRZ28Q8D": {
-      "id": "wl-01M22G7B13X463PJCJBRZ28Q8D",
-      "venueId": "v3",
-      "name": "m MAD shuffle Turbo",
-      "date": "2026-09-16",
-      "start": "21:00",
-      "buyin": 2000,
-      "addon": 1000,
-      "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M22G9Y0VFQENZBRYBYAHXGHT": {
       "id": "wl-01M22G9Y0VFQENZBRYBYAHXGHT",
       "venueId": "v3",
@@ -986,24 +934,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M25EKMVSDDQAMBD3J3W8TBEN": {
-      "id": "wl-01M25EKMVSDDQAMBD3J3W8TBEN",
-      "venueId": "v3",
-      "name": "m ULTIMA",
-      "date": "2026-09-25",
-      "start": "17:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 60000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M25EZJWVRG44TA5ZJBZQ0KJ6": {
       "id": "wl-01M25EZJWVRG44TA5ZJBZQ0KJ6",
       "venueId": "v3",
@@ -1106,22 +1036,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M2CNGA1ADKYJ8P3NGDQD8T7H": {
-      "id": "wl-01M2CNGA1ADKYJ8P3NGDQD8T7H",
-      "venueId": "v22",
-      "name": "深夜のトナメ",
-      "date": "2026-09-16",
-      "start": "23:30",
-      "buyin": 5000,
-      "addon": 5000,
-      "stack": 30000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M2CNGVA79R8E1ZQXNA3Z4RVC": {
       "id": "wl-01M2CNGVA79R8E1ZQXNA3Z4RVC",
       "venueId": "v22",
@@ -1178,6 +1092,22 @@
       "start": "23:30",
       "buyin": 10000,
       "addon": 10000,
+      "stack": 40000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M2N7JHQB547RC429JJE7KMNJ": {
+      "id": "wl-01M2N7JHQB547RC429JJE7KMNJ",
+      "venueId": "v3",
+      "name": "VS m AOI 卒業トーナメント🌸",
+      "date": "2026-09-25",
+      "start": "17:30",
+      "buyin": 4000,
+      "addon": null,
       "stack": 40000,
       "guarantee": null,
       "reentry": true,
