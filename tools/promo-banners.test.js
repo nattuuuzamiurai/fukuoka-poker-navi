@@ -45,7 +45,7 @@ const vm = require('node:vm');
 const PB = require('../promo-banners.js');
 const BE = require('../big-events.js');
 
-test('PROMO_LEAD_DAYSは14である(社長了承・2026-09-02。巻き戻り検知用)', () => {
+test('PROMO_LEAD_DAYSは14である(運営了承・2026-09-02。巻き戻り検知用)', () => {
   assert.strictEqual(PB.PROMO_LEAD_DAYS, 14);
 });
 
@@ -69,7 +69,7 @@ test('visiblePromoBanners(): 掲載終了日(最終日+1)は含まれ、その�
   assert.deepStrictEqual(PB.visiblePromoBanners('2026-09-07', promos).map(p => p.id), []);
 });
 
-test('本番のPROMO_BANNERS: DreaMグランドオープンの掲載期間は2026-08-22〜2026-09-06(社長指示どおり)', () => {
+test('本番のPROMO_BANNERS: DreaMグランドオープンの掲載期間は2026-08-22〜2026-09-06(運営判断どおり)', () => {
   const dream = PB.PROMO_BANNERS.find(p => p.id === 'dream-grandopen-2026');
   assert.ok(dream, 'PROMO_BANNERSにdream-grandopen-2026が見つからない');
   assert.strictEqual(PB.promoShowFrom(dream.days), '2026-08-22');
@@ -113,7 +113,7 @@ test('visiblePromoBanners(): 最終日の翌日 06:01 も非表示のまま', ()
     PB.visiblePromoBanners(new Date(2026, 8, 6, 6, 1, 0), promos).map(p => p.id), []);
 });
 
-test('本番のPROMO_BANNERS: dream-grandopen-2026は2026-09-06 05:59まで表示され、06:00には消える(社長指示の具体例そのもの)', () => {
+test('本番のPROMO_BANNERS: dream-grandopen-2026は2026-09-06 05:59まで表示され、06:00には消える(運営判断の具体例そのもの)', () => {
   const before = PB.visiblePromoBanners(new Date(2026, 8, 6, 5, 59, 59)).map(p => p.id);
   const after = PB.visiblePromoBanners(new Date(2026, 8, 6, 6, 0, 0)).map(p => p.id);
   assert.ok(before.includes('dream-grandopen-2026'), `05:59の時点で消えている(実際: ${JSON.stringify(before)})`);

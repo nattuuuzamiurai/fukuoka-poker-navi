@@ -54,7 +54,7 @@
  *   (無い方が「嘘の日付」を出すより安全)。CI(GitHub Actions)側は既に
  *   `actions/checkout@v4` に `fetch-depth: 0` を指定済み(このsitemap生成を呼ぶ
  *   import-waitinglist.yml / import-texaspoker.yml / monitor-instagram-apify.yml の3ワークフロー
- *   いずれも設定済み。2026-09-03 dev-lead確認)。
+ *   いずれも設定済み。2026-09-03確認)。
  *
  * 使い方:
  *   node gen-sitemap.js <リポジトリのパス>            … sitemap.xml を書き出す
@@ -83,11 +83,11 @@ const VENUE = { freq: 'weekly', pri: '0.7' };
 const AREA = { freq: 'weekly', pri: '0.8' };
 // 運営者情報ページ(依頼3・GEO監査2026-09-03)。更新頻度は低いページなので monthly・低priorityにする。
 const ABOUT = { freq: 'monthly', pri: '0.3' };
-// 初心者向け店舗選びガイド(/guide/beginner/。開発部2026-09-12)。「福岡 ポーカー」という
+// 初心者向け店舗選びガイド(/guide/beginner/。2026-09-12実装)。「福岡 ポーカー」という
 // 広いクエリを受ける入口で、店舗ページ・エリアページへのハブも兼ねるため、エリアページと
 // 同じ扱い(weekly・0.8)にする。中身(全店舗一覧表)はdata.jsの更新に追随する。
 const GUIDE = { freq: 'weekly', pri: '0.8' };
-// 「ウェブコイン」規制の解説記事(/guide/webcoin-regulation/。開発部2026-09-14)。
+// 「ウェブコイン」規制の解説記事(/guide/webcoin-regulation/。2026-09-14実装)。
 // 上記ガイドと違い店舗横断の一覧ではなく、日次のdata.js更新には追随しない読み物記事のため
 // changefreqはmonthly(頻繁に変わる想定ではないが、続報での更新を前提にしているためaboutより高い頻度)。
 const WEBCOIN = { freq: 'monthly', pri: '0.6' };
@@ -167,7 +167,7 @@ function buildSitemap(REPO) {
   // 【なぜ全件載せないか】このサイトの現時点の収益ゲートは検索順位ではなく AdSense審査で、
   //   審査はサイト全体のコンテンツ量・質を見る(不承認理由の最頻出が「価値の低い広告枠」)。
   //   日程0件かつpricingも無い店のページは実質「住所＋アクセス＋SNS＋noteの1行」しかなく、
-  //   これが全URLの3割を占める状態で審査を受けるリスクを避ける[社長判断・2026-07-30]。
+  //   これが全URLの3割を占める状態で審査を受けるリスクを避ける[運営判断・2026-07-30]。
   //   ページ自体は生成・公開し、トップの店舗リンク行(#venueLinks)からも辿れるので、
   //   URLの早期確定と被リンクの受け皿という狙いは sitemap 掲載と独立に達成できる。
   //   日程かpricingのどちらかが1件でも入れば次の生成で自動的に載る(手当ては不要)。
@@ -187,7 +187,7 @@ function buildSitemap(REPO) {
     .forEach(v => urls.push({ loc: `${SITE}/venues/${v.slug}/`, lastmod: VENUE_LASTMOD, ...VENUE }));
 
   // エリアページ: 2店舗以上あり(=ページが存在する)、かつ掲載中の日程が1件以上あるエリアだけ。
-  // 店舗ページと同じ考え方で、日程0件のページを審査対象の全URLに混ぜない[社長判断・2026-07-30]。
+  // 店舗ページと同じ考え方で、日程0件のページを審査対象の全URLに混ぜない[運営判断・2026-07-30]。
   // ページ自体は生成され、トップのエリアリンク行(#areaLinks)から辿れる。
   // lastmod は店舗ページと同じ2ファイル(該当エリアの店舗データも同じファイルに同居しているため)。
   areaList(DATA.VENUES, DATA.AREAS)
@@ -200,7 +200,7 @@ function buildSitemap(REPO) {
     urls.push({ loc: `${SITE}/about.html`, lastmod: lastmodFor(['about.html']), ...ABOUT });
   }
 
-  // 初心者向け店舗選びガイド(開発部2026-09-12)。about.html と同じくファイルが存在するときだけ載せる。
+  // 初心者向け店舗選びガイド(2026-09-12実装)。about.html と同じくファイルが存在するときだけ載せる。
   // 内容の実体(本文は tools/gen-guide-pages.js に直書き、全店舗一覧表は data.js 由来)を
   // 両方見て新しい方をlastmodにする(about.html は自分自身を参照するだけで足りるが、
   // こちらはページ自身が生成スクリプトなので、本文の変更元であるスクリプト本体を見る)。
@@ -212,7 +212,7 @@ function buildSitemap(REPO) {
     });
   }
 
-  // 「ウェブコイン」規制の解説記事(開発部2026-09-14)。about.html/guide/beginnerと同じく
+  // 「ウェブコイン」規制の解説記事(2026-09-14実装)。about.html/guide/beginnerと同じく
   // ファイルが存在するときだけ載せる。本文は tools/gen-guide-webcoin-regulation.js に直書きで
   // data.jsには依存しないため、lastmodはそのファイル自身の最終更新コミット日時のみを見る。
   if (fs.existsSync(path.join(REPO, 'guide/webcoin-regulation/index.html'))) {

@@ -118,7 +118,7 @@ test('3: 人が pinnedTags を足したことも食い違いとして拾う', ()
   assert.deepEqual(S.humanEditedFields(current, record), ['pinnedTags']);
 });
 
-// ---------- 4. 報告の並び順に社長の優先順位が出る ----------
+// ---------- 4. 報告の並び順に運営の優先順位が出る ----------
 
 test('4: 守った項目は 名前 → 参加費 → 開始時刻 の順に並ぶ(賞金は後ろ)', () => {
   const sorted = S.sortFieldsForReport(['prize', 'guarantee', 'start', 'buyin', 'name']);

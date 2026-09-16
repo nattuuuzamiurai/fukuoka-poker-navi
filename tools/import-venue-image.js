@@ -6,7 +6,7 @@
  * Visionモデルで抽出したうえで `data.js` に安全にupsertするCLIツール。
  *
  * 【経緯】PR #13で実装したInstagram自動巡回(セッションCookie注入+検知回避を伴う設計)は
- * 経営管理オフィスの判断で中止した。代わりに「各店舗にスケジュール画像を当社のLINE/メールへ
+ * 運営判断で中止した。代わりに「各店舗にスケジュール画像を当社のLINE/メールへ
  * 直接送ってもらう」運用に切り替え、届いた画像をこのツールで取り込む。
  * メール/LINE受信の自動化(画像を自動で取ってくる部分)は今回のスコープ外— 届いた画像は
  * 人が保存し、このツールにファイルパスを渡して実行する。
@@ -67,7 +67,7 @@ const { normalizeExtractedRow, extractedRowProblem, duplicateIdProblem } = requi
 // 「機械が最後に書いた値」の控えと、そこから導く所有の判定。
 const machineState = require('./machine-write-state');
 
-// 【店ごとの掲載ルール】(社長指示)。Instagram監視(tools/monitor-instagram-apify.js)と
+// 【店ごとの掲載ルール】(運営判断)。Instagram監視(tools/monitor-instagram-apify.js)と
 // 【同じものを使う】。このツールは Instagram監視が内容を取りこぼしたときの手動の代替経路
 // (「内容が必要なら node tools/import-venue-image.js … で手動取込みしてください」)なので、
 // ここで規則が効かないと【自動経路で消したはずの参加費・行が、手動経路から入ってくる】。
@@ -115,7 +115,7 @@ function slugify(name) {
  */
 function toTournament(t, venueId) {
   const start = t.start || '00:00';
-  // 【店ごとの掲載ルール: 参加費を一切記録しない店】(社長指示)
+  // 【店ごとの掲載ルール: 参加費を一切記録しない店】(運営判断)
   // Instagram監視側の toTournament と同じ扱いにする。この経路だけ参加費が残ると、
   // 同じ店の日程が「載っている行と載っていない行」に割れて、利用者にはどちらが正しいか分からない。
   const noBuyinRule = listingRules.buyinNotRecorded(venueId);
@@ -179,7 +179,7 @@ async function importVenueImage(opts, libs) {
       );
     }
     let reason = extractedRowProblem(row);
-    // 【店ごとの掲載ルールによる除外】(社長指示)。理由の文面は自動経路と同じものを使う。
+    // 【店ごとの掲載ルールによる除外】(運営判断)。理由の文面は自動経路と同じものを使う。
     if (!reason) {
       const exclusion = listingRules.excludedByListingRule(opts.venueId, row && row.name);
       if (exclusion) {

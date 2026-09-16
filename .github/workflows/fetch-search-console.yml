@@ -6,7 +6,7 @@ name: Search Console パフォーマンスデータの週次取得
 # 同ディレクトリのサマリー(Markdown)を毎回コミットする。詳細は tools/fetch-search-console.js
 # のヘッダコメントを参照。
 #
-# ★このデータは分析用(マーケティング部のGEO/SEO監査)であり、サイト自体の表示には使わない。
+# ★このデータは分析用(マーケティングのGEO/SEO監査)であり、サイト自体の表示には使わない。
 #   `data.js`(表示用データ)や、それを日次で書き換える import-waitinglist.yml /
 #   monitor-instagram-apify.yml とは完全に無関係(read-onlyでdata.jsに一切触れない)。
 #   そのため他ワークフローにあるような dry-run 切替・upsert・validate-data ゲートは無い
@@ -19,7 +19,7 @@ name: Search Console パフォーマンスデータの週次取得
 #
 # 【対象範囲外】このワークフローはコード(スクリプト自体)のみを自動デプロイ対象とする。
 #   Google Cloud側の設定(サービスアカウント・API有効化・GSCプロパティへの権限付与)は
-#   社長が実施済みのものをそのまま使うだけで、このワークフローが変更することはない。
+#   運営が実施済みのものをそのまま使うだけで、このワークフローが変更することはない。
 
 on:
   schedule:
