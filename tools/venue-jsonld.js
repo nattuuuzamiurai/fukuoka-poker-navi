@@ -36,9 +36,9 @@
  *     【そもそも作らない】ことで防ぐ(README 法務・信頼性メモと同じ考え方)。
  *
  * 【priceRange(料金帯)を追加した理由・2026-09-16】
- *   マーケティング部のSEO調査で LocalBusiness に priceRange が無いという指摘(PR #103で
- *   data.js に "pricing"〔入場料・チップ購入/引き出し等の料金体系。{name, price, note}の配列〕を
- *   追加済みだが、表示用HTML〔venuePricingHtml()〕にのみ使われ JSON-LD には未反映だった)。
+ *   LocalBusiness に priceRange が無いという指摘への対応(data.js には既に "pricing"〔入場料・
+ *   チップ購入/引き出し等の料金体系。{name, price, note}の配列〕があったが、表示用HTML
+ *   〔venuePricingHtml()〕にのみ使われ JSON-LD には未反映だった)。
  *   ★ "pricing" の "price" は店ごとに書式がバラバラ(単一額・範囲・平日/土日祝別・男女/学生別など)
  *     で、自動パースして priceRange を生成するのは "hours" と同じ理由でリスクがある
  *     (誤ったパースの結果を確定情報として Google に渡すことになる)。

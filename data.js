@@ -101,8 +101,8 @@
  * null。付けると店舗静的ページに「料金・システム」セクションが出る。持たない店は
  * 今まで通りこのセクション自体を出さない。
  *
- * VENUES の "priceRangeSpec" は JSON-LD(LocalBusiness)の priceRange の元データ(2026-09-16新設、
- * マーケティング部SEO調査・PR #103のフォローアップ)。schema.org の priceRange は文字列1つ
+ * VENUES の "priceRangeSpec" は JSON-LD(LocalBusiness)の priceRange の元データ(2026-09-16新設)。
+ * schema.org の priceRange は文字列1つ
  * (例: "¥3,000〜¥4,000"、"¥¥" のような簡易表記も可)。"hoursSpec" と同じ設計思想で、
  * "pricing"(上記、店ごとに書式がバラバラな自由記述の配列)からは自動生成しない
  * (自動パースは誤変換のリスクがある。"hours"→"hoursSpec" と同じ考え方)。
