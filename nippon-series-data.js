@@ -2,7 +2,7 @@
 // 出典（一次情報）: 公式イベントページ https://nippon-series.jp/event-nippon-series-fukuoka-2026
 //   公式Players Guide(PDF): https://nippon-series.jp/assets/players-guide-nippon-series-fukuoka-2026.pdf
 //   各トーナメントの詳細・ストラクチャーは公式の個別ページ(各 url フィールド)にある。
-// 取得日: 2026-07-29 / 開発部（公式ページのHTMLからスクリプトで機械抽出。手打ちしていない）
+// 取得日: 2026-07-29（公式ページのHTMLからスクリプトで機械抽出。手打ちしていない）
 //
 // 注1: 公式は全38イベント(#1〜#38)。うち #17 MAIN EVENT は Day 1A/1B/1C/1D Last Chance/Day 2 & FINAL の
 //      5行に分かれて掲載されているため、このファイルの行数は 42 になる。

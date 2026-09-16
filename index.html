@@ -33,7 +33,7 @@
 <meta property="og:title" content="福岡のポーカー大会・トーナメント日程｜今日の開催も一覧 | ふくおかポーカーナビ">
 <meta property="og:description" content="福岡県内（天神・中洲・北九州・久留米・筑豊）のアミューズメントポーカー店で開催されるポーカー大会・トーナメントの日程を一括で確認。今日・今週どの店で開催されるかがすぐ分かります。">
 <meta property="og:url" content="https://fukuokapoker.com/">
-<!-- OGP画像(依頼5・2026-08-28。マーケティング部調査: トップ・エリア・店舗ページにog:imageが
+<!-- OGP画像(2026-08-28導入。トップ・エリア・店舗ページにog:imageが
      一切無かった)。サイト共通OGP(1200×630)。tools/gen-ogp-images.js が data.js の掲載店舗数を
      焼き込んで生成する。events/venues/areas 側の同じ画像は tools/site-shell.js の pageHead 既定値。 -->
 <meta property="og:image" content="https://fukuokapoker.com/img/ogp/common-og.jpg">
@@ -179,7 +179,7 @@
      「.wrapを介さないフルブリード帯」の設計のため、class名は共通(.cta)でも index.html側で
      このファイル独自にスタイルを定義している(2ファイルで .cta という同名クラスを別定義で
      持つが、対象ページが重ならないため衝突しない)。
-     【2026-09-14改修】社長指示「案内があまり目立たない、デザインに甲乙つけてわかりやすく」。
+     【2026-09-14改修】「案内があまり目立たない、デザインに甲乙つけてわかりやすく」という指摘を受けて改修。
      角丸が無く直上の .areaNav(緑帯)と地続きに見えていたのが原因のため、
      - サイト基調の角丸カード(border-radius:var(--r))化 + 上下にmarginを取って独立させる
      - 上端にゴールドの帯(border-top)を足してアクセントにする(既存の --gold をそのまま使用、
@@ -229,7 +229,7 @@
   .dstrip-month:focus-visible{border-color:var(--felt);box-shadow:0 0 0 3px rgba(15,61,46,.18)}
   .dstrip-month[aria-expanded="true"]{background:var(--felt);border-color:var(--felt);color:#fff}
   .dstrip-month[aria-expanded="true"] .dm-caret{color:#fff;transform:rotate(180deg)}
-  /* 「今日」に戻るボタン(社長指示・2026-07-30)。月ボタンと同じピル型でトーンだけ変える
+  /* 「今日」に戻るボタン(2026-07-30導入)。月ボタンと同じピル型でトーンだけ変える
      (金＝日付チップの .dchip.today と同じ色。月選択＝緑と混同しない)。
      ★高さは月ボタンと同じに保つこと(この行の高さ＝直下の「トーナメント日程」見出しのY座標が動く。
        実測: 月ボタン29.2px / このボタン29.2px、行の高さは表示中も60.89pxで不変)。
@@ -311,7 +311,7 @@
   .adCard .ac-title{font-size:1.02em;font-weight:800;color:#fff}
   .adCard .ac-desc{font-size:.82em;color:#b9b6c9;margin-top:4px}
   .adCard .ac-btn{flex-shrink:0;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#3a2a06;font-weight:800;font-size:.85em;padding:10px 20px;border-radius:24px;white-space:nowrap;box-shadow:0 0 14px rgba(217,164,65,.3)}
-  /* トップ(大型バナーの上)の広告カードだけ高さを詰める(社長指示・2026-07-29)。
+  /* トップ(大型バナーの上)の広告カードだけ高さを詰める(2026-07-29導入)。
      位置は変えない。折り返しを止めて1行に収めることで約200px → 約110px になる。
      ページ下部の .adCard と固定表示の .stickyAd はこの指定の対象外(セレクタを .adslot 配下に限定)。 */
   .adslot .adCard{gap:12px;padding:13px 14px;flex-wrap:nowrap}
@@ -357,7 +357,7 @@
      (このバナー以外でDreaMの色を使う箇所が無いため、変数化する理由が無い)。 */
   .evtBanner.ev-dream{--ev-bd:var(--gold);--ev-bg:#1a0f05;--ev-bg2:#3a2308;--ev-fg:var(--gold2);--ev-ac:var(--red);--ev-ac2:#e0574a;--ev-on:#fff}
 
-  /* ===== 大型バナーの横スライド(カルーセル) 社長指示・2026-07-29 =====
+  /* ===== 大型バナーの横スライド(カルーセル) 2026-07-29導入 =====
      掲載中の大会が【2件以上】のときだけカルーセルにする。縦に積むと1件につき約195px、
      直下の「トーナメント日程」見出しが押し下げられてファーストビューから消えるため、
      縦方向の占有は常にバナー1枚分に固定する。
@@ -367,15 +367,15 @@
      ※ 自動スライドは入れない(トップの自動スクロールは 6f9eddb で廃止済み)。
      ※ 大型一覧(#majors)は縦並びのまま。横にするのはこのトップのバナー領域だけ。 */
   #bigEventBanner:empty{display:none}
-  /* 大型バナー直下の免責一文(社長判断・案C, 2026-09-01)。
+  /* 大型バナー直下の免責一文(案C採用, 2026-09-01)。
      フッター簡素化(feat/footer-simplify)でトップから免責文を退避した際、賞金額(最大1,500万円)を
-     表示するこのバナー周辺には免責が一切ない状態になってしまう指摘(レビュー部, 2026-07-30)があった。
+     表示するこのバナー周辺には免責が一切ない状態になってしまうという指摘(2026-07-30)があった。
      フッターの縮小は維持したまま、ここにだけ最小限の一文を残す。文言は tools/site-shell.js の
      POSITIONING 定数の前半文と一致させること。バナーが0件で非表示のときは道連れで隠す。
      大型一覧ページ(#majors, renderMajorsPage())でも同じクラスを使い回している。あちらはJS側で
      0件時は要素自体を出し分けているため、このCSSでの:empty連動はトップ(#bigEventBanner)専用。 */
   #bigEventBanner:empty + .bigban-disc{display:none}
-  /* コントラスト比の是正(レビュー部指摘・2026-09-01再チェック): var(--mut)=#8a8078は背景#f6f4ef
+  /* コントラスト比の是正(2026-09-01再チェック): var(--mut)=#8a8078は背景#f6f4ef
      に対し実測約3.51:1でWCAG AA(4.5:1)未達だったため、footer .discの是正(2026-08-27, #858d87)と
      同様に専用の色を直書きする。#858d87は背景#1b2320(フッター)向けに調整した値でここでは流用できない
      ため、この明るい背景(#f6f4ef)向けに#6e6660(実測約5.12:1)を採用。 */
@@ -668,11 +668,11 @@
   .tc-buyin b.unknown{font-size:.68em;font-weight:700;color:var(--mut);display:block;max-width:80px;line-height:1.3;text-align:right}
   .tc-buyin b.free{font-size:.78em;font-weight:800;color:var(--grn);display:block;max-width:80px;line-height:1.3;text-align:right}
   .tc-buyin span{display:block;font-size:.64em;color:var(--mut);font-weight:600}
-  /* 店舗アイコン(2026-09-16新設)。「一目でどの店舗かわかるように」との社長要望で
+  /* 店舗アイコン(2026-09-16新設)。「一目でどの店舗かわかるように」
      tc-buyin のさらに右に配置。大会名・バイイン額の視認性を妨げないよう小さめ(36px)の
      円形にとどめる。.vc-thumb(トップの店舗カード用サムネイル)と同じ venueThumbHtml() を
      共有するが、こちらは丸型・固定サイズなので個別にスタイルを当てる。
-     【object-fit は contain(品質管理部の指摘で cover→contain へ修正・2026-09-16)】
+     【object-fit は contain(cover→containへ修正・2026-09-16)】
      36x36の正方形コンテナだから正方形ロゴ(31件中30件)なら cover でも contain でも
      見た目は同じ、という当初の判断は「全店が正方形」という前提が誤りだった。
      img/venues/pokerbar-nuwland.png は 704x828 の縦長画像で、cover だと円全体が
@@ -704,7 +704,7 @@
   /* VENUE STRIP */
   .venues{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
   /* 2026-09-16改修: 店舗ごとに説明文の長さ・SNSアイコンの数(0〜3個)がバラバラで
-     カードの高さが揃わない、という社長指摘への対応。flex-columnにしてCTAボタンを
+     カードの高さが揃わない問題への対応。flex-columnにしてCTAボタンを
      margin-top:autoで下端に揃え、他の要素はカードごとの内容量に関わらず高さを固定化する。 */
   .vcard{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:14px 15px;display:flex;flex-direction:column}
   .vcard.feat{border-color:var(--gold)}
@@ -717,10 +717,10 @@
      onerror方針と同じ考え方)。
      【object-fit は contain(2026-09-16実装時に cover→contain へ変更)】"名刺サイズなら
      coverで統一感を優先してよい"という前提で当初は cover にしたが、実際の data.js の
-     "photo" を確認すると 31店舗中30店舗が正方形のロゴ画像(競合サイトからの移植、
-     PR #103)で、横長の実写真はほぼ無かった。16:9の枠に正方形ロゴを cover で当てると
-     店舗ページのヒーロー写真(依頼1)と同じ理由で上下が切れ、KING&QUEEN SUITED 黒崎店の
-     ように上下にテキストが配置されたロゴは文字が欠ける実例を確認した。そのため依頼1と
+     "photo" を確認すると 31店舗中30店舗が正方形のロゴ画像(競合サイトからの移植)で、
+     横長の実写真はほぼ無かった。16:9の枠に正方形ロゴを cover で当てると
+     店舗ページのヒーロー写真と同じ理由で上下が切れ、KING&QUEEN SUITED 黒崎店の
+     ように上下にテキストが配置されたロゴは文字が欠ける実例を確認した。そのため
      同じ考え方で contain に統一する。 :has() で「写真が実際に乗っているときだけ」
      背後の♠プレースホルダーを隠す(手前のimgをonerrorで消せばプレースホルダーが
      自動で再度見える設計はそのまま活かす。:has()非対応の古いブラウザではプレースホルダーが
@@ -752,7 +752,7 @@
   /* 大会ページ/エリア別/店舗ページのリンク一覧(#evtLinks/#areaLinks/#venueLinks)。
      JSを実行しないクローラがevents/venues/areasページに辿り着く唯一の経路(tools/site-shell.js
      冒頭のコメント参照)なので<a href>自体・テキスト・件数は変更しないが、閲覧者向けの見た目としては
-     優先度が低いため縮小・ミュートする(社長指示・2026-09-01)。色は上の footer .disc と同じ#858d87
+     優先度が低いため縮小・ミュートする(2026-09-01)。色は上の footer .disc と同じ#858d87
      (この#1b2320背景でWCAG AA 4.5:1を満たすことを2026-08-27点検で確認済み)を流用し、リンクも
      同色にして目立たなくする。 */
   footer .footer-linklist{font-size:.68em;color:#858d87}
@@ -767,7 +767,7 @@
     .venues{grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
     .vcard{padding:9px 4px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60px;cursor:pointer;min-width:0}
     /* この幅では店名の視認性を優先し、写真プレースホルダーも含めテキスト以外は出さない
-       (社長指示: 追加する場合は極小サイズにすること。ここでは追加しない判断とした)。 */
+       (追加する場合は極小サイズにすること。ここでは追加しない判断とした)。 */
     .vcard .vc-thumb,.vcard .vc-area,.vcard .vc-links,.vcard .vc-cta{display:none}
     .vc-name{font-size:.68em;line-height:1.25;justify-content:center;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
   }
@@ -823,7 +823,7 @@
        ★ここは静的HTML＝JSを実行しないクローラが読む唯一の説明文。下の「本日開催」の数字は
          JSが入れるのでクローラには「–」にしか見えない。数字が見えない代わりに、
          何が分かるサイトなのかは文章側で伝わるようにしておく。
-       ★2026-09-14 社長指示で「この説明文いらない」→理由確認の結果「(SEO用途なら)見た目は
+       ★2026-09-14「この説明文いらない」という指摘を受け理由確認の結果「(SEO用途なら)見た目は
          最初は見えないよう折りたたんでほしい」とのことだったため、常時表示の<p>から、下の
          FAQセクション(.faq-item)と同じ<details>/<summary>パターンに変更した。open属性は
          付けていないので初期状態は閉じており、クリックで展開する。FAQの<details>と同じく、
@@ -850,7 +850,7 @@
        同期のしくみ・実行コマンドは tools/gen-area-pages.js のコメントを参照。
        2店舗以上あるエリアが自動で並ぶ。ズレは --check を付けた実行で検出できる。
      id="areaNav" は他の静的ページ(events/venues/areas)のパンくずリスト「エリアから探す」の
-     リンク先(/#areaNav)として使う(依頼2・2026-08-28。専用ページを持たない中間階層のため、
+     リンク先(/#areaNav)として使う(2026-08-28導入。専用ページを持たない中間階層のため、
      このセクションへのアンカーにしている。tools/site-shell.js の breadcrumb コメントを参照)。 -->
 <div class="areaNav" id="areaNav">
   <div class="an-inner">
@@ -867,8 +867,7 @@
   </div>
 </div>
 
-<!-- 初心者向けガイドページへのCTA(2026-09-13新設・マーケティング部分析にもとづく、
-     2026-09-14デザイン強化)。
+<!-- 初心者向けガイドページへのCTA(2026-09-13新設、2026-09-14デザイン強化)。
      Search Console実測で「福岡 ポーカー」のインプレッションが実質0件だったのは、
      「店を選ぶための紹介記事」という検索意図に応えるページが無かったことが一因。
      ガイドページ(/guide/beginner/、生成元 tools/gen-guide-pages.js)への導線を、
@@ -888,7 +887,7 @@
 
 <div class="filters">
   <div class="dstrip-row">
-    <!-- 月の切り替え(社長指示・2026-07-30「7のところ押したら何月って選択できるように」)。
+    <!-- 月の切り替え(2026-07-30導入「7のところ押したら何月って選択できるように」)。
          選択肢は ALL_TOURNAMENTS から自動導出する(buildMonthMenu)。月をハードコードしないこと。 -->
     <div class="dstrip-month-wrap">
       <button type="button" class="dstrip-month" id="dstripMonth"
@@ -896,7 +895,7 @@
         <span id="dstripMonthLabel"></span><span class="dm-caret" aria-hidden="true">▼</span>
       </button>
       <div class="dmonth-menu" id="dstripMonthMenu" role="listbox" aria-label="表示する月を選ぶ" hidden></div>
-      <!-- 「今日」に戻るボタン(社長指示・2026-07-30「月が変わると今日の日付に戻るのがめんどくさい」)。
+      <!-- 「今日」に戻るボタン(2026-07-30導入「月が変わると今日の日付に戻るのがめんどくさい」)。
            日付の操作なので日付UI(月ボタン)の隣に置く。エリア/種類フィルタの .frow は役割が違い、
            かつ320px幅ですでに横スクロールしているため4つ目を足さない。
            ★今日を選んでいる間は hidden(タブ順からも外れる)。切り替えは syncTodayBtn()。 -->
@@ -941,8 +940,8 @@
     <div class="shead">
       <!-- ★この見出しの文言・高さは変えないこと。README「トップのバナーの見せ方」の
            見出しY実測値(320px=469/640/642等)が、この文字列の折り返し行数を前提に
-           計測・社長確認済みのため(このファイル冒頭近くの「★高さは月ボタンと同じに保つこと」の
-           コメントも参照)。一般語強化(2026-09-07・マーケティング部分析)は、この見出しではなく
+           計測・確認済みのため(このファイル冒頭近くの「★高さは月ボタンと同じに保つこと」の
+           コメントも参照)。一般語強化(2026-09-07)は、この見出しではなく
            <title>・<h1>・リード文・FAQ側で行う(いずれもバナーの高さ計算に関与しない箇所)。 -->
       <h2>トーナメント日程</h2>
       <span class="cnt" id="list-cnt"></span>
@@ -1054,9 +1053,9 @@
          店舗を足せば自動で増える。ズレは `--check` を付けた実行で検出できる。 -->
   <div id="venueLinks" class="footer-linklist" style="margin-top:6px">店舗ページ: 【天神】<a href="/venues/kkpoker-fukuoka/">KKPOKER FUKUOKA</a>・<a href="/venues/grand-mirage-poker/">グランドミラージュポーカー</a>・<a href="/venues/fuxk-fukuoka-tenjin/">Poker House FUXK 福岡天神店</a>・<a href="/venues/raise-blue-tenjin/">RAISE BLUE 天神</a>・<a href="/venues/alice-the-poker-room/">ALICE the Poker room（アリス）</a>・<a href="/venues/seventwo-tenjin/">72 -SevenTwo-</a>・<a href="/venues/save-tenjin/">アミューズメントバー SAVE天神店</a>・<a href="/venues/sbm-haruyoshi/">sbm HARUYOSHI</a>　【中洲】<a href="/venues/m-holdem-nakasu/">m HOLD'EM 中洲</a>・<a href="/venues/onecasino-fukuoka-nakasu/">ONECASINO 福岡中洲</a>・<a href="/venues/casino-bar-leje-hakata/">Casino bar Leje 博多店</a>・<a href="/venues/casino-blow-nishi-nakasu/">CASINO BLOW 西中洲</a>・<a href="/venues/crownclown-nakasu/">CRownCLown（クラウンクラウン）</a>・<a href="/venues/bon-nishi-nakasu/">梵 bon 西中洲</a>・<a href="/venues/aria-nakasu/">ARIA 中洲</a>・<a href="/venues/nutsbar/">Nutsbar</a>　【大名】<a href="/venues/roots-fukuoka/">ROOTS FUKUOKA</a>・<a href="/venues/musashi-poker-room-fukuoka/">むさぽ福岡（MUSASHI POKER ROOM 福岡店）</a>・<a href="/venues/bon-daimyo/">梵 Daimyo</a>　【今泉】<a href="/venues/casinox-fukuoka-imaizumi/">CasinoX（カジノックス）福岡今泉店</a>・<a href="/venues/raftel-casino-fukuoka-imaizumi/">RAFTEL CASINO（ラフテルカジノ 福岡今泉店）</a>　【大橋】<a href="/venues/joker-fukuoka-ohashi/">JOKER♠️ 福岡大橋</a>・<a href="/venues/the-dojo-fukuoka/">THE DOJO</a>　【博多】<a href="/venues/poker-room-sky/">Poker room SKY</a>　【北九州】<a href="/venues/pokerbar-nuwland/">PokerBar NUWLAND</a>・<a href="/venues/triplebarrel-kokura/">TripleBarrel 小倉店</a>・<a href="/venues/texas-holdem-3000/">てきさすほーるでむ。</a>・<a href="/venues/texas-holdem-aa/">テキサスホールデムAA</a>・<a href="/venues/poker-bar-iris/">Poker Bar IRIS</a>・<a href="/venues/casino-arrows-kokura/">CASINO Arrows 小倉店</a>・<a href="/venues/king-queen-suited-kurosaki/">KING&amp;QUEEN SUITED 黒崎店</a>・<a href="/venues/kaji-bar-kokura/">KAJI BAR</a>・<a href="/venues/triplebarrel-orio/">TripleBarrel 折尾店</a>　【京築】<a href="/venues/poker-studio-deep-blue-yukuhashi/">POKER Studio DEEP BLUE</a>　【筑豊】<a href="/venues/king-queen-suited-nogata/">KING&amp;QUEEN SUITED 直方店</a>　【久留米】<a href="/venues/ken-poker-kurume/">KENポーカー（久留米）</a>・<a href="/venues/ace-and-king-kurume/">A&amp;K（Ace and King）</a>・<a href="/venues/dream-casinobar-kurume/">DreaM CASINO BAR</a></div>
   <div><a href="guide/beginner/">初心者向け店舗の選び方</a>　|　<a href="guide/webcoin-regulation/">「ウェブコイン」規制の解説</a>　|　<a href="about.html">運営者情報</a>　|　<a href="contact.html">お問い合わせ</a>　|　<a href="contact.html">店舗の掲載・PRについて</a>　|　<a href="privacy.html">プライバシーポリシー</a>　|　<a href="terms.html">利用規約</a></div>
-  <!-- フッターの免責文は1文に圧縮している(社長指示・2026-09-01)。元は4文あり、
+  <!-- フッターの免責文は1文に圧縮している(2026-09-01)。元は4文あり、
        2〜4文目(賭博の勧誘・仲介ではない/プライズの扱いは各店舗規定による/バナーの著作権は
-       各主催者に帰属)は削除ではなく privacy.html 第7条に移設済み。3・4文目は以前レビュー部の
+       各主催者に帰属)は削除ではなく privacy.html 第7条に移設済み。3・4文目は以前の
        申し送りで追加された経緯があるため、内容自体はどこかに必ず残すこと(消したのは見た目だけ)。 -->
   <div class="disc">
     掲載情報は各店舗・主催者のSNS・公式サイト等をもとに収集。開催内容は変更される場合があるため参加前に公式情報をご確認ください。
@@ -1306,7 +1305,7 @@
     // 一覧と同じ monthTournaments() を見る。ALL_TOURNAMENTS(今日から60日で打ち切り)だと
     // 打ち切りに掛かった月で「最初の開催日」を取り違える。
     // 具体的には、打ち切りより前の開催日が見えないため【本当の最初の開催日より後の日】が
-    // 初期選択になる(開催が無い日が選ばれるわけではない。品質管理部が28通り検証して確認済み)。
+    // 初期選択になる(開催が無い日が選ばれるわけではない。28通り検証して確認済み)。
     // 症状は軽いが、月を開いた直後に見える一覧が変わるので、ここで ALL_TOURNAMENTS を使わないこと。
     monthTournaments(ym).forEach(t => {
       if (t && isYmd(t.date) && t.date.slice(0,7) === ym && (first === null || t.date < first)) first = t.date;
@@ -1391,7 +1390,7 @@
     Object.keys(groups).sort().forEach(date => { html += renderDateGroup(date, groups[date]); });
     list.innerHTML = html;
     // 以前はここで「次に始まるトーナメント」まで自動スクロールしていたが、
-    // 社長の指示によりトップ(ページ最上部)のまま開くよう廃止した(2026-07-23)。
+    // トップ(ページ最上部)のまま開くよう廃止した(2026-07-23)。
   }
 
   // 店舗サムネイル(2026-09-16新設)。トップの店舗カード(.vc-thumb)とトーナメントカードの
@@ -1427,7 +1426,7 @@
     const hideVenue = !!(opts && opts.hideVenue);
     const venueHtml = hideVenue ? ''
       : `<div class="tc-venue"><span class="vpin" aria-hidden="true">📍</span><a href="#venue/${encodeURIComponent(t.venueId||'')}">${escHtml(v.name||'')}</a><span class="area">${escHtml(v.area||'')}</span></div>`;
-    // 店舗アイコン(2026-09-16新設)。「一目でどの店舗かわかるように」との社長要望。
+    // 店舗アイコン(2026-09-16新設)。「一目でどの店舗かわかるように」。
     // hideVenue(店舗詳細ページ内の月別カレンダー)では同じ店の写真を毎回出す必要が無いので、
     // venueHtml と同じ扱いで出さない。
     const thumbHtml = hideVenue ? '' : venueThumbHtml(v, 'tc-thumb');
@@ -1799,7 +1798,7 @@
   // 2026-07-29時点: 会期・会場・MAIN EVENT/CHAMPIONSHIPの概要(下記 events[])を確認。
   // 2026-09-01追記: 主催者公式Linktree(https://linktr.ee/fukuokasupertounament)に掲載のPDF
   //   「EVENT SCHEDULE 2026.09.19-23」で、メイン会場(ホテルニューオータニ博多)の全56トーナメントの
-  //   タイムスケジュールを確認。社長が2026-09-01に書き起こしを提供。詳細は下の const FST 直前のコメント、
+  //   タイムスケジュールを確認(2026-09-01に書き起こし取得)。詳細は下の const FST 直前のコメント、
   //   および実データ(fst-schedule-data.js)冒頭のコメントを参照。
   //
   // ■ 大会のナンバリングは「FST 5.0」。主催者公式X(@fst_202408)の告知2件で確認した(2026-07-29確認)。
@@ -1823,12 +1822,12 @@
   //
   // 個別トーナメントのブラインドストラクチャーは一次情報で確認できていないため書かない(推測を載せない)。
   //
-  // ■【2026-09-09追記・誤情報の訂正とインマネ対象人数の追加】企画部の一次情報調査で、下記2点が判明した。
+  // ■【2026-09-09追記・誤情報の訂正とインマネ対象人数の追加】一次情報の追加調査で、下記2点が判明した。
   //   出典: https://fukuoka-super-tournament.com/ (FSTの公式エントリー・マイページ管理システムと
   //   推定される稼働中のWebアプリ。フッター等に運営会社名・公式SNSへの直接リンクの明記は見当たらず
   //   100%の断定はできていないが、MAIN EVENTの総賞金・エントリー費が既存の確定済み一次情報
   //   〈2026-07-29公式X投稿〉と完全一致し、全56トーナメントの日程構成もfst-schedule-data.jsと
-  //   完全一致するため確度は高いと判断。開発部が2026-09-09にcurlで同サイトの/scheduleページ・
+  //   完全一致するため確度は高いと判断。2026-09-09にcurlで同サイトの/scheduleページ・
   //   個別トーナメント詳細ページを直接取得し裏取りした)。
   //   1. CHAMPIONSHIPのエントリー費が誤っていた。旧「¥30,000／FSTチケット2枚／¥20,000＋FSTチケット1枚」
   //      → 正しくは「¥30,000／FSTチケット2枚／¥15,000＋FSTチケット1枚」。/schedule ページの
@@ -1838,14 +1837,14 @@
   //      "Main Event Day1 A"等のentryLabel"50,000/チケット×2 or チケット+25,000"と一致しており訂正なし。
   //   2. インマネ(ITM)対象人数(新規): MAIN EVENT=70位まで、CHAMPIONSHIP=40位まで。
   //      "Main Event Day1 A"の詳細ページで「Total Prize ¥15,000,000」(MAIN EVENTの賞金総額と一致)
-  //      と並んで「Inprize 70th」の表記を開発部が確認した(CHAMPIONSHIPの40位は企画部確認。開発部は
+  //      と並んで「Inprize 70th」の表記を確認した(CHAMPIONSHIPの40位も別途確認済み。ただし
   //      該当ページがJS読み込み待ちの状態でしか取得できず、curlでは再現確認できなかった)。
   //      順位別の具体的な配当金額(1位〜最下位)は、サイト側も「参加状況:受付準備中」で確定前のため、
   //      当サイトには書かない(events[].itm に対象人数のみを追記する)。
   //
   // ■ 全日程(タイムスケジュール): 主催者公式Linktree(https://linktr.ee/fukuokasupertounament)に
   //   掲載のPDF「EVENT SCHEDULE 2026.09.19-23」(メイン会場=ホテルニューオータニ博多の全56トーナメント)
-  //   を社長が2026-09-01に確認・提供。データ本体は別ファイル fst-schedule-data.js に切り出してあり、
+  //   を2026-09-01に確認。データ本体は別ファイル fst-schedule-data.js に切り出してあり、
   //   #fst を開いたときにだけ動的読み込みされる(loadFstScheduleData。NIPPON SERIESと同じ方式)。
   //   同ファイル冒頭のコメントに、金額欄が読み取れなかった行の扱い等の注意点をまとめてある。
   const FST = {
@@ -1876,7 +1875,7 @@
 
   // ===== FST 5.0「Main House Day1」(店舗開催のMAIN EVENT Day1フライト) =====
   // 出典: 主催者公式Linktree(https://linktr.ee/fukuokasupertounament)に掲載されている画像
-  //   「FST Main House Day1」。社長が2026-09-01に書き起こしを提供。
+  //   「FST Main House Day1」(2026-09-01に書き起こし取得)。
   // ★これは【サテライト(チケット獲得トーナメント)ではない】。メイン会場(ホテルニューオータニ博多)とは
   //   別に、県内各店舗で開催されるMAIN EVENT本戦のDay1フライトそのもの。ここで獲得したスタックは
   //   メイン会場のDay2(fst-schedule-data.js の flight:'MAIN_DAY2'。2026-09-21 13:00開始)に
@@ -1890,7 +1889,7 @@
   //     【店舗ページへは絶対にリンクしない】(誤った店舗に紐付けないため。裏取りが取れるまで
   //     「トリプルバレル(店舗未確定)」のまま表示する。一方に決め打ちしないこと)。
   //   ★KKPF(9/5)は当初 confidence:'medium'(略称からの推測)だったが、店舗紐付け(v2=KKPOKER
-  //     FUKUOKA)は2026-09-01に社長確認済みのため confidence:'high' に更新(トリプルバレル(9/13)は
+  //     FUKUOKA)は2026-09-01に確認済みのため confidence:'high' に更新(トリプルバレル(9/13)は
   //     引き続き未確認のまま。一方だけ決め打ちしない)。
   const FST_MAIN_HOUSE_DAY1 = {
     asOf: '2026年9月1日',
@@ -1981,7 +1980,7 @@
       // (fst-schedule-data.js 冒頭コメント参照)。
       //   - number → 従来通り fstMoney() で「¥●●●」表示。
       //   - string → すでに「¥50,000 ／ …」のような完成した表記のため、円マーク等を二重に付けず
-      //     エスケープしてそのまま表示(MAIN EVENTの各Day1フライトが該当。社長確認・2026-09-01)。
+      //     エスケープしてそのまま表示(MAIN EVENTの各Day1フライトが該当。2026-09-01確認)。
       //   - null   → 金額を推測で埋めず、「読み取れなかった」ことが分かる表現にする(fst-schedule-data.js 注1)。
       const entryHtml = (t.entry === null)
         ? `エントリー <span class="ft-tbd">PDF未記載（本ページのMain Event/Championship概要をご確認ください）</span>`
@@ -2185,7 +2184,7 @@
   // 終了済みは暗転させ、新しい順に MAJORS_ARCHIVED_LIMIT 件までだけ出す(それ以前は出さない)。
   // レジストリにエントリを足せば自動でここに載る(一覧側に個別の書き足しは不要)。
   // 免責文(.bigban-disc): showPage()で#page-listごと隠れるトップの免責文(#bigEventBannerの直後)は
-  // このページには届かないため、レビュー部指摘(2026-09-01再チェック)を受けてここにも同じ文言・同じ
+  // このページには届かないため、2026-09-01の再チェックを受けてここにも同じ文言・同じ
   // クラスで表示する。0件(掲載中の大型大会なし)のときは道連れで出さない(banners が空文字なら描画しない)。
   const MAJORS_ARCHIVED_LIMIT = 3;
   function renderMajorsPage(){
@@ -2481,7 +2480,7 @@
     closeMonthMenu(false);
   }, true);
 
-  // ---- 「今日」に戻るボタン(社長指示・2026-07-30) ----
+  // ---- 「今日」に戻るボタン(2026-07-30導入) ----
   // 表示条件は「今日以外の日を選んでいる」の1つだけ。これで「別の月にいる」「同じ月の別の日にいる」
   // の両方を拾える。今日を選んでいるときは出さないので、初期表示のレイアウトは変わらない。
   // ★ hidden 属性で出し入れすること(display:none 相当でタブ順からも外れる)。
@@ -2519,7 +2518,7 @@
   todayBtn.addEventListener('click', goToday);
 
   // 大型イベントのバナーは、掲載ウィンドウ(初日の30日前〜最終日の翌日)に入っているものを
-  // すべて出す。0件のことも複数件のこともある(社長了承済み・big-events.js の説明を参照)。
+  // すべて出す。0件のことも複数件のこともある(big-events.js の説明を参照)。
   // 並び順(開催中→まもなく→終了)の決定は big-events.js の visibleBigEvents() に一本化する。
   //
   // 【単発の店舗プロモーション(DreaMグランドオープン等)は常に先頭】
@@ -2527,7 +2526,7 @@
   // (renderBigEventBanner() 内)。visibleBigEvents() 側の並び替えロジックには一切手を入れない。
   // BIG_EVENTSに混ぜない理由は promo-banners.js 冒頭のコメントを参照。
   //
-  // 【2件以上のときは縦に積まず横スライドにする(社長指示・2026-07-29)】
+  // 【2件以上のときは縦に積まず横スライドにする(2026-07-29導入)】
   // 縦積みだとバナー1件につき約195px、直下の「トーナメント日程」見出しが下がってしまうため。
   // 1件のときはカルーセルUI(ドット・矢印)を出さない。レジストリに大会を足せば枚数は自動で増える。
   const prefersReducedMotion = () =>

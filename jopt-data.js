@@ -3,7 +3,7 @@
 //   https://japanopenpoker.com/wp-content/uploads/2026/JOPT_2026_Fukuoka_01/<番号>_<名前>.pdf
 //   公式Players Guide(EN): https://japanopenpoker.com/wp-content/uploads/2026/JOPT_2026_Fukuoka_01/pg_26fukuoka01_en.pdf
 // 出典（補助）: https://japanopenpoker.com/fukuoka/ , https://events.japanopenpoker.com/2026-fukuoka-01
-// 生成日: 2026-07-22 / 開発部
+// 生成日: 2026-07-22
 //
 // 注1: structure は全レベルを公式PDFから収録（Webページ埋め込みJSONはLv.25で打ち切られていたため不採用）。
 // 注2: PLO / FL 2-7 TD & Badugi は公式ストラクチャーに Ante 列が存在しない（BBアンティなし）ため ante:0。
