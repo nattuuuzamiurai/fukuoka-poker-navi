@@ -181,7 +181,7 @@
   .vp-tags{color:var(--mut);font-size:.9em}
   .vp-warn{color:var(--red);font-size:.9em;font-weight:700}
   .vp-recur{display:inline-block;background:#eef3f1;border:1px solid var(--bor);color:var(--felt);font-size:.8em;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:5px}
-  /* 店舗情報カード(2026-09-12改修・依頼1)。従来の .evt-meta(テキスト羅列)を置き換える。
+  /* 店舗情報カード(2026-09-12改修)。従来の .evt-meta(テキスト羅列)を置き換える。
      .evt-meta 自体は大会ページ(gen-event-pages.js)と共用の site-shell.js BASE_CSS 側にあり、
      そちらは変更しない(店舗ページ専用の見た目なのでここ(VENUE_CSS)に閉じる)。 */
   .vp-badges{margin-bottom:10px}
@@ -195,18 +195,29 @@
   .vp-sns-btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:5px}
   .vp-sns-btn{display:inline-block;background:var(--bg);border:1px solid var(--bor);border-radius:16px;padding:4px 11px;font-size:.85em;font-weight:700;color:var(--felt);text-decoration:none}
   .vp-sns-btn:hover{border-color:var(--gold)}
-  /* Googleマップ埋め込み(依頼2・社長承認済み)。addressUnverified の店には出さない(呼び出し側で制御)。 */
+  /* Googleマップ埋め込み。addressUnverified の店には出さない(呼び出し側で制御)。 */
   .vp-map{display:block;width:100%;height:260px;border:0;border-radius:var(--r);box-shadow:var(--sha);margin-bottom:14px}
-  /* ホットペッパー グルメの店舗写真(2026-09-12・PR #91の情報カードの上に配置)。
+  /* ホットペッパー グルメの店舗写真(2026-09-12・情報カードの上に配置)。
      画像は自社保存せずホットリンク(imgfp.hotp.jp を直接参照)。詳細は venueHeroPhotoHtml() のコメント参照。
      【2026-09-16・object-fit を cover→contain に変更】正方形に近いロゴ画像(例: KKPOKER FUKUOKAの
-     盾型ロゴ)を横長の枠に cover で当てると大きくズームされ絵柄が見切れる、と社長から指摘。
+     盾型ロゴ)を横長の枠に cover で当てると大きくズームされ絵柄が見切れる問題があった。
      contain なら全体が必ず収まる。余白ができる場合は var(--sur)(他のカードと同じ白地)で
      埋め、透明PNGのロゴでも背景が透けない・浮かない見た目にする。横長の実写真(ホットペッパー由来)は
      元々 max-height 内に収まる比率のものが多く、contain にしても見え方は変わらない(letterbox が
-     発生しない)。 */
+     発生しない)。
+     【2026-09-16・aspect-ratio を追加してCLS(レイアウトシフト)対策】従来は width/height属性も
+     aspect-ratioも無く、height:auto相当だったため、画像の読み込みが完了するまで高さが確定せず
+     レイアウトシフトが起きうる状態だった。トップページの店舗カード(.vc-thumb・aspect-ratio:16/9)・
+     トーナメント一覧アイコン(.tc-thumb)は既に固定比率にしてあるので、同じ 16/9 にそろえる。
+     ★ max-height:320px は残す。aspect-ratio と max-height を両方指定した場合、CSSの計算順は
+       「width(100%)→aspect-ratioからheightを算出→max-heightで上限クランプ」であり、どちらの値が
+       最終的に効いても【画像の実サイズを見ずに算出できる】ため、幅の狭い画面(aspect-ratioが効く)・
+       広い画面(max-heightが効く)のどちらでもCLSは起きない(高さが常にCSSだけで決まる)。
+     ★ object-fit:contain のため、画像の実際の縦横比(正方形・縦長・横長のいずれでも)にかかわらず
+       画像全体が必ず 16:9 の枠内に収まる(欠けない)。枠と縦横比が違う画像は左右または上下に
+       var(--sur)(他のカードと同じ白地)の余白ができる(ローカル確認済み)。 */
   .vp-photo{margin:0 0 14px}
-  .vp-photo img{display:block;width:100%;max-height:320px;object-fit:contain;background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha)}
+  .vp-photo img{display:block;width:100%;aspect-ratio:16/9;max-height:320px;object-fit:contain;background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha)}
   .vp-photo-credit{font-size:.78em;color:var(--mut);line-height:1.7;margin:6px 2px 0}
   .vp-photo-credit a{color:#0e6a72;font-weight:700}
   /* 料金・システム(2026-09-16新設。data.js の "pricing" をそのまま列挙するだけの単純な表)。 */
