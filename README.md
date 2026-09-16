@@ -107,10 +107,16 @@ node tools/gen-guide-pages.js .          # 初心者向けガイドページ(全
 > 変わったぶんは、それぞれのワークフローが同じジョブの中で再生成するので手作業は要らない。
 
 > **上記すべてを手で忘れても直る仕組み（2026-09-16〜）**。`.github/workflows/auto-regen-derived-files.yml` が
-> main への push（他PRのマージ含む）のたびに `gen-venue-pages.js` / `gen-area-pages.js` / `gen-guide-pages.js` /
-> `gen-event-pages.js` / `gen-guide-webcoin-regulation.js` / `gen-sitemap.js` / `gen-top-faq.js` を
-> すべて実行し、差分があれば自動でコミット・pushする（`gen-ogp-images.js` は対象外。理由は同ワークフロー冒頭コメント参照）。
-> **PRの段階を止めるCIゲートではない**（現状PRトリガーのCIは無い）。あくまで push 後の後追いの帳尻合わせなので、
+> `gen-venue-pages.js` / `gen-area-pages.js` / `gen-guide-pages.js` / `gen-event-pages.js` /
+> `gen-guide-webcoin-regulation.js` / `gen-sitemap.js` / `gen-top-faq.js` をすべて実行し、
+> 差分があれば自動でコミット・pushする（`gen-ogp-images.js` は対象外。理由は同ワークフロー冒頭コメント参照）。
+> **トリガーは2種類**。**(1)** main への人間による直接push・PRマージでは即座に発火する。
+> **(2)** 日次自動ジョブ（Waitinglist取込み等・`github-actions[bot]`名義のpush）由来のpushは、
+> GitHub Actionsの仕様上「既定の`GITHUB_TOKEN`でのpushはpushトリガーの新しい実行を発生させない」
+> （[公式ドキュメント](https://docs.github.com/en/actions/concepts/security/github_token)）ため、
+> **これらのジョブ自身が起こすドリフトはpushトリガーでは検知できない**。そこで毎日07:30 JSTの
+> **スケジュール実行**をバックストップとして設けてあり、日次自動ジョブが終わった後にこれを拾う。
+> **PRの段階を止めるCIゲートではない**（現状PRトリガーのCIは無い）。あくまで後追いの帳尻合わせなので、
 > 手で再生成してからコミットする従来の運用（上記コマンド）を続けても構わない（その場合はこのワークフローは「差分なし」で何もしない）。
 
 - 店舗ページの日程は**「生成時の静的レンダリング＋閲覧時に `data.js` から再描画」のハイブリッド**。
