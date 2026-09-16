@@ -1,0 +1,187 @@
+name: 生成物の自動再生成(生成物ドリフト防止)
+
+# main への人間による直接push・PRマージ(push トリガー)、または毎日1回のスケジュール実行
+# (schedule トリガー。bot起因のドリフトの取りこぼし防止。下記【bot起因のpushは
+# push トリガーを起動しない】参照)のたびに、「生成スクリプトの出力物」(店舗静的ページ・
+# エリアページ・ガイドページ・イベントページ・sitemap.xml・トップページのFAQセクション等)を
+# 元データ(data.js / jopt-data.js / big-events.js 等)と突き合わせて再生成し、
+# ズレがあればそのままコミット・pushする。
+#
+# 【背景・2026-09-16】現状PRトリガーのCIチェックは存在しないため、店舗データ更新や
+# 無関係なPRのマージで data.js 等が変わっても、静的ページ側の再生成を忘れたまま main に
+# 入ってしまうことがある(2026-09-16は同日に3回発生)。そのたびに、後から別の作業の
+# 品質チェックで偶然発覚し、都度手動で再生成する運用になっていた。このワークフローは
+# その「後追いの帳尻合わせ」を自動化する。
+#
+# 【PRのCIゲートではない】このワークフローは push(＝マージ後)・スケジュール実行にのみ反応する。
+# PRの段階で止める仕組み(--check を使ったCIゲート)は別の話で、今回は範囲外。
+#
+# ============================================================
+# 【bot起因のpushは push トリガーを起動しない(GitHub側の仕様・2026-09-16判明)】
+# ============================================================
+# GitHub Actionsには「ワークフローが既定の GITHUB_TOKEN で push したコミットは、
+# push トリガーの新しいワークフロー実行を発生させない」という自己再帰防止の仕組みがある
+# (公式ドキュメント: https://docs.github.com/en/actions/concepts/security/github_token)。
+#
+# このリポジトリの日次自動ジョブ(import-waitinglist.yml / import-texaspoker.yml /
+# monitor-instagram-apify.yml / fetch-search-console.yml)はいずれも既定の GITHUB_TOKEN で
+# main に push している。したがって【これらのジョブ自身が起こす生成物ドリフトは、
+# push トリガーだけでは検知できない】(そもそもワークフローが起動しないため)。
+# 実際のドリフト事例(上記【背景】)はこれまで人間のPRマージ直後に起きており実害は
+# 今のところ小さいが、「push トリガーがあれば全部直るはず」は誤った前提である。
+# そこで下の `on.schedule` を、日次自動ジョブがひと通り終わった後を狙う時間帯に設定し、
+# バックストップとして追加してある(bot起因のpushを見逃した分をここで拾う)。
+# 【注意・2026-09-16】GitHub Actions の schedule トリガーはベストエフォートで、負荷時は
+# 数十分〜数時間遅延することが公式に知られている仕様である。実測では、狙った時間帯より後に
+# 発火するはずの日次自動ジョブ自体が既に遅延しており、下の cron 設定コメントに書いた通り
+# 「その日のうちに必ず日次ジョブ完了後を拾える」わけではない。ただし本ワークフローは差分が
+# ある場合のみコミットする設計のため、その日拾えなくても翌日以降のスケジュール実行で
+# 最終的に回収され自己修復する(詳細は下の cron 設定コメント参照)。
+#
+# 【対象に含めないもの】tools/gen-ogp-images.js は含めない。Playwrightのブラウザ
+# インストールが必要な重い開発時ツールで、生成物ドリフト(HTML/sitemapの不一致)とは
+# 無関係のため(README「OGP画像」の節参照)。
+#
+# 【実行順序】gen-sitemap.js は必ず最後(のグループ)に置く。sitemap.xml の中身は
+# gen-sitemap.js が単独で所有しているが、gen-venue-pages.js / gen-event-pages.js /
+# gen-guide-pages.js / gen-guide-webcoin-regulation.js もそれぞれ自分の生成物と
+# 一緒に sitemap.xml を書き直す(店舗数等が変われば内容が変わるため)。どの順で実行しても
+# 最終的な内容は収束する設計だが(tools/gen-sitemap.js 冒頭コメント参照)、他のスクリプトが
+# 店舗数・大会数を変え得るぶんを反映しきってから最後に単独実行することで、
+# 「sitemap.xml だけ1歩遅れる」余地を無くしている。gen-top-faq.js は data.js に依存せず
+# index.html の3マーカーを同期するだけなので、順序上の制約はない。
+#
+# ============================================================
+# 【無限ループ防止】コミットメッセージに必ず [skip ci] を入れること
+# ============================================================
+# このワークフローは push トリガーで動く。もし自分が作るコミットに [skip ci] が
+# 無いと、その push が新たな push イベントとなり、このワークフロー自身を再度起動する
+# (差分が収束していれば2回目は「差分なし」で止まるはずだが、生成に何らかの非決定性が
+# 紛れ込んだ場合は無限ループになりうる)。[skip ci] を含む push は GitHub Actions が
+# push/pull_request トリガーのワークフローを一切起動しないため、この経路を根元で断つ。
+# (2026-09-16時点、このリポジトリで push トリガーのワークフローはこれ1本のみ。
+#  新しく push トリガーのワークフローを足すときは、そちらにも [skip ci] の影響が
+#  及ぶことを踏まえること。)
+# 【[skip ci] は schedule トリガーには効かない】[skip ci] が抑止するのは push/pull_request
+# トリガーの起動だけで、下の on.schedule による毎日07:30 JSTの定期実行は [skip ci] の
+# 有無に関わらず走る。ただし差分が無ければ「差分なし。プッシュしません。」で即終了するだけなので、
+# 無限ループにはならない(この点はスケジュール追加にあたり変更不要と確認済み)。
+#
+# ============================================================
+# 【同時実行】このワークフローの前提そのものが「同日に何度も main へマージが起きる」
+# ============================================================
+# concurrency で同時実行を1本に絞る(同時に複数走ってもキューイングされ直列化される)。
+# それでも「このジョブの実行中に、まったく別のPRが main に push される」窓は残るため、
+# コミット後に `git pull --rebase` で取り込み、取り込んだツリーに対して生成し直してから
+# push する(import-waitinglist.yml 等と同じ設計。理由は下のステップのコメント参照)。
+
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    # cronはUTC。22:30 UTC(前日) = 07:30 JST(毎日1回)。
+    # 日次自動ジョブ(import-waitinglist.yml ノミナル06:23 JST / import-texaspoker.yml ノミナル06:40 JST
+    # (2026-09-16時点 disabled_manually) / monitor-instagram-apify.yml ノミナル07:10 JST
+    # (2026-09-16時点 active・本番稼働中))がひと通り終わった後を狙って設定した時刻だが、
+    # GitHub Actions の schedule トリガーはベストエフォートで、負荷時は数十分〜数時間遅延しうる
+    # 仕様であり、2026年に入り悪化傾向にある。実測(2026-09、`gh run list`)でも
+    # import-waitinglist.yml は 08:00〜08:54 JST、monitor-instagram-apify.yml は 08:50〜09:20 JST
+    # に発火しており、07:30 JST時点ではまだ両方とも完了していない日がほとんどである。
+    # つまりこの07:30 JSTという時刻は「その日のうちに日次ジョブ完了後を必ず拾える」保証はない。
+    # ただし本ワークフローは差分がある場合のみコミットする設計のため、その日拾えなくても
+    # 翌日以降のこのスケジュール実行で最終的に回収され自己修復する(致命的ではない)。
+    # 加えて、bot(GITHUB_TOKEN)由来のpushで push トリガーが起動しない分もここで拾う
+    # (上記【bot起因のpushは push トリガーを起動しない】参照)。
+    - cron: '30 22 * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: auto-regen-derived-files
+  cancel-in-progress: false
+
+jobs:
+  regen:
+    runs-on: ubuntu-latest
+    # ハングした場合に concurrency(cancel-in-progress: false)で後続実行が長時間ブロックされる
+    # のを防ぐ上限。既存ジョブの実行内容(生成スクリプト7本 + git操作)は数分で終わる想定だが、
+    # 余裕を見て20分にしてある(品質管理部指摘・2026-09-16)。
+    timeout-minutes: 20
+    steps:
+      - name: リポジトリを取得
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          # 浅いクローンだと push 直前の `git pull --rebase` がマージベースを解決できないことがある
+          # (他ワークフロー: import-waitinglist.yml / import-texaspoker.yml と同じ理由)。
+          fetch-depth: 0
+
+      - name: Node.js をセットアップ
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: 生成物を再生成し、差分があればコミット & プッシュ
+        run: |
+          # 【生成順序】背景コメント参照。gen-sitemap.js を最後に置く。
+          node tools/gen-venue-pages.js .
+          node tools/gen-area-pages.js .
+          node tools/gen-guide-pages.js .
+          node tools/gen-event-pages.js .
+          node tools/gen-guide-webcoin-regulation.js .
+          node tools/gen-sitemap.js .
+          node tools/gen-top-faq.js .
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          committed=0
+          if test -n "$(git status --porcelain)"; then
+            git add -A
+            # [skip ci] は必須(このワークフロー自身の無限ループを防ぐ。ファイル冒頭コメント参照)。
+            git commit -m "chore: 生成物を自動再生成 [skip ci]"
+            committed=1
+          else
+            echo "生成物に差分なし。"
+          fi
+
+          # checkout から push までの間に main が進むと push が弾かれる。このワークフローは
+          # 「同日に何度も main へマージが起きる」こと自体が発生条件なので、他の日次ワークフロー
+          # 以上にこの窓が埋まりやすい。rebase で取り込んでから、取り込んだツリーに対して
+          # 生成し直す(取り込んだ変更が生成物に反映されないまま push される事故を防ぐ)。
+          git pull --rebase
+
+          # rebase で自分のコミットが【空になって消える】ことがある(同じ内容を他の実行や
+          # 人が先に push していた場合。git rebase は空になったコミットを既定で捨てる)。
+          if test "$committed" = "1" && test "$(git rev-list --count "@{u}..HEAD")" = "0"; then
+            echo "rebase で自分のコミットが空になりました(同じ変更が既に main にあります)。amendは行いません。"
+            committed=0
+          fi
+
+          # rebase で取り込んだツリーに対して再生成する(順序は上と同じ)。
+          node tools/gen-venue-pages.js .
+          node tools/gen-area-pages.js .
+          node tools/gen-guide-pages.js .
+          node tools/gen-event-pages.js .
+          node tools/gen-guide-webcoin-regulation.js .
+          node tools/gen-sitemap.js .
+          node tools/gen-top-faq.js .
+
+          if test -n "$(git status --porcelain)"; then
+            git add -A
+            if test "$committed" = "1"; then
+              # rebase 前のコミットと同じ1コミットにまとめる。
+              git commit --amend --no-edit
+            else
+              git commit -m "chore: 生成物を自動再生成 [skip ci]"
+              committed=1
+            fi
+          fi
+
+          if test "$committed" = "0"; then
+            echo "差分なし。プッシュしません。"
+            exit 0
+          fi
+          git push
