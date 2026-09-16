@@ -1,0 +1,140 @@
+name: 生成物の自動再生成(生成物ドリフト防止)
+
+# main への push(別PRのマージ・店舗データの直接コミット等すべて含む)のたびに、
+# 「生成スクリプトの出力物」(店舗静的ページ・エリアページ・ガイドページ・イベントページ・
+# sitemap.xml・トップページのFAQセクション等)を元データ(data.js / jopt-data.js /
+# big-events.js 等)と突き合わせて再生成し、ズレがあればそのままコミット・pushする。
+#
+# 【背景・2026-09-16】現状PRトリガーのCIチェックは存在しないため、店舗データ更新や
+# 無関係なPRのマージで data.js 等が変わっても、静的ページ側の再生成を忘れたまま main に
+# 入ってしまうことがある(2026-09-16は同日に3回発生)。そのたびに、後から別の作業の
+# 品質チェックで偶然発覚し、都度手動で再生成する運用になっていた。このワークフローは
+# その「後追いの帳尻合わせ」を自動化する。
+#
+# 【PRのCIゲートではない】このワークフローは push(＝マージ後)にのみ反応する。
+# PRの段階で止める仕組み(--check を使ったCIゲート)は別の話で、今回は範囲外。
+#
+# 【対象に含めないもの】tools/gen-ogp-images.js は含めない。Playwrightのブラウザ
+# インストールが必要な重い開発時ツールで、生成物ドリフト(HTML/sitemapの不一致)とは
+# 無関係のため(README「OGP画像」の節参照)。
+#
+# 【実行順序】gen-sitemap.js は必ず最後(のグループ)に置く。sitemap.xml の中身は
+# gen-sitemap.js が単独で所有しているが、gen-venue-pages.js / gen-event-pages.js /
+# gen-guide-pages.js / gen-guide-webcoin-regulation.js もそれぞれ自分の生成物と
+# 一緒に sitemap.xml を書き直す(店舗数等が変われば内容が変わるため)。どの順で実行しても
+# 最終的な内容は収束する設計だが(tools/gen-sitemap.js 冒頭コメント参照)、他のスクリプトが
+# 店舗数・大会数を変え得るぶんを反映しきってから最後に単独実行することで、
+# 「sitemap.xml だけ1歩遅れる」余地を無くしている。gen-top-faq.js は data.js に依存せず
+# index.html の3マーカーを同期するだけなので、順序上の制約はない。
+#
+# ============================================================
+# 【無限ループ防止】コミットメッセージに必ず [skip ci] を入れること
+# ============================================================
+# このワークフローは push トリガーで動く。もし自分が作るコミットに [skip ci] が
+# 無いと、その push が新たな push イベントとなり、このワークフロー自身を再度起動する
+# (差分が収束していれば2回目は「差分なし」で止まるはずだが、生成に何らかの非決定性が
+# 紛れ込んだ場合は無限ループになりうる)。[skip ci] を含む push は GitHub Actions が
+# push/pull_request トリガーのワークフローを一切起動しないため、この経路を根元で断つ。
+# (2026-09-16時点、このリポジトリで push トリガーのワークフローはこれ1本のみ。
+#  新しく push トリガーのワークフローを足すときは、そちらにも [skip ci] の影響が
+#  及ぶことを踏まえること。)
+#
+# ============================================================
+# 【同時実行】このワークフローの前提そのものが「同日に何度も main へマージが起きる」
+# ============================================================
+# concurrency で同時実行を1本に絞る(同時に複数走ってもキューイングされ直列化される)。
+# それでも「このジョブの実行中に、まったく別のPRが main に push される」窓は残るため、
+# コミット後に `git pull --rebase` で取り込み、取り込んだツリーに対して生成し直してから
+# push する(import-waitinglist.yml 等と同じ設計。理由は下のステップのコメント参照)。
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+concurrency:
+  group: auto-regen-derived-files
+  cancel-in-progress: false
+
+jobs:
+  regen:
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリを取得
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          # 浅いクローンだと push 直前の `git pull --rebase` がマージベースを解決できないことがある
+          # (他ワークフロー: import-waitinglist.yml / import-texaspoker.yml と同じ理由)。
+          fetch-depth: 0
+
+      - name: Node.js をセットアップ
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: 生成物を再生成し、差分があればコミット & プッシュ
+        run: |
+          # 【生成順序】背景コメント参照。gen-sitemap.js を最後に置く。
+          node tools/gen-venue-pages.js .
+          node tools/gen-area-pages.js .
+          node tools/gen-guide-pages.js .
+          node tools/gen-event-pages.js .
+          node tools/gen-guide-webcoin-regulation.js .
+          node tools/gen-sitemap.js .
+          node tools/gen-top-faq.js .
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          committed=0
+          if test -n "$(git status --porcelain)"; then
+            git add -A
+            # [skip ci] は必須(このワークフロー自身の無限ループを防ぐ。ファイル冒頭コメント参照)。
+            git commit -m "chore: 生成物を自動再生成 [skip ci]"
+            committed=1
+          else
+            echo "生成物に差分なし。"
+          fi
+
+          # checkout から push までの間に main が進むと push が弾かれる。このワークフローは
+          # 「同日に何度も main へマージが起きる」こと自体が発生条件なので、他の日次ワークフロー
+          # 以上にこの窓が埋まりやすい。rebase で取り込んでから、取り込んだツリーに対して
+          # 生成し直す(取り込んだ変更が生成物に反映されないまま push される事故を防ぐ)。
+          git pull --rebase
+
+          # rebase で自分のコミットが【空になって消える】ことがある(同じ内容を他の実行や
+          # 人が先に push していた場合。git rebase は空になったコミットを既定で捨てる)。
+          if test "$committed" = "1" && test "$(git rev-list --count "@{u}..HEAD")" = "0"; then
+            echo "rebase で自分のコミットが空になりました(同じ変更が既に main にあります)。amendは行いません。"
+            committed=0
+          fi
+
+          # rebase で取り込んだツリーに対して再生成する(順序は上と同じ)。
+          node tools/gen-venue-pages.js .
+          node tools/gen-area-pages.js .
+          node tools/gen-guide-pages.js .
+          node tools/gen-event-pages.js .
+          node tools/gen-guide-webcoin-regulation.js .
+          node tools/gen-sitemap.js .
+          node tools/gen-top-faq.js .
+
+          if test -n "$(git status --porcelain)"; then
+            git add -A
+            if test "$committed" = "1"; then
+              # rebase 前のコミットと同じ1コミットにまとめる。
+              git commit --amend --no-edit
+            else
+              git commit -m "chore: 生成物を自動再生成 [skip ci]"
+              committed=1
+            fi
+          fi
+
+          if test "$committed" = "0"; then
+            echo "差分なし。プッシュしません。"
+            exit 0
+          fi
+          git push

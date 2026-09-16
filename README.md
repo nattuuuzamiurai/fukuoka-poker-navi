@@ -106,6 +106,13 @@ node tools/gen-guide-pages.js .          # 初心者向けガイドページ(全
 > **人が `data.js` を触ったときの話**。日次の自動取込（Waitinglist / Instagram監視）で `data.js` が
 > 変わったぶんは、それぞれのワークフローが同じジョブの中で再生成するので手作業は要らない。
 
+> **上記すべてを手で忘れても直る仕組み（2026-09-16〜）**。`.github/workflows/auto-regen-derived-files.yml` が
+> main への push（他PRのマージ含む）のたびに `gen-venue-pages.js` / `gen-area-pages.js` / `gen-guide-pages.js` /
+> `gen-event-pages.js` / `gen-guide-webcoin-regulation.js` / `gen-sitemap.js` / `gen-top-faq.js` を
+> すべて実行し、差分があれば自動でコミット・pushする（`gen-ogp-images.js` は対象外。理由は同ワークフロー冒頭コメント参照）。
+> **PRの段階を止めるCIゲートではない**（現状PRトリガーのCIは無い）。あくまで push 後の後追いの帳尻合わせなので、
+> 手で再生成してからコミットする従来の運用（上記コマンド）を続けても構わない（その場合はこのワークフローは「差分なし」で何もしない）。
+
 - 店舗ページの日程は**「生成時の静的レンダリング＋閲覧時に `data.js` から再描画」のハイブリッド**。
   そのため再生成を忘れても**閲覧者には最新が出る**が、**JSを実行しないクローラには古い日程が見えたまま**になる。
   「画面で見えているから大丈夫」は成り立たないので、`--check` で機械的に確認すること。
