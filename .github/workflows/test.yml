@@ -1,0 +1,46 @@
+name: テストスイート(PR)
+
+# Pull Requestの作成・更新のたびに `node --test tools/*.test.js`(649件超の既存テスト +
+# `tools/no-internal-leaks.test.js` 等)を実行し、マージ前に壊れていないかを確認する。
+#
+# 【背景】これまでPR単位の自動テストが無く、動作確認は品質管理部が手動で実行していた。
+# 特に `tools/no-internal-leaks.test.js`(社内限定語彙のサイト混入を機械的に検知するテスト)は
+# マージ前にPR上で必ず走らせることに意味があるため、このワークフローを新設した。
+#
+# 【スコープ】このワークフローはテストの実行のみを行う。書き込み(git commit/push)は一切しない。
+# 他ワークフロー(import-waitinglist.yml等)のような `permissions: contents: write` は不要。
+#
+# 【fetch-depth: 0 にしている理由】
+# `tools/gen-sitemap.test.js` 等、一部のテストが `git log -1 --format=%cI -- <ファイル>` で
+# 対象ファイルの最終コミット日時を読む(sitemap.xml の lastmod の仕様。詳細はREADME
+# 「lastmod の決め方」参照)。浅いクローンだと対象コミットが取得範囲外になり得るため、
+# 他の自動化ワークフローと同じく全履歴を取得する。
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# 同じPRに対する重複実行を防ぐ(pushのたびに前の実行はキャンセルしてよい)
+concurrency:
+  group: test-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリを取得
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Node.js をセットアップ
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: テストスイートを実行
+        run: node --test tools/*.test.js

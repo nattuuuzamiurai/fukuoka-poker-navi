@@ -5,8 +5,7 @@
  * 店舗から直接(LINE/メール等で)届いたトーナメント月間スケジュール画像を取り込み、
  * Visionモデルで抽出したうえで `data.js` に安全にupsertするCLIツール。
  *
- * 【経緯】PR #13で実装したInstagram自動巡回(セッションCookie注入+検知回避を伴う設計)は
- * 運営判断で中止した。代わりに「各店舗にスケジュール画像を当社のLINE/メールへ
+ * 【経緯】Instagram自動巡回の実装は採用せず、「各店舗にスケジュール画像を当社のLINE/メールへ
  * 直接送ってもらう」運用に切り替え、届いた画像をこのツールで取り込む。
  * メール/LINE受信の自動化(画像を自動で取ってくる部分)は今回のスコープ外— 届いた画像は
  * 人が保存し、このツールにファイルパスを渡して実行する。
@@ -14,7 +13,7 @@
  * 【処理の流れ】
  *   1. 画像(ファイル、または任意で --instagram-url 経由のサムネイル)を用意する
  *   2. Visionモデルに渡し、Tournamentスキーマの配列に正規化する
- *      (tools/venue-schedule-vision.js。PR #13の instagram-vision.js を引き継いだロジック)
+ *      (tools/venue-schedule-vision.js。試作していた instagram-vision.js を引き継いだロジック)
  *   3. `source: 'semi', verified: false` を付ける(店舗から届いた写真はWaitinglist API
  *      のような構造化データではなく人力の読み取りのため、確度フラグを立てる。
  *      admin.html 経由の手動登録と同じ扱い)
