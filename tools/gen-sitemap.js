@@ -163,15 +163,19 @@ function buildSitemap(REPO) {
     .filter(p => p.href && p.href.startsWith('/events/'))
     .forEach(p => urls.push({ loc: SITE + p.href, lastmod: lastmodFor(['promo-banners.js']), ...EVENT }));
 
-  // 店舗ページ: 掲載中の日程が1件以上ある店だけ。
+  // 店舗ページ: 掲載中の日程が1件以上ある店 or 料金・システム情報(pricing)がある店だけ。
   // 【なぜ全件載せないか】このサイトの現時点の収益ゲートは検索順位ではなく AdSense審査で、
   //   審査はサイト全体のコンテンツ量・質を見る(不承認理由の最頻出が「価値の低い広告枠」)。
-  //   日程0件の店のページは実質「住所＋アクセス＋SNS＋noteの1行」しかなく、
+  //   日程0件かつpricingも無い店のページは実質「住所＋アクセス＋SNS＋noteの1行」しかなく、
   //   これが全URLの3割を占める状態で審査を受けるリスクを避ける[運営判断・2026-07-30]。
   //   ページ自体は生成・公開し、トップの店舗リンク行(#venueLinks)からも辿れるので、
   //   URLの早期確定と被リンクの受け皿という狙いは sitemap 掲載と独立に達成できる。
-  //   日程が1件でも入れば次の生成で自動的に載る(手当ては不要)。
-  // 【判定の所有者】venue-schedule.js の hasSchedule()。gen-venue-pages.js の
+  //   日程かpricingのどちらかが1件でも入れば次の生成で自動的に載る(手当ては不要)。
+  // 【pricingも基準に加えた理由(2026-09-16)】pricing(入場料・チップ・飲み放題等の具体的な
+  //   料金情報、複数行)が入っている店は、日程が無くても「住所＋アクセス＋SNS＋一言」より
+  //   はるかに情報量があり、薄いページとは言えない。日程の有無だけを見ていると
+  //   pricingのある店まで一律で除外してしまうため、いずれかを満たせば載せる形に広げた。
+  // 【判定の所有者】日程側の判定は venue-schedule.js の hasSchedule()。gen-venue-pages.js の
   //   title/description の分岐とまったく同じ基準を使う(基準が分かれるとズレる)。
   //   判定に使う期間も hasSchedule() の中(venueRange)で決まる。ここで期間を作って渡すと、
   //   店舗別になった期間の作り方が2箇所に分かれて、また基準がズレる。
@@ -179,7 +183,7 @@ function buildSitemap(REPO) {
   // 分解はしない。理由はファイル冒頭のコメント「lastmod の決め方」参照)。
   const VENUE_LASTMOD = lastmodFor(['data.js', 'fukuoka-venues.json']);
   DATA.VENUES
-    .filter(v => hasSchedule(DATA.TOURNAMENTS, DATA.RECURRING, v.id))
+    .filter(v => hasSchedule(DATA.TOURNAMENTS, DATA.RECURRING, v.id) || (v.pricing && v.pricing.length > 0))
     .forEach(v => urls.push({ loc: `${SITE}/venues/${v.slug}/`, lastmod: VENUE_LASTMOD, ...VENUE }));
 
   // エリアページ: 2店舗以上あり(=ページが存在する)、かつ掲載中の日程が1件以上あるエリアだけ。
