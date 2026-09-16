@@ -471,6 +471,12 @@ function buildVenue(v) {
   const altNamesNote = Array.isArray(v.altNames) && v.altNames.length
     ? `（SNS表記: ${v.altNames.map(esc).join('・')}）`
     : '';
+  // 「料金システム」を title / description / .vp-sub に入れる判定(2026-09-17・運営判断)。
+  // 「<店舗名> システム」「<店舗名> 料金システム」の検索で店舗ページが拾われやすくするため、
+  // data.js に pricing が1件以上ある店だけ文面を切り替える。pricing の無い店の文面は従来のまま
+  // (既存の title は検索結果の実測をもとに調整済みなので、材料の無い店まで一律に変えない)。
+  const hasPricing = Array.isArray(v.pricing) && v.pricing.length > 0;
+  const descPricing = hasPricing ? '入場料・チップ購入などの料金システムも掲載。' : '';
   let title, desc, sub;
   if (v.preopen) {
     // 未開店の店。営業中と読める文面を出さない(JSON-LDのLocalBusinessも出さない)。
@@ -484,17 +490,22 @@ function buildVenue(v) {
     //   弱いという指摘への対応。店名＋「｜」の直後に「店舗情報」を明示し、日程はその一部として
     //   後ろに回す(他2分岐〔preopen・掲載0件〕は元々この構成だったので、3分岐で構成をそろえる
     //   形になる)。titleParen(エリア・差別化バッジ)は今まで通り末尾に残す(情報は落とさない)。
-    title = `${v.name}｜店舗情報・トーナメント日程${titleParen} | ふくおかポーカーナビ`;
+    title = hasPricing
+      ? `${v.name}｜店舗情報・料金システム・トーナメント日程${titleParen} | ふくおかポーカーナビ`
+      : `${v.name}｜店舗情報・トーナメント日程${titleParen} | ふくおかポーカーナビ`;
     // description も書き出しを店名(descName)からにする。descLead(FSTサテライト開催中等の
     // 時々変わる告知)は書き出しを奪わないよう1文目の後ろに回す(情報は落とさない)。
-    desc = `${descName}で開催されるポーカートーナメントの日程を日付順に掲載。${descLead}`
+    // pricing のある店は1文目の直後に料金システム掲載の一文(descPricing)を挟む。
+    desc = `${descName}で開催されるポーカートーナメントの日程を日付順に掲載。${descPricing}${descLead}`
       + `開始時刻・バイイン・スタックのほか、${v.address ? '住所・' : ''}アクセス・公式SNSもまとめて確認できます。`;
-    sub = `${esc(v.area)}のポーカースポット${v.access ? `（${esc(v.access)}）` : ''} — トーナメント日程・バイイン・アクセス${altNamesNote}`;
+    sub = `${esc(v.area)}のポーカースポット${v.access ? `（${esc(v.access)}）` : ''} — トーナメント日程・バイイン・${hasPricing ? '料金システム・' : ''}アクセス${altNamesNote}`;
   } else {
-    title = `${v.name}｜住所・アクセス・トーナメント開催情報${titleParen} | ふくおかポーカーナビ`;
-    desc = `${descName}の${v.address ? '住所・' : ''}アクセス・公式SNSをまとめています。${descLead}`
+    title = hasPricing
+      ? `${v.name}｜料金システム・住所・アクセス・トーナメント開催情報${titleParen} | ふくおかポーカーナビ`
+      : `${v.name}｜住所・アクセス・トーナメント開催情報${titleParen} | ふくおかポーカーナビ`;
+    desc = `${descName}の${v.address ? '住所・' : ''}アクセス・公式SNSをまとめています。${descPricing}${descLead}`
       + `現時点で当サイトに掲載中の開催予定はありません。最新の開催情報は店舗の公式情報・SNSをご確認ください。`;
-    sub = `${esc(v.area)}のポーカースポット${v.access ? `（${esc(v.access)}）` : ''} — 住所・アクセス・開催情報${altNamesNote}`;
+    sub = `${esc(v.area)}のポーカースポット${v.access ? `（${esc(v.access)}）` : ''} — ${hasPricing ? '料金システム・' : ''}住所・アクセス・開催情報${altNamesNote}`;
   }
 
   // 同じエリアの他店。内部リンクを増やしつつ、読者にとっても「近くの別の店」になる。
@@ -557,6 +568,8 @@ ${sameAreaShown.map(x => `  <a class="vp-card" href="/venues/${x.slug}/">
   // 【表示位置(2026-09-16修正)】以前はトーナメント日程表の後ろに出していたが、店舗によっては
   // 日程表が長く、料金・システムが画面の一番下まで流れて気づかれにくいと運営から指摘。
   // mapBlock の直後(日程表より前)に移動した(body 組み立て部分を参照)。
+  // 【見出し(2026-09-17)】h2 は「<店舗名>の料金・システム」と店名入りにする。「<店舗名> システム」の
+  // 検索語と見出しが一致するようにするためで、上の hasPricing による title/description の切替と同じ狙い。
   const pricingBlock = venuePricingHtml(v);
 
   // ★ note は data.js の文面をそのまま出す。
@@ -614,7 +627,7 @@ ${sameAreaShown.map(x => `  <a class="vp-card" href="/venues/${x.slug}/">
 <div class="vp-info-grid">
 ${venueInfoCardsHtml(v)}
 </div>${mapBlock}${pricingBlock ? `
-<h2 class="vp-sec">料金・システム</h2>${pricingBlock}` : ''}${fstSatBlock}${pastSatBlock}
+<h2 class="vp-sec">${esc(v.name)}の料金・システム</h2>${pricingBlock}` : ''}${fstSatBlock}${pastSatBlock}
 <div class="disclaimer">${noteBlock}当サイトは店舗が公開している情報を集約している媒体で、この店舗の運営者ではありません。日程・料金・営業状況は変更されることがあるため、参加前に必ず店舗の公式情報・SNSをご確認ください。${sourceBlock}<br>${POSITIONING}</div>
 <a class="cta" href="/#venue/${esc(v.id)}">▶ 月を切り替えて日程を見る<small>サイト内の月別カレンダー（前月・翌月に移動できます）</small></a>
 <h2 class="vp-sec" id="vp-sched-title">${schedTitle}</h2>
