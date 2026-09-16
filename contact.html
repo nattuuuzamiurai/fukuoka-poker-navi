@@ -149,12 +149,27 @@
   const form = document.getElementById('contactForm');
   const statusEl = document.getElementById('formStatus');
   const btn = document.getElementById('submitBtn');
+  const categorySelect = document.getElementById('category');
   const categoryLabels = {
     general: '一般のお問い合わせ',
     correction: '掲載内容の誤り・修正依頼',
     listing: '店舗掲載・PR枠のご相談',
     other: 'その他'
   };
+
+  // URLの ?type=... を見て、#category の既存の選択肢(value)のいずれかと一致すれば
+  // それを選択済みにする。一致しない値・パラメータ無しのときは何もしない
+  // (先頭の一般のお問い合わせのままにする)。例: index.htmlの掲載店舗募集バナーからは
+  // contact.html?type=listing でリンクし、この関数が「listing」を選択済みにする。
+  function pickCategoryFromQuery(requested, validValues) {
+    return (requested && validValues.includes(requested)) ? requested : null;
+  }
+  const requestedType = new URLSearchParams(location.search).get('type');
+  const picked = pickCategoryFromQuery(
+    requestedType,
+    Array.from(categorySelect.options).map(o => o.value)
+  );
+  if (picked) categorySelect.value = picked;
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();

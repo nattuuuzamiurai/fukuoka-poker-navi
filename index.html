@@ -357,6 +357,18 @@
      (このバナー以外でDreaMの色を使う箇所が無いため、変数化する理由が無い)。 */
   .evtBanner.ev-dream{--ev-bd:var(--gold);--ev-bg:#1a0f05;--ev-bg2:#3a2308;--ev-fg:var(--gold2);--ev-ac:var(--red);--ev-ac2:#e0574a;--ev-on:#fff}
 
+  /* ===== 掲載店舗募集の常設バナー(listing-banner.js・2026-09-17導入) =====
+     実写真が無いため画像バナーではなくCSSで組む(bigEventBannerHtml()のev.customBanner分岐)。
+     配色はサイト本来のブランド色(--felt/--gold系)にして、大会ごとの色が付く他のバナーと区別する。 */
+  .evtBanner.ev-listing{--ev-bd:var(--gold);--ev-bg:var(--felt);--ev-bg2:var(--felt2);--ev-fg:var(--gold2);--ev-ac:var(--gold);--ev-ac2:var(--gold2);--ev-on:#3a2a06}
+  /* 日付(days)を持たない常設バナーのため「開催中/まもなく/終了」のバッジは出さない。 */
+  .evtBanner.ev-listing .eb-tag::before{content:none}
+  .evtBanner .eb-custom{display:flex;flex-direction:column;justify-content:center;gap:5px;position:relative;overflow:hidden;padding:20px 18px 16px;min-height:112px;background:radial-gradient(circle at 90% -12%,rgba(240,197,107,.32),transparent 55%),linear-gradient(135deg,var(--ev-bg2),var(--ev-bg))}
+  .evtBanner .eb-custom::after{content:"♠";position:absolute;right:6px;bottom:-14px;font-size:4.4em;line-height:1;color:rgba(255,255,255,.07);pointer-events:none}
+  .evtBanner .eb-eyebrow{align-self:flex-start;font-size:.68em;font-weight:800;letter-spacing:.06em;color:var(--ev-on);background:linear-gradient(135deg,var(--ev-ac2),var(--ev-ac));padding:3px 10px;border-radius:20px}
+  .evtBanner .eb-heading{font-size:1.18em;font-weight:800;line-height:1.35;color:#fff;position:relative}
+  .evtBanner .eb-sub{font-size:.83em;line-height:1.4;color:var(--ev-fg);position:relative}
+
   /* ===== 大型バナーの横スライド(カルーセル) 2026-07-29導入 =====
      掲載中の大会が【2件以上】のときだけカルーセルにする。縦に積むと1件につき約195px、
      直下の「トーナメント日程」見出しが押し下げられてファーストビューから消えるため、
@@ -1076,6 +1088,9 @@
 <!-- 単発の店舗プロモーション(グランドオープン記念など)の小さなレジストリ。big-events.js の
      直後に読む(掲載期間の判定に eventFirstDay 等をそのまま使うため。詳細はファイル冒頭のコメント参照)。 -->
 <script src="promo-banners.js"></script>
+<!-- 掲載店舗募集の常設バナー(日付を持たないため big-events.js のヘルパーには依存しない。
+     詳細はファイル冒頭のコメント参照)。 -->
+<script src="listing-banner.js"></script>
 <script src="data.js"></script>
 <!-- 「自動取込と同じ枠の定期開催は出さない」判定。静的な店舗ページ(tools/venue-schedule.js)と
      同じ1本を読む。判定を書き写さないこと(必ず片方が古くなる) -->
@@ -1144,16 +1159,28 @@
   // promo-banners.js のプロモ(DreaMグランドオープン等)もこの関数を共用する。BIG_EVENTSは
   // トップ内の遷移先を `hash`(例 '#fst')で持つが、プロモは実ページへのリンクなので `href` を持つ
   // (どちらか一方だけを見ればよいよう `ev.href || ev.hash` で吸収する)。
+  // ev.days が無い(掲載店舗募集バナー等、日付を持たない告知)場合、isEventArchived/eventFirstDay は
+  // 内部の Array.isArray チェックにより null/false を返すだけでクラッシュしない(バッジも付かない)。
+  //
+  // ev.customBanner が真のときは、実写真が無いためCSSで組んだ見出しブロックを <img> の代わりに出す
+  // (listing-banner.js 参照)。それ以外(既存のBIG_EVENTS/PROMO_BANNERS)は今まで通り画像バナー。
   function bigEventBannerHtml(ev){
     const today = localTodayGlobal();
     const cls = ['evtBanner', ev.bannerClass];
     if (isEventArchived(ev.days)) cls.push('is-archived');       // 終了 → 暗転+「終了」バッジ
     else if (today < eventFirstDay(ev.days)) cls.push('upcoming'); // 未開催 → 「まもなく」バッジ
+    const media = ev.customBanner
+      ? `<div class="eb-custom">
+          <span class="eb-eyebrow">${escHtml(ev.eyebrow)}</span>
+          <div class="eb-heading">${escHtml(ev.heading)}</div>
+          <div class="eb-sub">${escHtml(ev.sub)}</div>
+        </div>`
+      : `<img class="eb-img" src="${ev.banner}" alt="${escHtml(ev.bannerAlt)}">`;
     return `<a class="${cls.join(' ')}" href="${ev.href || ev.hash}">
-        <img class="eb-img" src="${ev.banner}" alt="${escHtml(ev.bannerAlt)}">
+        ${media}
         <div class="eb-foot">
           <span class="eb-tag"><span class="eb-desc">${escHtml(ev.bannerDesc)}</span></span>
-          <span class="eb-btn">日程を見る →</span>
+          <span class="eb-btn">${escHtml(ev.btnText || '日程を見る →')}</span>
         </div>
       </a>`;
   }
@@ -2548,7 +2575,10 @@
     // typeof チェックは promo-banners.js の読み込みが何らかの理由で失敗してもトップ全体を
     // 落とさないための保険(big-events.js側の型チェックと同じ考え方)。
     const promos = (typeof visiblePromoBanners === 'function') ? visiblePromoBanners() : [];
-    const evs = promos.concat(visibleBigEvents());
+    // 掲載店舗募集の常設バナー(listing-banner.js)は他の告知の【最後尾】に付く。
+    // 他に告知が0件ならこれ単体で表示される(同じtypeofの保険)。
+    const listing = (typeof visibleListingBanner === 'function') ? visibleListingBanner() : [];
+    const evs = promos.concat(visibleBigEvents()).concat(listing);
     // JOPT/NIPPONのデータ読み込み後に描き直すことがある。並びが変わっていなければ表示中の枚を保つ。
     const ids = evs.map(e => e.id).join(',');
     const keep = (slot.dataset.evIds === ids) ? Number(slot.dataset.index || 0) : 0;
