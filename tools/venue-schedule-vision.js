@@ -80,7 +80,7 @@ const MAX_EXPECTED_ROWS = 200;
  * 余裕がほぼ消える。これは PR #26 が差し戻された構図そのものが規模を縮めて残ったもの。
  * **この定数は常に「観測された最大」でなければならない。**
  *
- * 品質管理部が実トークナイザ3種(tiktoken o200k_base / cl100k_base / @anthropic-ai/tokenizer)で
+ * 品質チェックが実トークナイザ3種(tiktoken o200k_base / cl100k_base / @anthropic-ai/tokenizer)で
  * 独立に計測した値。pretty print(2スペースインデント)前提:
  *   ・data.js の実分布の行 … 95.2〜98.5 トークン/行
  *   ・全項目が埋まった行(guarantee/prize/addon まで全部ある)… 約123.3 トークン/行

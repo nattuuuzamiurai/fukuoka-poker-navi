@@ -182,7 +182,7 @@ const FILES_TO_COPY = [
   'validate-data.js',
   // 「機械が最後に書いた値」の控えと所有判定。tournament-merge.js が require するので必須。
   'machine-write-state.js',
-  // 店ごとの掲載ルール(社長指示)。import-venue-image.js が require するので必須。
+  // 店ごとの掲載ルール(運営判断)。import-venue-image.js が require するので必須。
   // 【★require を足したらここも足すこと★】足し忘れると全CLIテストが
   //   「Cannot find module」で終了コード1になり、落ち方が原因を示さない。
   'venue-listing-rules.js',
@@ -397,7 +397,7 @@ test('★漏洩走査: CLIの全出力(stdout/stderr/data.js/控えのJSON)に�
 });
 
 // ============================================================
-// 店ごとの掲載ルール(社長指示・2026-08-05)
+// 店ごとの掲載ルール(運営判断・2026-08-05)
 // ============================================================
 // 【なぜこの経路にも要るか】このCLIは、Instagram監視が内容を取りこぼしたときの
 // **手動の代替経路**として README・実行ログの両方から名指しで案内されている

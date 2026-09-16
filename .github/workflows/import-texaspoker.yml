@@ -27,8 +27,8 @@ name: てきさすほーるでむ 日程の自動取得
 # ★★2026-09時点、この定期実行は無効(disabled_manually)にしてある★★
 #   新規の取込み経路(HTMLスクレイピング・正規表現による項目抽出)を、無人の早朝cronに
 #   いきなり乗せる前に、実データで --dry-run を確認してから有効化する
-#   (monitor-instagram-apify.yml の導入時と同じ手順)。マージ後、品質管理部・レビュー部の
-#   チェックを経て経営管理オフィスが有効化を判断する。
+#   (monitor-instagram-apify.yml の導入時と同じ手順)。マージ後、品質チェック・レビューの
+#   チェックを経て運営が有効化を判断する。
 #
 #   ▼ 初回の観測から有効化までの手順(monitor-instagram-apify.yml と同じ形)
 #     無効化中は workflow_dispatch も 422 で弾かれるため、有効化 → dry-run実行 → 完了待ち →
@@ -190,7 +190,7 @@ jobs:
           node tools/gen-area-pages.js . --check
           # 初心者向けガイドページ(/guide/beginner/)の全店舗一覧表も data.js の
           # アクセス・営業時間をそのまま焼き込んでいるので、店舗ページ・エリアページと同じく
-          # 取込みのたびに再生成する(2026-09-12 品質管理部指摘)。
+          # 取込みのたびに再生成する(2026-09-12 品質チェック指摘)。
           node tools/gen-guide-pages.js .
           node tools/gen-guide-pages.js . --check
           if test -n "$(git status --porcelain)"; then

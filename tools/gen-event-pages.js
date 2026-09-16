@@ -280,12 +280,12 @@ function buildJopt() {
   const canonical = `${SITE}/events/jopt-2026-fukuoka-01/`;
   // OGP専用画像(1200x630。依頼5・2026-08-28)。本文中のバナー(.evt-banner、1024x412)とは別物。
   const image = 'img/jopt/jopt-og.jpg';
-  // ★ title/description微調整(依頼2・マーケティング部提案 2026-08-28)
+  // ★ title/description微調整(依頼2・マーケティング提案 2026-08-28)
   //   Search Console実測で「会場」「賞金」を知りたい検索クエリが強いことが分かっている一方、
   //   旧titleは59文字で「会場」ワードを含まず切れやすかった。「会場」をtitle冒頭30文字以内に足し、
   //   60文字以内に収める。descriptionも前方100文字以内で会場情報の露出を強化する。
   //   ★ここは文言の並べ替え・追記のみで、結果コンテンツ(JOPT_RESULT)自体は増やさない
-  //   (社長方針: WJPT・日本シリーズには結果調査を追加しないが、JOPTは既に結果コンテンツ追加済みで対象外)。
+  //   (運営方針: WJPT・日本シリーズには結果調査を追加しないが、JOPTは既に結果コンテンツ追加済みで対象外)。
   const title = `JOPT 2026 Fukuoka #01 結果・会場（7/30〜8/2 福岡・大名）| ふくおかポーカーナビ`;
   const desc = `JOPT 2026 Fukuoka #01の結果・会場まとめ。会場は${JOPT.venue}（${JOPT.area}）、開催日は2026年7月30日〜8月2日。`
     + `Main Event優勝は${JOPT_RESULT.winner}（エントリー${JOPT_RESULT.totalEntries}／プライズ保証1,500万円）。全${JOPT.tournaments.length}トーナメントのタイムスケジュール・バイインも掲載。`;
@@ -431,9 +431,9 @@ function buildNippon() {
   const canonical = `${SITE}/events/nippon-series-2026-fukuoka/`;
   // OGP専用画像(1200x630。依頼5・2026-08-28)。本文中のバナー(.evt-banner、1024x412)とは別物。
   const image = 'img/nippon-series/nippon-series-og.jpg';
-  // ★ title/description文言調整(依頼3・マーケティング部提案 2026-08-28)
+  // ★ title/description文言調整(依頼3・マーケティング提案 2026-08-28)
   //   会期(8/11〜8/16)は既に終了しているのに、旧titleの「タイムスケジュール」表記が開催前提の
-  //   ままで検索意図とズレていた。結果情報は追加しない(社長方針・2026-08-28: WJPT・日本シリーズの
+  //   ままで検索意図とズレていた。結果情報は追加しない(運営方針・2026-08-28: WJPT・日本シリーズの
   //   大会結果調査は需要がないと判断済み)。ここでの調整は文言のみ:
   //   ①「タイムスケジュール」を、結果を書かなくても成立する中立的な表記(「大会情報」)に変更
   //   ②検索クエリに含まれる和文「日本シリーズ」をtitleに追加
@@ -494,7 +494,7 @@ ${venueScheduleBlock()}
 
 // ---- FST 5.0 ページ「よくある質問」(FAQ) ----
 // ★ ここも推測を足さない原則は本文と同じ。断定できない項目(buy-in未発表・初心者/経験者向けの言及なし等)は
-//   「店舗・大会により異なる」「公式発表をご確認ください」等でヘッジする(社長指示・2026-08-27)。
+//   「店舗・大会により異なる」「公式発表をご確認ください」等でヘッジする(運営判断・2026-08-27)。
 // 見た目(<details>/<summary>)とFAQPage構造化データの生成ロジックは tools/site-shell.js の
 // faqBlock()/FAQ_CSS に集約してある(GEO監査2026-09-03で「FST専用にハードコードされている」
 // と指摘されたための切り出し。トップページ(index.html)のFAQも同じ関数を使う。
@@ -530,7 +530,7 @@ function fstFaqBlock(FST, main, champ) {
   return faqBlock(fstFaqItems(FST, main, champ));
 }
 
-// ---- サテライト開催店舗カード(依頼2・社長方針2026-08-27 / 依頼4・2026-08-28で過去形にも対応) ----
+// ---- サテライト開催店舗カード(依頼2・運営方針2026-08-27 / 依頼4・2026-08-28で過去形にも対応) ----
 // big-events.js の各大会エントリが持つ venueId のリストを店舗データと突き合わせてカードにする。
 // ここでは venueId のリストを信じるだけで、判定ロジック自体は複製しない。
 //   - FST(現在進行形)   … satelliteVenueIds を渡す。文言は「開催されています」の現在形
@@ -565,7 +565,7 @@ function pastSatelliteVenuesBlock(reg, eventLabel) {
 // (fst-schedule-data.js 冒頭コメント参照)。
 //   - number → fstMoney() で「¥●●●」表示。
 //   - string → すでに「¥50,000 ／ …」のような完成した表記のため、円マーク等を二重に付けず
-//     エスケープしてそのまま表示(MAIN EVENTの各Day1フライトが該当。社長確認・2026-09-01)。
+//     エスケープしてそのまま表示(MAIN EVENTの各Day1フライトが該当。確認・2026-09-01)。
 //   - null   → PDF側で金額が数値ではなくアイコン/バッジ表記だった行。★推測で埋めず、
 //     「PDF未記載」と分かる文言にする(index.html の fstScheduleCards() と同じ扱い。文言も揃えてある)。
 function fstMoney(n) { return '¥' + Number(n).toLocaleString('ja-JP'); }
@@ -743,7 +743,7 @@ ${faq.script}`;
 // 大会名・開催開始日(2026-11-12)・会場(UNITEDLAB)は一次情報(PR TIMES・2026-09-07)で確認済み。
 // 終了日・主催者は一次情報で確認できていないため、JSON-LDの endDate/organizer を出力せず、
 // 本文・FAQも「〜と紹介されています」「〜と位置づけています」等の伝聞・引用形式で統一する
-// (コンテンツ制作部 spadie-fukuoka-1st-content-brief.md の方針をそのまま踏襲。詳しい出典は
+// (コンテンツ制作 spadie-fukuoka-1st-content-brief.md の方針をそのまま踏襲。詳しい出典は
 // big-events.js の spadie エントリのコメントを参照)。
 // ★index.html に const SPADIE は持たない(FST/WJPTと違い、buyin・大会形式・スケジュールが
 //   すべて未発表で、大量データをインタラクティブに切り替えるSPA専用ページを作る材料が無いため。
@@ -789,7 +789,7 @@ function buildSpadie() {
   const image = 'img/spadie/spadie-og.jpg';
   const reg = BIG.bigEventById('spadie');
   // ★固有語(「SPADIE FUKUOKA」「SPADIE FUKUOKA 1st」)を先頭・中心に据え、一般語(「福岡 ポーカー
-  //   トーナメント」等)を単独で強く打ち出さない(社長指摘・FSTページが一般語検索でトップページと
+  //   トーナメント」等)を単独で強く打ち出さない(運営指摘・FSTページが一般語検索でトップページと
   //   競合した問題を踏まえた方針。コンテンツブリーフ1-1のとおり)。終了日は一次情報未確認のため
   //   タイトルには入れない(「11/12〜」のみ。確定後に「11/12〜15」等へ更新すること)。
   const title = 'SPADIE FUKUOKA 1st 開催概要（11/12〜 福岡・大名 UNITEDLAB）| ふくおかポーカーナビ';

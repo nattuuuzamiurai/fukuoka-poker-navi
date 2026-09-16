@@ -107,7 +107,7 @@ function breadcrumbJsonLd(items) {
     }))
   };
 }
-// 【2026-08-28 レビュー部指摘対応】長い店舗名・大会名で nav.breadcrumb が overflow-x:auto に
+// 【2026-08-28 レビュー指摘対応】長い店舗名・大会名で nav.breadcrumb が overflow-x:auto に
 // なるとき、横スクロール可能であることを示す視覚的ヒントが無く気づきにくい、という指摘。
 // スクロールする要素(nav.breadcrumb)自身に::afterでフェードを乗せると、フェードの位置も
 // 一緒にスクロールしてしまい右端に留まらない(position:absoluteの包含ブロックがnavでも、
@@ -128,7 +128,7 @@ function breadcrumbNavHtml(items) {
 
 // ---- FAQ(よくある質問): 見た目(<details>アコーディオン)とFAQPage構造化データの共通生成 ----
 // 【なぜここにあるか】以前は tools/gen-event-pages.js の fstFaqBlock() がFSTページ専用に
-//   ハードコードされていた(GEO監査 2026-09-03 dev-lead向け仕様書 3章①④で指摘)。
+//   ハードコードされていた(GEO監査 2026-09-03の仕様書 3章①④で指摘)。
 //   トップページ(index.html)にもFAQPageを新規実装するにあたり、「質問配列→表示HTML+JSON-LDを
 //   同時生成する」ロジック自体をここに1つだけ置き、FST・トップの両方(および将来の他イベント
 //   ページ)から呼ぶ。複製すると片方だけ直して片方を忘れる事故が起きる、というこのファイル
@@ -378,7 +378,7 @@ function pageFoot(BIG, currentPath, extraScripts, areaLinksHtml) {
   // 【エリアリンク行(依頼3)】トップページ(index.html)のフッターには元々 #areaLinks があるが、
   //   events/venues/areas の下層ページの共通フッター(=このpageFoot)には無かった。下層ページを
   //   読み終えて離脱しかけたユーザーに、店舗の集約ページ(エリアページ)への行き先を1つ増やす。
-  // 【見た目の縮小(社長指示・2026-09-01)】リンクの中身(href・テキスト)・件数は変えず、
+  // 【見た目の縮小(運営判断・2026-09-01)】リンクの中身(href・テキスト)・件数は変えず、
   // 「トップ」等の通常ナビとは切り離して .footer-linklist だけを小さく・ミュートにする
   // (index.html の #evtLinks/#areaLinks/#venueLinks と同じ考え方。詳しくはCSS側のコメント参照)。
   const areaLinksRow = areaLinksHtml ? `

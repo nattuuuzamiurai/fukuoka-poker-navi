@@ -14,7 +14,7 @@
  *   (venue-schedule.js / area-schedule.js と同じ構成)。
  *
  * 【geo(緯度経度)を追加した理由・2026-09-12】
- *   マーケティング部のSEO調査で LocalBusiness の geo が無いという指摘。
+ *   マーケティングのSEO調査で LocalBusiness の geo が無いという指摘。
  *   data.js の VENUES に "lat" / "lng"(国土地理院 住所ジオコーダーで address から取得。
  *   出典は fukuoka-venues.json 側の note に記録)を追加し、ここで GeoCoordinates に変換する。
  *   ★ "addressUnverified": true の店・address が空の店は対象外(誤った緯度経度を確定情報として
