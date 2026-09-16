@@ -243,6 +243,14 @@ test('venueJsonLd: pricing も priceRangeSpec も無い店は priceRange を出�
   assert.equal(j.priceRange, undefined);
 });
 
+test('venueJsonLd: priceRangeSpec の前後の空白は取り除いて出す', () => {
+  const j = venueJsonLd(baseVenue({
+    pricing: [{ name: '入場料', price: '3000円', note: null }],
+    priceRangeSpec: '  ¥3,000〜¥4,000  '
+  }));
+  assert.equal(j.priceRange, '¥3,000〜¥4,000');
+});
+
 test('validatePriceRangeSpec: pricing が無いのに priceRangeSpec があれば異常終了', () => {
   assert.throws(() => validatePriceRangeSpec([baseVenue({ priceRangeSpec: '¥3,000〜¥4,000' })]),
     /pricing が無いのに priceRangeSpec/);

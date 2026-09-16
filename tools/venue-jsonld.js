@@ -286,7 +286,7 @@ function venueJsonLd(v) {
   // v.priceRangeSpec(確度が高く簡潔にまとめられる店だけ人が追加する文字列)がある店だけ、
   // それをそのまま渡す。
   if (typeof v.priceRangeSpec === 'string' && v.priceRangeSpec.trim()) {
-    j.priceRange = v.priceRangeSpec;
+    j.priceRange = v.priceRangeSpec.trim();
   }
   return j;
 }
