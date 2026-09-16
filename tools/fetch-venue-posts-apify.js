@@ -5,9 +5,8 @@
  * Apify(apify.com)の既製Instagramスクレイパー(pay-per-result、$1〜1.6/1000件)を呼び出し、
  * 指定したInstagramハンドルの最近の投稿一覧(画像URL・投稿日時・パーマリンク・キャプション)を取得する。
  *
- * 【経緯】以前検討したInstagram自動ログイン監視(PR #13、運営者個人アカウントのセッションCookie注入＋
- * 検知回避を伴う設計)は運営判断で中止した。Apifyは正規の第三者スクレイピングサービスの
- * pay-per-resultプランを従量課金で使うだけで、自社アカウントへのログインや検知回避のロジックは不要。
+ * 【設計方針】Apify(正規の第三者スクレイピングサービス)のpay-per-resultプランを
+ * 従量課金で呼び出すだけの構成で、自社側でInstagramへログインする処理は持たない。
  *
  * 【使用Actor】Apify Instagram Post Scraper(既定 `apify/instagram-post-scraper`)。
  * `run-sync-get-dataset-items` エンドポイントを1回POSTするだけで、Actorの実行〜結果取得(同期)が完了する:
