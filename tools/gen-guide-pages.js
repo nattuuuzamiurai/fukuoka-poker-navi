@@ -144,7 +144,8 @@ const HIGHLIGHT_STORES = [
 // ★ v43/v44/v45(梵 Daimyo・sbm HARUYOSHI・Nutsbar)は2026-09-16に競合サイトのデータをもとに
 //   新規追加した店舗で、目的別カテゴリーの裏付けとなる出典(外部レビュー・業界メディア等)を
 //   当サイトでは確認できていないため、無理に当てはめずここに加える(原稿の方針と同じ)。
-const NOT_FOUND_IDS = ['v17', 'v26', 'v35', 'v38', 'v20', 'v8', 'v43', 'v44', 'v45'];
+// ★ v26(JOKER 福岡大橋)・v35(A&K)は2026-09-18に tools/guide-categories.js の ring-beginner(chips)へ移したため外した。
+const NOT_FOUND_IDS = ['v17', 'v38', 'v20', 'v8', 'v43', 'v44', 'v45'];
 
 // 掲載中(未開店・閉店の可能性がある店を除く)の全店舗が CATEGORIES か NOT_FOUND_IDS の
 // どちらかに必ず含まれることを検査する。新規開店・店舗追加は日次の自動取込(TOURNAMENTSのみ
