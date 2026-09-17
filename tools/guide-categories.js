@@ -73,7 +73,8 @@ const CATEGORIES = [
     // から外す(cat-drink の featured からも外した)。v26(JOKER 福岡大橋)は店舗公式X(2026年7月)の
     // 通常リング料金の告知で data.js が ring:true になったため、v2・v28 と同じ基準で chips に加える。
     // v35(A&K)も同日、店舗公式Instagramの料金表(時間料金制のリングゲーム)で ring:true になったため同様に加える。
-    chips: ['v21', 'v25', 'v3', 'v13', 'v14', 'v7', 'v4', 'v6', 'v28', 'v40', 'v41', 'v27', 'v33', 'v42', 'v2', 'v26', 'v35']
+    // v37(RAFTEL CASINO)も同日、店舗公式Instagram(2026年9月1日)の新料金システムの告知で ring:true になったため同様に加える。
+    chips: ['v21', 'v25', 'v3', 'v13', 'v14', 'v7', 'v4', 'v6', 'v28', 'v40', 'v41', 'v27', 'v33', 'v42', 'v2', 'v26', 'v35', 'v37']
   },
   {
     id: 'ring-advanced',

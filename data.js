@@ -1031,6 +1031,11 @@ const VENUES = [
         "name": "サイドゲーム(バカラ・ブラックジャック)",
         "price": "通常料金＋¥1,000",
         "note": "引き出し無料(公式X 2026年5月の告知)。ポーカーへ移動する場合はスタック5万まで持ち込み可(公式X 2026年5月の告知)。"
+      },
+      {
+        "name": "チップ共通化(RAFTEL CASINO)",
+        "price": "RAFTEL CASINOとチップが共通(2026年9月〜)",
+        "note": "RAFTELチップは×2でCasinoXチップに換算(例: RAFTEL 10,000点→CasinoX 20,000点)。RAFTEL CASINO公式Instagram 2026年9月1日の告知より。"
       }
     ]
   },
@@ -1323,7 +1328,7 @@ const VENUES = [
     "access": "西鉄福岡（天神）駅 徒歩圏内",
     "lat": 33.587154,
     "lng": 130.400604,
-    "hours": "平日17:00〜24:00／土日祝14:00〜24:00",
+    "hours": "平日 18:00〜24:00／土日 17:00〜24:00(2026年9月〜)",
     "hoursSpec": [
       {
         "days": [
@@ -1333,16 +1338,15 @@ const VENUES = [
           "Thursday",
           "Friday"
         ],
-        "opens": "17:00",
+        "opens": "18:00",
         "closes": "00:00"
       },
       {
         "days": [
           "Saturday",
-          "Sunday",
-          "PublicHolidays"
+          "Sunday"
         ],
-        "opens": "14:00",
+        "opens": "17:00",
         "closes": "00:00"
       }
     ],
@@ -1353,9 +1357,38 @@ const VENUES = [
     "tel": "092-406-7870",
     "photo": "/img/venues/raftel-casino-fukuoka-imaizumi.jpg",
     "featured": false,
-    "note": "2026年3月28日オープン。ポーカー5卓＋ブラックジャック・バカラ。",
+    "note": "2026年3月28日オープン。ポーカー5卓＋ブラックジャック・バカラ。料金・システム・営業時間は店舗公式Instagram(2026年9月1日の告知)より(2026年9月確認)。",
     "sourceLabel": "Instagram",
-    "sourceUrl": "https://www.instagram.com/raftelcasino/"
+    "sourceUrl": "https://www.instagram.com/raftelcasino/",
+    "ring": true,
+    "ringNote": "リングチップ(20,000点〜 ¥2,000〜、＋税10%)を使うリングゲームを開催しています。レートは公式告知に記載がありません。詳細は店舗にご確認ください(店舗公式Instagram 2026年9月1日の告知より)。",
+    "pricing": [
+      {
+        "name": "入場料",
+        "price": "ソフトドリンク飲み放題 ¥4,000／アルコール飲み放題 ¥5,000(いずれも＋税10%)",
+        "note": "2026年9月の新料金システム。すべての料金に消費税10%が加算されます。"
+      },
+      {
+        "name": "チップ購入",
+        "price": "20,000点〜 ¥2,000〜(＋税10%)",
+        "note": "「点」は店内チップ単位の表記です(円換算ではありません)。"
+      },
+      {
+        "name": "チップ引き出し",
+        "price": "10,000点〜 ¥500(＋税10%)",
+        "note": null
+      },
+      {
+        "name": "チップ共通化(RAFTEL × CasinoX)",
+        "price": "RAFTEL CASINOとCasinoX福岡今泉店のチップが共通",
+        "note": "従来のRAFTELチップは×2でCasinoXチップに換算(例: RAFTEL 10,000点→CasinoX 20,000点)。2026年9月〜。"
+      },
+      {
+        "name": "BJ・バカラ",
+        "price": "リングチップでもBET可(従来はベリーのみ)",
+        "note": "1回のベットの上限・下限: ベリー 本線 MIN 200／MAX 10,000・サイド MIN 100／MAX 1,000、リングチップ 本線 MIN 1,000／MAX 500,000・サイド MIN 500／MAX 50,000。"
+      }
+    ]
   },
   {
     "id": "v38",
