@@ -133,7 +133,7 @@ const VENUES = [
     "tel": "092-753-5093",
     "photo": "/img/venues/kkpoker-fukuoka.jpg",
     "featured": false,
-    "note": "KKPOKER系・6卓RFID。2026年9月に料金システムが改定され(エントランス料金の導入・リングチップ料金の変更)、トーナメントの参加費も改定されています。掲載中の参加費には改定前の値が残っている場合があるため、参加前に公式X・LINEの告知をご確認ください。",
+    "note": "KKPOKER系・6卓RFID。2026年9月に料金システムが改定され(エントランス料金・リングチップ料金の改定)、トーナメントの参加費も改定されています。掲載中の参加費には改定前の値が残っている場合があるため、参加前に公式X・LINEの告知をご確認ください。",
     "sourceLabel": "X",
     "sourceUrl": "https://x.com/kkpoker_fukuoka",
     "ring": true,
@@ -147,7 +147,7 @@ const VENUES = [
       {
         "name": "KKPFリングチップ(レート1-3)",
         "price": "100BB ¥3,000／200BB ¥6,000",
-        "note": "残ったチップはPTまたはスポンサードでの扱いになります。"
+        "note": "残ったチップはPTまたはスポンサードでの扱いになります。詳細は店舗にご確認ください。"
       },
       {
         "name": "トーナメント参加費",
@@ -231,8 +231,8 @@ const VENUES = [
     "photo": "/img/venues/onecasino-fukuoka-nakasu.jpg",
     "featured": false,
     "note": "木曜フリーロールあり。営業時間は第三者媒体情報のため要確認。料金・システムは2026年9月の改定後の内容を掲載しています。",
-    "sourceLabel": "",
-    "sourceUrl": "",
+    "sourceLabel": "X",
+    "sourceUrl": "https://x.com/onecasino477",
     "pricing": [
       {
         "name": "入場料",
@@ -449,7 +449,7 @@ const VENUES = [
       },
       {
         "name": "マイル",
-        "price": "1,000円ごとに1マイル",
+        "price": "入場料・チップ購入1,000円ごとに1マイル",
         "note": "500マイル単位でチップと交換(1マイル＝10円換算)、または5,000マイルで海外提携ホテル1泊と交換。"
       }
     ]
