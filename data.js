@@ -793,7 +793,7 @@ const VENUES = [
     "address": "福岡県福岡市中央区渡辺通5-2-10 2F",
     "access": "天神南駅 徒歩2分",
     "hours": "",
-    "x": "https://x.com/CASINOBAR_ALICE",
+    "x": "",
     "line": "",
     "instagram": "",
     "website": "",
@@ -900,6 +900,21 @@ const VENUES = [
     "lat": 33.555256,
     "lng": 130.428314,
     "hours": "12:00〜24:00",
+    "hoursSpec": [
+      {
+        "days": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday"
+        ],
+        "opens": "12:00",
+        "closes": "00:00"
+      }
+    ],
     "x": "https://x.com/dojofukuoka",
     "line": "https://line.me/R/ti/p/@856zasqq",
     "instagram": "https://www.instagram.com/the_dojo_fukuoka/",
@@ -907,7 +922,7 @@ const VENUES = [
     "tel": "092-403-7172",
     "photo": "/img/venues/the-dojo-fukuoka.jpg",
     "featured": false,
-    "note": "2025/12開店。DJL(店内リーグ戦)・FPC・FSTサテライト・ミステリーバウンティ等を定期開催。「SUPER DOJO RING DAY」はリングゲーム企画のため掲載対象外。トーナメント・リングゲームともに活発に開催されるポーカースポット。初心者講習にも対応。営業時間は第三者媒体情報のため要確認。",
+    "note": "2025/12開店。DJL(店内リーグ戦)・FPC・FSTサテライト・ミステリーバウンティ等を定期開催。「SUPER DOJO RING DAY」はリングゲーム企画のため掲載対象外。トーナメント・リングゲームともに活発に開催されるポーカースポット。初心者講習にも対応。営業時間は店舗公式Threadsの記載より(2026年9月確認)。",
     "sourceLabel": "X",
     "sourceUrl": "https://x.com/dojofukuoka",
     "ring": true,
@@ -932,7 +947,19 @@ const VENUES = [
     "featured": false,
     "note": "姉弟運営の小規模店。女性・初心者向け。貸切イベント可。曜日固定の定期開催ではなく、毎月カレンダー画像で告知するタイプ(2026年8月の再確認で判明)。最新の日程は、店舗が投稿する月間カレンダーでご確認ください。",
     "sourceLabel": "Instagram",
-    "sourceUrl": "https://www.instagram.com/cajinox/"
+    "sourceUrl": "https://www.instagram.com/cajinox/",
+    "pricing": [
+      {
+        "name": "リングゲーム",
+        "price": "100-200(50BB)",
+        "note": "1万Chipは最初無料で付いてきます(公式X 2026年5月の告知)。基本料金の金額は公式に記載がありません。店舗にご確認ください。"
+      },
+      {
+        "name": "サイドゲーム(バカラ・ブラックジャック)",
+        "price": "通常料金＋¥1,000",
+        "note": "引き出し無料(公式X 2026年5月の告知)。"
+      }
+    ]
   },
   {
     "id": "v29",
@@ -944,6 +971,20 @@ const VENUES = [
     "lat": 33.589836,
     "lng": 130.404984,
     "hours": "20:00〜翌4:00(月曜定休)",
+    "hoursSpec": [
+      {
+        "days": [
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday"
+        ],
+        "opens": "20:00",
+        "closes": "04:00"
+      }
+    ],
     "x": "https://x.com/bon_nishinakasu",
     "line": "",
     "instagram": "https://www.instagram.com/bon_nishinakasu/",
@@ -951,9 +992,21 @@ const VENUES = [
     "tel": "080-2359-0789",
     "photo": "/img/venues/bon-nishi-nakasu.jpg",
     "featured": false,
-    "note": "ポーカー・シーシャ・フード複合ラウンジ。現代アートに囲まれた非日常的な空間で、落ち着いた雰囲気を求める大人向けの店舗。定期トーナメントは要確認。営業時間は第三者媒体情報のため要確認。",
+    "note": "ポーカー・シーシャ・フード複合ラウンジ。現代アートに囲まれた非日常的な空間で、落ち着いた雰囲気を求める大人向けの店舗。定期トーナメントは要確認。料金・営業時間は店舗公式X・Threadsの記載より(2026年9月確認)。",
     "sourceLabel": "",
-    "sourceUrl": ""
+    "sourceUrl": "",
+    "pricing": [
+      {
+        "name": "CASINO料金(Poker・Baccarat)",
+        "price": "男性 ¥4,000／女性 ¥3,000",
+        "note": "公式Xプロフィールの表記。料金に含まれる内容(チップ・ドリンク等)の内訳は店舗にご確認ください。"
+      },
+      {
+        "name": "支払い方法",
+        "price": "クレジットカード(VISA、マスター、アメックス、DINERS、JCB、Discover、銀聯)、電子マネー(楽天Edy、WAON、Suica、PASMO、nanaco、ICOCA、iD、QUICPay、ApplePay)、QRコード決済(PayPay、d払い、au PAY)",
+        "note": "ホットペッパーグルメ掲載情報より。"
+      }
+    ]
   },
   {
     "id": "v30",
@@ -1182,13 +1235,25 @@ const VENUES = [
     "hours": "月〜木・日・祝20:00〜翌3:00／金・土・祝前日20:00〜翌5:00",
     "x": "https://x.com/bar_save_",
     "line": "",
-    "instagram": "",
+    "instagram": "https://www.instagram.com/save_gamebar",
     "website": "https://fbfg900.gorp.jp/",
     "tel": "092-791-2900",
     "featured": false,
     "note": "親不孝通りの総合アミューズメントバー。ポーカーのほかダーツ・ボードゲーム・ビデオゲーム等。トーナメント開催は未確認。",
     "sourceLabel": "",
-    "sourceUrl": ""
+    "sourceUrl": "",
+    "pricing": [
+      {
+        "name": "チャージ料金",
+        "price": "1時間 ¥550(税込)",
+        "note": "延長1時間 ¥550・ドリンク1杯 ¥800。1時間につきワンドリンクオーダー制(自動延長)。ボードゲーム・ダーツ・ポーカーは遊び放題。"
+      },
+      {
+        "name": "支払い方法",
+        "price": "クレジットカード(VISA、MasterCard、JCB、アメリカン・エキスプレス)、PayPay",
+        "note": null
+      }
+    ]
   },
   {
     "id": "v39",
@@ -1293,9 +1358,51 @@ const VENUES = [
     "website": "https://www.poker-deepblue.com/",
     "tel": "",
     "featured": false,
-    "note": "2025年5月オープン。公式サイトが「行橋初のカジノ専門店」を掲げる。公式サイトによると風俗営業5号許可を取得済みで、チップの換金・景品交換は一切なし。トーナメント定期開催（日程はInstagramで告知）。初心者プランあり。",
+    "note": "2025年5月オープン。公式サイトが「行橋初のカジノ専門店」を掲げる。公式サイトによると風俗営業5号許可を取得済みで、チップの換金・景品交換は一切なし。トーナメント定期開催（日程はInstagramで告知）。初心者プランあり。料金・システムは公式サイト掲載の料金表より(2026年9月確認)。",
     "sourceLabel": "Instagram",
-    "sourceUrl": "https://www.instagram.com/deepblue824/"
+    "sourceUrl": "https://www.instagram.com/deepblue824/",
+    "pricing": [
+      {
+        "name": "入場料＋飲み放題",
+        "price": "男性 ¥1,000／女性・学生 ¥500／3のつく日 ¥30",
+        "note": "アルコールは上記の金額より＋¥1,000。"
+      },
+      {
+        "name": "チップ購入",
+        "price": "$20,000＝¥2,000／$40,000＝¥3,000／$250,000＝¥15,000",
+        "note": "「$」は店内チップ単位の表記です(円換算ではありません)。3のつく日は$40,000購入で入場チケット2枚進呈。"
+      },
+      {
+        "name": "チップ引き出し料金",
+        "price": "〜$40,000 ¥700／$40,001〜$80,000 ¥1,000",
+        "note": null
+      },
+      {
+        "name": "トーナメントチップエントリー",
+        "price": "¥700〜",
+        "note": null
+      },
+      {
+        "name": "初来店パック",
+        "price": "¥3,000",
+        "note": "入場料(アルコールもOK)・ドリンク飲み放題・チップ$100,000込み。初回の1回のみ。"
+      },
+      {
+        "name": "初心者講習",
+        "price": "無料",
+        "note": "毎日開催。"
+      },
+      {
+        "name": "チップ預かり",
+        "price": "可",
+        "note": "残ったチップは各店で預かり可。"
+      },
+      {
+        "name": "支払い方法",
+        "price": "現金、キャリア決済、クレジットカード(一部使用不可)",
+        "note": "キャッシュレス決済取り扱い(一部非対応の場合あり)。"
+      }
+    ]
   },
   {
     "id": "v42",
@@ -1377,7 +1484,21 @@ const VENUES = [
     "address": "福岡県福岡市中央区大名2丁目1-42",
     "addressUnverified": true,
     "access": "",
-    "hours": "",
+    "hours": "18:00〜翌4:00(水曜定休)",
+    "hoursSpec": [
+      {
+        "days": [
+          "Monday",
+          "Tuesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday"
+        ],
+        "opens": "18:00",
+        "closes": "04:00"
+      }
+    ],
     "x": "https://x.com/Bondaimyo",
     "line": "",
     "instagram": "https://www.instagram.com/bon_daimyo/",
@@ -1385,9 +1506,21 @@ const VENUES = [
     "tel": "070-5815-8255",
     "photo": "/img/venues/bon-daimyo.jpg",
     "featured": false,
-    "note": "他媒体の掲載情報をもとに追加した店舗です。トーナメント開催状況・営業時間は当サイトでは確認できていません。住所は他媒体の掲載情報のため未確認。最新情報は公式X・Instagramをご確認ください。",
+    "note": "他媒体の掲載情報をもとに追加した店舗です。トーナメント開催状況は当サイトでは確認できていません。住所は他媒体の掲載情報のため未確認。最新情報は公式X・Instagramをご確認ください。料金・営業時間は店舗公式X・ホットペッパーグルメの掲載情報より(2026年9月確認)。",
     "sourceLabel": "X",
-    "sourceUrl": "https://x.com/Bondaimyo"
+    "sourceUrl": "https://x.com/Bondaimyo",
+    "pricing": [
+      {
+        "name": "【casino】料金",
+        "price": "男性 ¥4,000／女性 ¥3,000",
+        "note": "公式Xプロフィールの表記。料金に含まれる内容(チップ・ドリンク等)の内訳は店舗にご確認ください。"
+      },
+      {
+        "name": "支払い方法",
+        "price": "クレジットカード(VISA、マスター、アメックス、DINERS、JCB、Discover、銀聯)、電子マネー(楽天Edy、WAON、Suica、PASMO、nanaco、ICOCA、iD、QUICPay、ApplePay)、QRコード決済(PayPay、d払い、au PAY)",
+        "note": "ホットペッパーグルメ掲載情報より。"
+      }
+    ]
   },
   {
     "id": "v44",
@@ -1417,7 +1550,7 @@ const VENUES = [
     "address": "福岡県福岡市博多区上川端町10-255 2階",
     "addressUnverified": true,
     "access": "",
-    "hours": "",
+    "hours": "平日 18:00〜24:00／週末 15:00〜24:00(毎日営業)",
     "x": "https://x.com/Nutsbar72",
     "line": "",
     "instagram": "https://www.instagram.com/72nutsbar/",
@@ -1425,9 +1558,16 @@ const VENUES = [
     "tel": "092-285-9391",
     "photo": "/img/venues/nutsbar.jpg",
     "featured": false,
-    "note": "他媒体の掲載情報をもとに追加した店舗です。トーナメント開催状況・営業時間は当サイトでは確認できていません。住所は他媒体の掲載情報のため未確認。最新情報は公式X・Instagramをご確認ください。",
+    "note": "他媒体の掲載情報をもとに追加した店舗です。トーナメント開催状況は当サイトでは確認できていません。住所は他媒体の掲載情報のため未確認。最新情報は公式X・Instagramをご確認ください。営業時間は店舗公式Xプロフィールの記載より(2026年9月確認)。",
     "sourceLabel": "X",
-    "sourceUrl": "https://x.com/Nutsbar72"
+    "sourceUrl": "https://x.com/Nutsbar72",
+    "pricing": [
+      {
+        "name": "初心者講習",
+        "price": "無料",
+        "note": "入場料・チップ料金は公式に掲載がありません。店舗にご確認ください。"
+      }
+    ]
   }
 ];
 

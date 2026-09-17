@@ -98,19 +98,21 @@ const pageFoot = extraScripts => shell.pageFoot(BIG, null, extraScripts, FOOTER_
 // ============================================================
 
 // 「初心者講習」「初心者プラン」の実施を、店舗自身の公式サイト・SNS等で明記していることが
-// 確認できた店舗(原稿・2026-09-12時点)。6店舗(2026-09-17、v6 グランドミラージュポーカーを追加。
-// 公式Threadsのプロフィールに「初心者講習も行っています」の記載を確認)。
-const BEGINNER_COURSE_IDS = ['v6', 'v7', 'v21', 'v35', 'v40', 'v41'];
+// 確認できた店舗(原稿・2026-09-12時点)。7店舗(2026-09-17、v6 グランドミラージュポーカーを追加。
+// 公式Threadsのプロフィールに「初心者講習も行っています」の記載を確認。同日、v45 Nutsbar を追加。
+// 公式Xのプロフィールに「初心者講習無料」の記載を確認)。
+const BEGINNER_COURSE_IDS = ['v6', 'v7', 'v21', 'v35', 'v40', 'v41', 'v45'];
 
 // 営業時間が第三者媒体(当サイトが直接確認していない情報源)によるもので、店舗による一次確認が
 // 取れていない店舗。data.js の note に「営業時間は第三者媒体情報のため要確認」等の記載がある
 // 店舗と対応する(原稿・2026-09-12時点の data.js との突き合わせ済み。2026-09-17、v6・v9 は
-// 営業時間を店舗公式SNS・公式サイトの記載に置き換え data.js のヘッジを外したため外した)。
+// 営業時間を店舗公式SNS・公式サイトの記載に置き換え data.js のヘッジを外したため外した。
+// 同日、v27・v29 も店舗公式SNSの記載で確認が取れ data.js のヘッジを外したため外した)。
 const HOURS_THIRDPARTY_IDS = [
-  'v3', 'v4', 'v5', 'v8', 'v13', 'v14', 'v19', 'v21', 'v22', 'v27', 'v29', 'v40'
+  'v3', 'v4', 'v5', 'v8', 'v13', 'v14', 'v19', 'v21', 'v22', 'v40'
 ];
 
-// 初心者講習明記の個別紹介(7店舗)。6店舗(BEGINNER_COURSE_IDS)に加え、CasinoXは「女性・初心者向け」
+// 初心者講習明記の個別紹介(8店舗)。7店舗(BEGINNER_COURSE_IDS)に加え、CasinoXは「女性・初心者向け」
 // の表記はあるが「初心者講習」の実施明記までは確認できていない例外として、あえて併記する
 // (原稿の方針。無いことにせず、確認できていない旨とセットで正直に書く)。
 const HIGHLIGHT_STORES = [
@@ -120,7 +122,8 @@ const HIGHLIGHT_STORES = [
   { id: 'v35', intro: '公式Instagramによると、初心者講習を毎日実施しているとのことです。フリーロール(無料参加)の実績もあるとされています。KENポーカー(久留米)と同じ久留米エリアの別店舗です。' },
   { id: 'v40', intro: '公式Xによると、初心者講習を実施しているとのことです。ボードゲームも多数用意されているとされ、掲載中のTripleBarrel小倉店の姉妹店にあたります。' },
   { id: 'v41', intro: '公式サイトによると「初心者プラン」が用意されているとのことです。風俗営業5号許可を取得済みで、チップの換金・景品交換は一切ないと案内されています。トーナメントの日程は公式Instagramで告知されているとのことです。' },
-  { id: 'v28', intro: '公式Instagramでは「女性・初心者向け」と案内されています。ただし、他の6店舗のような「初心者講習」の実施明記は当サイトでは確認できていません(2026年9月時点)。姉弟で運営する小規模な店舗で、貸切イベントにも対応しているとのことです。', noCourseBadge: true }
+  { id: 'v45', intro: '公式Xプロフィールによると、初心者講習は無料とのことです。' },
+  { id: 'v28', intro: `公式Instagramでは「女性・初心者向け」と案内されています。ただし、他の${BEGINNER_COURSE_IDS.length}店舗のような「初心者講習」の実施明記は当サイトでは確認できていません(2026年9月時点)。姉弟で運営する小規模な店舗で、貸切イベントにも対応しているとのことです。`, noCourseBadge: true }
 ];
 
 // 「福岡のポーカー店を目的別に探す」のカテゴリー(6分類・原稿2026-09-12改訂版〔文章圧縮・
@@ -168,7 +171,10 @@ validateCategoryCoverage();
 // 長い紹介文で、こちらはこのガイドページ専用の一言。役割が違うので使い回さない)。
 const AREA_INTRO = {
   '天神': '福岡随一の繁華街で、店舗数の多いエリアの一つです。',
-  '中洲': '天神と並ぶ繁華街で、天神と同じく店舗数が多いエリアです。公式な初心者講習の明記がある店舗は今のところありませんが、外部レビューでは初心者でも入りやすいと紹介されている店舗もあります。',
+  // 中洲: 「公式な初心者講習の明記がある店舗は無い」という前提の文言は置かない(2026-09-17、
+  // v45 Nutsbar が中洲で初心者講習を明記している店として HIGHLIGHT_STORES に加わり、前提が崩れた。
+  // 講習明記店の有無は highlightStoresBlock() / まとめ が実データから出す)。
+  '中洲': '天神と並ぶ繁華街で、天神と同じく店舗数が多いエリアです。外部レビューでは初心者でも入りやすいと紹介されている店舗もあります。',
   '大名': '天神エリアに近い立地です。',
   '今泉': '天神から徒歩圏内の落ち着いたエリアです。',
   '大橋': '大橋駅周辺のエリアです。',
@@ -330,6 +336,14 @@ ${notFoundBlock()}`;
 }
 
 // ---- 初心者講習明記の店舗(HIGHLIGHT_STORES) ----
+// 中洲エリアで初心者講習の実施を明記している店(HIGHLIGHT_STORES のうち講習明記あり・中洲の店)の
+// 店名。highlightStoresBlock() の前置きと「まとめ」の両方がこれを使う(2箇所で別々に判定して
+// 食い違わないようにする)。
+function nakasuCourseStoreNames() {
+  return HIGHLIGHT_STORES
+    .filter(h => !h.noCourseBadge && venueById(h.id).area === '中洲')
+    .map(h => esc(venueById(h.id).name));
+}
 function highlightStoresBlock() {
   const cards = HIGHLIGHT_STORES.map(h => {
     const v = venueById(h.id);
@@ -340,14 +354,15 @@ function highlightStoresBlock() {
   <a class="vlink" href="/venues/${v.slug}/">${esc(v.name)}の店舗ページ →</a>
 </div>`;
   }).join('\n');
-  // 「中洲エリアについて」は原稿の固定文言だが、前提(中洲エリアの店に初心者講習明記が無いこと)が
-  // 崩れたら気づけるよう、HIGHLIGHT_STORESの実データで検算してから出す。
-  const nakasuHasBeginnerCourse = HIGHLIGHT_STORES.some(h => !h.noCourseBadge && venueById(h.id).area === '中洲');
-  if (nakasuHasBeginnerCourse) {
-    throw new Error('gen-guide-pages.js: 中洲エリアに初心者講習明記の店舗が見つかりました。'
-      + '「中洲エリアについて」の固定文言(該当店舗なし、という前提)を書き直してください。');
-  }
+  // 「中洲エリアについて」の前置き(公式に講習明記のある中洲の店の有無)は原稿では固定文言だったが、
+  // 2026-09-17に v45 Nutsbar(中洲)が HIGHLIGHT_STORES に加わり前提が変わったため、
+  // HIGHLIGHT_STORES の実データから出し分ける(店名は data.js から引く。リンクは直上のカードに
+  // あるためここでは付けず、verify() のリンク数の期待値は変えない)。
+  const nakasuCourseNames = nakasuCourseStoreNames();
   const nakasuCount = areaVenues(VENUES, '中洲').filter(v => !v.preopen && !v.closed).length;
+  const nakasuLeadIn = nakasuCourseNames.length
+    ? `中洲エリア(${nakasuCount}店舗)で、公式サイト・SNS等で「初心者講習」の実施を明記しているのは2026年9月時点で${nakasuCourseNames.join('・')}です(上記でご紹介しています)。このほか、`
+    : `中洲エリア(${nakasuCount}店舗)には、公式サイト・SNS等で「初心者講習」の実施を明記している店舗は2026年9月時点で確認できていません。ただし、`;
   // 「初心者でも入りやすい」と外部レビューで紹介されている中洲エリアの店舗(前段の
   // カテゴリー「リングゲーム、初心者でも安心して打ちたいなら」で紹介済み)を実データから拾い、
   // 文中で名指しする2店を検算する(手で書いた店名が原稿・実データとズレるのを防ぐ)。
@@ -364,7 +379,7 @@ function highlightStoresBlock() {
 <h2 class="day">初心者講習が明記されている福岡のポーカー店</h2>
 <p class="lead">以下の${HIGHLIGHT_STORES.length}店舗は、公式サイトや公式SNS等で「初心者講習」「初心者プラン」といった表記が確認できた店舗です。当サイトが独自に優劣を判定したものではなく、各店舗自身が発信している情報をそのまま紹介しています。内容は変更されることがあるため、来店前には必ず各店舗の最新の公式情報をご確認ください。</p>
 ${cards}
-<div class="disclaimer">中洲エリア(${nakasuCount}店舗)には、公式サイト・SNS等で「初心者講習」の実施を明記している店舗は2026年9月時点で確認できていません。ただし、前述の「福岡のポーカー店を目的別に探す」でご紹介した通り、外部のレビューサイトでは ${nakasuFriendlyNames} などが「初心者でも入りやすい」と紹介されている例があります。公式な講習の実施有無と、来店者からの評判は別の情報のため、中洲エリアで初めての来店を検討する場合は、事前に各店舗の公式SNS等で初心者対応の可否を直接確認することをおすすめします。</div>`;
+<div class="disclaimer">${nakasuLeadIn}前述の「福岡のポーカー店を目的別に探す」でご紹介した通り、外部のレビューサイトでは ${nakasuFriendlyNames} などが「初心者でも入りやすい」と紹介されている例があります。公式な講習の実施有無と、来店者からの評判は別の情報のため、中洲エリアで初めての来店を検討する場合は、事前に各店舗の公式SNS等で初心者対応の可否を直接確認することをおすすめします。</div>`;
 }
 
 // ---- エリアから探す ----
@@ -508,7 +523,7 @@ ${faq.html}
 <h2 class="day">まとめ</h2>
 <ul style="margin:0 0 14px 1.3em;font-size:.9em;line-height:2">
   <li>福岡のポーカー店選びで迷ったら、まずは「トーナメント重視」「リングゲームでじっくり」「お酒も楽しみたい」など、自分の目的に合ったカテゴリーから探すのがおすすめです。</li>
-  <li>公式サイト・SNS等で「初心者講習」「初心者プラン」の実施が明記されているのは、2026年9月時点で${HIGHLIGHT_STORES.filter(h => !h.noCourseBadge).map(h => esc(venueById(h.id).name)).join('・')} の${BEGINNER_COURSE_IDS.length}店舗です(${HIGHLIGHT_STORES.filter(h => h.noCourseBadge).map(h => esc(venueById(h.id).name)).join('・')}は「女性・初心者向け」の表記のみで、講習の実施明記はありません)。中洲エリアには公式な講習明記店はありませんが、外部レビューでは初心者でも入りやすいと紹介されている店舗もあります。</li>
+  <li>公式サイト・SNS等で「初心者講習」「初心者プラン」の実施が明記されているのは、2026年9月時点で${HIGHLIGHT_STORES.filter(h => !h.noCourseBadge).map(h => esc(venueById(h.id).name)).join('・')} の${BEGINNER_COURSE_IDS.length}店舗です(${HIGHLIGHT_STORES.filter(h => h.noCourseBadge).map(h => esc(venueById(h.id).name)).join('・')}は「女性・初心者向け」の表記のみで、講習の実施明記はありません)。${nakasuCourseStoreNames().length ? `中洲エリアで公式に講習の実施を明記しているのは${nakasuCourseStoreNames().join('・')}です。` : '中洲エリアには公式な講習明記店はありませんが、'}外部レビューでは初心者でも入りやすいと紹介されている店舗もあります。</li>
   <li>当サイトは店舗・主催者そのものではなく、公式情報や外部の紹介記事・口コミをもとにまとめた案内サイトです。当サイトが店舗の優劣を判定・ランキング化することはありません。掲載内容は変更されることがあるため、来店前には必ず各店舗の公式サイト・SNS等で最新情報をご確認ください。</li>
 </ul>
 ${faq.script}`;
@@ -534,7 +549,8 @@ function verify(files) {
   const linked = (html.match(/href="\/venues\/[^"]+\/"/g) || []).length;
   // 店舗ページへのリンクは「全店舗一覧表(未開店を除く全件)」＋「目的別カテゴリー(6分類、延べ件数。
   // 同じ店舗が複数カテゴリーに登場する分もそのまま数える)」＋「該当なし店舗の案内(NOT_FOUND_IDS)」＋
-  // 「初心者講習ハイライト(6件)」＋「『中洲エリアについて』が名指しする2件」の合計。
+  // 「初心者講習ハイライト(HIGHLIGHT_STORES の件数)」＋「『中洲エリアについて』が名指しする2件」の合計
+  // (中洲の講習明記店を前置きで挙げる場合もリンクは付けないので、ここの期待値には含めない)。
   const categoryLinkCount = CATEGORIES.reduce((sum, c) => sum + categoryStoreIds(c).length, 0);
   const nakasuMentionLinkCount = 2;
   const expectedVenueLinks = listedCount + categoryLinkCount + NOT_FOUND_IDS.length
