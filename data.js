@@ -10492,6 +10492,22 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01M2QA42Q5YMXX541K7QDDFWSP",
+    "venueId": "v22",
+    "name": "FST Main House Day1",
+    "date": "2026-09-18",
+    "start": "19:00",
+    "buyin": 6000,
+    "addon": null,
+    "stack": 30000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "wl-01M2CNMZBCMC0EPQ5GJFAWZ2Z4",
     "venueId": "v22",
     "name": "深夜のトナメ",
