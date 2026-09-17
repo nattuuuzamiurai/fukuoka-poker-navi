@@ -385,8 +385,10 @@ ${cards}
 // ---- エリアから探す ----
 function areaNavBlock() {
   const pageAreas = areaList(VENUES, AREAS);
+  // 件数は閉店の可能性がある店・未開店の店を除く(2026-09-18。それまでは全件を数えていたため、
+  // 同じ基準で数える講習ブロックの「中洲エリア(N店舗)」・全一覧の掲載数と食い違っていた)。
   const cards = pageAreas.map(a => {
-    const count = areaVenues(VENUES, a).length;
+    const count = areaVenues(VENUES, a).filter(v => !v.preopen && !v.closed).length;
     const intro = AREA_INTRO[a] || '';
     return `<div class="gd-card">
   <h3>${esc(a)}(${count}店舗)</h3>
