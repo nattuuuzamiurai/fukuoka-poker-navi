@@ -104,40 +104,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M19SPXXDVWV2JNXX3GYF7Z77": {
-      "id": "wl-01M19SPXXDVWV2JNXX3GYF7Z77",
-      "venueId": "v3",
-      "name": "m ORIGIN",
-      "date": "2026-09-18",
-      "start": "18:00",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M1K1ZS8Z0GDZVV0A3KARRJ92": {
-      "id": "wl-01M1K1ZS8Z0GDZVV0A3KARRJ92",
-      "venueId": "v3",
-      "name": "m Super Hold'em Turbo",
-      "date": "2026-09-18",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": 1000,
-      "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M1K2AETMQ5XRR989BRQN5P8P": {
       "id": "wl-01M1K2AETMQ5XRR989BRQN5P8P",
       "venueId": "v3",
@@ -395,24 +361,6 @@
       "venueId": "v27",
       "name": "ヘッズアップ〜DOJO破り〜",
       "date": "2026-10-04",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M1K7AQSXXJ297QT12GFJ9NK4": {
-      "id": "wl-01M1K7AQSXXJ297QT12GFJ9NK4",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-09-18",
       "start": "12:00",
       "buyin": 5000,
       "addon": null,
@@ -1032,15 +980,49 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M2QA42Q5YMXX541K7QDDFWSP": {
-      "id": "wl-01M2QA42Q5YMXX541K7QDDFWSP",
-      "venueId": "v22",
-      "name": "FST Main House Day1",
-      "date": "2026-09-18",
-      "start": "19:00",
-      "buyin": 6000,
+    "wl-01M2SPAW9KN02SESKAQYCYGEXN": {
+      "id": "wl-01M2SPAW9KN02SESKAQYCYGEXN",
+      "venueId": "v3",
+      "name": "m Super Hold'em Turbo",
+      "date": "2026-09-27",
+      "start": "21:00",
+      "buyin": 2500,
+      "addon": 1000,
+      "stack": 25000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ターボ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M2SPFNEERDYF7Z3RJ7FFWJNK": {
+      "id": "wl-01M2SPFNEERDYF7Z3RJ7FFWJNK",
+      "venueId": "v3",
+      "name": "m WAVE（Mystery Bounty）",
+      "date": "2026-09-28",
+      "start": "18:00",
+      "buyin": 3500,
       "addon": null,
-      "stack": 30000,
+      "stack": 50000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M2SPM00HWASGHFDPXYH1JFBX": {
+      "id": "wl-01M2SPM00HWASGHFDPXYH1JFBX",
+      "venueId": "v3",
+      "name": "m LIVE LEAGUE season1",
+      "date": "2026-09-29",
+      "start": "17:10",
+      "buyin": 4000,
+      "addon": null,
+      "stack": 40000,
       "guarantee": null,
       "reentry": true,
       "prize": null,

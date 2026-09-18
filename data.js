@@ -20158,6 +20158,56 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01M2SPAW9KN02SESKAQYCYGEXN",
+    "venueId": "v3",
+    "name": "m Super Hold'em Turbo",
+    "date": "2026-09-27",
+    "start": "21:00",
+    "buyin": 2500,
+    "addon": 1000,
+    "stack": 25000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M2SPFNEERDYF7Z3RJ7FFWJNK",
+    "venueId": "v3",
+    "name": "m WAVE（Mystery Bounty）",
+    "date": "2026-09-28",
+    "start": "18:00",
+    "buyin": 3500,
+    "addon": null,
+    "stack": 50000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M2SPM00HWASGHFDPXYH1JFBX",
+    "venueId": "v3",
+    "name": "m LIVE LEAGUE season1",
+    "date": "2026-09-29",
+    "start": "17:10",
+    "buyin": 4000,
+    "addon": null,
+    "stack": 40000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "wl-01KZTSYPAF05S1A61AKQ674G4F",
     "venueId": "v3",
     "name": "【3.5K 飲み放題！】m Booze up",
