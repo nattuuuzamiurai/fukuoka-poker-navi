@@ -199,6 +199,15 @@ const VENUE_CSS = `  .vp-sub{font-size:.9em;color:var(--mut);margin-bottom:14px}
   /* 閉店の可能性がある店の注記(2026-09-13新設・"closed":trueの店だけ)。preopen("オープン予定")の
      逆方向。h1直下に目立つ形で出す(.vp-sub〔灰色の小さい文字〕だけでは目立たないため)。 */
   .vp-closed-notice{background:#fdecea;border:1px solid var(--red);border-radius:var(--r);box-shadow:var(--sha);padding:12px 15px;margin-bottom:14px;font-size:.9em;line-height:1.8;color:var(--red);font-weight:700}
+  /* PR特典の告知(2026-09-19新設・data.js の "promoOffer" がある店だけ)。vp-closed-notice と
+     同じ「h1直下に目立つ形で出す」パターンだが、警告色ではなく祝祭色(felt/gold)にする。 */
+  .vp-offer{background:linear-gradient(135deg,var(--felt2),var(--felt));border:1px solid var(--gold);border-radius:var(--r);box-shadow:var(--sha);padding:14px 16px 13px;margin-bottom:14px;color:#fff}
+  .vp-offer-badge{display:inline-block;font-size:.68em;font-weight:800;letter-spacing:.06em;color:#3a2a06;background:linear-gradient(135deg,var(--gold2),var(--gold));padding:3px 10px;border-radius:20px;margin-bottom:7px}
+  .vp-offer-heading{font-size:1.03em;font-weight:800;margin:2px 0 7px}
+  .vp-offer-price{font-size:1.08em;font-weight:800;line-height:1.5;margin-bottom:7px}
+  .vp-offer-price .vp-offer-was{opacity:.8;font-weight:600;text-decoration:line-through;margin-right:7px;font-size:.82em}
+  .vp-offer-price .vp-offer-now{color:var(--gold2)}
+  .vp-offer-note{font-size:.82em;line-height:1.75;color:#f2ecdd;margin:0}
   /* .vp-fst(FSTサテライト開催中の告知)は site-shell.js の BASE_CSS 側に移設した
      (2026-08-28。エリアページでも使うため。複製すると片方だけ直して片方を忘れる)。 */
 `;
@@ -610,6 +619,18 @@ ${sameAreaShown.map(x => `  <a class="vp-card" href="/venues/${x.slug}/">
   const closedNoticeBlock = v.closed ? `
 <div class="vp-closed-notice">⚠ この店舗は閉店した可能性があります(要確認)。最新の営業状況は店舗の公式情報・SNS等でご確認ください。</div>` : '';
 
+  // PR特典の告知(2026-09-19新設)。data.js の "promoOffer" がある店だけ、h1直下に目立たせて出す
+  // (vp-closed-notice と同じ「h1直下」パターンだが警告色ではなく祝祭色)。noteBlock と同じく、
+  // 文面はすべて data.js 側の値をそのまま出す(生成スクリプト側で要約・言い換えを足さない)。
+  // 「PR」バッジは景品表示法のステマ規制対応のため常に固定で出す(data.js 側に値を持たせない)。
+  const promoOfferBlock = v.promoOffer ? `
+<div class="vp-offer">
+  <span class="vp-offer-badge">PR</span>
+  <div class="vp-offer-heading">${esc(v.promoOffer.heading)}</div>
+  <p class="vp-offer-price"><span class="vp-offer-was">${esc(v.promoOffer.regularLabel)}</span> → <span class="vp-offer-now">${esc(v.promoOffer.offerLabel)}</span></p>
+  <p class="vp-offer-note">${esc(v.promoOffer.note)}</p>
+</div>` : '';
+
   // Googleマップ埋め込み(依頼2・確認済み)。addressUnverified の店・住所が無い店には出さない
   // (法務・信頼性メモ「留保付きで載せている値は構造化データに出さない」と同じ考え方 ＝
   //  確度の低い住所を確定情報として地図に描くと、誤った場所を断定して示すことになる)。
@@ -642,7 +663,7 @@ ${sameAreaShown.map(x => `  <a class="vp-card" href="/venues/${x.slug}/">
 
   const body = `
 <h1>${esc(v.name)}</h1>
-<p class="vp-sub">${sub}</p>${closedNoticeBlock}${badgesBlock}${venueHeroPhotoHtml(v)}
+<p class="vp-sub">${sub}</p>${closedNoticeBlock}${promoOfferBlock}${badgesBlock}${venueHeroPhotoHtml(v)}
 <div class="vp-info-grid">
 ${venueInfoCardsHtml(v)}
 </div>${mapBlock}${pricingBlock ? `
