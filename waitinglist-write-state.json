@@ -73,7 +73,7 @@
       "venueId": "v19",
       "name": "2000 Turbo",
       "date": "2026-09-20",
-      "start": "16:10",
+      "start": "18:10",
       "buyin": 2000,
       "addon": 1000,
       "stack": 30000,
@@ -100,24 +100,6 @@
       "prize": null,
       "tags": [
         "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M1K2AETMQ5XRR989BRQN5P8P": {
-      "id": "wl-01M1K2AETMQ5XRR989BRQN5P8P",
-      "venueId": "v3",
-      "name": "m Monster Stack",
-      "date": "2026-09-19",
-      "start": "13:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 60000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ディープ"
       ],
       "source": "auto",
       "verified": false
@@ -253,24 +235,6 @@
       "venueId": "v27",
       "name": "ヘッズアップ〜DOJO破り〜",
       "date": "2026-10-01",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M1K7AQSXJWS25QZX4PFZHJ8T": {
-      "id": "wl-01M1K7AQSXJWS25QZX4PFZHJ8T",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-09-19",
       "start": "12:00",
       "buyin": 5000,
       "addon": null,
@@ -428,24 +392,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M1R52TNWCYRVXG6AVB6FT8DJ": {
-      "id": "wl-01M1R52TNWCYRVXG6AVB6FT8DJ",
-      "venueId": "v19",
-      "name": "3000 Deep Stack",
-      "date": "2026-09-19",
-      "start": "16:10",
-      "buyin": 3000,
-      "addon": 2000,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M1R52TNWG0DZF2A1REGNK9XD": {
       "id": "wl-01M1R52TNWG0DZF2A1REGNK9XD",
       "venueId": "v19",
@@ -569,22 +515,6 @@
       "buyin": 3000,
       "addon": null,
       "stack": 30000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M22GBCY0KDMAC7KHG4K5PXH4": {
-      "id": "wl-01M22GBCY0KDMAC7KHG4K5PXH4",
-      "venueId": "v3",
-      "name": "m FT Bounty",
-      "date": "2026-09-19",
-      "start": "18:00",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
       "guarantee": null,
       "reentry": true,
       "prize": null,
@@ -731,24 +661,6 @@
       "venueId": "v3",
       "name": "m Super Hold'em Turbo",
       "date": "2026-09-23",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": 1000,
-      "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M22HGR2SXJR5Q2J7NSB3FQ9N": {
-      "id": "wl-01M22HGR2SXJR5Q2J7NSB3FQ9N",
-      "venueId": "v3",
-      "name": "m DICE Poker Turbo",
-      "date": "2026-09-19",
       "start": "21:00",
       "buyin": 2500,
       "addon": 1000,

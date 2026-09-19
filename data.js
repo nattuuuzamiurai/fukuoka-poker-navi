@@ -20712,7 +20712,7 @@ const TOURNAMENTS = [
     "venueId": "v19",
     "name": "2000 Turbo",
     "date": "2026-09-20",
-    "start": "16:10",
+    "start": "18:10",
     "buyin": 2000,
     "addon": 1000,
     "stack": 30000,
