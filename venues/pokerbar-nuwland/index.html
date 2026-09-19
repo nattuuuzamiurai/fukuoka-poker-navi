@@ -248,15 +248,6 @@
   /* 閉店の可能性がある店の注記(2026-09-13新設・"closed":trueの店だけ)。preopen("オープン予定")の
      逆方向。h1直下に目立つ形で出す(.vp-sub〔灰色の小さい文字〕だけでは目立たないため)。 */
   .vp-closed-notice{background:#fdecea;border:1px solid var(--red);border-radius:var(--r);box-shadow:var(--sha);padding:12px 15px;margin-bottom:14px;font-size:.9em;line-height:1.8;color:var(--red);font-weight:700}
-  /* PR特典の告知(2026-09-19新設・data.js の "promoOffer" がある店だけ)。vp-closed-notice と
-     同じ「h1直下に目立つ形で出す」パターンだが、警告色ではなく祝祭色(felt/gold)にする。 */
-  .vp-offer{background:linear-gradient(135deg,var(--felt2),var(--felt));border:1px solid var(--gold);border-radius:var(--r);box-shadow:var(--sha);padding:14px 16px 13px;margin-bottom:14px;color:#fff}
-  .vp-offer-badge{display:inline-block;font-size:.68em;font-weight:800;letter-spacing:.06em;color:#3a2a06;background:linear-gradient(135deg,var(--gold2),var(--gold));padding:3px 10px;border-radius:20px;margin-bottom:7px}
-  .vp-offer-heading{font-size:1.03em;font-weight:800;margin:2px 0 7px}
-  .vp-offer-price{font-size:1.08em;font-weight:800;line-height:1.5;margin-bottom:7px}
-  .vp-offer-price .vp-offer-was{opacity:.8;font-weight:600;text-decoration:line-through;margin-right:7px;font-size:.82em}
-  .vp-offer-price .vp-offer-now{color:var(--gold2)}
-  .vp-offer-note{font-size:.82em;line-height:1.75;color:#f2ecdd;margin:0}
   /* .vp-fst(FSTサテライト開催中の告知)は site-shell.js の BASE_CSS 側に移設した
      (2026-08-28。エリアページでも使うため。複製すると片方だけ直して片方を忘れる)。 */
 </style>
