@@ -22,17 +22,18 @@
  *   CSS側で `.evtBanner.ev-dream .eb-tag::before{content:"PR"}` として常に「PR」表示に
  *   上書きしている(index.htmlのCSSコメント参照)。
  *
- * ■ 見た目・画像(2026-09-19修正: 正方形クロップをやめ、素の等倍表示に変更)
+ * ■ 見た目・画像(2026-09-19: 正方形の暫定画像 → 横長(1024×412)の専用画像に差し替え済み)
  *   bannerClass は過去の単発プロモ「DreaM グランドオープン記念」(promo-banners.js)と同じ
  *   `ev-dream`(黒地×ゴールド×赤)を流用する。実写真(フライヤー画像)を使うため customBanner は
  *   使わない(listing-banner.jsと違う点)。
- *   ★ 前回、正方形フライヤー(900×900)を CSS の aspect-ratio+object-fit で無理やり横長に
- *     トリミング表示していたが「見切れている」と指摘された。既存の大型大会バナー(FST等)と
- *     同じ横長(約1024×412)の専用画像を新しく用意する方針になったため、このファイルでは
- *     クロップ指定(imgAspect等)を一切持たない。index.html の eb-img は他のバナーと同じ
- *     `width:100%;height:auto` の素の等倍表示のみで、横長画像に差し替えれば他の大会バナーと
- *     自然に高さが揃う想定。img/dream/dream-saturday-tournament.jpg を横長画像に差し替える
- *     だけで済み、コード側の変更は不要。
+ *   ★ 導入当初は正方形フライヤー(900×900)を CSS の aspect-ratio+object-fit で無理やり横長に
+ *     トリミング表示していたが「見切れている」と指摘され、一度クロップ指定を撤去して
+ *     素の等倍表示(正方形のまま)にしていた。その後、既存の大型大会バナー(FST等)と同じ
+ *     横長(1024×412)の専用画像が用意できたため、img/dream/dream-saturday-tournament.jpg を
+ *     差し替えた。このファイル自体に imgAspect 等のクロップ指定は持たせていない
+ *     (index.html 側の `.evtBanner .eb-img{aspect-ratio:1024/412;object-fit:cover}` が
+ *     全バナー共通で高さを揃えるため、個別のバナーごとに指定する必要が無い。
+ *     index.htmlの該当コメント参照)。
  *
  * ■ リンク先(2026-09-19修正: 店舗ページ→トーナメント専用ページに変更)
  *   href はこのトーナメント専用の詳細ページ(events/dream-saturday-tournament/)。
@@ -51,7 +52,7 @@ const DREAM_PROMO_BANNER = {
   bannerClass: 'ev-dream',
   banner: 'img/dream/dream-saturday-tournament.jpg',
   bannerAlt: 'CASINO BAR DreaM Saturdayトーナメント（久留米）',
-  bannerDesc: '毎週土曜開催・久留米',              // eb-tagに出す下部説明文
+  bannerDesc: '毎週土曜日・久留米・18時スタート',    // eb-tagに出す下部説明文(ST18:00を明記・2026-09-19追加)
   btnText: '特典を見る →'
 };
 

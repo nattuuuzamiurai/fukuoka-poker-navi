@@ -110,12 +110,13 @@
   .vp-offer-price .vp-offer-was{opacity:.8;font-weight:600;text-decoration:line-through;margin-right:7px;font-size:.82em}
   .vp-offer-price .vp-offer-now{color:var(--gold2)}
   .vp-offer-note{font-size:.82em;line-height:1.75;color:#f2ecdd;margin:0}
-  /* 大会バナー(当サイト作成)。★他の大会ページ(WJPT/JOPT/FST等)と違い、意図的に
-     aspect-ratio を固定していない。このトーナメントは正方形フライヤー(900×900)を暫定で
-     使っており、他の大会と同じ横長比率(約1024×412)を決め打ちすると引き伸ばされて歪む。
-     横長の専用画像に差し替わり次第、width:100%;height:auto がそのまま自然な高さになる
-     (dream-promo-banner.js冒頭のコメントと同じ方針)。 */
-  .evt-banner{display:block;width:100%;height:auto;border-radius:var(--r);box-shadow:var(--sha);margin-bottom:14px}
+  /* ヘッダー画像(当サイト作成)。★このページだけ他の大会ページ(WJPT/JOPT/FST等・横長1024×412)
+     と違う正方形(900×900)の画像を使う(2026-09-19運営判断)。トップページのバナー
+     (dream-promo-banner.js・横長1024×412)は「カルーセルの1枚」としてコンパクトさを優先するが、
+     このページのヘッダーは賞金内訳・ENTRY/ADDON・ST/RC/STACK等の情報がすべて入った元画像を
+     そのまま見せる用途のため、クロップせず正方形のまま表示する。狭い画面でも横幅いっぱいに
+     収め、読み込み前後で高さが動かないようにする点は他の大会ページと同じ。 */
+  .evt-banner{display:block;width:100%;height:auto;aspect-ratio:1/1;border-radius:var(--r);box-shadow:var(--sha);margin-bottom:14px}
   .cta{display:block;text-align:center;background:linear-gradient(135deg,var(--felt),var(--felt2));color:#fff;font-weight:800;text-decoration:none;border-radius:var(--r);padding:13px 16px;margin:6px 0 20px;box-shadow:var(--sha)}
   .cta small{display:block;font-weight:600;font-size:.8em;color:#cfe3dd;margin-top:3px}
   h2.day{font-size:1.05em;font-weight:800;color:var(--felt);margin:22px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--gold)}
@@ -168,9 +169,7 @@
   <p class="vp-offer-price"><span class="vp-offer-was">通常 入場料 ¥1,500</span> → <span class="vp-offer-now">初回入場無料</span></p>
   <p class="vp-offer-note">受付で「ふくおかポーカーナビを見た」とお伝えください。初めてご来店の方・1グループ1回限りの特典です(1ドリンク付)。</p>
 </div>
-<!-- ★暫定画像(正方形900×900)。横長の専用画像が届き次第このファイルを差し替えるだけでよい
-     (CSS側は aspect-ratio を固定していないため追加の変更は不要。上のCSSコメント参照)。 -->
-<img class="evt-banner" src="/img/dream/dream-saturday-tournament.jpg" alt="CASINO BAR DreaM Saturdayトーナメント（久留米）">
+<img class="evt-banner" src="/img/dream/dream-saturday-tournament-detail.jpg" width="900" height="900" alt="CASINO BAR DreaM Saturdayトーナメント（久留米）賞金・参加費詳細">
 <div class="evt-meta">
   <b>開催日</b>　毎週土曜日<br>
   <b>スケジュール</b>　ST 18:00／RC 21:30／STACK 25,000点<br>
