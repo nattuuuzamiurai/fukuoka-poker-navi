@@ -398,6 +398,23 @@ function venueBadge(v) {
   return null;
 }
 
+// ---- title差別化語の町名上書き・CTR訴求のリード文(個別店舗のCTR改善・Search Console実績 2026-09-04〜09-19) ----
+// 【背景】data.js の area は「北九州」のように複数の町(小倉・黒崎・折尾など)をまとめた
+//   広域区分(tools/area-schedule.js 参照)。掲載順位はそれなりに付いているのに
+//   クリックがほぼ無いクエリ(「黒崎 ポーカー」表示週29件前後・順位9位台、「折尾 ポーカー」
+//   表示週5件・順位6.6位、いずれもクリックはほぼ0)があり、titleの差別化語が広域名の
+//   「北九州」のままで実際の検索語(町名)と一致していないことが一因と考えられる。
+//   該当する店だけ、titleの差別化語を実際の町名に、descriptionの書き出しをその町名からの
+//   検索を意識した一文にする(他の店には影響しない)。
+const VENUE_TOWN_LABEL = {
+  'king-queen-suited-kurosaki': '黒崎',
+  'triplebarrel-orio': '折尾'
+};
+const VENUE_CTR_LEAD = {
+  'king-queen-suited-kurosaki': '黒崎でポーカーができる店を探している方へ。',
+  'triplebarrel-orio': '折尾でポーカーができる店を探している方へ。'
+};
+
 // パンくずリスト(依頼2・2026-08-28): トップ > エリアから探す > 〇〇エリア > 店舗名。
 // 「エリアから探す」はトップページのヒーロー直下のナビ(index.html #areaNav)へのアンカー
 // (専用ページを持たないため)。その店のエリアにエリアページが無い(1店舗しか無いエリア。
@@ -444,7 +461,7 @@ function buildVenue(v) {
   // 同じエリアの店どうしでもtitleの前寄りが同じにならない(依頼1のねらい)。
   const badge = venueBadge(v);
   const titleParenParts = [];
-  if (!areaInName) titleParenParts.push(v.area);
+  if (!areaInName) titleParenParts.push(VENUE_TOWN_LABEL[v.slug] || v.area);
   if (badge) titleParenParts.push(badge.label);
   // title【末尾】に置く差別化の括弧(マーケティング・Search Console実測 2026-09-07)。
   // 【なぜ末尾に動かしたか】以前は titleName(=店名+差別化括弧)の直後に「のポーカートーナメント日程」を
@@ -496,7 +513,9 @@ function buildVenue(v) {
     // description も書き出しを店名(descName)からにする。descLead(FSTサテライト開催中等の
     // 時々変わる告知)は書き出しを奪わないよう1文目の後ろに回す(情報は落とさない)。
     // pricing のある店は1文目の直後に料金システム掲載の一文(descPricing)を挟む。
-    desc = `${descName}で開催されるポーカートーナメントの日程を日付順に掲載。${descPricing}${descLead}`
+    // ctrLead(該当2店のみ)は書き出しのさらに前に置く(VENUE_CTR_LEAD参照)。
+    const ctrLead = VENUE_CTR_LEAD[v.slug] || '';
+    desc = `${ctrLead}${descName}で開催されるポーカートーナメントの日程を日付順に掲載。${descPricing}${descLead}`
       + `開始時刻・バイイン・スタックのほか、${v.address ? '住所・' : ''}アクセス・公式SNSもまとめて確認できます。`;
     sub = `${esc(v.area)}のポーカースポット${v.access ? `（${esc(v.access)}）` : ''} — トーナメント日程・バイイン・${hasPricing ? '料金システム・' : ''}アクセス${altNamesNote}`;
   } else {
