@@ -6,9 +6,11 @@
  * 実行: node tools/contact-category-param.test.js (または node --test tools/*.test.js)
  *
  * 【背景】index.html の掲載店舗募集バナー(listing-banner.js)は
- *   contact.html?type=listing にリンクする。#category の既存の<option>
- *   (general/correction/listing/other)のいずれかと一致すればその選択肢を選択済みにし、
- *   一致しない値・パラメータ無しのときは何もしない(先頭のgeneralのまま)仕様。
+ *   contact.html?type=listing にリンクする。guide/partners/index.html の経営管理
+ *   ダッシュボードのご相談導線は contact.html?type=dashboard にリンクする(2026-09-19追加)。
+ *   #category の既存の<option>(general/correction/listing/dashboard/other)のいずれかと
+ *   一致すればその選択肢を選択済みにし、一致しない値・パラメータ無しのときは何もしない
+ *   (先頭のgeneralのまま)仕様。
  *
  * 【なぜ関数を切り出すか】pickCategoryFromQuery() 自体はDOMに触れない純粋関数のため、
  *   contact.html から文字列で切り出してそのまま実行して検証する(tools/recurring-dedupe.test.js
@@ -41,11 +43,16 @@ function loadPickCategoryFromQuery() {
   return vm.runInContext('pickCategoryFromQuery', sandbox);
 }
 
-const VALID = ['general', 'correction', 'listing', 'other'];
+const VALID = ['general', 'correction', 'listing', 'dashboard', 'other'];
 
 test('pickCategoryFromQuery(): 既存の値(listing)と一致すればそれを返す', () => {
   const f = loadPickCategoryFromQuery();
   assert.strictEqual(f('listing', VALID), 'listing');
+});
+
+test('pickCategoryFromQuery(): 既存の値(dashboard)と一致すればそれを返す(経営管理ダッシュボードのご相談)', () => {
+  const f = loadPickCategoryFromQuery();
+  assert.strictEqual(f('dashboard', VALID), 'dashboard');
 });
 
 test('pickCategoryFromQuery(): 既存の値(correction/other/general)もそれぞれ通る', () => {
@@ -66,7 +73,7 @@ test('pickCategoryFromQuery(): パラメータ無し(null/空文字)もnull', ()
   assert.strictEqual(f('', VALID), null);
 });
 
-test('contact.html: #category の<option>はgeneral/correction/listing/otherの4つ(巻き戻り検知用)', () => {
+test('contact.html: #category の<option>はgeneral/correction/listing/dashboard/otherの5つ(巻き戻り検知用)', () => {
   const options = [...CONTACT_HTML.matchAll(/<option value="([^"]+)">/g)].map(m => m[1]);
   assert.deepStrictEqual(options, VALID);
 });

@@ -48,8 +48,8 @@ test('visibleListingBanner(): 明示的にオンを渡しても1件のまま', (
   assert.deepStrictEqual(LB.visibleListingBanner(true).map(x => x.id), ['listing-recruit']);
 });
 
-test('LISTING_BANNER: リンク先はcontact.html?type=listing(確定仕様)', () => {
-  assert.strictEqual(LB.LISTING_BANNER.href, 'contact.html?type=listing');
+test('LISTING_BANNER: リンク先はguide/partners/(確定仕様・2026-09-19変更: 直接問い合わせフォームではなく案内ページを経由させる)', () => {
+  assert.strictEqual(LB.LISTING_BANNER.href, 'guide/partners/');
 });
 
 test('LISTING_BANNER: 確定文言(見出し/サブ/eyebrow/下部説明文/ボタン)', () => {
@@ -119,7 +119,7 @@ test('bigEventBannerHtml(): customBanner:true のとき<img>を出さず、CSS�
   assert.ok(html.includes('お店の告知バナー、掲載受付中'), 'bannerDesc(eb-tag)が出力されていない');
   assert.ok(html.includes('詳しくは →'), 'btnTextが出力されていない(既定の「日程を見る →」のままになっている)');
   assert.ok(html.includes('class="evtBanner ev-listing"'), 'bannerClass(ev-listing)が付いていない');
-  assert.ok(html.includes('href="contact.html?type=listing"'), 'href が反映されていない');
+  assert.ok(html.includes('href="guide/partners/"'), 'href が反映されていない');
 });
 
 test('bigEventBannerHtml(): 既存の画像バナー(customBannerなし)は今まで通り<img>のまま(回帰防止)', () => {

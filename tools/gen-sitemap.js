@@ -91,6 +91,9 @@ const GUIDE = { freq: 'weekly', pri: '0.8' };
 // 上記ガイドと違い店舗横断の一覧ではなく、日次のdata.js更新には追随しない読み物記事のため
 // changefreqはmonthly(頻繁に変わる想定ではないが、続報での更新を前提にしているためaboutより高い頻度)。
 const WEBCOIN = { freq: 'monthly', pri: '0.6' };
+// 掲載店舗向け案内ページ(/guide/partners/。2026-09-19実装)。プレイヤー向けの集客コンテンツ
+// ではなく掲載店舗の運営者向けページのため、about.htmlと同じ扱い(monthly・低priority)にする。
+const PARTNERS = { freq: 'monthly', pri: '0.3' };
 
 // ---- lastmod: git履歴ベースで決定論的に求める ----
 // big-events.js の各イベントの id → そのイベント固有のデータファイル(会期・共通レジストリの
@@ -220,6 +223,18 @@ function buildSitemap(REPO) {
       loc: `${SITE}/guide/webcoin-regulation/`,
       lastmod: lastmodFor(['tools/gen-guide-webcoin-regulation.js']),
       ...WEBCOIN
+    });
+  }
+
+  // 掲載店舗向け案内ページ(2026-09-19実装)。about.html/guide/webcoin-regulationと同じく
+  // ファイルが存在するときだけ載せる。本文の大半は tools/gen-guide-partners.js に直書きだが、
+  // 掲載店舗数・トーナメント日程数はdata.jsから動的に算出する(同ファイル冒頭コメント参照)ため、
+  // guide/beginnerと同じくdata.jsも見て新しい方をlastmodにする。
+  if (fs.existsSync(path.join(REPO, 'guide/partners/index.html'))) {
+    urls.push({
+      loc: `${SITE}/guide/partners/`,
+      lastmod: lastmodFor(['tools/gen-guide-partners.js', 'data.js']),
+      ...PARTNERS
     });
   }
 

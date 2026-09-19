@@ -172,6 +172,7 @@ function buildGeneratedSite() {
     'gen-event-pages.js',
     'gen-guide-pages.js',
     'gen-guide-webcoin-regulation.js',
+    'gen-guide-partners.js',
   ];
   for (const script of generators) {
     const scriptPath = path.join(tmpRoot, 'tools', script);

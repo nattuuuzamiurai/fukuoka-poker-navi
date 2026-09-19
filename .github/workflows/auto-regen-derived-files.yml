@@ -44,8 +44,10 @@ name: 生成物の自動再生成(生成物ドリフト防止)
 #
 # 【実行順序】gen-sitemap.js は必ず最後(のグループ)に置く。sitemap.xml の中身は
 # gen-sitemap.js が単独で所有しているが、gen-venue-pages.js / gen-event-pages.js /
-# gen-guide-pages.js / gen-guide-webcoin-regulation.js もそれぞれ自分の生成物と
-# 一緒に sitemap.xml を書き直す(店舗数等が変われば内容が変わるため)。どの順で実行しても
+# gen-guide-pages.js / gen-guide-webcoin-regulation.js / gen-guide-partners.js もそれぞれ
+# 自分の生成物と一緒に sitemap.xml を書き直す(店舗数等が変われば内容が変わるため。
+# gen-guide-partners.js は掲載店舗数・トーナメント日程数をdata.jsから動的に算出しているため、
+# 2026-09-19にこの一覧へ追加した)。どの順で実行しても
 # 最終的な内容は収束する設計だが(tools/gen-sitemap.js 冒頭コメント参照)、他のスクリプトが
 # 店舗数・大会数を変え得るぶんを反映しきってから最後に単独実行することで、
 # 「sitemap.xml だけ1歩遅れる」余地を無くしている。gen-top-faq.js は data.js に依存せず
@@ -106,7 +108,7 @@ jobs:
   regen:
     runs-on: ubuntu-latest
     # ハングした場合に concurrency(cancel-in-progress: false)で後続実行が長時間ブロックされる
-    # のを防ぐ上限。既存ジョブの実行内容(生成スクリプト7本 + git操作)は数分で終わる想定だが、
+    # のを防ぐ上限。既存ジョブの実行内容(生成スクリプト8本 + git操作)は数分で終わる想定だが、
     # 余裕を見て20分にしてある(品質管理部指摘・2026-09-16)。
     timeout-minutes: 20
     steps:
@@ -131,6 +133,7 @@ jobs:
           node tools/gen-guide-pages.js .
           node tools/gen-event-pages.js .
           node tools/gen-guide-webcoin-regulation.js .
+          node tools/gen-guide-partners.js .
           node tools/gen-sitemap.js .
           node tools/gen-top-faq.js .
 
@@ -166,6 +169,7 @@ jobs:
           node tools/gen-guide-pages.js .
           node tools/gen-event-pages.js .
           node tools/gen-guide-webcoin-regulation.js .
+          node tools/gen-guide-partners.js .
           node tools/gen-sitemap.js .
           node tools/gen-top-faq.js .
 
