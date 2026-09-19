@@ -113,6 +113,12 @@
  *   付けないこと(判断に迷う店は付けない。今まで通り pricing の表示のみに留める)。
  * ★ pricing が無いのに priceRangeSpec だけ残っている状態(消し忘れ)は
  *   tools/venue-jsonld.js の validatePriceRangeSpec が異常終了で検知する。
+ *
+ * VENUES の "eventPageLink" は、その店のトーナメント専用詳細ページ(events/<slug>/)への
+ * 内部リンク(2026-09-19新設)。{ href, label } の2項目のみを持つ単純な形で、店舗静的ページの
+ * 日程CTA直後に1行のリンクとして出る(tools/gen-venue-pages.js の eventPageLinkBlock を参照)。
+ * 来店特典等の告知はこの値には持たせない(告知の中身はリンク先の詳細ページに一本化する。
+ * 店舗ページ側に同じ内容を重複掲載しない)。持たない店は今まで通りこの行自体を出さない。
  * ============================================================ */
 
 const VENUES = [
@@ -1641,7 +1647,11 @@ const VENUES = [
         "price": "¥1,000～",
         "note": "100BB 10,000点　¥1,000\n200BB 20,000点　¥2,000\n300BB 30,000点　¥3,000\n¥4,000以降は引き出し無料！"
       }
-    ]
+    ],
+    "eventPageLink": {
+      "href": "/events/dream-saturday-tournament/",
+      "label": "Saturdayトーナメントの詳細を見る（毎週土曜開催）"
+    }
   },
   {
     "id": "v43",
