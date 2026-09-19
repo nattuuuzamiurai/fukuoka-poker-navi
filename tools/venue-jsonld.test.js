@@ -14,7 +14,7 @@
  *   5. validateHoursSpec が壊れた hoursSpec(空hours・曜日重複・不正な曜日名・不正な時刻書式)を
  *      検知すること
  *   6. hoursSpec を持たない店(hours だけの店)は openingHoursSpecification を出さないこと
- *      (PR #88 の判断を維持する回帰防止)
+ *      (2026-09-09の判断を維持する回帰防止)
  *   7. altNames → alternateName の変換(単数は文字列・複数は配列)、altNames を持たない店は
  *      alternateName を出さないこと(2026-09-13新設)
  *   8. priceRangeSpec → priceRange の変換(2026-09-16新設)。priceRangeSpec を持たない店は
@@ -150,7 +150,7 @@ test('venueJsonLd: hoursSpec があれば openingHoursSpecification を出す(�
 });
 
 test('venueJsonLd: hoursSpec が無い店(hours の自由文だけの店)は openingHoursSpecification を出さない'
-  + '(PR #88 の判断の回帰防止)', () => {
+  + '(2026-09-09の判断の回帰防止)', () => {
   const j = venueJsonLd(baseVenue({ hours: '12:00〜24:00' }));
   assert.equal(j.openingHoursSpecification, undefined);
 });

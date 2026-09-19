@@ -127,7 +127,7 @@ const path = require('path');
 const state = require('./machine-write-state');
 // 書き込み直前の最終自己チェック(Waitinglist・Instagram監視と共通)。
 const guard = require('./schedule-write-guard');
-// 安全な upsert の共通ロジック(PR #11 の設計をそのまま踏襲したもの)。自前で複製しない。
+// 安全な upsert の共通ロジック(tournament-merge.js の既存設計をそのまま踏襲したもの)。自前で複製しない。
 const merge = require('./tournament-merge');
 // 大会名の正規化(NFKC・小文字化・区切り吸収)。唯一の定義はこちら。
 const { normalizeName } = require('./venue-listing-rules');
