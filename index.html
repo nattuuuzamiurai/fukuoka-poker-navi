@@ -356,15 +356,6 @@
      WJPTと同じくバナー画像(黒地×ゴールド×赤リボン)に合わせた色を直接指定する
      (このバナー以外でDreaMの色を使う箇所が無いため、変数化する理由が無い)。 */
   .evtBanner.ev-dream{--ev-bd:var(--gold);--ev-bg:#1a0f05;--ev-bg2:#3a2308;--ev-fg:var(--gold2);--ev-ac:var(--red);--ev-ac2:#e0574a;--ev-on:#fff}
-  /* DreaM「Saturdayトーナメント」PR掲載の常設バナー(dream-promo-banner.js・2026-09-19導入)も
-     同じ ev-dream の配色を流用する。days を持たないため、何もしないと eb-tag::before の既定値
-     「開催中」がそのまま残ってしまう(index.html側の bigEventBannerHtml() コメント参照)。
-     景品表示法のステマ規制対応として常に「PR」と分かる表示にする必要があるため上書きする。
-     ★ 上の「DreaM グランドオープン記念」(promo-banners.js)も同じ ev-dream クラスを使うが、
-       会期(2026-09-05)がとうに過ぎ visiblePromoBanners() の掲載ウィンドウから永久に外れている
-       ため、このバッジ上書きが表示上ぶつかることはない。将来 ev-dream を新しい会期付き告知に
-       使い回すことがあれば、その告知だけ別クラスにするか、この上書きの要否を見直すこと。 */
-  .evtBanner.ev-dream .eb-tag::before{content:"PR";background:var(--ev-ac);color:var(--ev-on)}
 
   /* ===== 掲載店舗募集の常設バナー(listing-banner.js・2026-09-17導入) =====
      実写真が無いため画像バナーではなくCSSで組む(bigEventBannerHtml()のev.customBanner分岐)。
@@ -406,14 +397,7 @@
   .evtCarousel{position:relative; --ec-gap:10px}
   .ec-track{
     position:relative;                 /* スライドの offsetLeft をそのままスクロール量として使う */
-    display:flex; gap:var(--ec-gap); align-items:flex-start;
-    /* align-items:flex-start(2026-09-19追加): displayがflexの.ec-trackは既定でalign-items:stretch
-       になり、複数スライドの高さが最も高い1枚に揃ってしまう。これまでの画像バナーは
-       すべて実測1024×412(≒2.49:1)でほぼ同じ高さだったため気づかれなかったが、
-       DreaMのPRバナー(dream-promo-banner.js)は正方形フライヤーを2:1にトリミングしており、
-       他の横長バナーより高さが約2割高い。stretchのままだと、他の(より低い)スライドの下に
-       背景色の余白ができ、カード1枚1枚の高さが不揃いに見える。flex-startにして各スライドが
-       自分自身の高さ(画像のアスペクト比どおり)のままになるようにする。 */
+    display:flex; gap:var(--ec-gap);
     overflow-x:auto; overscroll-behavior-x:contain;
     scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;
     scrollbar-width:none;
@@ -1104,9 +1088,6 @@
 <!-- 単発の店舗プロモーション(グランドオープン記念など)の小さなレジストリ。big-events.js の
      直後に読む(掲載期間の判定に eventFirstDay 等をそのまま使うため。詳細はファイル冒頭のコメント参照)。 -->
 <script src="promo-banners.js"></script>
-<!-- CASINO BAR DreaM「Saturdayトーナメント」PR掲載の常設バナー(日付を持たないため
-     big-events.js のヘルパーには依存しない。詳細はファイル冒頭のコメント参照)。 -->
-<script src="dream-promo-banner.js"></script>
 <!-- 掲載店舗募集の常設バナー(日付を持たないため big-events.js のヘルパーには依存しない。
      詳細はファイル冒頭のコメント参照)。 -->
 <script src="listing-banner.js"></script>
@@ -1183,27 +1164,18 @@
   //
   // ev.customBanner が真のときは、実写真が無いためCSSで組んだ見出しブロックを <img> の代わりに出す
   // (listing-banner.js 参照)。それ以外(既存のBIG_EVENTS/PROMO_BANNERS)は今まで通り画像バナー。
-  //
-  // ev.imgAspect が指定されているときは、その比率(例 '2/1')に合わせて object-fit:cover で
-  // トリミング表示する(2026-09-19、dream-promo-banner.js のために導入)。他のバナー画像は
-  // すべて横長(実測1024×412 ≒ 2.49:1)で素の等倍表示のままだが、DreaMのフライヤーは正方形
-  // (900×900)のため、そのまま等倍表示すると1枚だけ縦に大きく間延びし、直下の「トーナメント
-  // 日程」見出しを押し下げてしまう。上部(店名・トーナメント名・保証額)を見せる
-  // object-position:top で、他のバナーに近い横長比率に揃える。
   function bigEventBannerHtml(ev){
     const today = localTodayGlobal();
     const cls = ['evtBanner', ev.bannerClass];
     if (isEventArchived(ev.days)) cls.push('is-archived');       // 終了 → 暗転+「終了」バッジ
     else if (today < eventFirstDay(ev.days)) cls.push('upcoming'); // 未開催 → 「まもなく」バッジ
-    const imgStyle = ev.imgAspect
-      ? ` style="aspect-ratio:${escHtml(ev.imgAspect)};object-fit:cover;object-position:top"` : '';
     const media = ev.customBanner
       ? `<div class="eb-custom">
           <span class="eb-eyebrow">${escHtml(ev.eyebrow)}</span>
           <div class="eb-heading">${escHtml(ev.heading)}</div>
           <div class="eb-sub">${escHtml(ev.sub)}</div>
         </div>`
-      : `<img class="eb-img" src="${ev.banner}" alt="${escHtml(ev.bannerAlt)}"${imgStyle}>`;
+      : `<img class="eb-img" src="${ev.banner}" alt="${escHtml(ev.bannerAlt)}">`;
     return `<a class="${cls.join(' ')}" href="${ev.href || ev.hash}">
         ${media}
         <div class="eb-foot">
@@ -2581,11 +2553,6 @@
   // (renderBigEventBanner() 内)。visibleBigEvents() 側の並び替えロジックには一切手を入れない。
   // BIG_EVENTSに混ぜない理由は promo-banners.js 冒頭のコメントを参照。
   //
-  // 【DreaM「Saturdayトーナメント」のPR常設バナーは、会期のある告知の後ろ・掲載店舗募集の前】
-  // dream-promo-banner.js の visibleDreamPromoBanner() を
-  // promos.concat(visibleBigEvents()) の【結果の後ろ】・visibleListingBanner() の【前】に連結する
-  // (renderBigEventBanner() 内)。詳細は dream-promo-banner.js 冒頭のコメントを参照。
-  //
   // 【2件以上のときは縦に積まず横スライドにする(2026-07-29導入)】
   // 縦積みだとバナー1件につき約195px、直下の「トーナメント日程」見出しが下がってしまうため。
   // 1件のときはカルーセルUI(ドット・矢印)を出さない。レジストリに大会を足せば枚数は自動で増える。
@@ -2608,14 +2575,10 @@
     // typeof チェックは promo-banners.js の読み込みが何らかの理由で失敗してもトップ全体を
     // 落とさないための保険(big-events.js側の型チェックと同じ考え方)。
     const promos = (typeof visiblePromoBanners === 'function') ? visiblePromoBanners() : [];
-    // CASINO BAR DreaM「Saturdayトーナメント」PR掲載の常設バナー(dream-promo-banner.js)は、
-    // 会期のある告知(単発プロモ・大型大会)の【後ろ】・掲載店舗募集バナーの【前】に付く
-    // (同じtypeofの保険)。
-    const dreamPromo = (typeof visibleDreamPromoBanner === 'function') ? visibleDreamPromoBanner() : [];
     // 掲載店舗募集の常設バナー(listing-banner.js)は他の告知の【最後尾】に付く。
     // 他に告知が0件ならこれ単体で表示される(同じtypeofの保険)。
     const listing = (typeof visibleListingBanner === 'function') ? visibleListingBanner() : [];
-    const evs = promos.concat(visibleBigEvents()).concat(dreamPromo).concat(listing);
+    const evs = promos.concat(visibleBigEvents()).concat(listing);
     // JOPT/NIPPONのデータ読み込み後に描き直すことがある。並びが変わっていなければ表示中の枚を保つ。
     const ids = evs.map(e => e.id).join(',');
     const keep = (slot.dataset.evIds === ids) ? Number(slot.dataset.index || 0) : 0;
