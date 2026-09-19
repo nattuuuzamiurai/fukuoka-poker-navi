@@ -21,7 +21,7 @@
  *      extractedRowProblem(日付書式・実在日・name非空・開始時刻が HH:MM か・金額が数値か)、
  *      行を跨ぐ検査は同ファイルの duplicateIdProblem(id重複)
  *   4. 抽出結果を tools/tournament-merge.js で `data.js` へ安全にupsertする
- *      (`source: 'semi', verified: false`。PR #11(import-waitinglist.js)・PR #14と同じ安全設計:
+ *      (`source: 'semi', verified: false`。import-waitinglist.js と同じ安全設計:
  *       対象venue以外・過去日には一切触れない、書き込み前に自己チェック、失敗時は書き換えない)
  *   5. 新着の有無・処理成否に関わらず、Apify呼び出し自体が失敗した店舗が1つでもあれば、
  *      このスクリプトは**どの店舗のぶんも** data.js / 状態ファイルを書き換えずに異常終了する
@@ -37,7 +37,7 @@
  *                                                       … 指定した店の【当月取得済みラッチ】をこの実行だけ解除する
  *                                                         (店が月の途中で訂正版カレンダーを出したときの取り直し)
  *
- * 【★当月取得済みラッチ(2026-08-05・運営判断「その月取得できたら次の月までその店舗は取得しなくていい」)】
+ * 【★当月取得済みラッチ(2026-08-05追加。その月取得できたら次の月までその店舗は取得しなくていい仕様)】
  *   状態ファイルに `capturedMonth` / `capturedAt` / `capturedPermalink` を持ち、
  *   その月のカレンダーを既に読めている店では【Vision を1回も呼ばない】。
  *   ★スキップした店は必ず1行ログに出す(黙って0件にしない)。
@@ -138,7 +138,7 @@ const path = require('path');
 const { normalizeExtractedRow, extractedRowProblem, duplicateIdProblem } = require('./validate-data');
 // 「機械が最後に書いた値」の控えと、そこから導く所有の判定。
 const machineState = require('./machine-write-state');
-// 【店ごとの掲載ルール】その店の実態を人が知っていないと決められない規則(運営判断)。
+// 【店ごとの掲載ルール】その店の実態を人が知っていないと決められない規則。
 // 行そのものの性質で決まる isClosureRow などとは種類が違うので、ファイルを分けてある。
 // tools/import-venue-image.js も同じものを使う(判定を書き分けない)。
 const listingRules = require('./venue-listing-rules');
@@ -233,7 +233,7 @@ function parseRecaptureArg(argv, stores) {
 }
 
 // ============================================================
-// 【当月取得済みラッチ】運営判断・2026-08-05
+// 【当月取得済みラッチ】2026-08-05追加
 // ============================================================
 /**
  * 【★毎月この日(JST)からはラッチを外して走査を再開する★】
@@ -456,7 +456,7 @@ function daysBetween(a, b) {
  *
  * 【★これは「両方向を実データで示す」規律の対象外(2026-08-05・レビューの線引き)】
  *   この案件が禁じてきたのは【閾値や経験則にもとづく警報で、鳴る側を実データで示せないもの】
- *   (PR #32 の到達不能な上振れ分岐が典型)。
+ *   (到達不能な上振れ分岐が典型)。
  *   一方これは【矛盾の検出】である — 投稿日時が現在より未来という状態は物理的に存在しない。
  *   **ありえない状態の検出は仮説の検証ではないので、鳴る側の実データを要さない**
  *   (定義上、正常なデータにその状態は存在しない)。この区別は README にも記録してある。
@@ -661,7 +661,7 @@ function nameContainsMoneyToken(name) {
 /**
  * ⚠ 要確認(`lowConfidence`)を付けるか。
  *
- * 【★判定を作り直した(2026-08-04・運営判断)】
+ * 【★判定を作り直した(2026-08-04)】
  *   「最低限はトナメ名。次点で参加費と開始時間。賞金は店舗のトーナメントではあまり気にしなくていい」
  * = **名前しか書かれていない行は【平常】**。
  *
@@ -692,14 +692,14 @@ function nameContainsMoneyToken(name) {
  *
  * 【★平常時は0行になる = 鳴らない警報になりうる】前回の44行では該当0件だったとみられる。
  * **鳴らない警報は壊れていても気づけない**。この案件は同じ罠を既に2度踏んでいる —
- * PR #32 の【到達不能な上振れ分岐】と、【上振れで発火しないことだけを検査した結果、
+ * 【到達不能な上振れ分岐】と、【上振れで発火しないことだけを検査した結果、
  * 警告が完全に死んでも緑になる】検査。だから片側だけの検査で満足しない。
  * そのためテストは**両方向**を固定してある:
  *   ・付くべき行で付く … `1K MULTI`+buyin を【時刻あり/スタックあり/GTDあり/何も無し の4通り全部】
  *   ・付くべきでない行で付かない … 名前だけの行 / 時刻だけの行
  *   ・`return false` に潰す変異でテストが落ちること(2026-08-04に確認済み)
  *
- * 【GTD・賞品は判定に使わない】運営判断のとおり店舗大会では重要度が低く、実測でも0/44。
+ * 【GTD・賞品は判定に使わない】店舗大会では重要度が低く、実測でも0/44。
  * 判定に入れても常に同じ側に倒れるだけで、印の意味を薄める。
  */
 function buyinMayComeFromName(t) {
@@ -822,7 +822,7 @@ function toTournament(t, venueId) {
   // 同じ日・同じ名前で時刻が読めない行が2つあれば id は衝突するが、それは
   // 【区別できないものを区別できないと言っている】だけで正しい。duplicateIdProblem が拾う。
   const startKey = start ? start.replace(':', '') : 'nostart';
-  // 【店ごとの掲載ルール: 参加費を一切記録しない店】(運営判断・tools/venue-listing-rules.js)
+  // 【店ごとの掲載ルール: 参加費を一切記録しない店】(tools/venue-listing-rules.js)
   // Visionが読み取っていても捨てる。0(無料)も同じく捨てる — この店の数字は店内通過価格で
   // 円と対応せず、0 は「0円で参加できる」という裏付けの無い円建ての主張になるため。
   // ★ここで捨てた件数は呼び出し側が数えてログに出す(黙って消さない)。
@@ -884,7 +884,7 @@ const VALID_DATE = /^\d{4}-\d{2}-\d{2}$/;
  * 【月間カレンダーかどうか】を、語彙ではなく【抽出結果の構造】で判定する。
  *
  * 【なぜ語彙で判定しないか(2026-08-04)】
- * 運営判断でスコープが「最新月のカレンダー1枚だけ」に絞られた。従来のキーワード判定
+ * スコープを「最新月のカレンダー1枚だけ」に絞った。従来のキーワード判定
  * (`looksLikeSchedulePost`)は廃止した — dry-run #5 で
  * **v40 は12投稿すべてがキーワードで捨てられ Vision に一度も渡っていなかった**(うち7件は
  * キャプション自体が無い)。キャプションが無い投稿はキーワードをどう調整しても届かないので、
@@ -1061,7 +1061,7 @@ async function runMonitor(opts, libs) {
       // 【★この店の lastPostedAt は絶対に前進させない★】nextState は state の浅いコピーなので、
       // ここで触らずに continue すれば前回値がそのまま残る。前進させてしまうと
       // 「取得に失敗しただけの投稿」が処理済みとして【永久に失われる】。
-      // Waitinglist取込み(import-waitinglist.js)にも同じ隔離が入っている(PR #22)が、
+      // Waitinglist取込み(import-waitinglist.js)にも同じ隔離が入っているが、
       // あちらは状態ファイルを持たないので、この lastPostedAt の扱いだけが Instagram 固有。
       // 実装は共通化していないので、片方を直しても自動では追従しない点に注意。
       summary.fetchFailed = true;
@@ -1426,7 +1426,7 @@ async function runMonitor(opts, libs) {
           reason = 'トーナメントではない競技形式(リングゲーム/キャッシュゲーム)';
           kind = 'not-a-tournament';
         }
-        // 【店ごとの掲載ルールによる除外】(運営判断・tools/venue-listing-rules.js)
+        // 【店ごとの掲載ルールによる除外】(tools/venue-listing-rules.js)
         // ★上の3つと kind を分けてある。上は「行そのものの性質」で大会でないと言えるが、
         //   こちらは【この店では載せないと決めた】だけで、大会でないと分かったわけではない
         //   (v20 の `華金` は「なにか分からない」が理由)。同じ kind に混ぜると、
@@ -1519,14 +1519,14 @@ async function runMonitor(opts, libs) {
         const allAlreadyImported = allDroppedFor('duplicate-in-run');
         // (b) そもそも大会が1件も写っていない投稿(定休日だけの月・リングゲームの案内など)。
         //     2026-08-01 の dry-run #5 で、v34 の19行がすべてリングゲームの投稿で赤くなった。
-        //     PR #30 でリングゲーム判定が先に効くようになり、以前は duplicate-in-run として
+        //     リングゲーム判定が先に効くようになり、以前は duplicate-in-run として
         //     再投稿に分類されていたものが異常に変わったもの。【失われた大会は1件も無い】。
         const allNotATournament = allDroppedFor('not-a-tournament');
         // (c) 人が admin.html で日時を訂正した投稿。id は日時から作るのでスロットがズレて衝突する。
         //     【人の訂正は正しく守られている】のに、その投稿がApifyの取得窓に残る限り毎日赤くなる。
         //     id が日時を含む以上、この kind は「人が日時を訂正した」以外の原因では発生しない。
         const allHumanEdited = allDroppedFor('existing-slot-conflict');
-        // (d) 全行が【店ごとの掲載ルール】で除外された投稿(運営判断による非掲載)。
+        // (d) 全行が【店ごとの掲載ルール】で除外された投稿(店ごとの方針による非掲載)。
         //     ★平常は 0 のはずのバケツ。それでも保存則の項として置くのは、ここを用意しないと
         //       この投稿が `unusablePosts`(=::error::)に落ちて【空振りの赤】になるため。
         //       0のまま動かない項を保存則に入れる先例は probeCalendarPostCount(探索専用)。
@@ -1854,7 +1854,7 @@ function makeStoreSummary(store) {
     repostedPostCount: 0,
     notATournamentPostCount: 0,
     humanEditedPostCount: 0,
-    // 【店ごとの掲載ルール(運営判断)で全行が除外された投稿】平常は0のまま動かない。
+    // 【店ごとの掲載ルールで全行が除外された投稿】平常は0のまま動かない。
     // 0でも保存則の項に入れてあるのは、ここを用意しないとその投稿が「全行不採用」= ::error::
     // に落ちて空振りの赤になるため(probeCalendarPostCount と同じ趣旨)。
     venueRuleOnlyPostCount: 0,
@@ -1867,7 +1867,7 @@ function makeStoreSummary(store) {
     unexaminedPostCount: 0,
     cacheHitCount: 0,
     examinedPostCount: 0,
-    // 【当月取得済みラッチでVisionを呼ばなかった投稿】(運営判断・2026-08-05)
+    // 【当月取得済みラッチでVisionを呼ばなかった投稿】(2026-08-05追加)
     // ★0で初期化すること。ラッチに掛からなかった店はこの値を触らないので、
     //   初期化しないと undefined のまま checkPostAccounting に渡って合計が NaN になる。
     latchSkippedPostCount: 0,
@@ -2103,7 +2103,7 @@ function checkVenueRuleAccounting(summary) {
 function reportVenueListingRules(summaries) {
   const list = Array.isArray(summaries) ? summaries : [];
   console.log('');
-  console.log('[monitor-instagram-apify] === 店ごとの掲載ルール(運営判断・tools/venue-listing-rules.js) ===');
+  console.log('[monitor-instagram-apify] === 店ごとの掲載ルール(tools/venue-listing-rules.js) ===');
   console.log(
     '  この規則は【その店の実態を人が知っていないと決められない】もので、行そのものの性質で' +
       '決まる定休日・見出し・リングゲームの判定とは種類が違います。0件でも毎回出します。'
@@ -2137,7 +2137,7 @@ function reportVenueListingRules(summaries) {
     const rows = target.flatMap((s) => s.venueRuleDropped || []).filter((r) => r.term === rule.term);
     console.log(
       `  除外: ${rule.label}(${rule.venueId}) — 大会名に「${rule.term}」を含む行 ${rows.length}件` +
-        `(根拠: ${rule.basis} / ${rule.instructedAt} 運営判断)` +
+        `(根拠: ${rule.basis} / ${rule.instructedAt} 確認)` +
         (target.length === 0 ? '(この実行の対象店に含まれていません)' : '')
     );
     console.log(`    理由: ${rule.reason}`);
@@ -2727,7 +2727,7 @@ const NO_START_PCT_TOLERANCE = 25;
  * 照合作業ができない。
  *
  * 【ここに出るのは公開する内容そのもの】日付・開始時刻・大会名・参加費・スタック・permalink は
- * いずれも data.js に載せてサイトで公開する値。PR #28 で削ったのは
+ * いずれも data.js に載せてサイトで公開する値。以前削ったのは
  * 「見ないと決めた投稿のキャプション本文」で、性質が正反対のもの。公開範囲は1文字も増えない。
  * 【ただしキャプションは決して出さないこと】— この経路にも同じ規律を適用する。
  */
@@ -3034,7 +3034,7 @@ function reportLatchState(summaries, storeCount, today) {
   const list = Array.isArray(summaries) ? summaries : [];
   const acc = latchAccounting(list, storeCount);
   console.log('');
-  console.log('[monitor-instagram-apify] === 当月取得済みラッチ(運営判断・2026-08-05) ===');
+  console.log('[monitor-instagram-apify] === 当月取得済みラッチ(2026-08-05追加) ===');
   console.log(
     `  対象 ${acc.expected}店 = スキップ ${acc.skipped}店 + 走査 ${acc.scanned}店 + ` +
       `新着なし ${acc.noNewPosts}店 + 取得失敗 ${acc.failed}店` +

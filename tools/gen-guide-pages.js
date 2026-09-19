@@ -222,10 +222,10 @@ const GUIDE_CSS = `  .gd-card{background:var(--sur);border:1px solid var(--bor);
   ul.gd-toc a:hover{text-decoration:underline}
 `;
 
-// ---- カテゴリー見出しのアイコン(運営判断: ストローク系のインラインSVG・絵文字は使わない) ----
-// 店舗ページ改修(PR #91 feat/venue-page-card-redesign)の ICONS/ICON_ATTR と同じ様式にそろえる
+// ---- カテゴリー見出しのアイコン(ストローク系のインラインSVG・絵文字は使わない方針) ----
+// 店舗ページ改修の ICONS/ICON_ATTR と同じ様式にそろえる
 // (fill=none・stroke=currentColor・stroke-width 1.8・角丸のシンプルなピクトグラム)。
-// ブランドロゴの模写はしない(同PRと同じ理由)。
+// ブランドロゴの模写はしない(同じ理由)。
 const ICON_ATTR = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"';
 const ICONS = {
   // トロフィー(トーナメント)
@@ -260,7 +260,7 @@ function categoryFeaturedCards(featured) {
   // 既定の .vp-cards は minmax(150px,1fr)(店舗ページの「同じエリアの他のポーカー店」= 店名＋駅名
   // 1行だけの軽いカード向け)。ここは箇条書き2〜3点＋出典まで入るため、既定のまま複数列に詰めると
   // 窮屈になる。.vp-cards 自体(店舗ページ等と共有)は変えず、この一覧だけ幅を広げる
-  // (店舗ページ改修〔PR #91〕の .vp-info-grid が採る 230px と同じ値にそろえる)。
+  // (店舗ページ改修の .vp-info-grid が採る 230px と同じ値にそろえる)。
   return `<div class="vp-cards" style="grid-template-columns:repeat(auto-fill,minmax(230px,1fr))">
 ${featured.map(f => {
     const v = venueById(f.id);

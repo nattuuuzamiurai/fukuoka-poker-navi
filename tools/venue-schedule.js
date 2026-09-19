@@ -270,9 +270,9 @@ function hasSchedule(TOURNAMENTS, RECURRING, venueId) {
 
 // ---- FST 5.0 サテライトを「現在開催中」と出してよいかの判定 ----
 // 【なぜここに置くか】もとは gen-venue-pages.js だけが持っていたが、エリアページ
-//   (gen-area-pages.js・依頼1「エリア内のいずれかの店舗が現在サテライト開催中ならバナー表示」)
+//   (gen-area-pages.js「エリア内のいずれかの店舗が現在サテライト開催中ならバナー表示」)
 //   にも同じ判定基準が必要になったため、TOURNAMENTS/RECURRING を都度読み直す他の店舗単位の
-//   判定(venueRange・hasSchedule)と同じこのファイルに寄せた。判定基準そのものはPR#50から
+//   判定(venueRange・hasSchedule)と同じこのファイルに寄せた。判定基準そのものは
 //   変えていない。
 // 【なぜ big-events.js の satelliteVenueIds をそのまま使わないか】
 //   あのリストは「一度集計した結果を書いた静的な配列」。店が開催をやめても人が書き換えを
@@ -291,7 +291,7 @@ function hasSchedule(TOURNAMENTS, RECURRING, venueId) {
 //     『今日以降』にしない理由」を参照)。
 // 【FST専用】WJPT/JOPTのように会期が終わった大会には使わない(「現在開催中」という現在形の
 //   主張が終了済み大会には成立しないため)。終了済み大会の店舗一覧は
-//   big-events.js の pastSatelliteVenueIds(静的リスト・依頼4)を別途参照すること。
+//   big-events.js の pastSatelliteVenueIds(静的リスト)を別途参照すること。
 const FST_SAT_RE = /サテライト|satellite/i;
 const FST_NAME_RE = /FST/i;
 const isFstSatelliteEntry = t => (FST_SAT_RE.test(t.name || '') || (t.tags || []).some(x => FST_SAT_RE.test(x)))

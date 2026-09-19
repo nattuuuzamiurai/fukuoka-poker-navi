@@ -99,7 +99,7 @@ const { SCHEDULE_JS, SCHED, venueRange, RecurringDedupe, venueHasCurrentFstSatel
 // 判定そのものは area-schedule.js が所有する(こちらは結果を使うだけ)。
 const { AREA_SLUGS, areaList, footerAreaLinksHtml } = require('./area-schedule.js');
 const AREA_PAGES = new Set(areaList(VENUES, AREAS));
-// フッターの「エリアから探す」リンク行(依頼3)。全店舗ページで内容は共通なので1回だけ組み立てる。
+// フッターの「エリアから探す」リンク行。全店舗ページで内容は共通なので1回だけ組み立てる。
 const FOOTER_AREA_LINKS = footerAreaLinksHtml(VENUES, AREAS);
 
 // ---- 関連ガイド(/guide/beginner/)への内部リンク(2026-09-13・マーケティング分析) ----
@@ -203,8 +203,8 @@ const VENUE_CSS = `  .vp-sub{font-size:.9em;color:var(--mut);margin-bottom:14px}
      (2026-08-28。エリアページでも使うため。複製すると片方だけ直して片方を忘れる)。 */
 `;
 
-// ---- 情報カードのアイコン(依頼1・2026-09-12) ----
-// ストローク系のインラインSVG(絵文字は使わない・運営判断)。ブランドロゴ(X/Instagram等)は
+// ---- 情報カードのアイコン(2026-09-12追加) ----
+// ストローク系のインラインSVG(絵文字は使わない方針)。ブランドロゴ(X/Instagram等)は
 // 商標・著作権を避けるため模写せず、どの項目も同じ「汎用ピクトグラム」にしてある
 // (SNSは後述のボタン側がテキストでプラットフォーム名を示すので、アイコン単体で
 // ブランドを表現する必要が無い)。
@@ -218,8 +218,8 @@ const ICONS = {
 };
 function icon(name) { return `<span class="vp-info-ic">${ICONS[name]}</span>`; }
 
-// ---- 初心者講習バッジ(依頼4) ----
-// 【noteの自由文はパースしない、の例外】このバッジに限っては運営判断で「既存のnoteデータから
+// ---- 初心者講習バッジ ----
+// 【noteの自由文はパースしない、の例外】このバッジに限っては「既存のnoteデータから
 // 抽出してよい」となっている(新しい事実を作り出すのではなく、既に書かれている文言の有無を
 // 見た目で目立たせるだけ)。抽出結果は「あり/なし」の2値のみで、講習の内容(無料か・毎日か等)を
 // 要約・断定しない(要約するとnoteの原文と表現がズレて情報源としての一次性が崩れる)。
@@ -230,11 +230,11 @@ function beginnerBadge(v) {
   return null;
 }
 
-// ---- Googleマップ埋め込み(依頼2・確認済み) ----
+// ---- Googleマップ埋め込み(確認済み) ----
 // APIキー不要の /maps?q=<住所>&output=embed 形式。
 // ★ addressUnverified の店・住所が無い店には出さない(呼び出し側 buildVenue が判定する)。
 //   誤った場所の地図を確定情報として出すリスクを避けるため(法務・信頼性メモと同じ考え方)。
-// ★ lat/lng(PR #89・2026-09-13 統合ブランチで main合流済み)があればそちらを優先する
+// ★ lat/lng(2026-09-13にmainへ統合済み)があればそちらを優先する
 //   (住所文字列から Google に組み立てさせるより地理的に正確なため)。
 // 【venueJsonLd はここでは定義しない】LocalBusiness(JSON-LD)の組み立ては
 //   tools/venue-jsonld.js の venueJsonLd() に一本化してある(このファイル冒頭で import 済み)。
@@ -246,12 +246,12 @@ function mapEmbedUrl(v) {
   return `https://www.google.com/maps?q=${encodeURIComponent(v.address)}&output=embed`;
 }
 
-// ---- 情報カード本体(依頼1) ----
+// ---- 情報カード本体 ----
 // 【エリアをカードに出さない理由】h1直下の .vp-sub に既にエリア(＋アクセス)を出しているため、
 //   同じ情報をもう一度カードで繰り返さない(旧 metaRows は毎回「エリア」行を出していたが、
 //   これは重複表示だった)。
-// 【公式サイトとSNSを1枚のカードにまとめる理由】依頼1の項目列挙(「住所・アクセス・営業時間・
-//   公式サイト/SNS」)が4カテゴリなので、それに合わせる。SNSは依頼3のフォールバック
+// 【公式サイトとSNSを1枚のカードにまとめる理由】掲載する項目(「住所・アクセス・営業時間・
+//   公式サイト/SNS」)が4カテゴリなので、それに合わせる。SNSはフォールバック
 //   (「公式サイト・SNSへの目立つリンクボタンで代替してよい」)を兼ね、ボタン型で見せる。
 function venueInfoCardsHtml(v) {
   const cards = [];
@@ -261,7 +261,7 @@ function venueInfoCardsHtml(v) {
   if (v.access) {
     cards.push(`<div class="vp-info-card">${icon('access')}<div><b>アクセス</b>${esc(v.access)}</div></div>`);
   }
-  // hours(営業時間)は店舗からの直接申告等、分かっている店だけ埋まる自由記述(運営判断・2026-09-09)。
+  // hours(営業時間)は店舗からの直接申告等、分かっている店だけ埋まる自由記述(2026-09-09)。
   // 空文字列の店では他の項目(住所・アクセス等)と同じくカードごと出さない。
   if (v.hours) {
     cards.push(`<div class="vp-info-card">${icon('clock')}<div><b>営業時間</b>${esc(v.hours)}</div></div>`);
@@ -338,7 +338,7 @@ function venueHeroPhotoHtml(v) {
 </figure>`;
 }
 
-// ---- 料金・システム(2026-09-16新設・運営判断) ----
+// ---- 料金・システム(2026-09-16新設) ----
 // data.js の "pricing"({name, price, note}の配列)をそのまま列挙するだけ。店ごとに項目名・
 // 粒度がバラバラなため、固定カテゴリへの正規化・要約はしない(noteBlock と同じ考え方)。
 function venuePricingHtml(v) {
@@ -353,14 +353,14 @@ function venuePricingHtml(v) {
 <div class="vp-pricing">${rows}</div>`;
 }
 
-// ---- FST 5.0 サテライトを「現在開催中」と出してよいかの判定(依頼2) ----
+// ---- FST 5.0 サテライトを「現在開催中」と出してよいかの判定 ----
 // 判定ロジックの実体は tools/venue-schedule.js の venueHasCurrentFstSatellite() に移設した
-// (2026-08-28。エリアページ(gen-area-pages.js・依頼1)にも同じ判定基準が必要になったため。
-// 判定基準そのものはPR#50から変えていない。呼び出し方は venueHasCurrentFstSatellite(TOURNAMENTS,
+// (2026-08-28。エリアページ(gen-area-pages.js)にも同じ判定基準が必要になったため。
+// 判定基準そのものは変えていない。呼び出し方は venueHasCurrentFstSatellite(TOURNAMENTS,
 // RECURRING, venueId) の3引数になった)。
 const FST_REG = BIG.bigEventById('fst');
 
-// ---- title/description 差別化バッジの材料(依頼1・マーケティング提案 2026-08-28) ----
+// ---- title/description 差別化バッジの材料(2026-08-28追加) ----
 // 【背景】全店舗ページ(37件)のtitle/descriptionが店名以外まったく同じ文言で、Search Console実測で
 //   CTR0%のページが目立つ(例: CasinoX福岡今泉店・KING&QUEEN SUITED黒崎店・THE DOJO大橋)。
 //   店名以外の文言が全店共通だと「機械的な一覧サイト」に見えて選ばれにくいため、data.js に
@@ -415,7 +415,7 @@ const VENUE_CTR_LEAD = {
   'triplebarrel-orio': '折尾でポーカーができる店を探している方へ。'
 };
 
-// パンくずリスト(依頼2・2026-08-28): トップ > エリアから探す > 〇〇エリア > 店舗名。
+// パンくずリスト(2026-08-28追加): トップ > エリアから探す > 〇〇エリア > 店舗名。
 // 「エリアから探す」はトップページのヒーロー直下のナビ(index.html #areaNav)へのアンカー
 // (専用ページを持たないため)。その店のエリアにエリアページが無い(1店舗しか無いエリア。
 // 2026-08-28時点で西中洲・博多・京築・筑豊)場合は、存在しない階層を作らずその段を省く。
@@ -458,7 +458,7 @@ function buildVenue(v) {
   //   (半角括弧の店名が来ても効くようにしている)。
   const areaInName = v.name.includes(`（${v.area}）`) || v.name.includes(`(${v.area})`);
   // title側の括弧: エリア(店名に無ければ) + 差別化バッジ(あれば)。1店1店違う材料が入るので、
-  // 同じエリアの店どうしでもtitleの前寄りが同じにならない(依頼1のねらい)。
+  // 同じエリアの店どうしでもtitleの前寄りが同じにならないようにする狙い。
   const badge = venueBadge(v);
   const titleParenParts = [];
   if (!areaInName) titleParenParts.push(VENUE_TOWN_LABEL[v.slug] || v.area);
@@ -488,7 +488,7 @@ function buildVenue(v) {
   const altNamesNote = Array.isArray(v.altNames) && v.altNames.length
     ? `（SNS表記: ${v.altNames.map(esc).join('・')}）`
     : '';
-  // 「料金システム」を title / description / .vp-sub に入れる判定(2026-09-17・運営判断)。
+  // 「料金システム」を title / description / .vp-sub に入れる判定(2026-09-17追加)。
   // 「<店舗名> システム」「<店舗名> 料金システム」の検索で店舗ページが拾われやすくするため、
   // data.js に pricing が1件以上ある店だけ文面を切り替える。pricing の無い店の文面は従来のまま
   // (既存の title は検索結果の実測をもとに調整済みなので、材料の無い店まで一律に変えない)。
@@ -531,7 +531,7 @@ function buildVenue(v) {
   // 【運営方針・2026-08-27】大型大会は一時的なものなので、リピート導線は店舗どうしの
   //   内部リンクで作る。カードは3〜5件に絞る(それ以上は下のエリアページへの導線でカバーする。
   //   1エリアに何十件も並べると「近くの店」として一覧しづらくなるため)。
-  // 【選出方法・2026-08-30改訂(品質チェック指摘・PR#53)】以前は「VENUES配列順の先頭から5件」を
+  // 【選出方法・2026-08-30改訂(公開前チェックの指摘による)】以前は「VENUES配列順の先頭から5件」を
   //   全ページ共通で固定選出していた。この方式だと、エリアの店舗数が6件(自店+5件)を超えた
   //   瞬間、【配列の後方にいる店舗がどのページからも永遠に選ばれない】(被リンク0本のまま
   //   固定化する)。実際に中洲エリアが7→8店舗に増えたとき(本PRでBon西中洲を合流)、
@@ -564,12 +564,12 @@ ${sameAreaShown.map(x => `  <a class="vp-card" href="/venues/${x.slug}/">
 </div>${areaHref ? `
 <p class="lead">▶ <a href="${areaHref}">${esc(v.area)}のポーカー店${VENUES.filter(x => x.area === v.area).length}店舗の日程をまとめて見る</a></p>` : ''}` : '';
 
-  // FST 5.0 サテライトを現在開催中の店舗への告知(依頼2)。判定は venueHasCurrentFstSatellite が
+  // FST 5.0 サテライトを現在開催中の店舗への告知。判定は venueHasCurrentFstSatellite が
   // data.js の実データから都度行う(店舗一覧を手で足し引きしない)。大会ページが無ければ出さない。
   const fstSatBlock = (FST_REG && venueHasCurrentFstSatellite(TOURNAMENTS, RECURRING, v.id)) ? `
 <div class="vp-fst"><b>現在FST 5.0のサテライトを開催中です。</b>FSTチケット（獲得すると本大会にエントリーできます）を賭けたトーナメントを開催しています。詳細は<a href="${esc(FST_REG.featureUrl)}">FST 5.0 大会ページ</a>をご確認ください。</div>` : '';
 
-  // 終了済み大会(WJPT/JOPT)のサテライト開催実績の告知(依頼4・2026-08-28)。
+  // 終了済み大会(WJPT/JOPT)のサテライト開催実績の告知(2026-08-28追加)。
   // FSTと違って会期が終わっているので「現在開催中」ではなく過去形。判定は big-events.js の
   // pastSatelliteVenueIds(静的リスト。終了済み大会なので動的判定にする必要が無い)を参照する。
   // 見た目は「終了しました」告知と同じ .archived(BASE_CSS)を流用する(意味的にも「記録」なので)。
@@ -577,7 +577,7 @@ ${sameAreaShown.map(x => `  <a class="vp-card" href="/venues/${x.slug}/">
   const pastSatBlock = pastSatEvents.length ? `
 <div class="archived"><b>${esc(v.name)}は、${pastSatEvents.map(e => `<a href="${esc(e.featureUrl)}">${esc(e.label)}</a>`).join('・')}のサテライト（チケット獲得トーナメント）を開催していました。</b>いずれも終了した大会の開催実績です。現在の開催状況は店舗の公式情報・SNSをご確認ください。</div>` : '';
 
-  // リングゲーム開催ブロック(依頼3)。ring:true の店だけ出す。
+  // リングゲーム開催ブロック。ring:true の店だけ出す。
   // レート等の裏取り状況は店ごとにまちまちなので、data.js の ringNote をそのまま出す
   // (noteBlock と同じ考え方 ＝ 生成スクリプト側で要約・断定を足さない)。
   const ringBlock = v.ring === true ? `
@@ -600,7 +600,7 @@ ${sameAreaShown.map(x => `  <a class="vp-card" href="/venues/${x.slug}/">
     ? `主な情報源: <a href="${esc(v.sourceUrl)}" target="_blank" rel="noopener">${esc(v.sourceLabel)}</a>。`
     : '';
 
-  // 初心者講習バッジ(依頼4)。
+  // 初心者講習バッジ。
   const bBadge = beginnerBadge(v);
   const badgesBlock = bBadge ? `
 <div class="vp-badges"><span class="vp-badge">${esc(bBadge)}</span></div>` : '';
@@ -610,7 +610,7 @@ ${sameAreaShown.map(x => `  <a class="vp-card" href="/venues/${x.slug}/">
   const closedNoticeBlock = v.closed ? `
 <div class="vp-closed-notice">⚠ この店舗は閉店した可能性があります(要確認)。最新の営業状況は店舗の公式情報・SNS等でご確認ください。</div>` : '';
 
-  // Googleマップ埋め込み(依頼2・確認済み)。addressUnverified の店・住所が無い店には出さない
+  // Googleマップ埋め込み(確認済み)。addressUnverified の店・住所が無い店には出さない
   // (法務・信頼性メモ「留保付きで載せている値は構造化データに出さない」と同じ考え方 ＝
   //  確度の低い住所を確定情報として地図に描くと、誤った場所を断定して示すことになる)。
   const mapBlock = (v.address && !v.addressUnverified) ? `
@@ -704,7 +704,7 @@ ${SCHEDULE_JS}
     // (営業中の事業所として構造化データで断定しないため)。
     jsonld: (v.preopen || v.closed) ? null : venueJsonLd(v),
     breadcrumb: venueBreadcrumb(v, canonical),
-    // OGP画像(依頼5・2026-08-28)。店舗ごとの専用画像は持たないため、image を省略して
+    // OGP画像(2026-08-28追加)。店舗ごとの専用画像は持たないため、image を省略して
     // pageHead の既定値(サイト共通OGP・img/ogp/common-og.jpg)に任せる。
     ogType: 'website',
     twitterCard: 'summary_large_image',

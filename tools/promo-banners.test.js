@@ -5,7 +5,7 @@
  * 実行: node tools/promo-banners.test.js (または node --test tools/*.test.js)
  *
  * 【なぜこのファイルがあるか】
- *   big-events.test.js(BANNER_LEAD_DAYS の変更漏れをPR #67で指摘された教訓)と同じ考え方。
+ *   big-events.test.js(BANNER_LEAD_DAYSの変更漏れが公開前チェックで見つかった教訓・2026-09-01)と同じ考え方。
  *   promo-banners.js は big-events.js の日付ヘルパーをそのまま使う設計だが、
  *   「PROMO_LEAD_DAYS の値」と「掲載ウィンドウの境界」は promo-banners.js 独自のパラメータなので、
  *   ここで固定しておかないと次に値を変えたときの巻き戻りに気づけない。
@@ -19,7 +19,7 @@
  *   eventFirstDay = BE.eventFirstDay; … }` という互換ブロックを持っていたが、big-events.js と
  *   【同じ名前】で var 宣言していたため、ブラウザで
  *   `Uncaught SyntaxError: Identifier 'eventFirstDay' has already been declared` が発生し、
- *   本番デプロイ後に初めて発覚した(PR #74マージ後)。
+ *   本番デプロイ後に初めて発覚した(2026-09-02)。
  *   原因は、ブラウザの複数の<script>タグ(非module)が同じページ内でグローバルな字句スコープを
  *   共有すること。var 宣言は if 文の中にあっても【実行されなくても】構文解析の時点で
  *   スクリプト全体にホイスティングされるため、big-events.js側の `const eventFirstDay` と
@@ -69,7 +69,7 @@ test('visiblePromoBanners(): 掲載終了日(最終日+1)は含まれ、その�
   assert.deepStrictEqual(PB.visiblePromoBanners('2026-09-07', promos).map(p => p.id), []);
 });
 
-test('本番のPROMO_BANNERS: DreaMグランドオープンの掲載期間は2026-08-22〜2026-09-06(運営判断どおり)', () => {
+test('本番のPROMO_BANNERS: DreaMグランドオープンの掲載期間は2026-08-22〜2026-09-06(設定どおり)', () => {
   const dream = PB.PROMO_BANNERS.find(p => p.id === 'dream-grandopen-2026');
   assert.ok(dream, 'PROMO_BANNERSにdream-grandopen-2026が見つからない');
   assert.strictEqual(PB.promoShowFrom(dream.days), '2026-08-22');
@@ -113,7 +113,7 @@ test('visiblePromoBanners(): 最終日の翌日 06:01 も非表示のまま', ()
     PB.visiblePromoBanners(new Date(2026, 8, 6, 6, 1, 0), promos).map(p => p.id), []);
 });
 
-test('本番のPROMO_BANNERS: dream-grandopen-2026は2026-09-06 05:59まで表示され、06:00には消える(運営判断の具体例そのもの)', () => {
+test('本番のPROMO_BANNERS: dream-grandopen-2026は2026-09-06 05:59まで表示され、06:00には消える(掲載打ち切りルールの具体例)', () => {
   const before = PB.visiblePromoBanners(new Date(2026, 8, 6, 5, 59, 59)).map(p => p.id);
   const after = PB.visiblePromoBanners(new Date(2026, 8, 6, 6, 0, 0)).map(p => p.id);
   assert.ok(before.includes('dream-grandopen-2026'), `05:59の時点で消えている(実際: ${JSON.stringify(before)})`);

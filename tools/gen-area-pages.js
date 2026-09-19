@@ -67,9 +67,9 @@ shell.validateVenueSlugs(VENUES);
 validateAreaSlugs(VENUES, AREAS);
 
 const PAGE_AREAS = areaList(VENUES, AREAS);
-// フッターの「エリアから探す」リンク行(依頼3)。全エリアページで内容は共通なので1回だけ組み立てる。
+// フッターの「エリアから探す」リンク行。全エリアページで内容は共通なので1回だけ組み立てる。
 const FOOTER_AREA_LINKS = footerAreaLinksHtml(VENUES, AREAS);
-// FST 5.0 サテライトを現在開催中の店舗があるかの判定に使うレジストリ(依頼1)。
+// FST 5.0 サテライトを現在開催中の店舗があるかの判定に使うレジストリ。
 const FST_REG = BIG.bigEventById('fst');
 
 const AREA_CSS = `  .vp-sub{font-size:.9em;color:var(--mut);margin-bottom:14px}
@@ -93,7 +93,7 @@ const AREA_CSS = `  .vp-sub{font-size:.9em;color:var(--mut);margin-bottom:14px}
 `;
 
 /**
- * パンくずリスト(依頼2・2026-08-28): トップ > エリアから探す > エリア名。
+ * パンくずリスト(2026-08-28追加): トップ > エリアから探す > エリア名。
  * 表示用HTML・JSON-LD(BreadcrumbList)とも tools/site-shell.js の pageHead({ breadcrumb }) に
  * items 配列を渡すだけで両方組み立たる(2箇所を別々に書かない)。
  * 「エリアから探す」はトップページのヒーロー直下のナビ(index.html #areaNav)へのアンカー
@@ -147,7 +147,7 @@ function venueCards(venues) {
   }).join('\n');
 }
 
-// ---- title/description 差別化(依頼1: エリアページ・マーケティング提案 2026-08-28) ----
+// ---- title/description 差別化(エリアページ・2026-08-28追加) ----
 // 【背景】全エリアページ(7件)のtitle/descriptionがエリア名以外まったく同じ文言で、
 //   特に「北九州」のように1エリアが複数の町(小倉・黒崎・折尾…)にまたがる場合、
 //   検索意図(「小倉 ポーカー」等)との一致が見えにくくCTR0%になりやすい(実測)。
@@ -326,11 +326,11 @@ function buildArea(area) {
 ${others.map(a => `  <li><a href="/areas/${AREA_SLUGS[a]}/">${esc(a)}（${areaVenues(VENUES, a).length}店舗）</a></li>`).join('\n')}
 </ul>` : '';
 
-  // 「掲載中の大会」バナー(依頼1・2026-08-28)。エリア内のいずれかの店舗が現在FST 5.0の
-  // サテライトを開催中なら告知を出す。判定は venueHasCurrentFstSatellite(店舗ページ・PR#50と同じ
+  // 「掲載中の大会」バナー(2026-08-28追加)。エリア内のいずれかの店舗が現在FST 5.0の
+  // サテライトを開催中なら告知を出す。判定は venueHasCurrentFstSatellite(店舗ページと同じ
   // 判定関数。2026-08-28に venue-schedule.js へ移設して共有)をエリア内の各店舗に対して都度行う。
   // 【FST専用】終了済み大会(WJPT/JOPT)は「現在開催中」という現在形の告知にはしない
-  // (big-events.js の pastSatelliteVenueIds を使った店舗ページ側の過去形表示(依頼4)で別途対応)。
+  // (big-events.js の pastSatelliteVenueIds を使った店舗ページ側の過去形表示で別途対応)。
   const fstAreaBlock = (FST_REG && venues.some(v => venueHasCurrentFstSatellite(TOURNAMENTS, RECURRING, v.id))) ? `
 <div class="vp-fst"><b>${esc(area)}エリアで現在FST 5.0のサテライトが開催されています。</b>FSTチケット（獲得すると本大会にエントリーできます）を賭けたトーナメントを開催している店舗があります。詳細は<a href="${esc(FST_REG.featureUrl)}">FST 5.0 大会ページ</a>をご確認ください。</div>` : '';
 
@@ -403,7 +403,7 @@ ${SCHEDULE_JS}${AREA_SCHEDULE_JS}
     title, desc, canonical,
     jsonld: areaItemListJsonLd(venues),
     breadcrumb: areaBreadcrumb(area, canonical),
-    // OGP画像(依頼5・2026-08-28)。エリアごとの専用画像は持たないため、image を省略して
+    // OGP画像(2026-08-28追加)。エリアごとの専用画像は持たないため、image を省略して
     // pageHead の既定値(サイト共通OGP・img/ogp/common-og.jpg)に任せる。
     ogType: 'website',
     twitterCard: 'summary_large_image',

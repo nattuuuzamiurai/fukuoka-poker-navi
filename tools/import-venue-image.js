@@ -66,7 +66,7 @@ const { normalizeExtractedRow, extractedRowProblem, duplicateIdProblem } = requi
 // 「機械が最後に書いた値」の控えと、そこから導く所有の判定。
 const machineState = require('./machine-write-state');
 
-// 【店ごとの掲載ルール】(運営判断)。Instagram監視(tools/monitor-instagram-apify.js)と
+// 【店ごとの掲載ルール】。Instagram監視(tools/monitor-instagram-apify.js)と
 // 【同じものを使う】。このツールは Instagram監視が内容を取りこぼしたときの手動の代替経路
 // (「内容が必要なら node tools/import-venue-image.js … で手動取込みしてください」)なので、
 // ここで規則が効かないと【自動経路で消したはずの参加費・行が、手動経路から入ってくる】。
@@ -114,7 +114,7 @@ function slugify(name) {
  */
 function toTournament(t, venueId) {
   const start = t.start || '00:00';
-  // 【店ごとの掲載ルール: 参加費を一切記録しない店】(運営判断)
+  // 【店ごとの掲載ルール: 参加費を一切記録しない店】
   // Instagram監視側の toTournament と同じ扱いにする。この経路だけ参加費が残ると、
   // 同じ店の日程が「載っている行と載っていない行」に割れて、利用者にはどちらが正しいか分からない。
   const noBuyinRule = listingRules.buyinNotRecorded(venueId);
@@ -178,7 +178,7 @@ async function importVenueImage(opts, libs) {
       );
     }
     let reason = extractedRowProblem(row);
-    // 【店ごとの掲載ルールによる除外】(運営判断)。理由の文面は自動経路と同じものを使う。
+    // 【店ごとの掲載ルールによる除外】。理由の文面は自動経路と同じものを使う。
     if (!reason) {
       const exclusion = listingRules.excludedByListingRule(opts.venueId, row && row.name);
       if (exclusion) {
