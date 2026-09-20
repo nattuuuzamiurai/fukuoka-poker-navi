@@ -27,11 +27,10 @@
  *   bannerClass は過去の単発プロモ「DreaM グランドオープン記念」(promo-banners.js)と同じ
  *   `ev-dream`(黒地×ゴールド×赤)を流用する。実写真(フライヤー画像)を使うため customBanner は
  *   使わない(listing-banner.jsと違う点)。
- *   ★ 導入当初は正方形フライヤー(900×900)を CSS の aspect-ratio+object-fit で無理やり横長に
- *     トリミング表示していたが「見切れている」と指摘され、一度クロップ指定を撤去して
- *     素の等倍表示(正方形のまま)にしていた。その後、既存の大型大会バナー(FST等)と同じ
- *     横長(1024×412)の専用画像が用意できたため、img/dream/dream-saturday-tournament.jpg を
- *     差し替えた。このファイル自体に imgAspect 等のクロップ指定は持たせていない
+ *   ★ 正方形フライヤー(900×900)をCSSのaspect-ratio+object-fitで横長にクロップ表示すると
+ *     画像の一部が欠けて見えたため、クロップ指定を撤去し、最初から横長(1024×412)で
+ *     作成した画像を使う方式に変更した(2026-09-19)。img/dream/dream-saturday-tournament.jpg を
+ *     差し替え、このファイル自体には imgAspect 等のクロップ指定は持たせていない
  *     (index.html 側の `.evtBanner .eb-img{aspect-ratio:1024/412;object-fit:cover}` が
  *     全バナー共通で高さを揃えるため、個別のバナーごとに指定する必要が無い。
  *     index.htmlの該当コメント参照)。
