@@ -81,7 +81,7 @@ const VENUE = { freq: 'weekly', pri: '0.7' };
 // エリアページは複数店を束ねるので、単独の店舗ページより上位の受け皿にあたる。
 // ただし priority は Google がほぼ見ないヒントなので、序列の宣言以上の意味は持たせない。
 const AREA = { freq: 'weekly', pri: '0.8' };
-// 運営者情報ページ(依頼3・GEO監査2026-09-03)。更新頻度は低いページなので monthly・低priorityにする。
+// 運営者情報ページ(GEO監査で追加・2026-09-03)。更新頻度は低いページなので monthly・低priorityにする。
 const ABOUT = { freq: 'monthly', pri: '0.3' };
 // 初心者向け店舗選びガイド(/guide/beginner/。2026-09-12実装)。「福岡 ポーカー」という
 // 広いクエリを受ける入口で、店舗ページ・エリアページへのハブも兼ねるため、エリアページと
@@ -91,6 +91,9 @@ const GUIDE = { freq: 'weekly', pri: '0.8' };
 // 上記ガイドと違い店舗横断の一覧ではなく、日次のdata.js更新には追随しない読み物記事のため
 // changefreqはmonthly(頻繁に変わる想定ではないが、続報での更新を前提にしているためaboutより高い頻度)。
 const WEBCOIN = { freq: 'monthly', pri: '0.6' };
+// 掲載店舗向け案内ページ(/guide/partners/。2026-09-19実装)。プレイヤー向けの集客コンテンツ
+// ではなく掲載店舗の運営者向けページのため、about.htmlと同じ扱い(monthly・低priority)にする。
+const PARTNERS = { freq: 'monthly', pri: '0.3' };
 
 // ---- lastmod: git履歴ベースで決定論的に求める ----
 // big-events.js の各イベントの id → そのイベント固有のデータファイル(会期・共通レジストリの
@@ -167,7 +170,7 @@ function buildSitemap(REPO) {
   // 【なぜ全件載せないか】このサイトの現時点の収益ゲートは検索順位ではなく AdSense審査で、
   //   審査はサイト全体のコンテンツ量・質を見る(不承認理由の最頻出が「価値の低い広告枠」)。
   //   日程0件かつpricingも無い店のページは実質「住所＋アクセス＋SNS＋noteの1行」しかなく、
-  //   これが全URLの3割を占める状態で審査を受けるリスクを避ける[運営判断・2026-07-30]。
+  //   これが全URLの3割を占める状態で審査を受けるリスクを避ける(2026-07-30)。
   //   ページ自体は生成・公開し、トップの店舗リンク行(#venueLinks)からも辿れるので、
   //   URLの早期確定と被リンクの受け皿という狙いは sitemap 掲載と独立に達成できる。
   //   日程かpricingのどちらかが1件でも入れば次の生成で自動的に載る(手当ては不要)。
@@ -187,14 +190,14 @@ function buildSitemap(REPO) {
     .forEach(v => urls.push({ loc: `${SITE}/venues/${v.slug}/`, lastmod: VENUE_LASTMOD, ...VENUE }));
 
   // エリアページ: 2店舗以上あり(=ページが存在する)、かつ掲載中の日程が1件以上あるエリアだけ。
-  // 店舗ページと同じ考え方で、日程0件のページを審査対象の全URLに混ぜない[運営判断・2026-07-30]。
+  // 店舗ページと同じ考え方で、日程0件のページを審査対象の全URLに混ぜない(2026-07-30)。
   // ページ自体は生成され、トップのエリアリンク行(#areaLinks)から辿れる。
   // lastmod は店舗ページと同じ2ファイル(該当エリアの店舗データも同じファイルに同居しているため)。
   areaList(DATA.VENUES, DATA.AREAS)
     .filter(a => hasAreaSchedule(DATA.TOURNAMENTS, DATA.RECURRING, areaVenues(DATA.VENUES, a)))
     .forEach(a => urls.push({ loc: `${SITE}/areas/${AREA_SLUGS[a]}/`, lastmod: VENUE_LASTMOD, ...AREA }));
 
-  // 運営者情報ページ(依頼3・GEO監査2026-09-03)。ファイル自体が存在するときだけ載せる
+  // 運営者情報ページ(GEO監査で追加・2026-09-03)。ファイル自体が存在するときだけ載せる
   // (このリポジトリを使う別環境・過去のコミット等でファイルが無い場合に壊れないようにするため)。
   if (fs.existsSync(path.join(REPO, 'about.html'))) {
     urls.push({ loc: `${SITE}/about.html`, lastmod: lastmodFor(['about.html']), ...ABOUT });
@@ -220,6 +223,18 @@ function buildSitemap(REPO) {
       loc: `${SITE}/guide/webcoin-regulation/`,
       lastmod: lastmodFor(['tools/gen-guide-webcoin-regulation.js']),
       ...WEBCOIN
+    });
+  }
+
+  // 掲載店舗向け案内ページ(2026-09-19実装)。about.html/guide/webcoin-regulationと同じく
+  // ファイルが存在するときだけ載せる。本文の大半は tools/gen-guide-partners.js に直書きだが、
+  // 掲載店舗数・トーナメント日程数はdata.jsから動的に算出する(同ファイル冒頭コメント参照)ため、
+  // guide/beginnerと同じくdata.jsも見て新しい方をlastmodにする。
+  if (fs.existsSync(path.join(REPO, 'guide/partners/index.html'))) {
+    urls.push({
+      loc: `${SITE}/guide/partners/`,
+      lastmod: lastmodFor(['tools/gen-guide-partners.js', 'data.js']),
+      ...PARTNERS
     });
   }
 

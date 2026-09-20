@@ -17,7 +17,7 @@
  *   - tools/gen-sitemap.js      … esc/SITE/店舗slugの検査だけ使う
  *
  * パンくずリスト(pageHead の breadcrumb オプション)・フッターのエリアリンク行(pageFoot の
- * areaLinksHtml オプション)も同じ理由でここに集約している(依頼2・3・2026-08-28)。
+ * areaLinksHtml オプション)も同じ理由でここに集約している(2026-08-28追加)。
  */
 
 const SITE = 'https://fukuokapoker.com';
@@ -85,7 +85,7 @@ function permanentEventLinks(BIG, currentPath) {
     .join(LINK_SEP);
 }
 
-// ---- パンくずリスト(依頼2・2026-08-28) ----
+// ---- パンくずリスト(2026-08-28追加) ----
 // 表示用のHTML(nav.breadcrumb)と、SEO用のJSON-LD(BreadcrumbList)を同じ items 配列から作る。
 // 2つを別々のロジックで組み立てると、片方だけ直して片方が実際のページ階層とズレる事故が
 // 起きうる(このファイルの他の箇所と同じ教訓)ため、items(name・urlの配列)を唯一の入力にする。
@@ -274,7 +274,7 @@ const BASE_CSS = `  *,*::before,*::after{box-sizing:border-box;margin:0;padding:
  *   image      … OGP画像のパス(SITE基準の相対)。省略時はサイト共通OGP(img/ogp/common-og.jpg)。
  *                 【2026-08-28変更】以前の既定値はJOPTバナーだった(店舗ページ等は noImage:true で
  *                 隠して回避していた)。他社イベントの画像を無関係なページの既定値にしていたのが
- *                 そもそもの歪みで、サイト自身の共通OGP画像を作った(依頼5)ことで解消した。
+ *                 そもそもの歪みで、サイト自身の共通OGP画像を作ったことで解消した。
  *                 各画像とも1200×630(OGP推奨比率1.91:1)。tools/gen-ogp-images.js が生成する。
  *   noImage    … true にすると og:image/twitter:image を出さない。今は使う場面が無いが、
  *                 画像を出したくない特殊なページのための逃げ道として残してある。
@@ -287,7 +287,7 @@ const BASE_CSS = `  *,*::before,*::after{box-sizing:border-box;margin:0;padding:
  *                 (jsonld と統合しないのは、店舗ページのLocalBusiness等と役割が違うものを
  *                 1つのオブジェクトに無理に混ぜたくないため。別スクリプトタグで問題ない)。
  */
-// OGP画像は全ページ共通で1200×630(1.91:1)に統一してある(依頼5・2026-08-28)。
+// OGP画像は全ページ共通で1200×630(1.91:1)に統一してある(2026-08-28追加)。
 // サイズを画像ごとに分岐させる必要が無いので、og:image:width/height は固定値で出す。
 const OG_IMG_W = 1200, OG_IMG_H = 630;
 function pageHead({ title, desc, canonical, jsonld, breadcrumb, image, noImage, ogType, twitterCard, extraCss }) {
@@ -364,7 +364,7 @@ ${BASE_CSS}${extraCss || ''}</style>
  *   BIG          … big-events.js のエクスポート(恒久リンク行を作るのに使う)
  *   currentPath  … そのページ自身のパス(自己リンクを避けるため)。null なら全件リンクになる
  *   extraScripts … </body> の直前に足すスクリプト(店舗ページの日程再描画など)
- *   areaLinksHtml… 全エリアへのテキストリンク一覧(依頼3・2026-08-28)。中身は呼び出し側が
+ *   areaLinksHtml… 全エリアへのテキストリンク一覧(2026-08-28追加)。中身は呼び出し側が
  *                   area-schedule.js の footerAreaLinksHtml() で組み立てて渡す(このファイルは
  *                   data.js を読まないので、エリア一覧そのものはここでは作らない)。
  *                   渡さなければ行ごと出さない(index.html 自身はこの pageFoot を使わず、
@@ -375,10 +375,10 @@ function pageFoot(BIG, currentPath, extraScripts, areaLinksHtml) {
   // 「大会特集」(掲載中の1件だけ・日によって変わるのでブラウザ側で判定)は【両方】出す。
   // 後者は生成時に焼き込まない(静的ページは再生成しない限り更新されず、古い大会が残り続けるため)。
   //
-  // 【エリアリンク行(依頼3)】トップページ(index.html)のフッターには元々 #areaLinks があるが、
+  // 【エリアリンク行】トップページ(index.html)のフッターには元々 #areaLinks があるが、
   //   events/venues/areas の下層ページの共通フッター(=このpageFoot)には無かった。下層ページを
   //   読み終えて離脱しかけたユーザーに、店舗の集約ページ(エリアページ)への行き先を1つ増やす。
-  // 【見た目の縮小(運営判断・2026-09-01)】リンクの中身(href・テキスト)・件数は変えず、
+  // 【見た目の縮小(2026-09-01)】リンクの中身(href・テキスト)・件数は変えず、
   // 「トップ」等の通常ナビとは切り離して .footer-linklist だけを小さく・ミュートにする
   // (index.html の #evtLinks/#areaLinks/#venueLinks と同じ考え方。詳しくはCSS側のコメント参照)。
   const areaLinksRow = areaLinksHtml ? `
@@ -394,8 +394,8 @@ function pageFoot(BIG, currentPath, extraScripts, areaLinksHtml) {
 <script>if (typeof mountBigEventFooter === 'function') mountBigEventFooter('evtFeature');</script>
 <div class="stickyAd">
   <!-- 自社アプリ(ポーカートナメ成績表)の広告なので、アイコンは【必ず自社のもの】を使う。
-       以前はJOPTのバナー画像を焼き込んでいたため、日本シリーズのページでも自社広告の横に
-       JOPTのブランドが出ていた(他社イベントのページに別の他社ロゴを載せる形になり不適切)。
+       以前は特定の他社バナー画像を固定表示していたが、無関係なページにもそのブランドが
+       表示されてしまうため、汎用的な自社アイコン表示に変更(2026-07-30)。
        トップページ(index.html)の .stickyAd と同じ画像・同じ指定に揃えること。 -->
   <img src="/img/ptl-bulldog.webp" alt="" width="38" height="38">
   <div class="sa-body">

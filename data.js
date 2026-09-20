@@ -20722,7 +20722,7 @@ const TOURNAMENTS = [
     "venueId": "v19",
     "name": "2000 Turbo",
     "date": "2026-09-20",
-    "start": "16:10",
+    "start": "18:10",
     "buyin": 2000,
     "addon": 1000,
     "stack": 30000,
@@ -24909,6 +24909,398 @@ const TOURNAMENTS = [
     "prize": null,
     "tags": [
       "バウンティ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dm0914",
+    "venueId": "v42",
+    "name": "フリーロール",
+    "date": "2026-09-14",
+    "start": "19:00",
+    "buyin": 0,
+    "addon": null,
+    "stack": null,
+    "guarantee": 30000,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "フリーロール"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dm0915",
+    "venueId": "v42",
+    "name": "KO Bounty",
+    "date": "2026-09-15",
+    "start": "19:00",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": 30000,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "バウンティ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dm0916",
+    "venueId": "v42",
+    "name": "KO Bounty",
+    "date": "2026-09-16",
+    "start": "19:00",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": 30000,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "バウンティ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dm0917",
+    "venueId": "v42",
+    "name": "KO Bounty",
+    "date": "2026-09-17",
+    "start": "19:00",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": 30000,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "バウンティ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dm0918",
+    "venueId": "v42",
+    "name": "Friday Tournament",
+    "date": "2026-09-18",
+    "start": "18:00",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": 200000,
+    "reentry": false,
+    "prize": null,
+    "tags": [],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dm0919a",
+    "venueId": "v42",
+    "name": "フリーロール",
+    "date": "2026-09-19",
+    "start": "14:00",
+    "buyin": 0,
+    "addon": null,
+    "stack": null,
+    "guarantee": 30000,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "フリーロール"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dm0919b",
+    "venueId": "v42",
+    "name": "KO Bounty",
+    "date": "2026-09-19",
+    "start": "19:00",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": 60000,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "バウンティ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dm0920",
+    "venueId": "v42",
+    "name": "フリーロール",
+    "date": "2026-09-20",
+    "start": "14:00",
+    "buyin": 0,
+    "addon": null,
+    "stack": null,
+    "guarantee": 30000,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "フリーロール"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dm0921",
+    "venueId": "v42",
+    "name": "KO Bounty",
+    "date": "2026-09-21",
+    "start": "19:00",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": 30000,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "バウンティ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dm0922a",
+    "venueId": "v42",
+    "name": "フリーロール",
+    "date": "2026-09-22",
+    "start": "14:00",
+    "buyin": 0,
+    "addon": null,
+    "stack": null,
+    "guarantee": 30000,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "フリーロール"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dm0922b",
+    "venueId": "v42",
+    "name": "Win the Button",
+    "date": "2026-09-22",
+    "start": "19:00",
+    "buyin": 0,
+    "addon": null,
+    "stack": null,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "フリーロール"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dm0923a",
+    "venueId": "v42",
+    "name": "フリーロール",
+    "date": "2026-09-23",
+    "start": "14:00",
+    "buyin": 0,
+    "addon": null,
+    "stack": null,
+    "guarantee": 30000,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "フリーロール"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dm0923b",
+    "venueId": "v42",
+    "name": "KO Bounty",
+    "date": "2026-09-23",
+    "start": "19:00",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": 30000,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "バウンティ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dm0924",
+    "venueId": "v42",
+    "name": "フリーロール",
+    "date": "2026-09-24",
+    "start": "19:00",
+    "buyin": 0,
+    "addon": null,
+    "stack": null,
+    "guarantee": 30000,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "フリーロール"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dm0925",
+    "venueId": "v42",
+    "name": "KO Bounty（1,000pt）",
+    "date": "2026-09-25",
+    "start": "19:00",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": 60000,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "バウンティ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dm0926",
+    "venueId": "v42",
+    "name": "Saturday Tournament",
+    "date": "2026-09-26",
+    "start": "18:00",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": 200000,
+    "reentry": false,
+    "prize": null,
+    "tags": [],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dm0927a",
+    "venueId": "v42",
+    "name": "フリーロール",
+    "date": "2026-09-27",
+    "start": "14:00",
+    "buyin": 0,
+    "addon": null,
+    "stack": null,
+    "guarantee": 30000,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "フリーロール"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dm0927b",
+    "venueId": "v42",
+    "name": "KO Bounty",
+    "date": "2026-09-27",
+    "start": "19:00",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": 30000,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "バウンティ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dm0928",
+    "venueId": "v42",
+    "name": "KO Bounty",
+    "date": "2026-09-28",
+    "start": "19:00",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": 30000,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "バウンティ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dm0929a",
+    "venueId": "v42",
+    "name": "フリーロール",
+    "date": "2026-09-29",
+    "start": "14:00",
+    "buyin": 0,
+    "addon": null,
+    "stack": null,
+    "guarantee": 30000,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "フリーロール"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dm0929b",
+    "venueId": "v42",
+    "name": "Win the Button",
+    "date": "2026-09-29",
+    "start": "19:00",
+    "buyin": 0,
+    "addon": null,
+    "stack": null,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "フリーロール"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "dm0930",
+    "venueId": "v42",
+    "name": "Win the Button",
+    "date": "2026-09-30",
+    "start": "19:00",
+    "buyin": 0,
+    "addon": null,
+    "stack": null,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "フリーロール"
     ],
     "source": "semi",
     "verified": false

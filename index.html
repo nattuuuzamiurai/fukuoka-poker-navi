@@ -151,6 +151,8 @@
   .logo .pip{color:var(--gold2)}
   .back-link{color:#fff;font-size:.85em;font-weight:800;text-decoration:none;flex-shrink:0}
   .back-link:hover{text-decoration:underline}
+  .back-link.partner-link{background:var(--gold2);color:#1a1207;padding:5px 13px;border-radius:999px;font-size:.8em}
+  .back-link.partner-link:hover{text-decoration:none;opacity:.88}
   .venue-header-name{font-weight:800;font-size:.95em;color:#3a2a06;text-align:right;max-width:65%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
   /* HERO */
@@ -179,7 +181,7 @@
      「.wrapを介さないフルブリード帯」の設計のため、class名は共通(.cta)でも index.html側で
      このファイル独自にスタイルを定義している(2ファイルで .cta という同名クラスを別定義で
      持つが、対象ページが重ならないため衝突しない)。
-     【2026-09-14改修】「案内があまり目立たない、デザインに甲乙つけてわかりやすく」という指摘を受けて改修。
+     【2026-09-14改修】視認性向上のためデザインを見直した。
      角丸が無く直上の .areaNav(緑帯)と地続きに見えていたのが原因のため、
      - サイト基調の角丸カード(border-radius:var(--r))化 + 上下にmarginを取って独立させる
      - 上端にゴールドの帯(border-top)を足してアクセントにする(既存の --gold をそのまま使用、
@@ -775,6 +777,25 @@
   .vlink.line{background:#06c755;color:#fff}
   .vlink.ig{background:linear-gradient(45deg,#f09433,#dc2743,#bc1888);color:#fff}
 
+  /* 店舗ページ(renderVenuePage)の営業時間・電話・料金・リング情報。
+     静的ページ(tools/gen-venue-pages.js の VENUE_CSS)と同じクラス名・見た目にそろえてある
+     (情報量の同等性を保つための追加。CSS変数(--sur/--bor/--r/--sha/--felt/--mut)を共用しているため
+     見た目は同じトーンになる)。 */
+  .vp-info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:14px}
+  .vp-info-card{display:flex;align-items:flex-start;gap:10px;background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:12px 13px;font-size:.88em;line-height:1.65}
+  .vp-info-ic{flex:0 0 auto;width:21px;height:21px;margin-top:1px;color:var(--gold)}
+  .vp-info-ic svg{display:block;width:100%;height:100%}
+  .vp-info-card b{display:block;color:var(--felt);font-size:.86em;margin-bottom:2px}
+  .vp-info-card a{color:#0e6a72;font-weight:700;word-break:break-all}
+  .vp-pricing{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+  .vp-price-row{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:10px 13px;font-size:.9em;line-height:1.6}
+  .vp-price-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .vp-price-name{font-weight:800;color:var(--felt)}
+  .vp-price-amount{font-weight:800;color:var(--felt);white-space:nowrap}
+  .vp-price-note{color:var(--mut);font-size:.88em;margin-top:3px}
+  .vp-ring{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:13px 15px;margin-top:14px;font-size:.9em;line-height:1.8}
+  .vp-ring b{color:var(--felt)}
+
   /* FOOTER */
   footer{background:#1b2320;color:#9aa39d;padding:26px 16px;font-size:.8em;text-align:center;line-height:1.9}
   footer a{color:var(--gold2)}
@@ -822,6 +843,7 @@
 <header>
   <div class="hbar" id="hbar-list">
     <a class="logo" href="#"><span class="pip">♠</span>ふくおかポーカーナビ</a>
+    <a class="back-link partner-link" href="guide/partners/">店舗の方へ</a>
   </div>
   <div class="hbar hbar-venue" id="hbar-venue" style="display:none">
     <a class="back-link" href="#">← 一覧へ戻る</a>
@@ -854,12 +876,10 @@
        ★ここは静的HTML＝JSを実行しないクローラが読む唯一の説明文。下の「本日開催」の数字は
          JSが入れるのでクローラには「–」にしか見えない。数字が見えない代わりに、
          何が分かるサイトなのかは文章側で伝わるようにしておく。
-       ★2026-09-14「この説明文いらない」という指摘を受け理由確認の結果「(SEO用途なら)見た目は
-         最初は見えないよう折りたたんでほしい」とのことだったため、常時表示の<p>から、下の
+       ★2026-09-14、SEO上の役割は維持しつつ見た目には常時表示しない形にするため、常時表示の<p>から、下の
          FAQセクション(.faq-item)と同じ<details>/<summary>パターンに変更した。open属性は
          付けていないので初期状態は閉じており、クリックで展開する。FAQの<details>と同じく、
-         閉じた状態でもクローラにはページ内のテキストとして読める前提(SEO上の役割は維持)。
-         中のテキスト自体は変更していない。 -->
+         閉じた状態でもクローラにはページ内のテキストとして読める前提。中のテキスト自体は変更していない。 -->
   <h1>福岡の<span class="hl">ポーカー大会・トーナメント</span>を<br>ぜんぶ、ここで。</h1>
   <details class="faq-item">
     <summary>対応エリアと使い方について</summary>
@@ -1083,7 +1103,7 @@
          `node tools/gen-venue-pages.js <repo>` を実行するとこの1行だけが差し替わる。
          店舗を足せば自動で増える。ズレは `--check` を付けた実行で検出できる。 -->
   <div id="venueLinks" class="footer-linklist" style="margin-top:6px">店舗ページ: 【天神】<a href="/venues/kkpoker-fukuoka/">KKPOKER FUKUOKA</a>・<a href="/venues/grand-mirage-poker/">グランドミラージュポーカー</a>・<a href="/venues/fuxk-fukuoka-tenjin/">Poker House FUXK 福岡天神店</a>・<a href="/venues/raise-blue-tenjin/">RAISE BLUE 天神</a>・<a href="/venues/alice-the-poker-room/">ALICE the Poker room（アリス）</a>・<a href="/venues/seventwo-tenjin/">72 -SevenTwo-</a>・<a href="/venues/save-tenjin/">アミューズメントバー SAVE天神店</a>・<a href="/venues/sbm-haruyoshi/">sbm HARUYOSHI</a>　【中洲】<a href="/venues/m-holdem-nakasu/">m HOLD'EM 中洲</a>・<a href="/venues/onecasino-fukuoka-nakasu/">ONECASINO 福岡中洲</a>・<a href="/venues/casino-bar-leje-hakata/">Casino bar Leje 博多店</a>・<a href="/venues/casino-blow-nishi-nakasu/">CASINO BLOW 西中洲</a>・<a href="/venues/crownclown-nakasu/">CRownCLown（クラウンクラウン）</a>・<a href="/venues/bon-nishi-nakasu/">梵 bon 西中洲</a>・<a href="/venues/aria-nakasu/">ARIA 中洲</a>・<a href="/venues/nutsbar/">Nutsbar</a>　【大名】<a href="/venues/roots-fukuoka/">ROOTS FUKUOKA</a>・<a href="/venues/musashi-poker-room-fukuoka/">むさぽ福岡（MUSASHI POKER ROOM 福岡店）</a>・<a href="/venues/bon-daimyo/">梵 Daimyo</a>　【今泉】<a href="/venues/casinox-fukuoka-imaizumi/">CasinoX（カジノックス）福岡今泉店</a>・<a href="/venues/raftel-casino-fukuoka-imaizumi/">RAFTEL CASINO（ラフテルカジノ 福岡今泉店）</a>　【大橋】<a href="/venues/joker-fukuoka-ohashi/">JOKER♠️ 福岡大橋</a>・<a href="/venues/the-dojo-fukuoka/">THE DOJO</a>　【博多】<a href="/venues/poker-room-sky/">Poker room SKY</a>　【北九州】<a href="/venues/pokerbar-nuwland/">PokerBar NUWLAND</a>・<a href="/venues/triplebarrel-kokura/">TripleBarrel 小倉店</a>・<a href="/venues/texas-holdem-3000/">てきさすほーるでむ。</a>・<a href="/venues/texas-holdem-aa/">テキサスホールデムAA</a>・<a href="/venues/poker-bar-iris/">Poker Bar IRIS</a>・<a href="/venues/casino-arrows-kokura/">CASINO Arrows 小倉店</a>・<a href="/venues/king-queen-suited-kurosaki/">KING&amp;QUEEN SUITED 黒崎店</a>・<a href="/venues/kaji-bar-kokura/">KAJI BAR</a>・<a href="/venues/triplebarrel-orio/">TripleBarrel 折尾店</a>　【京築】<a href="/venues/poker-studio-deep-blue-yukuhashi/">POKER Studio DEEP BLUE</a>　【筑豊】<a href="/venues/king-queen-suited-nogata/">KING&amp;QUEEN SUITED 直方店</a>　【久留米】<a href="/venues/ken-poker-kurume/">KENポーカー（久留米）</a>・<a href="/venues/ace-and-king-kurume/">A&amp;K（Ace and King）</a>・<a href="/venues/dream-casinobar-kurume/">DreaM CASINO BAR</a></div>
-  <div><a href="guide/beginner/">初心者向け店舗の選び方</a>　|　<a href="guide/webcoin-regulation/">「ウェブコイン」規制の解説</a>　|　<a href="about.html">運営者情報</a>　|　<a href="contact.html">お問い合わせ</a>　|　<a href="contact.html">店舗の掲載・PRについて</a>　|　<a href="privacy.html">プライバシーポリシー</a>　|　<a href="terms.html">利用規約</a></div>
+  <div><a href="guide/beginner/">初心者向け店舗の選び方</a>　|　<a href="guide/webcoin-regulation/">「ウェブコイン」規制の解説</a>　|　<a href="about.html">運営者情報</a>　|　<a href="contact.html">お問い合わせ</a>　|　<a href="guide/partners/">店舗の掲載・PRについて</a>　|　<a href="privacy.html">プライバシーポリシー</a>　|　<a href="terms.html">利用規約</a></div>
   <!-- フッターの免責文は1文に圧縮している(2026-09-01)。元は4文あり、
        2〜4文目(賭博の勧誘・仲介ではない/プライズの扱いは各店舗規定による/バナーの著作権は
        各主催者に帰属)は削除ではなく privacy.html 第7条に移設済み。3・4文目は以前の
@@ -1175,6 +1195,27 @@
   // 外部サイトから転記した文字列をHTMLに埋める前にエスケープする(& や < が混じるため)
   const escHtml = s => String(s == null ? '' : s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+  // 店舗ページ(renderVenuePage)の情報カード用アイコン。tools/gen-venue-pages.js の
+  // ICONS/icon() と同じ汎用ピクトグラム(絵文字・ブランドロゴは使わない方針を踏襲)。
+  const VP_ICON_ATTR = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"';
+  const VP_ICONS = {
+    clock: `<svg ${VP_ICON_ATTR}><circle cx="12" cy="12" r="9"/><path d="M12 7.2V12l3.3 2"/></svg>`,
+    phone: `<svg ${VP_ICON_ATTR}><path d="M4.5 5c.5 1.6 1.1 3 1.9 4.2.4.7.3 1.6-.3 2.2l-1.2 1.2a13.6 13.6 0 0 0 5.5 5.5l1.2-1.2c.6-.6 1.5-.7 2.2-.3 1.2.8 2.6 1.4 4.2 1.9.9.3 1.4 1.2 1 2.1l-.7 1.8c-.3.8-1.1 1.3-1.9 1.1C9 21.4 2.6 15 1.5 6.8c-.1-.8.4-1.6 1.1-1.9l1.8-.7c.9-.3 1.8.1 2.1 1z"/></svg>`
+  };
+  const vpIcon = name => `<span class="vp-info-ic">${VP_ICONS[name]}</span>`;
+
+  // 店舗ページ(renderVenuePage)の料金・システム表。静的ページ(tools/gen-venue-pages.js の
+  // venuePricingHtml)と同じ考え方: data.js の "pricing"({name,price,note}の配列)を
+  // そのまま列挙するだけで、要約・正規化はしない。
+  function vpPricingHtml(v){
+    if (!Array.isArray(v.pricing) || !v.pricing.length) return '';
+    const rows = v.pricing.map(p => {
+      const noteLine = p.note ? `<div class="vp-price-note">${escHtml(p.note).replace(/\n/g,'<br>')}</div>` : '';
+      return `<div class="vp-price-row"><div class="vp-price-head"><span class="vp-price-name">${escHtml(p.name)}</span><span class="vp-price-amount">${escHtml(p.price)}</span></div>${noteLine}</div>`;
+    }).join('');
+    return `<div class="vp-pricing">${rows}</div>`;
+  }
 
   // 大型イベントのバナー1枚分のHTML。トップのバナー領域と大型一覧(#majors)の両方で使い、
   // 見た目と「開催中/まもなく/終了」の出し分けを1か所に集約する。
@@ -1533,6 +1574,26 @@
     if (v.line) links.push(`<a class="vlink line" href="${v.line}" target="_blank" rel="noopener">LINE</a>`);
     if (v.instagram) links.push(`<a class="vlink ig" href="${v.instagram}" target="_blank" rel="noopener" aria-label="Instagram"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#fff" stroke-width="2" style="vertical-align:middle"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r="1.1" fill="#fff" stroke="none"/></svg></a>`);
 
+    // 店舗ページ(静的、tools/gen-venue-pages.js 生成)への戻り導線。ブラウザ履歴に頼らず
+    // 常に元の店舗ページへ戻れるようにするための明示リンク(slugが無い店は出さない)。
+    const staticPageLinkHtml = v.slug
+      ? `<div style="margin:10px 0 2px"><a class="abtn" href="/venues/${escHtml(v.slug)}/">店舗ページ（料金・営業時間など）を見る</a></div>`
+      : '';
+
+    // 営業時間・電話。静的ページ(venueInfoCardsHtml)と同じく、値が無い店はカードごと出さない。
+    const infoCards = [];
+    if (v.hours) infoCards.push(`<div class="vp-info-card">${vpIcon('clock')}<div><b>営業時間</b>${escHtml(v.hours)}</div></div>`);
+    if (v.tel) infoCards.push(`<div class="vp-info-card">${vpIcon('phone')}<div><b>電話</b><a href="tel:${escHtml(v.tel.replace(/[^0-9+]/g,''))}">${escHtml(v.tel)}</a></div></div>`);
+    const infoCardsHtml = infoCards.length ? `<div class="vp-info-grid">${infoCards.join('')}</div>` : '';
+
+    // 料金・システム表。静的ページと同じ vpPricingHtml() を使う。
+    const pricingHtml = vpPricingHtml(v);
+
+    // リングゲーム開催ブロック。静的ページの ringBlock と同じ条件(ring === true の店だけ)。
+    const ringHtml = v.ring === true
+      ? `<div class="vp-ring"><b>${escHtml(v.name)}はリングゲームを開催しています。</b>${v.ringNote ? escHtml(v.ringNote) : 'レート・詳細は店舗にご確認ください。'}</div>`
+      : '';
+
     let listHtml;
     if (!rows.length){
       listHtml = `<div class="empty">${monthLabel}の掲載トーナメントはまだありません。<br>店舗のSNS・公式情報もあわせてご確認ください。</div>`;
@@ -1548,7 +1609,11 @@
       <div class="shead"><h2>${v.featured?'<span class="star">★</span> ':''}${v.name}</h2></div>
       <div class="vc-area">${v.area}${v.access?'　|　'+v.access:''}${v.address?'　|　'+v.address:''}</div>
       <div class="vc-links" style="margin:11px 0 2px">${links.join('')}</div>
+      ${staticPageLinkHtml}
       ${v.note?`<div style="font-size:.82em;color:var(--mut);margin-top:10px;line-height:1.6">${v.note}</div>`:''}
+      ${infoCardsHtml}
+      ${pricingHtml}
+      ${ringHtml}
       <div class="shead" style="margin-top:28px;align-items:center">
         <h2 style="display:flex;align-items:center;gap:10px">
           <a class="abtn" href="#venue/${venueId}/${prevStr}">← 前月</a>
@@ -2456,7 +2521,7 @@
 
   // ---- 月の切り替えメニュー ----
   // ネイティブ <select> ではなくボタン+ドロップダウンにしている。理由:
-  //   ①「7のところを押したら選べる」という指示どおり、日付ストリップの月表示そのものを押させたい
+  //   ①日付ストリップの月表示そのものを押すだけで選べるようにしたい
   //   ② 選択肢は数個しかないので、OSのホイールピッカーより1タップで選び切れるほうが速い
   //   ③ 開いている状態(アクティブな色・▼の反転)を自前で出せる
   //   ④ aria-haspopup / aria-expanded を明示でき、キーボード操作も仕様どおりに書ける

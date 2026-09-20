@@ -8,10 +8,11 @@
  *   listing-banner.js(掲載店舗募集の常設バナー)と同じ考え方で専用ファイル1本にした。
  *   promo-banners.js冒頭のコメントも参照。
  *
- * ■ 表示順(2026-09-19修正: 運営指摘により大型大会より前に変更)
+ * ■ 表示順(2026-09-19修正: 運営判断により大型大会より前に変更)
  *   promo-banners.js 冒頭のコメントにあるとおり、単発プロモ系バナーは【常に大型大会(FST等)より
- *   先頭】に出すのがこのサイトの設計原則。当初 visibleBigEvents() の【後ろ】に連結してしまい
- *   「FSTに隠れている」という指摘を受けたため、index.html の renderBigEventBanner() では
+ *   先頭】に出すのがこのサイトの設計原則。当初 visibleBigEvents() の【後ろ】に連結してしまい、
+ *   会期のある大型大会のバナーに埋もれて視認性が下がる状態になっていたため、index.html の
+ *   renderBigEventBanner() では
  *   `promos.concat(visibleDreamPromoBanner()).concat(visibleBigEvents()).concat(listing)` として
  *   promo-banners.js のプロモ群のすぐ後ろ・大型大会より前に連結する。
  *

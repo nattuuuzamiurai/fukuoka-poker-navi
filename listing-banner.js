@@ -22,6 +22,13 @@
  *   (既存の画像バナー呼び出しはすべて今まで通り)。
  *
  * ■ 表示のオン/オフは下の LISTING_BANNER_ENABLED を切り替えるだけでよい。
+ *
+ * ■ リンク先(2026-09-19変更)
+ *   以前は contact.html?type=listing(お問い合わせフォームへ直接遷移)にリンクしていたが、
+ *   店舗掲載・PR枠の案内ページ(guide/partners/)を新設したことに伴い、まずそちらで内容を
+ *   見てもらってから問い合わせに進んでもらう動線に変更した。guide/partners/index.html側の
+ *   お問い合わせ導線(PR掲載枠/経営管理ダッシュボードそれぞれ)は引き続き
+ *   contact.html?type=listing・?type=dashboard を使う。
  * ============================================================ */
 
 const LISTING_BANNER_ENABLED = true;
@@ -29,7 +36,7 @@ const LISTING_BANNER_ENABLED = true;
 const LISTING_BANNER = {
   id: 'listing-recruit',
   label: '掲載店舗募集',                        // カルーセルのドット(aria-label)で使う。index.html の ec-dots が ev.label を読む
-  href: 'contact.html?type=listing',
+  href: 'guide/partners/',
   bannerClass: 'ev-listing',
   customBanner: true,                          // 画像を使わずCSSで組む(bigEventBannerHtml側の分岐)
   eyebrow: '掲載店舗様へ',

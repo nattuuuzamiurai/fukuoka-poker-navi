@@ -105,6 +105,7 @@
         <option value="general">一般のお問い合わせ</option>
         <option value="correction">掲載内容の誤り・修正依頼</option>
         <option value="listing">店舗掲載・PR枠のご相談</option>
+        <option value="dashboard">経営管理ダッシュボードのご相談</option>
         <option value="other">その他</option>
       </select>
 
@@ -154,13 +155,17 @@
     general: '一般のお問い合わせ',
     correction: '掲載内容の誤り・修正依頼',
     listing: '店舗掲載・PR枠のご相談',
+    dashboard: '経営管理ダッシュボードのご相談',
     other: 'その他'
   };
 
   // URLの ?type=... を見て、#category の既存の選択肢(value)のいずれかと一致すれば
   // それを選択済みにする。一致しない値・パラメータ無しのときは何もしない
-  // (先頭の一般のお問い合わせのままにする)。例: index.htmlの掲載店舗募集バナーからは
-  // contact.html?type=listing でリンクし、この関数が「listing」を選択済みにする。
+  // (先頭の一般のお問い合わせのままにする)。例: guide/partners/index.htmlのPR掲載枠の
+  // お問い合わせ導線は contact.html?type=listing、経営管理ダッシュボードの
+  // お問い合わせ導線は contact.html?type=dashboard でリンクし、この関数が
+  // 対応する選択肢を選択済みにする(index.htmlの掲載店舗募集バナーは2026-09-19以降、
+  // 直接ここへはリンクせず guide/partners/ を経由する。listing-banner.js冒頭コメント参照)。
   function pickCategoryFromQuery(requested, validValues) {
     return (requested && validValues.includes(requested)) ? requested : null;
   }

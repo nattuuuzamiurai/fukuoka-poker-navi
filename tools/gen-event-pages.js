@@ -93,7 +93,7 @@ const FST_MAIN_HOUSE_DAY1 = extractConst(INDEX_SRC, 'FST_MAIN_HOUSE_DAY1');
 //   (このリポジトリの生成物の原則。gen-venue-pages.js の同じ箇所のコメントを参照)。
 const DATA = require(path.join(REPO, 'data.js'));
 const { AREA_SLUGS, areaVenues, areaList, footerAreaLinksHtml } = require('./area-schedule.js');
-// フッターの「エリアから探す」リンク行(依頼3・2026-08-28)。全大会ページで内容は共通なので1回だけ組み立てる。
+// フッターの「エリアから探す」リンク行(2026-08-28追加)。全大会ページで内容は共通なので1回だけ組み立てる。
 const FOOTER_AREA_LINKS = footerAreaLinksHtml(DATA.VENUES, DATA.AREAS);
 
 function venueScheduleBlock() {
@@ -114,7 +114,7 @@ const permanentEventLinks = currentPath => shell.permanentEventLinks(BIG, curren
 // currentPath: そのページ自身のパス(自己リンクを避けるため)。省略すると全件がリンクになる。
 const pageFoot = currentPath => shell.pageFoot(BIG, currentPath, null, FOOTER_AREA_LINKS);
 
-// パンくずリスト(依頼2・2026-08-28): トップ > 大会 > 大会名。
+// パンくずリスト(2026-08-28追加): トップ > 大会 > 大会名。
 // 「大会」はトップページ内の大型一覧(#majors)へのアンカー(専用ページを持たないため)。
 // label は各大会のレジストリ表示名(big-events.js の BIG_EVENTS.label。恒久リンク行と同じ出どころ)。
 const pageBreadcrumb = (id, canonical) => [
@@ -278,14 +278,14 @@ const JOPT_RESULT = require(path.join(REPO, 'jopt-result-data.js'));
 
 function buildJopt() {
   const canonical = `${SITE}/events/jopt-2026-fukuoka-01/`;
-  // OGP専用画像(1200x630。依頼5・2026-08-28)。本文中のバナー(.evt-banner、1024x412)とは別物。
+  // OGP専用画像(1200x630。2026-08-28追加)。本文中のバナー(.evt-banner、1024x412)とは別物。
   const image = 'img/jopt/jopt-og.jpg';
-  // ★ title/description微調整(依頼2・マーケティング提案 2026-08-28)
+  // ★ title/description微調整(2026-08-28)
   //   Search Console実測で「会場」「賞金」を知りたい検索クエリが強いことが分かっている一方、
   //   旧titleは59文字で「会場」ワードを含まず切れやすかった。「会場」をtitle冒頭30文字以内に足し、
   //   60文字以内に収める。descriptionも前方100文字以内で会場情報の露出を強化する。
   //   ★ここは文言の並べ替え・追記のみで、結果コンテンツ(JOPT_RESULT)自体は増やさない
-  //   (運営方針: WJPT・日本シリーズには結果調査を追加しないが、JOPTは既に結果コンテンツ追加済みで対象外)。
+  //   (WJPT・日本シリーズには結果調査を追加していないが、JOPTは既に結果コンテンツ追加済み)。
   const title = `JOPT 2026 Fukuoka #01 結果・会場（7/30〜8/2 福岡・大名）| ふくおかポーカーナビ`;
   const desc = `JOPT 2026 Fukuoka #01の結果・会場まとめ。会場は${JOPT.venue}（${JOPT.area}）、開催日は2026年7月30日〜8月2日。`
     + `Main Event優勝は${JOPT_RESULT.winner}（エントリー${JOPT_RESULT.totalEntries}／プライズ保証1,500万円）。全${JOPT.tournaments.length}トーナメントのタイムスケジュール・バイインも掲載。`;
@@ -352,7 +352,7 @@ ${venueScheduleBlock()}
 // ---- WJPTページ(終了済み=アーカイブ) ----
 function buildWjpt() {
   const canonical = `${SITE}/events/wjpt-2026/`;
-  // OGP専用画像(1200x630。依頼5・2026-08-28)。本文中のバナー(1024x412)とは別物。
+  // OGP専用画像(1200x630。2026-08-28追加)。本文中のバナー(1024x412)とは別物。
   const image = 'img/wjpt/wjpt-og.jpg';
   const title = 'WJPT 2026（West Japan Poker Tour 7/18〜7/20 北九州）タイムスケジュール | ふくおかポーカーナビ';
   const desc = 'WJPT（West Japan Poker Tour）2026年7月18日〜20日・北九州で開催された全' + WJPT.tournaments.length + 'トーナメントのタイムスケジュール・バイイン・スタックの記録。';
@@ -429,12 +429,12 @@ ${rows}
 
 function buildNippon() {
   const canonical = `${SITE}/events/nippon-series-2026-fukuoka/`;
-  // OGP専用画像(1200x630。依頼5・2026-08-28)。本文中のバナー(.evt-banner、1024x412)とは別物。
+  // OGP専用画像(1200x630。2026-08-28追加)。本文中のバナー(.evt-banner、1024x412)とは別物。
   const image = 'img/nippon-series/nippon-series-og.jpg';
-  // ★ title/description文言調整(依頼3・マーケティング提案 2026-08-28)
+  // ★ title/description文言調整(2026-08-28)
   //   会期(8/11〜8/16)は既に終了しているのに、旧titleの「タイムスケジュール」表記が開催前提の
-  //   ままで検索意図とズレていた。結果情報は追加しない(運営方針・2026-08-28: WJPT・日本シリーズの
-  //   大会結果調査は需要がないと判断済み)。ここでの調整は文言のみ:
+  //   ままで検索意図とズレていた。結果情報は追加しない方針(2026-08-28: WJPT・日本シリーズは
+  //   大会結果調査を追加していない)。ここでの調整は文言のみ:
   //   ①「タイムスケジュール」を、結果を書かなくても成立する中立的な表記(「大会情報」)に変更
   //   ②検索クエリに含まれる和文「日本シリーズ」をtitleに追加
   //   ③66文字→60文字以内に短縮
@@ -494,7 +494,7 @@ ${venueScheduleBlock()}
 
 // ---- FST 5.0 ページ「よくある質問」(FAQ) ----
 // ★ ここも推測を足さない原則は本文と同じ。断定できない項目(buy-in未発表・初心者/経験者向けの言及なし等)は
-//   「店舗・大会により異なる」「公式発表をご確認ください」等でヘッジする(運営判断・2026-08-27)。
+//   「店舗・大会により異なる」「公式発表をご確認ください」等でヘッジする(2026-08-27)。
 // 見た目(<details>/<summary>)とFAQPage構造化データの生成ロジックは tools/site-shell.js の
 // faqBlock()/FAQ_CSS に集約してある(GEO監査2026-09-03で「FST専用にハードコードされている」
 // と指摘されたための切り出し。トップページ(index.html)のFAQも同じ関数を使う。
@@ -530,12 +530,12 @@ function fstFaqBlock(FST, main, champ) {
   return faqBlock(fstFaqItems(FST, main, champ));
 }
 
-// ---- サテライト開催店舗カード(依頼2・運営方針2026-08-27 / 依頼4・2026-08-28で過去形にも対応) ----
+// ---- サテライト開催店舗カード(2026-08-27追加 / 2026-08-28で過去形にも対応) ----
 // big-events.js の各大会エントリが持つ venueId のリストを店舗データと突き合わせてカードにする。
 // ここでは venueId のリストを信じるだけで、判定ロジック自体は複製しない。
 //   - FST(現在進行形)   … satelliteVenueIds を渡す。文言は「開催されています」の現在形
 //   - WJPT/JOPT(終了済み)… pastSatelliteVenueIds を渡す。文言は「開催されていました」の過去形
-//     (会期が終わった大会に「現在開催中」の現在形を使わないため。PR#50のコメント・依頼4を参照)
+//     (会期が終わった大会に「現在開催中」の現在形を使わないため。venue-schedule.js のコメントを参照)
 function satelliteVenuesBlock(ids, opts) {
   if (!ids || !ids.length) return '';
   const venues = DATA.VENUES.filter(v => ids.indexOf(v.id) >= 0);
@@ -646,7 +646,7 @@ ${mainHouseDay1Table(mh)}
 //   (いずれも一次情報で裏取り済み)からそのまま取る。
 function buildFst() {
   const canonical = `${SITE}/events/fst-2026-fukuoka/`;
-  // OGP専用画像(1200x630。依頼5・2026-08-28)。本文中のバナー(SVG、1024x412)とは別物。
+  // OGP専用画像(1200x630。2026-08-28追加)。本文中のバナー(SVG、1024x412)とは別物。
   const image = 'img/fst/fst-og.jpg';
   const reg = BIG.bigEventById('fst');
   const first = BIG.eventFirstDay(FST.days), last = BIG.eventLastDay(FST.days);
