@@ -20,8 +20,8 @@
  *       見逃さないため。生成先はこのリポジトリ本体ではなく一時ディレクトリにコピーした
  *       複製で、このテストの実行がリポジトリの作業ツリーを書き換えることはない)
  *   2. `<script src>` で直接配信されるJS/JSONファイル(data.js, big-events.js,
- *      promo-banners.js, listing-banner.js, fst-schedule-data.js, jopt-data.js,
- *      jopt-result-data.js, nippon-series-data.js, recurring-dedupe.js 等)。
+ *      promo-banners.js, dream-promo-banner.js, listing-banner.js, fst-schedule-data.js,
+ *      jopt-data.js, jopt-result-data.js, nippon-series-data.js, recurring-dedupe.js 等)。
  *      ただし実際に配信されるかどうかは `_config.yml` の `exclude:` が最終的な正とする
  *      (例: jopt-result-data.js / fukuoka-venues.json は同ファイルで配信除外済みのため、
  *      このリストに残っていても実際に除外されていれば自動的にスキップする)。
@@ -109,6 +109,7 @@ const CANDIDATE_PUBLIC_DATA_FILES = [
   'data.js',
   'big-events.js',
   'promo-banners.js',
+  'dream-promo-banner.js',
   'listing-banner.js',
   'fst-schedule-data.js',
   'jopt-data.js',

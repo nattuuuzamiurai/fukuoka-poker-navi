@@ -336,7 +336,14 @@
      どのイベントを出すかは big-events.js の visibleBigEvents() が決める。
      掲載ウィンドウが重なると【複数件】返るため、2件以上のときは下の .evtCarousel で横スライドにする。 */
   .evtBanner{display:block;text-decoration:none;border-radius:16px;overflow:hidden;position:relative;box-shadow:0 6px 26px rgba(0,0,0,.32);border:2px solid var(--ev-bd);background:var(--ev-bg);margin-bottom:6px}
-  .evtBanner .eb-img{display:block;width:100%;height:auto}
+  /* メディア部分(画像 .eb-img / CSS組み .eb-custom)の高さ統一(2026-09-19)。
+     以前は .eb-img が「画像の縦横比まかせ(height:auto)」、.eb-custom が「固定px(min-height:112px)」
+     と、そもそもレンダリング方式が違う2系統だった。掲載中の大会・プロモが実測ほぼ同じ比率
+     (1024×412)の画像で揃っていたため普段は気づきにくいが、PC幅(.ec-slideの上限が効く1000px以上)
+     でカルーセルに2種類が並ぶと高さの差(画像バナー約235px vs 募集バナー約158px)が目立つ。
+     .eb-img/.eb-custom の両方に同じ aspect-ratio を指定して高さを揃える(下の .eb-custom 側の
+     コメントも参照)。 */
+  .evtBanner .eb-img{display:block;width:100%;aspect-ratio:1024/412;object-fit:cover}
   .evtBanner .eb-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 14px;background:linear-gradient(90deg,var(--ev-bg),var(--ev-bg2))}
   .evtBanner .eb-tag{font-size:.72em;font-weight:800;letter-spacing:.05em;color:var(--ev-fg);display:flex;align-items:center;gap:7px;min-width:0;white-space:nowrap}
   .evtBanner .eb-tag::before{content:"開催中";flex-shrink:0;white-space:nowrap;background:var(--red);color:#fff;font-size:.85em;padding:2px 8px;border-radius:20px;letter-spacing:.02em}
@@ -358,6 +365,15 @@
      WJPTと同じくバナー画像(黒地×ゴールド×赤リボン)に合わせた色を直接指定する
      (このバナー以外でDreaMの色を使う箇所が無いため、変数化する理由が無い)。 */
   .evtBanner.ev-dream{--ev-bd:var(--gold);--ev-bg:#1a0f05;--ev-bg2:#3a2308;--ev-fg:var(--gold2);--ev-ac:var(--red);--ev-ac2:#e0574a;--ev-on:#fff}
+  /* DreaM「Saturdayトーナメント」PR掲載の常設バナー(dream-promo-banner.js・2026-09-19導入)も
+     同じ ev-dream の配色を流用する。days を持たないため、何もしないと eb-tag::before の既定値
+     「開催中」がそのまま残ってしまう(index.html側の bigEventBannerHtml() コメント参照)。
+     景品表示法のステマ規制対応として常に「PR」と分かる表示にする必要があるため上書きする。
+     ★ 上の「DreaM グランドオープン記念」(promo-banners.js)も同じ ev-dream クラスを使うが、
+       会期(2026-09-05)がとうに過ぎ visiblePromoBanners() の掲載ウィンドウから永久に外れている
+       ため、このバッジ上書きが表示上ぶつかることはない。将来 ev-dream を新しい会期付き告知に
+       使い回すことがあれば、その告知だけ別クラスにするか、この上書きの要否を見直すこと。 */
+  .evtBanner.ev-dream .eb-tag::before{content:"PR";background:var(--ev-ac);color:var(--ev-on)}
 
   /* ===== 掲載店舗募集の常設バナー(listing-banner.js・2026-09-17導入) =====
      実写真が無いため画像バナーではなくCSSで組む(bigEventBannerHtml()のev.customBanner分岐)。
@@ -365,7 +381,10 @@
   .evtBanner.ev-listing{--ev-bd:var(--gold);--ev-bg:var(--felt);--ev-bg2:var(--felt2);--ev-fg:var(--gold2);--ev-ac:var(--gold);--ev-ac2:var(--gold2);--ev-on:#3a2a06}
   /* 日付(days)を持たない常設バナーのため「開催中/まもなく/終了」のバッジは出さない。 */
   .evtBanner.ev-listing .eb-tag::before{content:none}
-  .evtBanner .eb-custom{display:flex;flex-direction:column;justify-content:center;gap:5px;position:relative;overflow:hidden;padding:20px 18px 16px;min-height:112px;background:radial-gradient(circle at 90% -12%,rgba(240,197,107,.32),transparent 55%),linear-gradient(135deg,var(--ev-bg2),var(--ev-bg))}
+  /* aspect-ratio は .eb-img と同じ 1024/412(上のコメント参照)。min-height はその aspect-ratio
+     から出てくる高さの【下限としてだけ】残す(スライド幅が極端に狭いモバイル等で、
+     aspect-ratio任せだと文字(eyebrow/heading/sub)が窮屈になり過ぎない保険)。 */
+  .evtBanner .eb-custom{display:flex;flex-direction:column;justify-content:center;gap:5px;position:relative;overflow:hidden;padding:20px 18px 16px;aspect-ratio:1024/412;min-height:112px;background:radial-gradient(circle at 90% -12%,rgba(240,197,107,.32),transparent 55%),linear-gradient(135deg,var(--ev-bg2),var(--ev-bg))}
   .evtBanner .eb-custom::after{content:"♠";position:absolute;right:6px;bottom:-14px;font-size:4.4em;line-height:1;color:rgba(255,255,255,.07);pointer-events:none}
   .evtBanner .eb-eyebrow{align-self:flex-start;font-size:.68em;font-weight:800;letter-spacing:.06em;color:var(--ev-on);background:linear-gradient(135deg,var(--ev-ac2),var(--ev-ac));padding:3px 10px;border-radius:20px}
   .evtBanner .eb-heading{font-size:1.18em;font-weight:800;line-height:1.35;color:#fff;position:relative}
@@ -1108,6 +1127,9 @@
 <!-- 単発の店舗プロモーション(グランドオープン記念など)の小さなレジストリ。big-events.js の
      直後に読む(掲載期間の判定に eventFirstDay 等をそのまま使うため。詳細はファイル冒頭のコメント参照)。 -->
 <script src="promo-banners.js"></script>
+<!-- CASINO BAR DreaM「Saturdayトーナメント」PR掲載の常設バナー(日付を持たないため
+     big-events.js のヘルパーには依存しない。詳細はファイル冒頭のコメント参照)。 -->
+<script src="dream-promo-banner.js"></script>
 <!-- 掲載店舗募集の常設バナー(日付を持たないため big-events.js のヘルパーには依存しない。
      詳細はファイル冒頭のコメント参照)。 -->
 <script src="listing-banner.js"></script>
@@ -2613,9 +2635,11 @@
   // すべて出す。0件のことも複数件のこともある(big-events.js の説明を参照)。
   // 並び順(開催中→まもなく→終了)の決定は big-events.js の visibleBigEvents() に一本化する。
   //
-  // 【単発の店舗プロモーション(DreaMグランドオープン等)は常に先頭】
-  // promo-banners.js の visiblePromoBanners() を visibleBigEvents() の【結果の先頭に連結】する
-  // (renderBigEventBanner() 内)。visibleBigEvents() 側の並び替えロジックには一切手を入れない。
+  // 【単発の店舗プロモーション(DreaMグランドオープン等)・DreaM「Saturdayトーナメント」PR掲載
+  //   常設バナー(dream-promo-banner.js)は、どちらも常に大型大会より先頭】
+  // promo-banners.js の visiblePromoBanners() → dream-promo-banner.js の
+  // visibleDreamPromoBanner() → visibleBigEvents() の順に連結する(renderBigEventBanner() 内)。
+  // visibleBigEvents() 側の並び替えロジックには一切手を入れない。
   // BIG_EVENTSに混ぜない理由は promo-banners.js 冒頭のコメントを参照。
   //
   // 【2件以上のときは縦に積まず横スライドにする(2026-07-29導入)】
@@ -2640,10 +2664,14 @@
     // typeof チェックは promo-banners.js の読み込みが何らかの理由で失敗してもトップ全体を
     // 落とさないための保険(big-events.js側の型チェックと同じ考え方)。
     const promos = (typeof visiblePromoBanners === 'function') ? visiblePromoBanners() : [];
+    // CASINO BAR DreaM「Saturdayトーナメント」PR掲載の常設バナー(dream-promo-banner.js)も、
+    // 上と同じ「大型大会より先頭」の原則で promos の直後・visibleBigEvents() の【前】に置く
+    // (同じtypeofの保険)。
+    const dreamPromo = (typeof visibleDreamPromoBanner === 'function') ? visibleDreamPromoBanner() : [];
     // 掲載店舗募集の常設バナー(listing-banner.js)は他の告知の【最後尾】に付く。
     // 他に告知が0件ならこれ単体で表示される(同じtypeofの保険)。
     const listing = (typeof visibleListingBanner === 'function') ? visibleListingBanner() : [];
-    const evs = promos.concat(visibleBigEvents()).concat(listing);
+    const evs = promos.concat(dreamPromo).concat(visibleBigEvents()).concat(listing);
     // JOPT/NIPPONのデータ読み込み後に描き直すことがある。並びが変わっていなければ表示中の枚を保つ。
     const ids = evs.map(e => e.id).join(',');
     const keep = (slot.dataset.evIds === ids) ? Number(slot.dataset.index || 0) : 0;
