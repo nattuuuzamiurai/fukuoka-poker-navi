@@ -50,42 +50,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M0W0KXCHMQVYVEQ73TJPZ88Q": {
-      "id": "wl-01M0W0KXCHMQVYVEQ73TJPZ88Q",
-      "venueId": "v3",
-      "name": "m LIVE LEAGUE ~WEEKEND~",
-      "date": "2026-09-20",
-      "start": "13:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 60000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M18T2N3J0RCVYKHTNR3BXK81": {
-      "id": "wl-01M18T2N3J0RCVYKHTNR3BXK81",
-      "venueId": "v19",
-      "name": "2000 Turbo",
-      "date": "2026-09-20",
-      "start": "18:10",
-      "buyin": 2000,
-      "addon": 1000,
-      "stack": 30000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M18T2N3JHRJ914NHJACE9P2P": {
       "id": "wl-01M18T2N3JHRJ914NHJACE9P2P",
       "venueId": "v19",
@@ -95,24 +59,6 @@
       "buyin": 2000,
       "addon": 1000,
       "stack": 30000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M1K7AQSX0F5J537CG2YSM7V6": {
-      "id": "wl-01M1K7AQSX0F5J537CG2YSM7V6",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-09-20",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
       "guarantee": null,
       "reentry": true,
       "prize": null,
@@ -572,22 +518,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M22H5PDPCMQX6W541W0QX2B2": {
-      "id": "wl-01M22H5PDPCMQX6W541W0QX2B2",
-      "venueId": "v3",
-      "name": "m Brain",
-      "date": "2026-09-20",
-      "start": "18:00",
-      "buyin": 3500,
-      "addon": null,
-      "stack": 10000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M22H8DGYKX4YE7FAM5P74QTT": {
       "id": "wl-01M22H8DGYKX4YE7FAM5P74QTT",
       "venueId": "v3",
@@ -601,24 +531,6 @@
       "reentry": true,
       "prize": null,
       "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M22HA2GAXKVXD9V96G0TXACF": {
-      "id": "wl-01M22HA2GAXKVXD9V96G0TXACF",
-      "venueId": "v3",
-      "name": "ｍ Hyper Deep Turbo",
-      "date": "2026-09-20",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": null,
-      "stack": 100000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
       "source": "auto",
       "verified": false
     },
