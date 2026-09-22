@@ -387,7 +387,7 @@ function pageFoot(BIG, currentPath, extraScripts, areaLinksHtml) {
 <footer>
   <div><b style="color:#fff">ふくおかポーカーナビ</b> — 福岡ポーカートーナメント日程アグリゲーター</div>
   <div style="margin-top:6px"><a href="/">トップ</a>　|　<span class="footer-linklist">${permanentEventLinks(BIG, currentPath)}</span></div>${areaLinksRow}
-  <div style="margin-top:6px"><a href="/about.html">運営者情報</a>　|　<a href="/contact.html">お問い合わせ</a>　|　<a href="/privacy.html">プライバシーポリシー</a>　|　<a href="/terms.html">利用規約</a></div>
+  <div style="margin-top:6px"><a href="/about.html">運営者情報</a>　|　<a href="/contact.html">お問い合わせ</a>　|　<a href="/guide/partners/">店舗の掲載・PRについて</a>　|　<a href="/privacy.html">プライバシーポリシー</a>　|　<a href="/terms.html">利用規約</a></div>
   <div id="evtFeature" style="display:none"></div>
 </footer>
 <script src="/big-events.js"></script>
