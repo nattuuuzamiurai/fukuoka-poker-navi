@@ -140,24 +140,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M1K7AQSXGHRBSNYTBSNQH1J7": {
-      "id": "wl-01M1K7AQSXGHRBSNYTBSNQH1J7",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-09-22",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M1K7AQSXJM7G78PAWR4YA5E3": {
       "id": "wl-01M1K7AQSXJM7G78PAWR4YA5E3",
       "venueId": "v27",
@@ -431,58 +413,6 @@
       "reentry": true,
       "prize": null,
       "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M22GPQYYY5RTJD3B7A1GA5JW": {
-      "id": "wl-01M22GPQYYY5RTJD3B7A1GA5JW",
-      "venueId": "v3",
-      "name": "m SUPER STACK",
-      "date": "2026-09-22",
-      "start": "13:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M22GZP5V5HPN5AK0PRHCR4TA": {
-      "id": "wl-01M22GZP5V5HPN5AK0PRHCR4TA",
-      "venueId": "v3",
-      "name": "m LIVE LEAGUE season1",
-      "date": "2026-09-22",
-      "start": "17:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M22HB5FV3F96ZD3DPQ0D02YD": {
-      "id": "wl-01M22HB5FV3F96ZD3DPQ0D02YD",
-      "venueId": "v3",
-      "name": "m MAD shuffle Turbo",
-      "date": "2026-09-22",
-      "start": "21:00",
-      "buyin": 2000,
-      "addon": 1000,
-      "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
       "source": "auto",
       "verified": false
     },
