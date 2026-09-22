@@ -50,7 +50,7 @@ const REPO = path.resolve(REPO_ARG);
 // 共通ユーティリティは tools/site-shell.js に寄せてある。
 // 店舗ページ(tools/gen-venue-pages.js)がまったく同じ骨格を使うため、複製せず共有する。
 const shell = require('./site-shell.js');
-const { SITE, POSITIONING, esc, fmtDate, LINK_SEP, pageHead, FAQ_CSS, faqBlock } = shell;
+const { SITE, POSITIONING, esc, fmtDate, LINK_SEP, pageHead, FAQ_CSS, faqBlock, adCard, ADCARD_CSS } = shell;
 // sitemap.xml の唯一の所有者。中身はここでは組み立てず、丸ごと受け取って書くだけ。
 const { sitemapFile } = require('./gen-sitemap.js');
 
@@ -342,11 +342,12 @@ function buildJopt() {
 ${schedTable(JOPT.tournaments)}
 ${pastSatelliteVenuesBlock(BIG.bigEventById('jopt'), 'JOPT 2026 Fukuoka #01')}
 ${venueScheduleBlock()}
+${adCard()}
 <div class="links">
   ▶ <a href="${esc(JOPT.guideUrl)}" target="_blank" rel="noopener">JOPT公式サイト</a>${JOPT.scheduleUrl ? `　／　<a href="${esc(JOPT.scheduleUrl)}" target="_blank" rel="noopener">公式スケジュール</a>` : ''}<br>
   ▶ <a href="/">福岡の他のポーカートーナメント日程を見る</a>
 </div>`;
-  return pageHead({ title, desc, canonical, jsonld, image, breadcrumb: pageBreadcrumb('jopt', canonical) }) + body + pageFoot('/events/jopt-2026-fukuoka-01/');
+  return pageHead({ title, desc, canonical, jsonld, image, extraCss: ADCARD_CSS, breadcrumb: pageBreadcrumb('jopt', canonical) }) + body + pageFoot('/events/jopt-2026-fukuoka-01/');
 }
 
 // ---- WJPTページ(終了済み=アーカイブ) ----
@@ -390,10 +391,11 @@ function buildWjpt() {
 ${schedTable(WJPT.tournaments)}
 ${pastSatelliteVenuesBlock(BIG.bigEventById('wjpt'), 'WJPT 2026')}
 ${venueScheduleBlock()}
+${adCard()}
 <div class="links">
   ▶ <a href="/">福岡の今後のポーカートーナメント日程を見る</a>
 </div>`;
-  return pageHead({ title, desc, canonical, jsonld, image, breadcrumb: pageBreadcrumb('wjpt', canonical) }) + body + pageFoot('/events/wjpt-2026/');
+  return pageHead({ title, desc, canonical, jsonld, image, extraCss: ADCARD_CSS, breadcrumb: pageBreadcrumb('wjpt', canonical) }) + body + pageFoot('/events/wjpt-2026/');
 }
 
 // ---- NIPPON SERIES ページ ----
@@ -485,11 +487,12 @@ ${schedTableNippon(NIPPON.events)}
 <p class="lead" style="margin-top:14px">※ MAIN EVENT（#17）は Day 1A〜Day 1D Last Chance と Day 2 &amp; FINAL に分かれているため、同じ番号が複数の日に登場します。ブラインドストラクチャーは公式の各トーナメントページをご確認ください。</p>
 ${pastSatelliteVenuesBlock(BIG.bigEventById('nippon'), 'NIPPON SERIES FUKUOKA 2026')}
 ${venueScheduleBlock()}
+${adCard()}
 <div class="links">
   ▶ <a href="${esc(NIPPON.siteUrl)}" target="_blank" rel="noopener">NIPPON SERIES 公式イベントページ</a>　／　<a href="${esc(NIPPON.guidePdfUrl)}" target="_blank" rel="noopener">公式Players Guide(PDF)</a><br>
   ▶ <a href="/">福岡の他のポーカートーナメント日程を見る</a>
 </div>`;
-  return pageHead({ title, desc, canonical, jsonld, image, breadcrumb: pageBreadcrumb('nippon', canonical) }) + body + pageFoot('/events/nippon-series-2026-fukuoka/');
+  return pageHead({ title, desc, canonical, jsonld, image, extraCss: ADCARD_CSS, breadcrumb: pageBreadcrumb('nippon', canonical) }) + body + pageFoot('/events/nippon-series-2026-fukuoka/');
 }
 
 // ---- FST 5.0 ページ「よくある質問」(FAQ) ----
@@ -731,12 +734,13 @@ ${venueScheduleBlock()}
 <p class="lead">メイン会場（${esc(FST.venue)}）で行われる全${FST_SCHEDULE.tournaments.length}トーナメントのSTART・CLOSE・エントリーです。出典: 主催者公式Linktreeに掲載のPDF「EVENT SCHEDULE 2026.09.19-23」（${esc(FST.asOf)}時点）。エントリー欄が「PDF未記載」の行は、PDF側でエントリー欄が数値ではなくアイコン/バッジ表記になっており、当サイトで金額を読み取れなかった行です（推測で埋めていません）。CLOSE欄が「-」の回はレイトレジ無し（最後まで続行）です。［EC］［F100］［XPT］は公式PDFのTOURNAMENT列に付いていたバッジ表記をそのまま掲載しており、正式名称・詳細は当サイトでは確認できていません。</p>
 ${schedTableFst(FST_SCHEDULE.tournaments)}
 ${faq.html}
+${adCard()}
 <div class="links">
   ▶ <a href="${esc(FST.x)}" target="_blank" rel="noopener">公式X（@fst_202408）</a>　／　<a href="${esc(FST.linktree)}" target="_blank" rel="noopener">公式Linktree</a>　／　<a href="${esc(FST.instagram)}" target="_blank" rel="noopener">公式Instagram</a><br>
   ▶ <a href="/">福岡の他のポーカートーナメント日程を見る</a>
 </div>
 ${faq.script}`;
-  return pageHead({ title, desc, canonical, jsonld, image, extraCss: FAQ_CSS, breadcrumb: pageBreadcrumb('fst', canonical) }) + body + pageFoot('/events/fst-2026-fukuoka/');
+  return pageHead({ title, desc, canonical, jsonld, image, extraCss: FAQ_CSS + ADCARD_CSS, breadcrumb: pageBreadcrumb('fst', canonical) }) + body + pageFoot('/events/fst-2026-fukuoka/');
 }
 
 // ---- SPADIE FUKUOKA 1st ページ ----
@@ -853,12 +857,13 @@ function buildSpadie() {
 </table></div>
 ${faq.html}
 ${venueScheduleBlock()}
+${adCard()}
 <div class="links">
   ▶ <a href="${esc(SPADIE_X)}" target="_blank" rel="noopener">公式X（@SPADIE_FUKUOKA）</a><br>
   ▶ <a href="/">福岡の他のポーカートーナメント日程を見る</a>
 </div>
 ${faq.script}`;
-  return pageHead({ title, desc, canonical, jsonld, image, extraCss: FAQ_CSS, breadcrumb: pageBreadcrumb('spadie', canonical) }) + body + pageFoot('/events/spadie-fukuoka-1st/');
+  return pageHead({ title, desc, canonical, jsonld, image, extraCss: FAQ_CSS + ADCARD_CSS, breadcrumb: pageBreadcrumb('spadie', canonical) }) + body + pageFoot('/events/spadie-fukuoka-1st/');
 }
 
 // ---- 書き出し / 検査 ----

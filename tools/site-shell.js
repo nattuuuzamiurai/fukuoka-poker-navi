@@ -370,6 +370,12 @@ ${BASE_CSS}${extraCss || ''}</style>
  *                   渡さなければ行ごと出さない(index.html 自身はこの pageFoot を使わず、
  *                   #areaLinks を自前で持っているため、渡さない使い方も想定する)。
  */
+// ---- 自社アプリ(ポーカートナメ成績表)の広告リンク ----
+// UTM付きURLをここに集約する(2026-09-23追加)。GA4のoutbound click(linkUrlパラメータ)で、
+// サイト内のどの枠(コンテンツ内カード/画面下固定バナー)からのクリックかを区別するため。
+const PTL_URL = 'https://poker-tourney-log--family.expo.app';
+const ptlLink = medium => `${PTL_URL}?utm_source=fukuokapoker&utm_medium=${medium}&utm_campaign=selfpromo`;
+
 function pageFoot(BIG, currentPath, extraScripts, areaLinksHtml) {
   // 恒久リンク行(全大会・日付に関係なく常に出す)と、
   // 「大会特集」(掲載中の1件だけ・日によって変わるのでブラウザ側で判定)は【両方】出す。
@@ -402,10 +408,72 @@ function pageFoot(BIG, currentPath, extraScripts, areaLinksHtml) {
     <div class="sa-title">成績、記録してますか？</div>
     <div class="sa-desc">ポーカートナメ成績表(無料) — buyin・順位・収支を記録</div>
   </div>
-  <a class="sa-btn" href="https://poker-tourney-log--family.expo.app" target="_blank" rel="noopener">使ってみる →</a>
+  <a class="sa-btn" href="${ptlLink('sticky_banner')}" target="_blank" rel="noopener">使ってみる →</a>
 </div>
 ${extraScripts || ''}</body>
 </html>`;
+}
+
+/**
+ * 自社アプリ(ポーカートナメ成績表)の広告カード(.adCard)。
+ *
+ * 【stickyAdとの違い】stickyAd(画面下固定の小さいバナー)は pageFoot() から全ページ共通で
+ * 必ず出る。こちらはコンテンツ内に埋め込む目立つカードで、ページ種別ごとに自然な挿入位置が
+ * 違う(店舗ページなら日程表の直後、エリアページなら店舗一覧の直後、大会ページなら本文末尾…)。
+ * pageFoot のような「決まった場所に固定で挟む」関数にはできないため、呼び出し側が
+ * body組み立ての好きな位置でそのまま連結できる独立関数にしてある(2026-09-23導入)。
+ * 【なぜここに集約したか】もとは index.html にだけ存在し、しかも微妙にコピーが違う2パターンが
+ * 複製されていた(ページ上部の縮小版・下部のフルサイズ版)。店舗・エリア・大会・ガイドページへ
+ * 展開するにあたり、CSS・HTMLとも「片方だけ直して片方を忘れる」事故を防ぐため1箇所にした
+ * (このファイル冒頭の設計方針と同じ理由)。
+ * 【文言は流用】opts.title/opts.desc を省略すると index.html 下部のカード(見出し「今日の
+ * 戦績、記録に残しませんか？」)と同じ文言になる。新しい文言を都度書き起こさない方針
+ * (執筆レビューを増やさないため)。
+ *
+ * opts.style … ルート <a> に足す inline style(index.html の2枚目のカードのように
+ *              margin を個別調整したい場合に使う。省略可)
+ */
+const ADCARD_CSS = `  .adCard{display:flex;align-items:center;gap:16px;flex-wrap:wrap;text-decoration:none;border-radius:var(--r);padding:20px 22px;background:radial-gradient(120% 160% at 8% 0%,rgba(96,214,255,.20),transparent 55%),radial-gradient(120% 160% at 100% 100%,rgba(200,110,255,.16),transparent 55%),linear-gradient(160deg,#12101d,#191325 60%,#140f1e);border:1px solid rgba(255,255,255,.08);box-shadow:0 4px 18px rgba(5,0,15,.3)}
+  .adCard img{width:56px;height:56px;flex-shrink:0;filter:drop-shadow(0 0 10px rgba(120,210,255,.4))}
+  .adCard .ac-body{flex:1;min-width:0}
+  .adCard .ac-title{font-size:1.02em;font-weight:800;color:#fff}
+  .adCard .ac-desc{font-size:.82em;color:#b9b6c9;margin-top:4px}
+  .adCard .ac-btn{flex-shrink:0;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#3a2a06;font-weight:800;font-size:.85em;padding:10px 20px;border-radius:24px;white-space:nowrap;box-shadow:0 0 14px rgba(217,164,65,.3)}
+  /* 430px以下(iPhone SE/12/13/14/15等の主要スマホ幅)向けの縮小指定。
+     .ac-body の min-width を固定200pxのままにすると、画像+本文+ボタンの合計が実効幅
+     (~310〜340px)に収まらずボタンが見切れる。.stickyAd で min-width:0 +
+     @media(max-width:420px) により同種の問題を回避済みなのと同じ考え方で、ここでも
+     min-width:0(上の行)に加えて、画像・余白・文字を詰めて img+本文+ボタンが1行に
+     収まるようにする(トップの .adslot .adCard=縮小版カードと同じレイアウト)。
+     説明文は2行までクランプ(内容を消さず省略記号で収める)。 */
+  @media(max-width:430px){
+    .adCard{gap:10px;padding:14px 16px}
+    .adCard img{width:40px;height:40px}
+    .adCard .ac-title{font-size:.88em;line-height:1.3}
+    .adCard .ac-desc{font-size:.72em;margin-top:2px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .adCard .ac-btn{font-size:.72em;padding:8px 12px}
+  }
+  @media(max-width:360px){
+    .adCard{gap:8px;padding:12px}
+    .adCard img{width:32px;height:32px}
+    .adCard .ac-title{font-size:.82em}
+    .adCard .ac-btn{font-size:.68em;padding:7px 10px}
+  }
+`;
+function adCard(opts) {
+  opts = opts || {};
+  const title = opts.title || '今日の戦績、記録に残しませんか？';
+  const desc = opts.desc || 'ポーカートナメ成績表なら buyin・順位・収支をすぐ記録。無料アプリはこちら';
+  const style = opts.style ? ` style="${esc(opts.style)}"` : '';
+  return `
+<a class="adCard"${style} href="${ptlLink('content_card')}" target="_blank" rel="noopener">
+  <img src="/img/ptl-bulldog.webp" alt="" loading="lazy" width="56" height="56">
+  <div class="ac-body">
+    <div class="ac-title">${esc(title)}</div>
+    <div class="ac-desc">${esc(desc)}</div>
+  </div>
+  <span class="ac-btn">使ってみる →</span>
+</a>`;
 }
 
 module.exports = {
@@ -414,5 +482,6 @@ module.exports = {
   breadcrumbJsonLd, breadcrumbNavHtml,
   BASE_CSS, pageHead, pageFoot,
   FAQ_CSS, faqBlock,
+  ptlLink, ADCARD_CSS, adCard,
   validateVenueSlugs
 };

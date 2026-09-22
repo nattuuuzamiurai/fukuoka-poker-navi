@@ -64,7 +64,7 @@ if (!REPO_ARG) { console.error('リポジトリのパスを指定してくださ
 const REPO = path.resolve(REPO_ARG);
 
 const shell = require('./site-shell.js');
-const { SITE, POSITIONING, esc, pageHead, FAQ_CSS, faqBlock } = shell;
+const { SITE, POSITIONING, esc, pageHead, FAQ_CSS, faqBlock, adCard, ADCARD_CSS } = shell;
 const { sitemapFile } = require('./gen-sitemap.js');
 const { AREA_SLUGS, areaVenues, areaList, footerAreaLinksHtml } = require('./area-schedule.js');
 // CATEGORIES(「福岡のポーカー店を目的別に探す」6分類)は tools/guide-categories.js が
@@ -523,6 +523,7 @@ ${faq.html}
 <h2 class="day">トーナメントに挑戦したくなったら</h2>
 <p class="lead">店選びの参考になったら、次はぜひ実際の大会日程もチェックしてみてください。当サイトのトップページでは、福岡県内で開催されるポーカートーナメント・大会の日程を、日付・エリア・種類(サテライト/PLO/NLHなど)で絞り込んで一覧表示できます。</p>
 <a class="cta" href="/">▶ 福岡のポーカートーナメント・大会日程一覧はこちら<small>日付・エリア・種類で絞り込んで表示</small></a>
+${adCard()}
 <h2 class="day">まとめ</h2>
 <ul style="margin:0 0 14px 1.3em;font-size:.9em;line-height:2">
   <li>福岡のポーカー店選びで迷ったら、まずは「トーナメント重視」「リングゲームでじっくり」「お酒も楽しみたい」など、自分の目的に合ったカテゴリーから探すのがおすすめです。</li>
@@ -539,7 +540,7 @@ ${faq.script}`;
     breadcrumb,
     ogType: 'article',
     twitterCard: 'summary_large_image',
-    extraCss: FAQ_CSS + GUIDE_CSS
+    extraCss: FAQ_CSS + GUIDE_CSS + ADCARD_CSS
   }) + body + pageFoot(null);
 }
 

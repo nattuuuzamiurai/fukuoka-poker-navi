@@ -224,6 +224,32 @@
   .vp-closed-notice{background:#fdecea;border:1px solid var(--red);border-radius:var(--r);box-shadow:var(--sha);padding:12px 15px;margin-bottom:14px;font-size:.9em;line-height:1.8;color:var(--red);font-weight:700}
   /* .vp-fst(FSTサテライト開催中の告知)は site-shell.js の BASE_CSS 側に移設した
      (2026-08-28。エリアページでも使うため。複製すると片方だけ直して片方を忘れる)。 */
+  .adCard{display:flex;align-items:center;gap:16px;flex-wrap:wrap;text-decoration:none;border-radius:var(--r);padding:20px 22px;background:radial-gradient(120% 160% at 8% 0%,rgba(96,214,255,.20),transparent 55%),radial-gradient(120% 160% at 100% 100%,rgba(200,110,255,.16),transparent 55%),linear-gradient(160deg,#12101d,#191325 60%,#140f1e);border:1px solid rgba(255,255,255,.08);box-shadow:0 4px 18px rgba(5,0,15,.3)}
+  .adCard img{width:56px;height:56px;flex-shrink:0;filter:drop-shadow(0 0 10px rgba(120,210,255,.4))}
+  .adCard .ac-body{flex:1;min-width:0}
+  .adCard .ac-title{font-size:1.02em;font-weight:800;color:#fff}
+  .adCard .ac-desc{font-size:.82em;color:#b9b6c9;margin-top:4px}
+  .adCard .ac-btn{flex-shrink:0;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#3a2a06;font-weight:800;font-size:.85em;padding:10px 20px;border-radius:24px;white-space:nowrap;box-shadow:0 0 14px rgba(217,164,65,.3)}
+  /* 430px以下(iPhone SE/12/13/14/15等の主要スマホ幅)向けの縮小指定。
+     .ac-body の min-width を固定200pxのままにすると、画像+本文+ボタンの合計が実効幅
+     (~310〜340px)に収まらずボタンが見切れる。.stickyAd で min-width:0 +
+     @media(max-width:420px) により同種の問題を回避済みなのと同じ考え方で、ここでも
+     min-width:0(上の行)に加えて、画像・余白・文字を詰めて img+本文+ボタンが1行に
+     収まるようにする(トップの .adslot .adCard=縮小版カードと同じレイアウト)。
+     説明文は2行までクランプ(内容を消さず省略記号で収める)。 */
+  @media(max-width:430px){
+    .adCard{gap:10px;padding:14px 16px}
+    .adCard img{width:40px;height:40px}
+    .adCard .ac-title{font-size:.88em;line-height:1.3}
+    .adCard .ac-desc{font-size:.72em;margin-top:2px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .adCard .ac-btn{font-size:.72em;padding:8px 12px}
+  }
+  @media(max-width:360px){
+    .adCard{gap:8px;padding:12px}
+    .adCard img{width:32px;height:32px}
+    .adCard .ac-title{font-size:.82em}
+    .adCard .ac-btn{font-size:.68em;padding:7px 10px}
+  }
 </style>
 </head>
 <body>
@@ -247,6 +273,16 @@
 <h2 class="vp-sec" id="vp-sched-title">トーナメント日程</h2>
 <p class="lead" id="vp-sched-note">※ JavaScriptが有効な環境では、読み込み時に最新の掲載データから<b>今日以降</b>の日程に差し替わります。</p>
 <div id="vp-sched"><div class="vp-empty">現在このサイトに掲載している開催予定はありません。<br>開催状況は店舗の公式情報・SNSをご確認ください。</div></div>
+
+<a class="adCard" href="https://poker-tourney-log--family.expo.app?utm_source=fukuokapoker&utm_medium=content_card&utm_campaign=selfpromo" target="_blank" rel="noopener">
+  <img src="/img/ptl-bulldog.webp" alt="" loading="lazy" width="56" height="56">
+  <div class="ac-body">
+    <div class="ac-title">今日の戦績、記録に残しませんか？</div>
+    <div class="ac-desc">ポーカートナメ成績表なら buyin・順位・収支をすぐ記録。無料アプリはこちら</div>
+  </div>
+  <span class="ac-btn">使ってみる →</span>
+</a>
+
 <h2 class="vp-sec">同じエリア（大名）の他のポーカー店</h2>
 <div class="vp-cards">
   <a class="vp-card" href="/venues/musashi-poker-room-fukuoka/">
@@ -282,7 +318,7 @@
     <div class="sa-title">成績、記録してますか？</div>
     <div class="sa-desc">ポーカートナメ成績表(無料) — buyin・順位・収支を記録</div>
   </div>
-  <a class="sa-btn" href="https://poker-tourney-log--family.expo.app" target="_blank" rel="noopener">使ってみる →</a>
+  <a class="sa-btn" href="https://poker-tourney-log--family.expo.app?utm_source=fukuokapoker&utm_medium=sticky_banner&utm_campaign=selfpromo" target="_blank" rel="noopener">使ってみる →</a>
 </div>
 <script src="/recurring-dedupe.js"></script>
 <script src="/data.js"></script>

@@ -49,7 +49,7 @@ if (!REPO_ARG) { console.error('リポジトリのパスを指定してくださ
 const REPO = path.resolve(REPO_ARG);
 
 const shell = require('./site-shell.js');
-const { SITE, POSITIONING, esc, pageHead, pageFoot } = shell;
+const { SITE, POSITIONING, esc, pageHead, pageFoot, adCard, ADCARD_CSS } = shell;
 const { sitemapFile } = require('./gen-sitemap.js');
 const { SCHEDULE_JS, venueHasCurrentFstSatellite } = require('./venue-schedule.js');
 const {
@@ -358,6 +358,7 @@ ${others.map(a => `  <li><a href="/areas/${AREA_SLUGS[a]}/">${esc(a)}（${areaVe
 <div class="ap-cards">
 ${venueCards(venues)}
 </div>
+${adCard()}
 <h2 class="vp-sec" id="ap-sched-title">${schedTitle}</h2>
 <p class="lead" id="ap-sched-note">${schedNote}</p>
 <div id="ap-sched">${schedHtml}</div>${otherBlock}
@@ -407,7 +408,7 @@ ${SCHEDULE_JS}${AREA_SCHEDULE_JS}
     // pageHead の既定値(サイト共通OGP・img/ogp/common-og.jpg)に任せる。
     ogType: 'website',
     twitterCard: 'summary_large_image',
-    extraCss: AREA_CSS
+    extraCss: AREA_CSS + ADCARD_CSS
   }) + body + pageFoot(BIG, null, scripts, FOOTER_AREA_LINKS);
 }
 
