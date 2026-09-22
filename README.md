@@ -41,6 +41,18 @@ AdSense/PR枠が埋まるまでの間、自社アプリの導線を3か所に置
 （高さ稼ぎに説明文を削ると CTR に直接効く）。320px級で見出しが3行に折り返す場合も、文言ではなく
 `@media(max-width:360px)` 側の寸法で吸収する。
 
+**2026-09-23、`main > .adCard` と同じCSS・文言を `tools/site-shell.js` の `ADCARD_CSS` / `adCard(opts)` に
+共通化し、店舗ページ（日程表の直後）・エリアページ（店舗一覧の直後）・大会ページ（本文末尾）・
+`guide/beginner/`（トーナメント誘導CTAの直後）にも展開した**（`.stickyAd` が既に同じ考え方で
+共通化されていたのに倣った）。挿入位置はページ種別ごとに違うため、`pageFoot()` のような
+「フッターに固定で挟む」方式ではなく、各生成スクリプトが呼びたい場所で呼ぶ独立関数にしてある。
+`guide/partners/`（店舗様向け案内）と `guide/webcoin-regulation/`（規制解説・中立ページ）は対象外
+（読者層が違う/中立性を保つため）。`events/dream-grandopen-2026/` `events/dream-saturday-tournament/`
+は `gen-event-pages.js` の生成対象ではない手書きの静的ページのため、CSS/HTMLを直接複製してある
+（揃えて直すこと）。リンク先には `?utm_source=fukuokapoker&utm_medium=content_card&utm_campaign=selfpromo`
+（`.stickyAd` は `utm_medium=sticky_banner`）を付与し、GA4のoutbound click（`linkUrl`）でどの枠から
+のクリックかを区別できるようにしている（`tools/site-shell.js` の `ptlLink()`）。
+
 ## ファイル
 
 | ファイル | 役割 |

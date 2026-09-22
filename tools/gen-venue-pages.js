@@ -63,7 +63,7 @@ if (!REPO_ARG) { console.error('リポジトリのパスを指定してくださ
 const REPO = path.resolve(REPO_ARG);
 
 const shell = require('./site-shell.js');
-const { SITE, POSITIONING, esc, pageHead, pageFoot } = shell;
+const { SITE, POSITIONING, esc, pageHead, pageFoot, adCard, ADCARD_CSS } = shell;
 // sitemap.xml の唯一の所有者。中身はここでは組み立てず、丸ごと受け取って書くだけ。
 const { sitemapFile } = require('./gen-sitemap.js');
 
@@ -617,10 +617,16 @@ ${sameAreaShown.map(x => `  <a class="vp-card" href="/venues/${x.slug}/">
 <iframe class="vp-map" src="${esc(mapEmbedUrl(v))}" title="${esc(v.name)}の地図" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>` : '';
 
   // トーナメント専用詳細ページへの内部リンク(2026-09-19新設)。data.js の "eventPageLink" が
-  // ある店だけ、日程CTAの直後に1行出す。特典等の告知の中身はここには持たせない
-  // (リンク先の詳細ページに一本化。data.jsのフィールド定義コメント参照)。
-  const eventPageLinkBlock = v.eventPageLink ? `
-<p class="lead">▶ <a href="${esc(v.eventPageLink.href)}">${esc(v.eventPageLink.label)}</a></p>` : '';
+  // ある店だけ、日程CTAの直後に1行(複数あれば複数行)出す。特典等の告知の中身はここには
+  // 持たせない(リンク先の詳細ページに一本化。data.jsのフィールド定義コメント参照)。
+  // 【単一オブジェクト/配列の両対応】2026-09-23、1店が複数のトーナメント専用ページを
+  // 持つケース(例: v42=毎週開催のSaturdayトーナメント＋終了済みのグランドオープン記念)に
+  // 対応するため配列も受け付けるようにした(既存データとの後方互換で単一オブジェクトも許容)。
+  const eventPageLinkBlock = v.eventPageLink
+    ? (Array.isArray(v.eventPageLink) ? v.eventPageLink : [v.eventPageLink])
+        .map(l => `
+<p class="lead">▶ <a href="${esc(l.href)}">${esc(l.label)}</a></p>`).join('')
+    : '';
 
   // 日程表の見出しと但し書き。3通りに分かれる。
   // 【原則】静的HTMLは再生成しない限り何ヶ月でもそのまま残る。だからここに書く文は
@@ -658,7 +664,9 @@ ${venueInfoCardsHtml(v)}
 <h2 class="vp-sec" id="vp-sched-title">${schedTitle}</h2>
 <p class="lead" id="vp-sched-note">${schedNote}</p>
 <div id="vp-sched">${schedHtml}</div>${ringBlock ? `
-<h2 class="vp-sec">リングゲーム</h2>${ringBlock}` : ''}${areaBlock}${guideLinksHtml(v)}
+<h2 class="vp-sec">リングゲーム</h2>${ringBlock}` : ''}
+${adCard()}
+${areaBlock}${guideLinksHtml(v)}
 <div class="links">
   ▶ <a href="/">福岡のポーカートーナメント日程を日付順に見る（全${VENUES.length}店舗）</a><br>
   ▶ <a href="/#venue/${esc(v.id)}">${esc(v.name)} の月別カレンダー</a>
@@ -714,7 +722,7 @@ ${SCHEDULE_JS}
     // pageHead の既定値(サイト共通OGP・img/ogp/common-og.jpg)に任せる。
     ogType: 'website',
     twitterCard: 'summary_large_image',
-    extraCss: VENUE_CSS
+    extraCss: VENUE_CSS + ADCARD_CSS
   }) + body + pageFoot(BIG, null, scripts, FOOTER_AREA_LINKS);
 }
 

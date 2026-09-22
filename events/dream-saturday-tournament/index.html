@@ -151,6 +151,15 @@
   .stickyAd .sa-desc{font-size:.68em;color:#b9b6c9;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .stickyAd .sa-btn{flex-shrink:0;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#3a2a06;font-weight:800;font-size:.76em;padding:8px 14px;border-radius:18px;white-space:nowrap;text-decoration:none}
   @media(max-width:420px){.stickyAd .sa-desc{display:none}}
+  /* AD CARD(コンテンツ内の自社広告カード)。tools/site-shell.js の ADCARD_CSS と同じ内容
+     (このページは gen-event-pages.js の生成対象ではなく手書きの静的ページのため、
+     CSS/HTMLとも他の大会ページと揃うようここに直接複製してある。揃えて直すこと)。 */
+  .adCard{display:flex;align-items:center;gap:16px;flex-wrap:wrap;text-decoration:none;border-radius:var(--r);padding:20px 22px;background:radial-gradient(120% 160% at 8% 0%,rgba(96,214,255,.20),transparent 55%),radial-gradient(120% 160% at 100% 100%,rgba(200,110,255,.16),transparent 55%),linear-gradient(160deg,#12101d,#191325 60%,#140f1e);border:1px solid rgba(255,255,255,.08);box-shadow:0 4px 18px rgba(5,0,15,.3)}
+  .adCard img{width:56px;height:56px;flex-shrink:0;filter:drop-shadow(0 0 10px rgba(120,210,255,.4))}
+  .adCard .ac-body{flex:1;min-width:200px}
+  .adCard .ac-title{font-size:1.02em;font-weight:800;color:#fff}
+  .adCard .ac-desc{font-size:.82em;color:#b9b6c9;margin-top:4px}
+  .adCard .ac-btn{flex-shrink:0;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#3a2a06;font-weight:800;font-size:.85em;padding:10px 20px;border-radius:24px;white-space:nowrap;box-shadow:0 0 14px rgba(217,164,65,.3)}
 </style>
 </head>
 <body>
@@ -209,6 +218,14 @@
   <b>SNS</b>　<a href="https://www.instagram.com/dream.casinobar/" target="_blank" rel="noopener">Instagram（@dream.casinobar）</a>
 </div>
 
+<a class="adCard" href="https://poker-tourney-log--family.expo.app?utm_source=fukuokapoker&utm_medium=content_card&utm_campaign=selfpromo" target="_blank" rel="noopener">
+  <img src="/img/ptl-bulldog.webp" alt="" loading="lazy" width="56" height="56">
+  <div class="ac-body">
+    <div class="ac-title">今日の戦績、記録に残しませんか？</div>
+    <div class="ac-desc">ポーカートナメ成績表なら buyin・順位・収支をすぐ記録。無料アプリはこちら</div>
+  </div>
+  <span class="ac-btn">使ってみる →</span>
+</a>
 <div class="links">
   ▶ <a href="/venues/dream-casinobar-kurume/">CASINO BAR DreaM の店舗ページ（トーナメント日程・アクセス）を見る</a><br>
   ▶ <a href="/areas/kurume/">久留米エリアの他のポーカー店を見る</a><br>
@@ -232,7 +249,7 @@
     <div class="sa-title">成績、記録してますか？</div>
     <div class="sa-desc">ポーカートナメ成績表(無料) — buyin・順位・収支を記録</div>
   </div>
-  <a class="sa-btn" href="https://poker-tourney-log--family.expo.app" target="_blank" rel="noopener">使ってみる →</a>
+  <a class="sa-btn" href="https://poker-tourney-log--family.expo.app?utm_source=fukuokapoker&utm_medium=sticky_banner&utm_campaign=selfpromo" target="_blank" rel="noopener">使ってみる →</a>
 </div>
 </body>
 </html>

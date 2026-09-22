@@ -196,6 +196,12 @@
   .ap-card .mt{font-size:.84em;color:var(--mut);line-height:1.8;margin-top:3px}
   ul.vp-list{list-style:none;display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 6px}
   ul.vp-list a{display:inline-block;background:var(--sur);border:1px solid var(--bor);border-radius:20px;padding:6px 13px;font-size:.85em;font-weight:700;color:var(--felt);text-decoration:none;box-shadow:var(--sha)}
+  .adCard{display:flex;align-items:center;gap:16px;flex-wrap:wrap;text-decoration:none;border-radius:var(--r);padding:20px 22px;background:radial-gradient(120% 160% at 8% 0%,rgba(96,214,255,.20),transparent 55%),radial-gradient(120% 160% at 100% 100%,rgba(200,110,255,.16),transparent 55%),linear-gradient(160deg,#12101d,#191325 60%,#140f1e);border:1px solid rgba(255,255,255,.08);box-shadow:0 4px 18px rgba(5,0,15,.3)}
+  .adCard img{width:56px;height:56px;flex-shrink:0;filter:drop-shadow(0 0 10px rgba(120,210,255,.4))}
+  .adCard .ac-body{flex:1;min-width:200px}
+  .adCard .ac-title{font-size:1.02em;font-weight:800;color:#fff}
+  .adCard .ac-desc{font-size:.82em;color:#b9b6c9;margin-top:4px}
+  .adCard .ac-btn{flex-shrink:0;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#3a2a06;font-weight:800;font-size:.85em;padding:10px 20px;border-radius:24px;white-space:nowrap;box-shadow:0 0 14px rgba(217,164,65,.3)}
 </style>
 </head>
 <body>
@@ -227,6 +233,15 @@
     <div class="mt">福岡県久留米市東町38-24</div>
   </div>
 </div>
+
+<a class="adCard" href="https://poker-tourney-log--family.expo.app?utm_source=fukuokapoker&utm_medium=content_card&utm_campaign=selfpromo" target="_blank" rel="noopener">
+  <img src="/img/ptl-bulldog.webp" alt="" loading="lazy" width="56" height="56">
+  <div class="ac-body">
+    <div class="ac-title">今日の戦績、記録に残しませんか？</div>
+    <div class="ac-desc">ポーカートナメ成績表なら buyin・順位・収支をすぐ記録。無料アプリはこちら</div>
+  </div>
+  <span class="ac-btn">使ってみる →</span>
+</a>
 <h2 class="vp-sec" id="ap-sched-title">トーナメント日程（2026年7月〜9月の掲載分）</h2>
 <p class="lead" id="ap-sched-note">※ この一覧は2026年7月〜9月の掲載分です。JavaScriptが有効な環境では、読み込み時に最新の掲載データから<b>今日以降</b>の日程に差し替わります。</p>
 <div id="ap-sched"><h3 class="vp-day">7月1日（水）</h3><div class="sched-wrap"><table class="sched"><thead><tr><th>開始</th><th>店舗</th><th>トーナメント</th><th>バイイン</th></tr></thead><tbody><tr><td class="start">19:30</td><td class="ap-venue"><a href="/venues/ken-poker-kurume/">KENポーカー（久留米）</a></td><td>SUPER CHAMPIONSHIP FUKUOKA サテライト　<span class="vp-tags">サテライト・WJPT</span></td><td class="buyin">¥3,500</td></tr><tr><td class="start">—</td><td class="ap-venue"><a href="/venues/ace-and-king-kurume/">A&amp;K（Ace and King）</a></td><td>SUPER CHAMPIONSHIP FUKUOKA サテライト　<span class="vp-tags">サテライト</span>　<span class="vp-warn">⚠ 要確認</span></td><td class="buyin">詳細は店舗SNSを確認</td></tr></tbody></table></div>
@@ -352,7 +367,7 @@
     <div class="sa-title">成績、記録してますか？</div>
     <div class="sa-desc">ポーカートナメ成績表(無料) — buyin・順位・収支を記録</div>
   </div>
-  <a class="sa-btn" href="https://poker-tourney-log--family.expo.app" target="_blank" rel="noopener">使ってみる →</a>
+  <a class="sa-btn" href="https://poker-tourney-log--family.expo.app?utm_source=fukuokapoker&utm_medium=sticky_banner&utm_campaign=selfpromo" target="_blank" rel="noopener">使ってみる →</a>
 </div>
 <script src="/recurring-dedupe.js"></script>
 <script src="/data.js"></script>

@@ -270,6 +270,12 @@
   .vp-closed-notice{background:#fdecea;border:1px solid var(--red);border-radius:var(--r);box-shadow:var(--sha);padding:12px 15px;margin-bottom:14px;font-size:.9em;line-height:1.8;color:var(--red);font-weight:700}
   /* .vp-fst(FSTサテライト開催中の告知)は site-shell.js の BASE_CSS 側に移設した
      (2026-08-28。エリアページでも使うため。複製すると片方だけ直して片方を忘れる)。 */
+  .adCard{display:flex;align-items:center;gap:16px;flex-wrap:wrap;text-decoration:none;border-radius:var(--r);padding:20px 22px;background:radial-gradient(120% 160% at 8% 0%,rgba(96,214,255,.20),transparent 55%),radial-gradient(120% 160% at 100% 100%,rgba(200,110,255,.16),transparent 55%),linear-gradient(160deg,#12101d,#191325 60%,#140f1e);border:1px solid rgba(255,255,255,.08);box-shadow:0 4px 18px rgba(5,0,15,.3)}
+  .adCard img{width:56px;height:56px;flex-shrink:0;filter:drop-shadow(0 0 10px rgba(120,210,255,.4))}
+  .adCard .ac-body{flex:1;min-width:200px}
+  .adCard .ac-title{font-size:1.02em;font-weight:800;color:#fff}
+  .adCard .ac-desc{font-size:.82em;color:#b9b6c9;margin-top:4px}
+  .adCard .ac-btn{flex-shrink:0;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#3a2a06;font-weight:800;font-size:.85em;padding:10px 20px;border-radius:24px;white-space:nowrap;box-shadow:0 0 14px rgba(217,164,65,.3)}
 </style>
 </head>
 <body>
@@ -300,6 +306,7 @@
 <div class="disclaimer"><b>DreaM CASINO BARについて</b>　2026年9月1日グランドオープン。入場料(1ドリンク付)1,500円、ソフトドリンク飲み放題(12時間)500円、アルコール飲み放題(12時間)1,500円。ポーカートーナメントも定期開催(フリーロール30,000保証、KO Bounty60,000保証など)。<br>当サイトは店舗が公開している情報を集約している媒体で、この店舗の運営者ではありません。日程・料金・営業状況は変更されることがあるため、参加前に必ず店舗の公式情報・SNSをご確認ください。主な情報源: <a href="https://www.instagram.com/dream.casinobar/" target="_blank" rel="noopener">Instagram</a>。<br>当サイトは店舗・主催者が公開している情報を集約する媒体であり、賭博行為の勧誘・仲介を行うものではありません。賞品・プライズの取扱いは各店舗・主催者の規定によります。</div>
 <a class="cta" href="/#venue/v42">▶ 月を切り替えて日程を見る<small>サイト内の月別カレンダー（前月・翌月に移動できます）</small></a>
 <p class="lead">▶ <a href="/events/dream-saturday-tournament/">Saturdayトーナメントの詳細を見る（毎週土曜開催）</a></p>
+<p class="lead">▶ <a href="/events/dream-grandopen-2026/">グランドオープン記念トーナメント（9/5開催・終了）の詳細を見る</a></p>
 <h2 class="vp-sec" id="vp-sched-title">トーナメント日程（2026年9月の掲載分）</h2>
 <p class="lead" id="vp-sched-note">※ この一覧は2026年9月の掲載分です。JavaScriptが有効な環境では、読み込み時に最新の掲載データから<b>今日以降</b>の日程に差し替わります。</p>
 <div id="vp-sched"><h3 class="vp-day">9月1日（火）</h3><div class="sched-wrap"><table class="sched"><thead><tr><th>開始</th><th>トーナメント</th><th>バイイン</th><th>スタック</th></tr></thead><tbody><tr><td class="start">19:00</td><td>プレオープン フリーロール<span class="gtd">GTD 30,000</span>　<span class="vp-tags">フリーロール</span></td><td class="buyin">フリーロール</td><td class="buyin">—</td></tr></tbody></table></div>
@@ -334,6 +341,16 @@
 <h3 class="vp-day">9月30日（水）</h3><div class="sched-wrap"><table class="sched"><thead><tr><th>開始</th><th>トーナメント</th><th>バイイン</th><th>スタック</th></tr></thead><tbody><tr><td class="start">19:00</td><td>Win the Button　<span class="vp-tags">フリーロール</span></td><td class="buyin">フリーロール</td><td class="buyin">—</td></tr></tbody></table></div></div>
 <h2 class="vp-sec">リングゲーム</h2>
 <div class="vp-ring"><b>DreaM CASINO BARはリングゲームを開催しています。</b>通常リング レート50-100。点数5,000点=1,500円/10,000点=3,000円/20,000点=6,000円。まとめ買い割引あり(40,000点10,000円・90,000点20,000円・140,000点30,000円・200,000点40,000円・300,000点50,000円)。(公式Instagramより)</div>
+
+<a class="adCard" href="https://poker-tourney-log--family.expo.app?utm_source=fukuokapoker&utm_medium=content_card&utm_campaign=selfpromo" target="_blank" rel="noopener">
+  <img src="/img/ptl-bulldog.webp" alt="" loading="lazy" width="56" height="56">
+  <div class="ac-body">
+    <div class="ac-title">今日の戦績、記録に残しませんか？</div>
+    <div class="ac-desc">ポーカートナメ成績表なら buyin・順位・収支をすぐ記録。無料アプリはこちら</div>
+  </div>
+  <span class="ac-btn">使ってみる →</span>
+</a>
+
 <h2 class="vp-sec">同じエリア（久留米）の他のポーカー店</h2>
 <div class="vp-cards">
   <a class="vp-card" href="/venues/ken-poker-kurume/">
@@ -371,7 +388,7 @@
     <div class="sa-title">成績、記録してますか？</div>
     <div class="sa-desc">ポーカートナメ成績表(無料) — buyin・順位・収支を記録</div>
   </div>
-  <a class="sa-btn" href="https://poker-tourney-log--family.expo.app" target="_blank" rel="noopener">使ってみる →</a>
+  <a class="sa-btn" href="https://poker-tourney-log--family.expo.app?utm_source=fukuokapoker&utm_medium=sticky_banner&utm_campaign=selfpromo" target="_blank" rel="noopener">使ってみる →</a>
 </div>
 <script src="/recurring-dedupe.js"></script>
 <script src="/data.js"></script>
