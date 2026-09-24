@@ -142,24 +142,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M1K7AQSXPMTZJP7VKNHVWTM5": {
-      "id": "wl-01M1K7AQSXPMTZJP7VKNHVWTM5",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-09-24",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M1K7AQSXQGQ049YFWTJ44XHD": {
       "id": "wl-01M1K7AQSXQGQ049YFWTJ44XHD",
       "venueId": "v27",
@@ -302,22 +284,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M1VEJGW4G61WCRXRJ2MHYKQ6": {
-      "id": "wl-01M1VEJGW4G61WCRXRJ2MHYKQ6",
-      "venueId": "v19",
-      "name": "FREEZE OUT TOURNAMENT",
-      "date": "2026-09-24",
-      "start": "18:30",
-      "buyin": 3000,
-      "addon": null,
-      "stack": 30000,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M1VEJGW4JFQ0CQ2GYFV4VE3P": {
       "id": "wl-01M1VEJGW4JFQ0CQ2GYFV4VE3P",
       "venueId": "v19",
@@ -379,40 +345,6 @@
       "reentry": true,
       "prize": null,
       "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M25B1S4Z41QQ6ZNDTW5C4XNT": {
-      "id": "wl-01M25B1S4Z41QQ6ZNDTW5C4XNT",
-      "venueId": "v3",
-      "name": "m LIVE LEAGUE season1",
-      "date": "2026-09-24",
-      "start": "17:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M25B2SYXHC6ZVXH724RG6EV7": {
-      "id": "wl-01M25B2SYXHC6ZVXH724RG6EV7",
-      "venueId": "v3",
-      "name": "m Bounty Turbo",
-      "date": "2026-09-24",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": 1000,
-      "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
       "source": "auto",
       "verified": false
     },
@@ -511,22 +443,6 @@
       "buyin": 4000,
       "addon": null,
       "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M2CNMZBCMC0EPQ5GJFAWZ2Z4": {
-      "id": "wl-01M2CNMZBCMC0EPQ5GJFAWZ2Z4",
-      "venueId": "v22",
-      "name": "深夜のトナメ",
-      "date": "2026-09-24",
-      "start": "23:30",
-      "buyin": 5000,
-      "addon": 5000,
-      "stack": 30000,
       "guarantee": null,
       "reentry": true,
       "prize": null,
