@@ -14651,6 +14651,24 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "ig-v35-2026-09-29-2230-sit-go-6max",
+    "venueId": "v35",
+    "name": "Sit & Go 6MAX",
+    "date": "2026-09-29",
+    "start": "22:30",
+    "buyin": null,
+    "addon": null,
+    "stack": 20,
+    "guarantee": null,
+    "reentry": false,
+    "prize": "MCT Ticket×1 or $600 / 時間料金OFF券¥500 / 月間ランキングPT+10",
+    "tags": [
+      "ターボ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
     "id": "ig-v35-2026-09-30-1915-tournament",
     "venueId": "v35",
     "name": "ハイローラー TOURNAMENT",
