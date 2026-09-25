@@ -387,6 +387,55 @@ function bigEventDays(id) {
   return e ? e.days.slice() : [];
 }
 
+// ---- バナー1枚分のHTML(トップのバナー領域・大型一覧(#majors)・店舗ページ上部で共通) ----
+// 外部サイトから転記した文字列をHTMLに埋める前にエスケープする(& や < が混じるため)。
+// index.html 側にも用途の広い同名の関数(escHtml)があるが、そちらは店舗情報カード等
+// バナー以外にも使われる汎用ヘルパーなので、ここでは巻き込まず1行だけの独立した複製を持つ
+// (site-shell.js の esc() も同じ理由で個別に持っている)。
+function escHtmlBanner(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// ev.banner はどのレジストリ(BIG_EVENTS/PROMO_BANNERS/dream-promo-banner.js)でも
+// サイトルート起点の相対パス(例 'img/fst/fst-banner.svg'、先頭に '/' 無し)で統一されている。
+// index.html(URLが常にサイトルート)から使う分には問題にならないが、店舗ページ
+// (/venues/<slug>/ のように1階層下)から同じ文字列をそのまま <img src> に使うと、
+// ブラウザがそのページのディレクトリ(/venues/<slug>/img/...)を基準に解決してしまい
+// 画像が壊れる。呼び出し元のページ階層に関わらず常に正しく解決されるよう、ここで
+// サイトルート起点の絶対パス(先頭 '/')に正規化する(index.html側の見た目は不変。
+// 相対パスも絶対パスも「サイトルート」で見れば同じURLに解決されるため)。
+function bannerImgSrc(banner) {
+  const s = String(banner || '');
+  return /^(https?:)?\//.test(s) ? s : '/' + s;
+}
+
+// 大型イベント/プロモ/常設告知のバナー1枚分のHTML。もともとは index.html 内にのみ存在した
+// (トップのバナー領域・大型一覧の2箇所で共用)。店舗ページ(tools/gen-venue-pages.js)が
+// 店舗自身のPRバナーを静的に埋め込めるよう、Nodeからも呼べるここに移設した(2026-09-26)。
+// 見た目・分岐ロジックは移設前と同一。promo-banners.js のプロモ(days・href を持つ)、
+// listing-banner.js/dream-promo-banner.js の常設告知(customBanner・days無し)のどちらも扱える。
+function bigEventBannerHtml(ev) {
+  const today = localTodayGlobal();
+  const cls = ['evtBanner', ev.bannerClass];
+  if (isEventArchived(ev.days)) cls.push('is-archived');         // 終了 → 暗転+「終了」バッジ
+  else if (today < eventFirstDay(ev.days)) cls.push('upcoming'); // 未開催 → 「まもなく」バッジ
+  const media = ev.customBanner
+    ? `<div class="eb-custom">
+        <span class="eb-eyebrow">${escHtmlBanner(ev.eyebrow)}</span>
+        <div class="eb-heading">${escHtmlBanner(ev.heading)}</div>
+        <div class="eb-sub">${escHtmlBanner(ev.sub)}</div>
+      </div>`
+    : `<img class="eb-img" src="${bannerImgSrc(ev.banner)}" alt="${escHtmlBanner(ev.bannerAlt)}">`;
+  return `<a class="${cls.join(' ')}" href="${ev.href || ev.hash}">
+      ${media}
+      <div class="eb-foot">
+        <span class="eb-tag"><span class="eb-desc">${escHtmlBanner(ev.bannerDesc)}</span></span>
+        <span class="eb-btn">${escHtmlBanner(ev.btnText || '日程を見る →')}</span>
+      </div>
+    </a>`;
+}
+
 // ---- フッター「大会特集」の描画(トップページ・静的ページ共通) ----
 // 開催中の大会、開催中が無ければ次の大会を1件だけ出す。該当が無ければ行ごと隠す。
 // トップのバナー(visibleBigEvents)とは判定条件が違うため、一致しない日がある(仕様)。
@@ -408,6 +457,7 @@ if (typeof module !== 'undefined') {
     SHOW_CUTOFF_HOUR, showCutoffInstant, isBeforeShowCutoff, resolveNowAndToday,
     isEventArchived, isEventOngoing,
     bigEventWindows, visibleBigEvents, footerBigEvent,
-    bigEventListForIndex, bigEventById, bigEventDays
+    bigEventListForIndex, bigEventById, bigEventDays,
+    escHtmlBanner, bannerImgSrc, bigEventBannerHtml
   };
 }

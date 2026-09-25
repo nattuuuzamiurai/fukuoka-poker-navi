@@ -63,13 +63,17 @@ if (!REPO_ARG) { console.error('リポジトリのパスを指定してくださ
 const REPO = path.resolve(REPO_ARG);
 
 const shell = require('./site-shell.js');
-const { SITE, POSITIONING, esc, pageHead, pageFoot, adCard, ADCARD_CSS } = shell;
+const { SITE, POSITIONING, esc, pageHead, pageFoot, adCard, ADCARD_CSS, BANNER_CSS, venuePromoBannerHtml } = shell;
 // sitemap.xml の唯一の所有者。中身はここでは組み立てず、丸ごと受け取って書くだけ。
 const { sitemapFile } = require('./gen-sitemap.js');
 
 // ---- データ読み込み ----
 const DATA = require(path.join(REPO, 'data.js'));
 const BIG = require(path.join(REPO, 'big-events.js'));
+// 店舗自身のページ上部に出すPRバナー(2026-09-26追加)。venueId が付いたプロモ
+// (promo-banners.js)だけを対象にする。掲載期間の判定は venuePromoBanners() 内で
+// visiblePromoBanners() に委ねているため、ここで日付比較を書き足さない。
+const PROMO = require(path.join(REPO, 'promo-banners.js'));
 const { VENUES, TOURNAMENTS, RECURRING, AREAS } = DATA;
 
 // slug が欠けている/重複している/使えない文字を含む場合はここで落ちる。
@@ -652,8 +656,13 @@ ${sameAreaShown.map(x => `  <a class="vp-card" href="/venues/${x.slug}/">
     schedNote = `※ この一覧は${esc(RANGE.label)}の掲載分です。${NOTE_JS_TAIL}`;
   }
 
+  // 店舗自身のPRバナー(2026-09-26追加)。トップページ最上部のバナーと同じ見た目・画像・リンク先を
+  // パンくず直後・店舗名(h1)の直前に静的に出す。該当が無い店では venuePromoBannerHtml が
+  // 空文字列を返すので、この店舗ページの見た目は今まで通り変わらない。
+  const venuePromoBlock = venuePromoBannerHtml(BIG, PROMO.venuePromoBanners(v.id));
+
   const body = `
-<h1>${esc(v.name)}</h1>
+${venuePromoBlock}<h1>${esc(v.name)}</h1>
 <p class="vp-sub">${sub}</p>${closedNoticeBlock}${badgesBlock}${venueHeroPhotoHtml(v)}
 <div class="vp-info-grid">
 ${venueInfoCardsHtml(v)}
@@ -722,7 +731,7 @@ ${SCHEDULE_JS}
     // pageHead の既定値(サイト共通OGP・img/ogp/common-og.jpg)に任せる。
     ogType: 'website',
     twitterCard: 'summary_large_image',
-    extraCss: VENUE_CSS + ADCARD_CSS
+    extraCss: VENUE_CSS + ADCARD_CSS + (venuePromoBlock ? BANNER_CSS : '')
   }) + body + pageFoot(BIG, null, scripts, FOOTER_AREA_LINKS);
 }
 

@@ -129,37 +129,23 @@ test('画像アセット: 1024×412(他の大型大会バナーと同じ比率�
 });
 
 // ============================================================
-// index.html: bigEventBannerHtml() は他の画像バナーと全く同じ経路で描画される
+// big-events.js: bigEventBannerHtml() は他の画像バナーと全く同じ経路で描画される
 // (imgAspect等の特別なクロップ処理を持ち込んでいないことの回帰防止)
+// 2026-09-26: index.htmlから big-events.js へ移設されたため、vmでの文字列切り出しは不要になった。
 // ============================================================
 function loadBigEventBannerHtml() {
-  const start = INDEX_HTML.indexOf('  function bigEventBannerHtml(ev){');
-  const end = INDEX_HTML.indexOf('  // アーカイブ時にページ冒頭へ出す共通の告知ボックス');
-  if (start < 0 || end <= start) {
-    throw new Error('index.html から bigEventBannerHtml() を切り出せませんでした。'
-      + '目印(`function bigEventBannerHtml(ev){` 〜 `// アーカイブ時にページ冒頭へ出す共通の告知ボックス`)'
-      + 'を動かしたなら、このテストの目印も直すこと。');
-  }
-  const src = INDEX_HTML.slice(start, end);
-  const sandbox = {
-    localTodayGlobal: () => '2026-09-19',
-    isEventArchived: (days) => (Array.isArray(days) && days.length) ? false : false,
-    eventFirstDay: (days) => (Array.isArray(days) && days.length) ? days[0] : null,
-    escHtml: (s) => String(s == null ? '' : s)
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-  };
-  vm.createContext(sandbox);
-  new vm.Script(src, { filename: 'bigEventBannerHtml-extract.js' }).runInContext(sandbox);
-  return sandbox.bigEventBannerHtml;
+  return require('../big-events.js').bigEventBannerHtml;
 }
 
 test('bigEventBannerHtml(): DREAM_PROMO_BANNERは<img>のまま(customBannerではない)で、他の画像バナーと同じ出力形(style属性等の特別扱いなし)', () => {
   const bigEventBannerHtml = loadBigEventBannerHtml();
   const html = bigEventBannerHtml(DB.DREAM_PROMO_BANNER);
   assert.ok(!html.includes('eb-custom'), 'eb-customブロックが出力されている(実画像なのにCSS組み立て経路に入っている)');
+  // src は 2026-09-26 からサイトルート起点の絶対パス('/img/...')に正規化されている
+  // (big-events.js の bannerImgSrc() 参照。店舗ページ等の1階層下のページからも壊れず解決できるようにするため)。
   assert.strictEqual(
     html.match(/<img[^>]*>/)[0],
-    '<img class="eb-img" src="img/dream/dream-saturday-tournament.jpg" alt="CASINO BAR DreaM Saturdayトーナメント（久留米）">',
+    '<img class="eb-img" src="/img/dream/dream-saturday-tournament.jpg" alt="CASINO BAR DreaM Saturdayトーナメント（久留米）">',
     '既存の画像バナー(FST等)と同じ<img class="eb-img" src="..." alt="...">の形になっていない'
     + '(style属性等のクロップ指定が付いていないか確認すること)'
   );
