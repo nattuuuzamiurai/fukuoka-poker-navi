@@ -11,10 +11,14 @@
  *   組む経路。既存の画像バナーの経路を壊していないか)、③renderBigEventBanner() 内の連結順
  *   (常に最後尾)、の3点は固定しておかないと次に誰かが触ったときの巻き戻りに気づけない。
  *
- * 【index.htmlから関数を切り出す理由】tools/recurring-dedupe.test.js と同じ流儀。
- *   このリポジトリのテストは外部依存ゼロ(node:test のみ、jsdomは使わない)。
- *   bigEventBannerHtml() / renderBigEventBanner() の該当部分はDOMに(ほぼ)触れないので
- *   vm で足りる。目印を動かしたときはこのテストが明示的に落ちる。
+ * 【bigEventBannerHtml()について】2026-09-26に big-events.js へ移設された(店舗ページ生成
+ *   〔tools/gen-venue-pages.js〕からもNodeで呼べるようにするため)。以前はindex.html内にしか
+ *   存在せず、vmで文字列を切り出して実行していたが、今は素直に require() で取れる。
+ *
+ * 【index.htmlから関数を切り出す理由(renderBigEventBanner()のみ)】tools/recurring-dedupe.test.js
+ *   と同じ流儀。このリポジトリのテストは外部依存ゼロ(node:test のみ、jsdomは使わない)。
+ *   renderBigEventBanner() の該当部分はDOMに(ほぼ)触れないので vm で足りる。
+ *   目印を動かしたときはこのテストが明示的に落ちる。
  */
 
 'use strict';
@@ -84,28 +88,10 @@ test('big-events.js: days が undefined の告知でも isEventArchived/eventFir
 });
 
 // ============================================================
-// index.html: bigEventBannerHtml() の customBanner 分岐
+// big-events.js: bigEventBannerHtml() の customBanner 分岐
 // ============================================================
 function loadBigEventBannerHtml() {
-  const start = INDEX_HTML.indexOf('  function bigEventBannerHtml(ev){');
-  const end = INDEX_HTML.indexOf('  // アーカイブ時にページ冒頭へ出す共通の告知ボックス');
-  if (start < 0 || end <= start) {
-    throw new Error('index.html から bigEventBannerHtml() を切り出せませんでした。'
-      + '目印(`function bigEventBannerHtml(ev){` 〜 `// アーカイブ時にページ冒頭へ出す共通の告知ボックス`)'
-      + 'を動かしたなら、このテストの目印も直すこと。');
-  }
-  const src = INDEX_HTML.slice(start, end);
-  const sandbox = {
-    // bigEventBannerHtml() が参照する big-events.js 側の関数群
-    localTodayGlobal: () => '2026-09-17',
-    isEventArchived: (days) => (Array.isArray(days) && days.length) ? false : false,
-    eventFirstDay: (days) => (Array.isArray(days) && days.length) ? days[0] : null,
-    escHtml: (s) => String(s == null ? '' : s)
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-  };
-  vm.createContext(sandbox);
-  new vm.Script(src, { filename: 'bigEventBannerHtml-extract.js' }).runInContext(sandbox);
-  return sandbox.bigEventBannerHtml;
+  return require('../big-events.js').bigEventBannerHtml;
 }
 
 test('bigEventBannerHtml(): customBanner:true のとき<img>を出さず、CSSで組む見出しブロックを出す', () => {
@@ -133,7 +119,9 @@ test('bigEventBannerHtml(): 既存の画像バナー(customBannerなし)は今�
     days: ['2026-09-19', '2026-09-20']
   };
   const html = bigEventBannerHtml(ev);
-  assert.ok(html.includes('<img class="eb-img" src="img/fst/fst-banner.svg"'), '既存の画像バナーの出力が変わっている');
+  // src は 2026-09-26 からサイトルート起点の絶対パス('/img/...')に正規化されている
+  // (big-events.js の bannerImgSrc() 参照。店舗ページ等の1階層下のページからも壊れず解決できるようにするため)。
+  assert.ok(html.includes('<img class="eb-img" src="/img/fst/fst-banner.svg"'), '既存の画像バナーの出力が変わっている');
   assert.ok(!html.includes('eb-custom'), '画像バナーなのにeb-customが出力されている');
   assert.ok(html.includes('日程を見る →'), 'btnText省略時の既定文言(日程を見る →)が出ていない');
 });

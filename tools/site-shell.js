@@ -266,6 +266,54 @@ const BASE_CSS = `  *,*::before,*::after{box-sizing:border-box;margin:0;padding:
   @media(max-width:420px){.stickyAd .sa-desc{display:none}}
 `;
 
+// ---- 店舗ページ上部のPRバナー(2026-09-26追加) ----
+// トップページ(index.html)の「大型イベント バナー」(.evtBanner)と【見た目を完全に一致させる】ための
+// CSS。index.html 側は静的ページ生成(このファイル)を経由しない単独のHTMLファイルなので、
+// CSSそのものを共有(1箇所に集約)できず、コピーを1つ持つ形になっている
+// (index.html の該当CSS ― 「===== 大型イベント バナー(トーナメント日程の最上部) =====」―
+// と見た目・配色を変えるときは、この定数側も一緒に直すこと)。
+// ★ HTML生成側(バナー1枚分のマークアップ)は bigEventBannerHtml()〔big-events.js〕に共通化済みで
+//   ここでは複製していない。複製しているのは見た目(CSS)だけ。
+// ★ カルーセル(.evtCarousel等)は含めない。店舗ページは1店舗につき同時に1件程度しか
+//   想定しておらず、該当があれば縦に並べるだけの簡易実装にしている(呼び出し側 venuePromoBannerHtml 参照)。
+const BANNER_CSS = `  :root{--jopt:#1fb6ba;--jopt2:#5fe2e6;--fst:#e0304a;--fst2:#ff6b7f;--ns:#c4141f;--ns2:#ff6b5c}
+  .evtBanner{display:block;text-decoration:none;border-radius:16px;overflow:hidden;position:relative;box-shadow:0 6px 26px rgba(0,0,0,.32);border:2px solid var(--ev-bd);background:var(--ev-bg);margin-bottom:6px}
+  .evtBanner .eb-img{display:block;width:100%;aspect-ratio:1024/412;object-fit:cover}
+  .evtBanner .eb-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 14px;background:linear-gradient(90deg,var(--ev-bg),var(--ev-bg2))}
+  .evtBanner .eb-tag{font-size:.72em;font-weight:800;letter-spacing:.05em;color:var(--ev-fg);display:flex;align-items:center;gap:7px;min-width:0;white-space:nowrap}
+  .evtBanner .eb-tag::before{content:"開催中";flex-shrink:0;white-space:nowrap;background:var(--red);color:#fff;font-size:.85em;padding:2px 8px;border-radius:20px;letter-spacing:.02em}
+  .evtBanner .eb-tag .eb-desc{overflow:hidden;text-overflow:ellipsis}
+  .evtBanner.upcoming .eb-tag::before{content:"まもなく";background:var(--ev-ac);color:var(--ev-on)}
+  .evtBanner .eb-btn{flex-shrink:0;background:linear-gradient(135deg,var(--ev-ac2),var(--ev-ac));color:var(--ev-on);font-weight:800;font-size:.8em;padding:8px 16px;border-radius:20px;white-space:nowrap}
+  .evtBanner.is-archived{filter:grayscale(.8) opacity(.55)}
+  .evtBanner.is-archived .eb-tag::before{content:"終了";background:#6b6055;color:#fff}
+  .evtBanner.ev-wjpt{--ev-bd:#d9a441;--ev-bg:#0a1226;--ev-bg2:#122046;--ev-fg:#f0c56b;--ev-ac:var(--gold);--ev-ac2:var(--gold2);--ev-on:#3a2a06}
+  .evtBanner.ev-jopt{--ev-bd:var(--jopt);--ev-bg:#07171d;--ev-bg2:#0e3d48;--ev-fg:var(--jopt2);--ev-ac:var(--jopt);--ev-ac2:var(--jopt2);--ev-on:#04222a}
+  .evtBanner.ev-nippon{--ev-bd:var(--ns);--ev-bg:#5c0910;--ev-bg2:#a8111c;--ev-fg:#ffd9d4;--ev-ac:var(--ns);--ev-ac2:var(--ns2);--ev-on:#fff}
+  .evtBanner.ev-fst{--ev-bd:var(--fst);--ev-bg:#070c22;--ev-bg2:#1a2455;--ev-fg:var(--fst2);--ev-ac:var(--fst);--ev-ac2:var(--fst2);--ev-on:#fff}
+  .evtBanner.ev-spadie{--ev-bd:#8b5cf6;--ev-bg:#160b2e;--ev-bg2:#2f1a5c;--ev-fg:#c9a8ff;--ev-ac:#8b5cf6;--ev-ac2:#c9a8ff;--ev-on:#1c0f38}
+  .evtBanner.ev-dream{--ev-bd:var(--gold);--ev-bg:#1a0f05;--ev-bg2:#3a2308;--ev-fg:var(--gold2);--ev-ac:var(--red);--ev-ac2:#e0574a;--ev-on:#fff}
+  .evtBanner.ev-dream .eb-tag::before{content:"PR";background:var(--ev-ac);color:var(--ev-on)}
+  .evtBanner.ev-listing{--ev-bd:var(--gold);--ev-bg:var(--felt);--ev-bg2:var(--felt2);--ev-fg:var(--gold2);--ev-ac:var(--gold);--ev-ac2:var(--gold2);--ev-on:#3a2a06}
+  .evtBanner.ev-listing .eb-tag::before{content:none}
+  .evtBanner .eb-custom{display:flex;flex-direction:column;justify-content:center;gap:5px;position:relative;overflow:hidden;padding:20px 18px 16px;aspect-ratio:1024/412;min-height:112px;background:radial-gradient(circle at 90% -12%,rgba(240,197,107,.32),transparent 55%),linear-gradient(135deg,var(--ev-bg2),var(--ev-bg))}
+  .evtBanner .eb-custom::after{content:"♠";position:absolute;right:6px;bottom:-14px;font-size:4.4em;line-height:1;color:rgba(255,255,255,.07);pointer-events:none}
+  .evtBanner .eb-eyebrow{align-self:flex-start;font-size:.68em;font-weight:800;letter-spacing:.06em;color:var(--ev-on);background:linear-gradient(135deg,var(--ev-ac2),var(--ev-ac));padding:3px 10px;border-radius:20px}
+  .evtBanner .eb-heading{font-size:1.18em;font-weight:800;line-height:1.35;color:#fff;position:relative}
+  .evtBanner .eb-sub{font-size:.83em;line-height:1.4;color:var(--ev-fg);position:relative}
+  .vp-promo-banner{margin:0 0 14px}
+`;
+
+// promo-banners.js の venuePromoBanners() が返す配列(0件〜複数件)から、店舗ページ上部に
+// 静的に埋め込むバナーHTMLを組み立てる。バナー1枚分のマークアップは bigEventBannerHtml()
+// (big-events.js。トップページと共通)を呼ぶだけで、ここでは複製しない。
+//   BIG    … big-events.js の require 結果(bigEventBannerHtml を使うため)
+//   promos … promo-banners.js の venuePromoBanners(venueId) の戻り値
+function venuePromoBannerHtml(BIG, promos) {
+  if (!promos || !promos.length) return '';
+  return promos.map(p => `<div class="vp-promo-banner">${BIG.bigEventBannerHtml(p)}</div>`).join('');
+}
+
 /**
  * <head> 〜 <main> 開きタグまで。
  *
@@ -483,5 +531,6 @@ module.exports = {
   BASE_CSS, pageHead, pageFoot,
   FAQ_CSS, faqBlock,
   ptlLink, ADCARD_CSS, adCard,
+  BANNER_CSS, venuePromoBannerHtml,
   validateVenueSlugs
 };

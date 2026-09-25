@@ -41,6 +41,15 @@
  *   リンクなので、BIG_EVENTSの `hash`(例 '#fst')の代わりに `href`(例 '/events/...')を持つ。
  *
  * ■ 新しいプロモを追加するときは下の PROMO_BANNERS に1エントリ足すだけでよい。
+ *
+ * ■ venueId(店舗自身のページにも同じバナーを出す・2026-09-26追加)
+ *   対象の店舗(data.js の VENUES の id)がある場合は `venueId` を書く。書いておくと、
+ *   店舗静的ページ(tools/gen-venue-pages.js)が venuePromoBanners(v.id) でこのプロモを見つけ、
+ *   その店舗自身のページ上部にも同じバナー(見た目・画像・リンク先はトップと共通の
+ *   bigEventBannerHtml()〔big-events.js〕を使うため常に一致する)を静的に埋め込む。
+ *   掲載期間の判定はトップと同じ visiblePromoBanners() を経由するので、期間外は店舗ページ側にも出ない。
+ *   venueId を書かなくてもトップのバナーには今まで通り出る(店舗ページ側にだけ出ないだけで、
+ *   このファイルの他の挙動には影響しない・必須フィールドではない)。
  * ============================================================ */
 
 // Node実行時(tools/gen-sitemap.js 等)は big-events.js が export する関数を _BE 経由で参照する。
@@ -83,6 +92,7 @@ const PROMO_BANNERS = [
     label: 'DreaM グランドオープン記念',         // カルーセルのドット(aria-label)で使う。index.html の ec-dots が ev.label を読む
     days: ['2026-09-05'],                       // 単日開催
     href: '/events/dream-grandopen-2026/',      // バナーのリンク先(実ページ。BIG_EVENTSの hash と違い遷移先はトップのハッシュ内ではない)
+    venueId: 'v42',                             // CASINO BAR DreaM(久留米)。店舗ページにも同じバナーを出す対象(data.jsのVENUES参照)
     banner: 'img/dream/dream-grandopen-banner.jpg',
     bannerAlt: 'CASINO BAR DreaM グランドオープン記念ポーカートーナメント 9.5 久留米',
     bannerDesc: '久留米・グランドオープン記念',
@@ -115,6 +125,15 @@ function visiblePromoBanners(today, promos) {
     .map(w => w.promo);
 }
 
+// 店舗静的ページ(tools/gen-venue-pages.js)の上部に出す、その店舗自身のプロモ(0件〜複数件)。
+// 判定(掲載期間に入っているか)は visiblePromoBanners() にそのまま委ね、ここでは
+// venueId が一致するものだけに絞り込む(判定ロジックの複製はしない・ファイル冒頭の設計方針と同じ)。
+// 引数は visiblePromoBanners(today, promos) とそろえてある(テストからの差し替え口も同じ)。
+function venuePromoBanners(venueId, today, promos) {
+  if (!venueId) return [];
+  return visiblePromoBanners(today, promos).filter(p => p.venueId === venueId);
+}
+
 if (typeof module !== 'undefined') {
-  module.exports = { PROMO_BANNERS, PROMO_LEAD_DAYS, promoShowFrom, visiblePromoBanners };
+  module.exports = { PROMO_BANNERS, PROMO_LEAD_DAYS, promoShowFrom, visiblePromoBanners, venuePromoBanners };
 }
