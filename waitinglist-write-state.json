@@ -52,24 +52,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M1K7AQSX31B6MCVM3BTSM9SA": {
-      "id": "wl-01M1K7AQSX31B6MCVM3BTSM9SA",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-09-25",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M1K7AQSX6RK5SDJ0S60MTYCS": {
       "id": "wl-01M1K7AQSX6RK5SDJ0S60MTYCS",
       "venueId": "v27",
@@ -366,24 +348,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M25F0MPZGJSFPPDYP3Y9HK14": {
-      "id": "wl-01M25F0MPZGJSFPPDYP3Y9HK14",
-      "venueId": "v3",
-      "name": "ｍ Hyper Deep Turbo",
-      "date": "2026-09-25",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": null,
-      "stack": 100000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M25GZ87N14MZS8Y94RF6NE9Z": {
       "id": "wl-01M25GZ87N14MZS8Y94RF6NE9Z",
       "venueId": "v3",
@@ -450,22 +414,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M2CNPA9FNXPCP1F8C0ABXVS7": {
-      "id": "wl-01M2CNPA9FNXPCP1F8C0ABXVS7",
-      "venueId": "v22",
-      "name": "深夜のトナメSS",
-      "date": "2026-09-25",
-      "start": "23:30",
-      "buyin": 10000,
-      "addon": 10000,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M2CNXP0AZX7ZGF7HFB0Q8GKH": {
       "id": "wl-01M2CNXP0AZX7ZGF7HFB0Q8GKH",
       "venueId": "v22",
@@ -474,22 +422,6 @@
       "start": "23:30",
       "buyin": 10000,
       "addon": 10000,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M2N7JHQB547RC429JJE7KMNJ": {
-      "id": "wl-01M2N7JHQB547RC429JJE7KMNJ",
-      "venueId": "v3",
-      "name": "VS m AOI 卒業トーナメント🌸",
-      "date": "2026-09-25",
-      "start": "17:30",
-      "buyin": 4000,
-      "addon": null,
       "stack": 40000,
       "guarantee": null,
       "reentry": true,
