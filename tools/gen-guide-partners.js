@@ -173,13 +173,21 @@ const PT_CSS = `  .pt-toc{list-style:none;margin:0 0 16px;padding:0;font-size:.8
 `;
 
 // ---- 本文の組み立て ----
-function buildBody(desc) {
+// 【2026-09-26改訂・本題への導線を圧縮】以前はここに「サイト概要(店舗数・日程件数)」と
+// 「サイトの沿革(2026年7月14日公開以来〜)」の2つの<p class="lead">を分けて置いていたため、
+// 本題(PR掲載枠のオファー)にたどり着くまでの前置きが長くなっていた。沿革は要点(開設時期)
+// だけを概要文に統合し、1つの短いリード文にまとめる(免責文言の内容・位置はそのまま維持)。
+// meta description(buildDesc)は引き続き店舗数・日程件数を含む文で残し、SEO用の説明文と
+// 画面表示用のリード文を役割分担させる。
+function buildLead(stats) {
+  return `2026年7月開設の「ふくおかポーカーナビ」は、現在${stats.venueCount}店舗・トーナメント日程${stats.tournamentCount}件を掲載する福岡のポーカー店アグリゲーターサイトです。掲載店舗様向けに、今すぐご利用いただける「PR掲載枠」(月額5,000円〜)と、開発中の「経営管理ダッシュボード」をご案内します。`;
+}
+
+function buildBody(stats) {
   return `
 <h1>掲載店舗の皆さまへ — PR掲載枠・経営管理ダッシュボードのご案内</h1>
-<p class="lead">${desc}</p>
+<p class="lead">${buildLead(stats)}</p>
 <div class="disclaimer">${POSITIONING}<br>本ページでご案内する経営管理ダッシュボードは、店舗様の来店客管理・会計記録・経営分析を支援するツールです。チップ・ポイントは店内限定のアミューズメント用であり、現金化や店舗をまたいだ利用はできません。</div>
-
-<p class="lead">2026年7月14日の公開以来、エリア・日付・種類で絞り込んでトーナメント日程を探せる仕組みを軸に、福岡のポーカー店を知っていただく入口になることを目指してきました。このページでは、掲載店舗様向けに今すぐご利用いただける「PR掲載枠」と、現在開発を進めている「経営管理ダッシュボード」をご案内します。</p>
 
 <ul class="pt-toc">
   <li><a href="#service1">1. PR掲載枠(今すぐご利用いただけます)</a></li>
@@ -473,6 +481,8 @@ function buildPage(REPO) {
   const DATA = require(path.join(REPO, 'data.js'));
   const areaLinks = footerAreaLinksHtml(DATA.VENUES, DATA.AREAS);
   const stats = siteStats(DATA);
+  // 画面表示用のリード文(buildLead)とmeta description(buildDesc)は役割が違うため別々に持つ
+  // (buildBody コメント参照)。head側のdesc/JSON-LDには引き続きbuildDescを使う。
   const desc = buildDesc(stats);
 
   const jsonld = {
@@ -500,7 +510,7 @@ function buildPage(REPO) {
     extraCss: PT_CSS
   });
   const foot = pageFoot(BIG, null, null, areaLinks);
-  return head + buildBody(desc) + foot;
+  return head + buildBody(stats) + foot;
 }
 
 // ---- 検査 ----
