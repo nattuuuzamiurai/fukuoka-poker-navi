@@ -483,6 +483,14 @@ ${BASE_CSS}${extraCss || ''}</style>
 const PTL_URL = 'https://poker-tourney-log--family.expo.app';
 const ptlLink = medium => `${PTL_URL}?utm_source=fukuokapoker&utm_medium=${medium}&utm_campaign=selfpromo`;
 
+// 【.stickyAd(画面下固定バナー)のアイコンについて】自社アプリ(ポーカートナメ成績表)の
+// 広告なので、アイコンは必ず自社のものを使う。以前は特定の他社バナー画像を固定表示していたが、
+// 無関係なページにもそのブランドが表示されてしまうため、汎用的な自社アイコン表示に変更
+// (2026-07-30)。トップページ(index.html)の.stickyAdと同じ画像・同じ指定に揃えること。
+// ★このコメントは function 定義の外側(JS の // コメント)に置くこと。以前 <!-- --> の
+//   HTMLコメントとして pageFoot() の返り値(テンプレートリテラル)の中に書いていたため、
+//   生成後の公開ページ(店舗・エリア・大会・ガイドページ等54ページ)のHTMLソースにそのまま
+//   出力され、View Sourceで内部の改訂理由が読める状態になっていた(2026-09-26是正)。
 function pageFoot(BIG, currentPath, extraScripts, areaLinksHtml) {
   // 恒久リンク行(全大会・日付に関係なく常に出す)と、
   // 「大会特集」(掲載中の1件だけ・日によって変わるのでブラウザ側で判定)は【両方】出す。
@@ -506,10 +514,6 @@ function pageFoot(BIG, currentPath, extraScripts, areaLinksHtml) {
 <script src="/big-events.js"></script>
 <script>if (typeof mountBigEventFooter === 'function') mountBigEventFooter('evtFeature');</script>
 <div class="stickyAd">
-  <!-- 自社アプリ(ポーカートナメ成績表)の広告なので、アイコンは【必ず自社のもの】を使う。
-       以前は特定の他社バナー画像を固定表示していたが、無関係なページにもそのブランドが
-       表示されてしまうため、汎用的な自社アイコン表示に変更(2026-07-30)。
-       トップページ(index.html)の .stickyAd と同じ画像・同じ指定に揃えること。 -->
   <img src="/img/ptl-bulldog.webp" alt="" width="38" height="38">
   <div class="sa-body">
     <div class="sa-title">成績、記録してますか？</div>
