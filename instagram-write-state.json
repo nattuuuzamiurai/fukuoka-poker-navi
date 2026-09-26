@@ -2,24 +2,6 @@
   "version": 1,
   "writtenBy": "tools/monitor-instagram-apify.js",
   "entries": {
-    "ig-v18-2026-09-25-nostart-post": {
-      "id": "ig-v18-2026-09-25-nostart-post",
-      "venueId": "v18",
-      "name": "大還元フリロ",
-      "date": "2026-09-25",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "フリーロール"
-      ],
-      "source": "semi",
-      "verified": false
-    },
     "ig-v18-2026-09-26-nostart-post": {
       "id": "ig-v18-2026-09-26-nostart-post",
       "venueId": "v18",
@@ -156,22 +138,6 @@
       "source": "semi",
       "verified": false
     },
-    "ig-v21-2026-09-25-1800-times-spadie-ring": {
-      "id": "ig-v21-2026-09-25-1800-times-spadie-ring",
-      "venueId": "v21",
-      "name": "TIMES SPADIE RING",
-      "date": "2026-09-25",
-      "start": "18:00",
-      "buyin": 1500,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
     "ig-v21-2026-09-26-1930-kp-2-7td-badugi": {
       "id": "ig-v21-2026-09-26-1930-kp-2-7td-badugi",
       "venueId": "v21",
@@ -236,24 +202,6 @@
       "prize": "MCT Ticket×1 or $600 / 時間料金OFF券¥500 / 月間ランキングPT+10",
       "tags": [
         "ターボ"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v40-2026-09-25-nostart-xpt": {
-      "id": "ig-v40-2026-09-25-nostart-xpt",
-      "venueId": "v40",
-      "name": "XPT サテライト",
-      "date": "2026-09-25",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "サテライト"
       ],
       "source": "semi",
       "verified": false
