@@ -81,6 +81,12 @@ const LEAK_PATTERNS = [
   // index.html に内部の指摘文面が原文引用されたまま公開ページに出力されていたことを受けて追加)
   { label: '内部指摘の引用(という指摘を受け)', pattern: /という指摘を受け/g },
   { label: '内部指摘の引用(とのことだった)', pattern: /とのことだった/g },
+  // Search Console/GA4の実測データ(インプレッション数・検索順位・PV数等)を分析結果ごと
+  // コメントに残した混入(2026-09-26、index.htmlの複数箇所に「Search Console実測で
+  // ○○のインプレッションが実質0件」等の具体的な数値が残っていたことを受けて追加)
+  { label: '検索実測データの直書き(Search Console実測)', pattern: /Search Console実測/g },
+  { label: '検索実測データの直書き(GA4実測)', pattern: /GA4実測/g },
+  { label: '内部監査文書の章番号参照', pattern: /監査20\d\d-\d\d-\d\d/g },
 ];
 
 // ============================================================
@@ -302,6 +308,39 @@ test('検知パターンの回帰確認: 内部指摘の原文引用は検知さ
   scanText('(回帰確認用)修正前の文言', beforeFix, before);
   assert.ok(before.some(v => v.label === '内部指摘の引用(という指摘を受け)'), '「という指摘を受け」が検知されませんでした');
   assert.ok(before.some(v => v.label === '内部指摘の引用(とのことだった)'), '「とのことだった」が検知されませんでした');
+
+  const after = [];
+  scanText('(回帰確認用)修正後の文言', afterFixSamples, after);
+  assert.equal(
+    after.length, 0,
+    `圧縮後の文言にまだ検知パターンがマッチしています:\n${formatViolations(after)}`
+  );
+});
+
+// ============================================================
+// 回帰確認: index.html に残っていたSearch Console/GA4の実測データ(インプレッション数・
+// 検索順位・PV数等の具体的な数値)を含むコメント、および内部監査文書の章番号参照
+// (2026-09-26に是正)が、検知パターンで再現できることを固定しておく
+// ============================================================
+test('検知パターンの回帰確認: 検索実測データ・内部監査文書参照は検知され、圧縮後の文言は検知されない', () => {
+  const beforeFix = [
+    '（Search Console 実測・2026-08-18: 「福岡 ポーカー大会」64表示で平均7.4位）',
+    'Search Console実測で「福岡 ポーカー」のインプレッションが実質0件だったのは、',
+    '（GA4実測: /index.html や存在しない /_baseline-index.html に偏ったPVが計測）',
+    'FAQ(GEO監査2026-09-03 3章①への対応)。',
+  ].join('\n');
+  const afterFixSamples = [
+    '検索する人は「トーナメント」だけでなく「大会」とも打つため(2026-08-18)、同義語として併記する。',
+    '「店を選ぶための紹介記事」という検索意図に応えるページとして、導線を置く。',
+    'ここでホストを絞る(人手とは考えにくいノイズアクセスの計測を防ぐ対応、2026-08-27)。',
+    'FAQ(AI検索エンジン向けに静的HTMLとしても内容を読めるようにする対応、2026-09-03)。',
+  ].join('\n');
+
+  const before = [];
+  scanText('(回帰確認用)修正前の文言', beforeFix, before);
+  assert.ok(before.some(v => v.label === '検索実測データの直書き(Search Console実測)'), '「Search Console実測」が検知されませんでした');
+  assert.ok(before.some(v => v.label === '検索実測データの直書き(GA4実測)'), '「GA4実測」が検知されませんでした');
+  assert.ok(before.some(v => v.label === '内部監査文書の章番号参照'), '「監査20XX-XX-XX」が検知されませんでした');
 
   const after = [];
   scanText('(回帰確認用)修正後の文言', afterFixSamples, after);
