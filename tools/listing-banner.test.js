@@ -8,17 +8,16 @@
  *   promo-banners.test.js / big-events.test.js と同じ考え方。listing-banner.js は日付を
  *   持たない常設バナーで掲載期間の計算は無いが、①オン/オフの切り替え口(visibleListingBanner)、
  *   ②index.html の bigEventBannerHtml() 側に追加した customBanner 分岐(画像を使わずCSSで
- *   組む経路。既存の画像バナーの経路を壊していないか)、③renderBigEventBanner() 内の連結順
- *   (常に最後尾)、の3点は固定しておかないと次に誰かが触ったときの巻き戻りに気づけない。
+ *   組む経路。既存の画像バナーの経路を壊していないか)の2点は固定しておかないと次に誰かが
+ *   触ったときの巻き戻りに気づけない。
+ *   ③「サイト全体のバナーの中での連結順(常に最後尾)」は、2026-09-26に visibleSiteBanners()
+ *   (site-banner.js)へ集約されたため、そちらのテスト(tools/site-banner.test.js)で固定する
+ *   (以前はここに renderBigEventBanner() の連結順を検証するテストがあったが、
+ *   index.html 側が visibleSiteBanners() を呼ぶだけになり検証対象が無くなったため撤去した)。
  *
  * 【bigEventBannerHtml()について】2026-09-26に big-events.js へ移設された(店舗ページ生成
  *   〔tools/gen-venue-pages.js〕からもNodeで呼べるようにするため)。以前はindex.html内にしか
  *   存在せず、vmで文字列を切り出して実行していたが、今は素直に require() で取れる。
- *
- * 【index.htmlから関数を切り出す理由(renderBigEventBanner()のみ)】tools/recurring-dedupe.test.js
- *   と同じ流儀。このリポジトリのテストは外部依存ゼロ(node:test のみ、jsdomは使わない)。
- *   renderBigEventBanner() の該当部分はDOMに(ほぼ)触れないので vm で足りる。
- *   目印を動かしたときはこのテストが明示的に落ちる。
  */
 
 'use strict';
@@ -27,7 +26,6 @@ const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('node:fs');
 const path = require('node:path');
-const vm = require('node:vm');
 const LB = require('../listing-banner.js');
 
 const INDEX_HTML = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
@@ -53,7 +51,11 @@ test('visibleListingBanner(): 明示的にオンを渡しても1件のまま', (
 });
 
 test('LISTING_BANNER: リンク先はguide/partners/(確定仕様・2026-09-19変更: 直接問い合わせフォームではなく案内ページを経由させる)', () => {
-  assert.strictEqual(LB.LISTING_BANNER.href, 'guide/partners/');
+  assert.strictEqual(LB.LISTING_BANNER.href, '/guide/partners/');
+});
+
+test('LISTING_BANNER: hrefはサイトルート起点の絶対パス(先頭が"/")である(2026-09-26追加。店舗ページ等1階層下のページでもリンクが壊れないことの回帰防止)', () => {
+  assert.ok(LB.LISTING_BANNER.href.startsWith('/'), `href が相対パスのままになっている(実際: ${LB.LISTING_BANNER.href})`);
 });
 
 test('LISTING_BANNER: 確定文言(見出し/サブ/eyebrow/下部説明文/ボタン)', () => {
@@ -105,7 +107,7 @@ test('bigEventBannerHtml(): customBanner:true のとき<img>を出さず、CSS�
   assert.ok(html.includes('お店の告知バナー、掲載受付中'), 'bannerDesc(eb-tag)が出力されていない');
   assert.ok(html.includes('詳しくは →'), 'btnTextが出力されていない(既定の「日程を見る →」のままになっている)');
   assert.ok(html.includes('class="evtBanner ev-listing"'), 'bannerClass(ev-listing)が付いていない');
-  assert.ok(html.includes('href="guide/partners/"'), 'href が反映されていない');
+  assert.ok(html.includes('href="/guide/partners/"'), 'href が反映されていない');
 });
 
 test('bigEventBannerHtml(): 既存の画像バナー(customBannerなし)は今まで通り<img>のまま(回帰防止)', () => {
@@ -124,43 +126,6 @@ test('bigEventBannerHtml(): 既存の画像バナー(customBannerなし)は今�
   assert.ok(html.includes('<img class="eb-img" src="/img/fst/fst-banner.svg"'), '既存の画像バナーの出力が変わっている');
   assert.ok(!html.includes('eb-custom'), '画像バナーなのにeb-customが出力されている');
   assert.ok(html.includes('日程を見る →'), 'btnText省略時の既定文言(日程を見る →)が出ていない');
-});
-
-// ============================================================
-// index.html: renderBigEventBanner() 内の連結順(常に最後尾)
-// ============================================================
-test('renderBigEventBanner(): 掲載店舗募集バナーは promos/visibleBigEvents の【最後尾】に連結される', () => {
-  const start = INDEX_HTML.indexOf('    const promos = (typeof visiblePromoBanners === \'function\')');
-  const end = INDEX_HTML.indexOf('    // JOPT/NIPPONのデータ読み込み後に描き直すことがある');
-  if (start < 0 || end <= start) {
-    throw new Error('index.html から renderBigEventBanner() の連結部分を切り出せませんでした。'
-      + '目印を動かしたなら、このテストの目印も直すこと。');
-  }
-  const src = INDEX_HTML.slice(start, end);
-  const sandbox = {
-    visiblePromoBanners: () => [{ id: 'promoX' }],
-    visibleBigEvents: () => [{ id: 'fst' }, { id: 'spadie' }],
-    visibleListingBanner: () => [{ id: 'listing-recruit' }]
-  };
-  vm.createContext(sandbox);
-  new vm.Script(src + '\n;evs', { filename: 'renderBigEventBanner-extract.js' }).runInContext(sandbox);
-  const ids = new vm.Script('evs.map(e => e.id)').runInContext(sandbox);
-  assert.deepStrictEqual(ids, ['promoX', 'fst', 'spadie', 'listing-recruit']);
-});
-
-test('renderBigEventBanner(): 他の告知が0件でも掲載店舗募集バナー単体で1件返る', () => {
-  const start = INDEX_HTML.indexOf('    const promos = (typeof visiblePromoBanners === \'function\')');
-  const end = INDEX_HTML.indexOf('    // JOPT/NIPPONのデータ読み込み後に描き直すことがある');
-  const src = INDEX_HTML.slice(start, end);
-  const sandbox = {
-    visiblePromoBanners: () => [],
-    visibleBigEvents: () => [],
-    visibleListingBanner: () => [{ id: 'listing-recruit' }]
-  };
-  vm.createContext(sandbox);
-  new vm.Script(src, { filename: 'renderBigEventBanner-extract2.js' }).runInContext(sandbox);
-  const ids = new vm.Script('evs.map(e => e.id)').runInContext(sandbox);
-  assert.deepStrictEqual(ids, ['listing-recruit']);
 });
 
 // ============================================================

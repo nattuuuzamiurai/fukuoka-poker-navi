@@ -50,7 +50,7 @@ const REPO = path.resolve(REPO_ARG);
 // 共通ユーティリティは tools/site-shell.js に寄せてある。
 // 店舗ページ(tools/gen-venue-pages.js)がまったく同じ骨格を使うため、複製せず共有する。
 const shell = require('./site-shell.js');
-const { SITE, POSITIONING, esc, fmtDate, LINK_SEP, pageHead, FAQ_CSS, faqBlock, adCard, ADCARD_CSS } = shell;
+const { SITE, POSITIONING, esc, fmtDate, LINK_SEP, pageHead, FAQ_CSS, faqBlock, adCard, ADCARD_CSS, BANNER_CSS, siteBannerSection } = shell;
 // sitemap.xml の唯一の所有者。中身はここでは組み立てず、丸ごと受け取って書くだけ。
 const { sitemapFile } = require('./gen-sitemap.js');
 
@@ -58,6 +58,8 @@ const { sitemapFile } = require('./gen-sitemap.js');
 const JOPT = require(path.join(REPO, 'jopt-data.js'));
 // 大型イベントのレジストリ(会期・掲載期間ルール)。ブラウザ側と同じファイルを使う。
 const BIG = require(path.join(REPO, 'big-events.js'));
+// サイト全体のバナー(トップページ最上部と同じ内容)を大会ページ上部にも出す(2026-09-26)。
+const SITE_BANNER = require(path.join(REPO, 'site-banner.js'));
 const NIPPON = require(path.join(REPO, 'nippon-series-data.js'));
 // FST 5.0 メイン会場(ホテルニューオータニ博多)の全日程。出典・注意点はファイル冒頭のコメントを参照。
 const FST_SCHEDULE = require(path.join(REPO, 'fst-schedule-data.js'));
@@ -95,6 +97,8 @@ const DATA = require(path.join(REPO, 'data.js'));
 const { AREA_SLUGS, areaVenues, areaList, footerAreaLinksHtml } = require('./area-schedule.js');
 // フッターの「エリアから探す」リンク行(2026-08-28追加)。全大会ページで内容は共通なので1回だけ組み立てる。
 const FOOTER_AREA_LINKS = footerAreaLinksHtml(DATA.VENUES, DATA.AREAS);
+// サイト全体のバナー。全大会ページで内容は共通なので1回だけ組み立てる。
+const SITE_BANNER_SECTION = siteBannerSection(SITE_BANNER);
 
 function venueScheduleBlock() {
   const areas = areaList(DATA.VENUES, DATA.AREAS);
@@ -112,7 +116,9 @@ ${areas.map(a => `  <li><a href="/areas/${AREA_SLUGS[a]}/">${esc(a)}（${areaVen
 const permanentEventLinksList = () => shell.permanentEventLinksList(BIG);
 const permanentEventLinks = currentPath => shell.permanentEventLinks(BIG, currentPath);
 // currentPath: そのページ自身のパス(自己リンクを避けるため)。省略すると全件がリンクになる。
-const pageFoot = currentPath => shell.pageFoot(BIG, currentPath, null, FOOTER_AREA_LINKS);
+// extraScripts に SITE_BANNER_SECTION.scripts を常に足す(サイト全体のバナーのカルーセルを
+// 有効にするため。0件時もinitBigEventCarouselがno-opになるだけで無害)。
+const pageFoot = currentPath => shell.pageFoot(BIG, currentPath, SITE_BANNER_SECTION.scripts, FOOTER_AREA_LINKS);
 
 // パンくずリスト(2026-08-28追加): トップ > 大会 > 大会名。
 // 「大会」はトップページ内の大型一覧(#majors)へのアンカー(専用ページを持たないため)。
@@ -317,7 +323,7 @@ function buildJopt() {
     "isAccessibleForFree": false
   };
   const body = `
-<h1>JOPT 2026 Fukuoka #01 結果・優勝者 ＆ タイムスケジュール</h1>
+${SITE_BANNER_SECTION.html}<h1>JOPT 2026 Fukuoka #01 結果・優勝者 ＆ タイムスケジュール</h1>
 <p class="lead">Japan Open Poker Tour 2026 福岡 #01（2026年7月30日〜8月2日）の結果まとめと、全${JOPT.tournaments.length}トーナメントの日程</p>
 <div class="archived"><b>このイベントは終了しました。</b>Main Event優勝は<b>${esc(JOPT_RESULT.winner)}</b>（エントリー${esc(JOPT_RESULT.totalEntries)}）でした。詳しい結果は下記「結果・優勝者」をご覧ください。以下は開催当時のタイムスケジュールの記録です。今後のトーナメントは<a href="/">トップページ</a>をご確認ください。</div>
 <div class="evt-meta">
@@ -347,7 +353,7 @@ ${adCard()}
   ▶ <a href="${esc(JOPT.guideUrl)}" target="_blank" rel="noopener">JOPT公式サイト</a>${JOPT.scheduleUrl ? `　／　<a href="${esc(JOPT.scheduleUrl)}" target="_blank" rel="noopener">公式スケジュール</a>` : ''}<br>
   ▶ <a href="/">福岡の他のポーカートーナメント日程を見る</a>
 </div>`;
-  return pageHead({ title, desc, canonical, jsonld, image, extraCss: ADCARD_CSS, breadcrumb: pageBreadcrumb('jopt', canonical) }) + body + pageFoot('/events/jopt-2026-fukuoka-01/');
+  return pageHead({ title, desc, canonical, jsonld, image, extraCss: ADCARD_CSS + BANNER_CSS, breadcrumb: pageBreadcrumb('jopt', canonical) }) + body + pageFoot('/events/jopt-2026-fukuoka-01/');
 }
 
 // ---- WJPTページ(終了済み=アーカイブ) ----
@@ -379,7 +385,7 @@ function buildWjpt() {
     "isAccessibleForFree": false
   };
   const body = `
-<h1>WJPT 2026 タイムスケジュール</h1>
+${SITE_BANNER_SECTION.html}<h1>WJPT 2026 タイムスケジュール</h1>
 <p class="lead">West Japan Poker Tour 2026（北九州）の全${WJPT.tournaments.length}トーナメント日程</p>
 <div class="archived"><b>このイベントは終了しました。</b>以下は2026年7月18日〜20日に北九州で開催された当時の日程・内容の記録です。今後のトーナメントは<a href="/">トップページ</a>をご確認ください。</div>
 <div class="evt-meta">
@@ -395,7 +401,7 @@ ${adCard()}
 <div class="links">
   ▶ <a href="/">福岡の今後のポーカートーナメント日程を見る</a>
 </div>`;
-  return pageHead({ title, desc, canonical, jsonld, image, extraCss: ADCARD_CSS, breadcrumb: pageBreadcrumb('wjpt', canonical) }) + body + pageFoot('/events/wjpt-2026/');
+  return pageHead({ title, desc, canonical, jsonld, image, extraCss: ADCARD_CSS + BANNER_CSS, breadcrumb: pageBreadcrumb('wjpt', canonical) }) + body + pageFoot('/events/wjpt-2026/');
 }
 
 // ---- NIPPON SERIES ページ ----
@@ -473,7 +479,7 @@ function buildNippon() {
     "isAccessibleForFree": false
   };
   const body = `
-<h1>NIPPON SERIES FUKUOKA 2026 タイムスケジュール</h1>
+${SITE_BANNER_SECTION.html}<h1>NIPPON SERIES FUKUOKA 2026 タイムスケジュール</h1>
 <p class="lead">${esc(NIPPON.name)} の全${NIPPON.eventCount}イベント日程（#1〜#38）</p>
 <div class="evt-meta">
   <b>会期</b>　2026年8月11日（火）〜8月16日（日）<br>
@@ -492,7 +498,7 @@ ${adCard()}
   ▶ <a href="${esc(NIPPON.siteUrl)}" target="_blank" rel="noopener">NIPPON SERIES 公式イベントページ</a>　／　<a href="${esc(NIPPON.guidePdfUrl)}" target="_blank" rel="noopener">公式Players Guide(PDF)</a><br>
   ▶ <a href="/">福岡の他のポーカートーナメント日程を見る</a>
 </div>`;
-  return pageHead({ title, desc, canonical, jsonld, image, extraCss: ADCARD_CSS, breadcrumb: pageBreadcrumb('nippon', canonical) }) + body + pageFoot('/events/nippon-series-2026-fukuoka/');
+  return pageHead({ title, desc, canonical, jsonld, image, extraCss: ADCARD_CSS + BANNER_CSS, breadcrumb: pageBreadcrumb('nippon', canonical) }) + body + pageFoot('/events/nippon-series-2026-fukuoka/');
 }
 
 // ---- FST 5.0 ページ「よくある質問」(FAQ) ----
@@ -698,7 +704,7 @@ ${e.itm ? `    <tr><th>インマネ</th><td>${esc(e.itm)}</td></tr>\n` : ''}${e.
   // 検索から来た人が知りたいこと(参加の流れ・buy-in目安・予約方法・初心者可否)にその場で答える。
   const faq = fstFaqBlock(FST, main, FST.events[1]);
   const body = `
-<h1>FST 5.0（FUKUOKA SUPER TOURNAMENT）2026 福岡 開催概要</h1>
+${SITE_BANNER_SECTION.html}<h1>FST 5.0（FUKUOKA SUPER TOURNAMENT）2026 福岡 開催概要</h1>
 <p class="lead">2026年${f1.m}月${f1.d}日（${f1.wd}）〜${f2.m}月${f2.d}日（${f2.wd}）／ホテルニューオータニ博多（福岡市中央区渡辺通）</p>
 <img class="evt-banner" src="/${esc(FST.banner)}" width="1024" height="412" alt="${esc(reg && reg.bannerAlt ? reg.bannerAlt : FST.name)}">
 <div class="evt-meta">
@@ -740,7 +746,7 @@ ${adCard()}
   ▶ <a href="/">福岡の他のポーカートーナメント日程を見る</a>
 </div>
 ${faq.script}`;
-  return pageHead({ title, desc, canonical, jsonld, image, extraCss: FAQ_CSS + ADCARD_CSS, breadcrumb: pageBreadcrumb('fst', canonical) }) + body + pageFoot('/events/fst-2026-fukuoka/');
+  return pageHead({ title, desc, canonical, jsonld, image, extraCss: FAQ_CSS + ADCARD_CSS + BANNER_CSS, breadcrumb: pageBreadcrumb('fst', canonical) }) + body + pageFoot('/events/fst-2026-fukuoka/');
 }
 
 // ---- SPADIE FUKUOKA 1st ページ ----
@@ -821,7 +827,7 @@ function buildSpadie() {
   };
   const faq = faqBlock(spadieFaqItems(), { headingId: 'spadie-faq' });
   const body = `
-<h1>SPADIE FUKUOKA 1st（2026年11月12日〜・UNITEDLAB）開催概要</h1>
+${SITE_BANNER_SECTION.html}<h1>SPADIE FUKUOKA 1st（2026年11月12日〜・UNITEDLAB）開催概要</h1>
 <p class="lead">開催開始: 2026年11月12日（木）／会場: UNITEDLAB（福岡市中央区大名）</p>
 <img class="evt-banner" src="/${esc(reg.banner)}" width="1024" height="412" alt="${esc(reg.bannerAlt)}">
 <div class="evt-meta">
@@ -863,7 +869,7 @@ ${adCard()}
   ▶ <a href="/">福岡の他のポーカートーナメント日程を見る</a>
 </div>
 ${faq.script}`;
-  return pageHead({ title, desc, canonical, jsonld, image, extraCss: FAQ_CSS + ADCARD_CSS, breadcrumb: pageBreadcrumb('spadie', canonical) }) + body + pageFoot('/events/spadie-fukuoka-1st/');
+  return pageHead({ title, desc, canonical, jsonld, image, extraCss: FAQ_CSS + ADCARD_CSS + BANNER_CSS, breadcrumb: pageBreadcrumb('spadie', canonical) }) + body + pageFoot('/events/spadie-fukuoka-1st/');
 }
 
 // ---- 書き出し / 検査 ----

@@ -397,7 +397,7 @@ function escHtmlBanner(s) {
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-// ev.banner はどのレジストリ(BIG_EVENTS/PROMO_BANNERS/dream-promo-banner.js)でも
+// ev.banner はどのレジストリ(BIG_EVENTS/PROMO_BANNERS)でも
 // サイトルート起点の相対パス(例 'img/fst/fst-banner.svg'、先頭に '/' 無し)で統一されている。
 // index.html(URLが常にサイトルート)から使う分には問題にならないが、店舗ページ
 // (/venues/<slug>/ のように1階層下)から同じ文字列をそのまま <img src> に使うと、
@@ -414,8 +414,16 @@ function bannerImgSrc(banner) {
 // (トップのバナー領域・大型一覧の2箇所で共用)。店舗ページ(tools/gen-venue-pages.js)が
 // 店舗自身のPRバナーを静的に埋め込めるよう、Nodeからも呼べるここに移設した(2026-09-26)。
 // 見た目・分岐ロジックは移設前と同一。promo-banners.js のプロモ(days・href を持つ)、
-// listing-banner.js/dream-promo-banner.js の常設告知(customBanner・days無し)のどちらも扱える。
-function bigEventBannerHtml(ev) {
+// listing-banner.js の常設告知(customBanner・days無し)のどちらも扱える。
+//
+// opts.staticPage(2026-09-26追加): WJPT/JOPT/NIPPON/FST(big-events.js の BIG_EVENTS)は
+// `hash`('#wjpt' 等)しか持たないことがある。これは index.html 自身のハッシュルーターの中で
+// 使う前提のリンクで、index.html を経由しない独立した静的ページ(店舗/エリア/大会/初心者ガイド)
+// では【何にも遷移しないリンク】になってしまう(同じ静的ページ内に #wjpt という要素が無いため)。
+// opts.staticPage を渡すと、featureUrl(そのイベント専用の静的ページ)があればそちらを優先する。
+// index.html 自身(トップの一覧・大型一覧・SPAの店舗詳細ビュー)はこれまで通り opts 無しで呼び、
+// ハッシュ遷移(インタラクティブな専用ビュー)を使う。
+function bigEventBannerHtml(ev, opts) {
   const today = localTodayGlobal();
   const cls = ['evtBanner', ev.bannerClass];
   if (isEventArchived(ev.days)) cls.push('is-archived');         // 終了 → 暗転+「終了」バッジ
@@ -427,7 +435,8 @@ function bigEventBannerHtml(ev) {
         <div class="eb-sub">${escHtmlBanner(ev.sub)}</div>
       </div>`
     : `<img class="eb-img" src="${bannerImgSrc(ev.banner)}" alt="${escHtmlBanner(ev.bannerAlt)}">`;
-  return `<a class="${cls.join(' ')}" href="${ev.href || ev.hash}">
+  const href = (opts && opts.staticPage && ev.featureUrl) ? ev.featureUrl : (ev.href || ev.hash);
+  return `<a class="${cls.join(' ')}" href="${href}">
       ${media}
       <div class="eb-foot">
         <span class="eb-tag"><span class="eb-desc">${escHtmlBanner(ev.bannerDesc)}</span></span>

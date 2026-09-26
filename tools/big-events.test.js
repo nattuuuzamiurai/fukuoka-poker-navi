@@ -115,3 +115,36 @@ test('visibleBigEvents(): 第1引数に日付文字列だけを渡した場合�
   const events = [{ id: 'fx', label: 'フィクスチャ', days: ['2026-09-19', '2026-09-23'] }];
   assert.deepStrictEqual(BE.visibleBigEvents('2026-09-24', events).map(e => e.id), ['fx']);
 });
+
+// ============================================================
+// bigEventBannerHtml(): opts.staticPage(2026-09-26追加)
+// 【背景】WJPT/JOPT/NIPPON/FSTは index.html 自身のハッシュルーターで開く専用ビュー
+// (hash: '#wjpt' 等)しか持たないことがある。このリンクは index.html を経由しない
+// 独立した静的ページ(店舗/エリア/大会/初心者ガイド)に埋め込むと「クリックしても何も
+// 起きないリンク」になってしまう(同じ静的ページの中には #wjpt という要素が無いため)。
+// opts.staticPage:true を渡すと featureUrl(そのイベント専用の静的ページ)を優先する。
+// ============================================================
+test('bigEventBannerHtml(): opts無し(既定)はhashのイベントでもhashのまま(index.html自身のハッシュルーター向け)', () => {
+  const ev = { bannerClass: 'ev-fst', hash: '#fst', featureUrl: '/events/fst-2026-fukuoka/', banner: 'x.svg', bannerAlt: 'x', bannerDesc: 'd', days: ['2026-09-19'] };
+  const html = BE.bigEventBannerHtml(ev);
+  assert.ok(html.includes('href="#fst"'), `hashのまま出力されていない: ${html}`);
+});
+
+test('bigEventBannerHtml(): opts.staticPage:trueかつfeatureUrlがあれば、hashではなくfeatureUrlを使う', () => {
+  const ev = { bannerClass: 'ev-fst', hash: '#fst', featureUrl: '/events/fst-2026-fukuoka/', banner: 'x.svg', bannerAlt: 'x', bannerDesc: 'd', days: ['2026-09-19'] };
+  const html = BE.bigEventBannerHtml(ev, { staticPage: true });
+  assert.ok(html.includes('href="/events/fst-2026-fukuoka/"'), `featureUrlに切り替わっていない: ${html}`);
+  assert.ok(!html.includes('href="#fst"'), `hashのまま残ってしまっている: ${html}`);
+});
+
+test('bigEventBannerHtml(): opts.staticPage:trueでもfeatureUrlが無ければhref/hashのまま(promo-banners.js等はhrefのみでfeatureUrlを持たない)', () => {
+  const ev = { bannerClass: 'ev-dream', href: '/events/dream-saturday-tournament/', banner: 'x.jpg', bannerAlt: 'x', bannerDesc: 'd' };
+  const html = BE.bigEventBannerHtml(ev, { staticPage: true });
+  assert.ok(html.includes('href="/events/dream-saturday-tournament/"'), `hrefが変わってしまっている: ${html}`);
+});
+
+test('本番のBIG_EVENTS: featureUrlを持たないエントリは無い(opts.staticPageで静的ページに埋め込んでも無反応リンクにならない前提)', () => {
+  BE.BIG_EVENTS.forEach(e => {
+    assert.ok(e.featureUrl, `${e.id}: featureUrl が無い(opts.staticPage:true で静的ページに出すと無反応リンクになる)`);
+  });
+});

@@ -63,17 +63,16 @@ if (!REPO_ARG) { console.error('リポジトリのパスを指定してくださ
 const REPO = path.resolve(REPO_ARG);
 
 const shell = require('./site-shell.js');
-const { SITE, POSITIONING, esc, pageHead, pageFoot, adCard, ADCARD_CSS, BANNER_CSS, venuePromoBannerHtml } = shell;
+const { SITE, POSITIONING, esc, pageHead, pageFoot, adCard, ADCARD_CSS, BANNER_CSS, siteBannerSection } = shell;
 // sitemap.xml の唯一の所有者。中身はここでは組み立てず、丸ごと受け取って書くだけ。
 const { sitemapFile } = require('./gen-sitemap.js');
 
 // ---- データ読み込み ----
 const DATA = require(path.join(REPO, 'data.js'));
 const BIG = require(path.join(REPO, 'big-events.js'));
-// 店舗自身のページ上部に出すPRバナー(2026-09-26追加)。venueId が付いたプロモ
-// (promo-banners.js)だけを対象にする。掲載期間の判定は venuePromoBanners() 内で
-// visiblePromoBanners() に委ねているため、ここで日付比較を書き足さない。
-const PROMO = require(path.join(REPO, 'promo-banners.js'));
+// サイト全体のバナー(トップページ最上部と同じ内容)を店舗ページ上部にも出す(2026-09-26)。
+// 内容は全店舗共通なので1回だけ組み立てる(下記 SITE_BANNER_SECTION)。
+const SITE_BANNER = require(path.join(REPO, 'site-banner.js'));
 const { VENUES, TOURNAMENTS, RECURRING, AREAS } = DATA;
 
 // slug が欠けている/重複している/使えない文字を含む場合はここで落ちる。
@@ -105,6 +104,10 @@ const { AREA_SLUGS, areaList, footerAreaLinksHtml } = require('./area-schedule.j
 const AREA_PAGES = new Set(areaList(VENUES, AREAS));
 // フッターの「エリアから探す」リンク行。全店舗ページで内容は共通なので1回だけ組み立てる。
 const FOOTER_AREA_LINKS = footerAreaLinksHtml(VENUES, AREAS);
+// サイト全体のバナー(トップページ最上部と同じ内容)。全店舗ページで内容は共通なので1回だけ組み立てる
+// (このスクリプトを実行した時点の visibleSiteBanners() を焼き込む。他の静的コンテンツと同じく
+// data.js 更新時と同様、日付が進むと再生成しないと古くなる)。
+const SITE_BANNER_SECTION = siteBannerSection(SITE_BANNER);
 
 // ---- 関連ガイド(/guide/beginner/)への内部リンク(2026-09-13・マーケティング分析) ----
 // 【背景】ガイドページへのリンクがサイト全体でトップページのCTA・フッターのみで、
@@ -656,13 +659,8 @@ ${sameAreaShown.map(x => `  <a class="vp-card" href="/venues/${x.slug}/">
     schedNote = `※ この一覧は${esc(RANGE.label)}の掲載分です。${NOTE_JS_TAIL}`;
   }
 
-  // 店舗自身のPRバナー(2026-09-26追加)。トップページ最上部のバナーと同じ見た目・画像・リンク先を
-  // パンくず直後・店舗名(h1)の直前に静的に出す。該当が無い店では venuePromoBannerHtml が
-  // 空文字列を返すので、この店舗ページの見た目は今まで通り変わらない。
-  const venuePromoBlock = venuePromoBannerHtml(BIG, PROMO.venuePromoBanners(v.id));
-
   const body = `
-${venuePromoBlock}<h1>${esc(v.name)}</h1>
+${SITE_BANNER_SECTION.html}<h1>${esc(v.name)}</h1>
 <p class="vp-sub">${sub}</p>${closedNoticeBlock}${badgesBlock}${venueHeroPhotoHtml(v)}
 <div class="vp-info-grid">
 ${venueInfoCardsHtml(v)}
@@ -719,7 +717,7 @@ ${SCHEDULE_JS}
   if (note && note.parentNode) note.parentNode.removeChild(note);
 })();
 </script>
-`;
+${SITE_BANNER_SECTION.scripts}`;
 
   return pageHead({
     title, desc, canonical,
@@ -731,7 +729,7 @@ ${SCHEDULE_JS}
     // pageHead の既定値(サイト共通OGP・img/ogp/common-og.jpg)に任せる。
     ogType: 'website',
     twitterCard: 'summary_large_image',
-    extraCss: VENUE_CSS + ADCARD_CSS + (venuePromoBlock ? BANNER_CSS : '')
+    extraCss: VENUE_CSS + ADCARD_CSS + BANNER_CSS
   }) + body + pageFoot(BIG, null, scripts, FOOTER_AREA_LINKS);
 }
 

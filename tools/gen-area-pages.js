@@ -49,7 +49,7 @@ if (!REPO_ARG) { console.error('リポジトリのパスを指定してくださ
 const REPO = path.resolve(REPO_ARG);
 
 const shell = require('./site-shell.js');
-const { SITE, POSITIONING, esc, pageHead, pageFoot, adCard, ADCARD_CSS } = shell;
+const { SITE, POSITIONING, esc, pageHead, pageFoot, adCard, ADCARD_CSS, BANNER_CSS, siteBannerSection } = shell;
 const { sitemapFile } = require('./gen-sitemap.js');
 const { SCHEDULE_JS, venueHasCurrentFstSatellite } = require('./venue-schedule.js');
 const {
@@ -60,6 +60,8 @@ const {
 // ---- データ読み込み ----
 const DATA = require(path.join(REPO, 'data.js'));
 const BIG = require(path.join(REPO, 'big-events.js'));
+// サイト全体のバナー(トップページ最上部と同じ内容)をエリアページ上部にも出す(2026-09-26)。
+const SITE_BANNER = require(path.join(REPO, 'site-banner.js'));
 const { VENUES, TOURNAMENTS, RECURRING, AREAS } = DATA;
 
 // slug の欠け・重複は生成前に止める(公開後に気づくとURLの付け替え=被リンクの喪失になる)。
@@ -69,6 +71,8 @@ validateAreaSlugs(VENUES, AREAS);
 const PAGE_AREAS = areaList(VENUES, AREAS);
 // フッターの「エリアから探す」リンク行。全エリアページで内容は共通なので1回だけ組み立てる。
 const FOOTER_AREA_LINKS = footerAreaLinksHtml(VENUES, AREAS);
+// サイト全体のバナー。全エリアページで内容は共通なので1回だけ組み立てる。
+const SITE_BANNER_SECTION = siteBannerSection(SITE_BANNER);
 // FST 5.0 サテライトを現在開催中の店舗があるかの判定に使うレジストリ。
 const FST_REG = BIG.bigEventById('fst');
 
@@ -351,7 +355,7 @@ ${others.map(a => `  <li><a href="/areas/${AREA_SLUGS[a]}/">${esc(a)}（${areaVe
   const h1 = rows.length ? `${esc(area)}のポーカートーナメント日程` : `${esc(area)}のポーカー店一覧`;
 
   const body = `
-<h1>${h1}</h1>
+${SITE_BANNER_SECTION.html}<h1>${h1}</h1>
 <p class="vp-sub">${sub}</p>${multiStationNote}${areaContent}${fstAreaBlock}
 <div class="disclaimer">当サイトは店舗が公開している情報を集約している媒体で、掲載店舗の運営者ではありません。日程・料金・営業状況は変更されることがあるため、参加前に必ず各店舗の公式情報・SNSをご確認ください。<br>${POSITIONING}</div>
 <h2 class="vp-sec">${esc(area)}のポーカー店（${venues.length}店舗）</h2>
@@ -398,7 +402,7 @@ ${SCHEDULE_JS}${AREA_SCHEDULE_JS}
   if (note && note.parentNode) note.parentNode.removeChild(note);
 })();
 </script>
-`;
+${SITE_BANNER_SECTION.scripts}`;
 
   return pageHead({
     title, desc, canonical,
@@ -408,7 +412,7 @@ ${SCHEDULE_JS}${AREA_SCHEDULE_JS}
     // pageHead の既定値(サイト共通OGP・img/ogp/common-og.jpg)に任せる。
     ogType: 'website',
     twitterCard: 'summary_large_image',
-    extraCss: AREA_CSS + ADCARD_CSS
+    extraCss: AREA_CSS + ADCARD_CSS + BANNER_CSS
   }) + body + pageFoot(BIG, null, scripts, FOOTER_AREA_LINKS);
 }
 
