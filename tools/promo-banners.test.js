@@ -128,6 +128,81 @@ test('本番のPROMO_BANNERS: 各エントリが href(実ページへのリン�
 });
 
 // ============================================================
+// 2026-09-26追加: days を持たない常設(evergreen)プロモのサポート
+// ============================================================
+test('visiblePromoBanners(): days が無いプロモは掲載期間に関わらず常に含まれる', () => {
+  const promos = [{ id: 'evergreen-x', label: 'x', href: '/events/x/' }];
+  assert.deepStrictEqual(PB.visiblePromoBanners('2000-01-01', promos).map(p => p.id), ['evergreen-x']);
+  assert.deepStrictEqual(PB.visiblePromoBanners('2099-12-31', promos).map(p => p.id), ['evergreen-x']);
+});
+
+test('visiblePromoBanners(): 会期付き(dated)は常設(evergreen)より先に並ぶ', () => {
+  const promos = [
+    { id: 'evergreen-x', label: 'x', href: '/events/x/' },
+    { id: 'dated-y', label: 'y', href: '/events/y/', days: ['2026-09-05'] }
+  ];
+  assert.deepStrictEqual(PB.visiblePromoBanners('2026-09-05', promos).map(p => p.id), ['dated-y', 'evergreen-x']);
+});
+
+test('visiblePromoBanners(): 会期付きが掲載ウィンドウ外でも、常設(evergreen)は表示され続ける', () => {
+  const promos = [
+    { id: 'evergreen-x', label: 'x', href: '/events/x/' },
+    { id: 'dated-y', label: 'y', href: '/events/y/', days: ['2026-09-05'] }
+  ];
+  assert.deepStrictEqual(PB.visiblePromoBanners('2026-09-10', promos).map(p => p.id), ['evergreen-x']);
+});
+
+test('本番のPROMO_BANNERS: dream-saturday-tournamentはdaysを持たない常設エントリで、venueId(v42)を持つ(巻き戻り検知用)', () => {
+  const entry = PB.PROMO_BANNERS.find(p => p.id === 'dream-saturday-tournament');
+  assert.ok(entry, 'PROMO_BANNERSにdream-saturday-tournamentが見つからない');
+  assert.strictEqual(entry.days, undefined, 'days を持ってしまっている(常設のはず)');
+  assert.strictEqual(entry.venueId, 'v42');
+  assert.strictEqual(entry.href, '/events/dream-saturday-tournament/');
+  assert.strictEqual(entry.banner, 'img/dream/dream-saturday-tournament.jpg');
+  assert.strictEqual(entry.bannerClass, 'ev-dream');
+});
+
+test('本番のPROMO_BANNERS: dream-saturday-tournamentはどんな日付でも常に掲載対象に含まれる', () => {
+  assert.ok(PB.visiblePromoBanners('2000-01-01').map(p => p.id).includes('dream-saturday-tournament'));
+  assert.ok(PB.visiblePromoBanners('2099-12-31').map(p => p.id).includes('dream-saturday-tournament'));
+});
+
+// ============================================================
+// 画像アセット: PROMO_BANNERS が参照する画像が実在し、他の大型大会バナーと同じ比率(1024×412)
+// であること(旧 dream-promo-banner.test.js から移設。依存ライブラリを増やさないよう
+// JPEGのSOFセグメントを直接読む最小限のパーサーで寸法だけ確認する)
+// ============================================================
+/** JPEGファイルの (width, height) を返す。JPEGでない/読めない場合は null。 */
+function jpegDimensions(buf) {
+  if (buf.length < 4 || buf[0] !== 0xFF || buf[1] !== 0xD8) return null; // SOIマーカーが無い
+  let offset = 2;
+  while (offset + 3 < buf.length) {
+    if (buf[offset] !== 0xFF) { offset++; continue; }
+    const marker = buf[offset + 1];
+    if (marker === 0x01 || (marker >= 0xD0 && marker <= 0xD7)) { offset += 2; continue; }
+    if (marker === 0xD9) return null;
+    const length = buf.readUInt16BE(offset + 2);
+    const isSof = marker >= 0xC0 && marker <= 0xCF && marker !== 0xC4 && marker !== 0xC8 && marker !== 0xCC;
+    if (isSof) {
+      return { height: buf.readUInt16BE(offset + 5), width: buf.readUInt16BE(offset + 7) };
+    }
+    offset += 2 + length;
+  }
+  return null;
+}
+
+test('画像アセット: PROMO_BANNERSが参照するbannerがすべて実在し、1024×412(カルーセルの高さ統一の前提)である', () => {
+  PB.PROMO_BANNERS.forEach(p => {
+    const abs = path.join(__dirname, '..', p.banner);
+    assert.ok(fs.existsSync(abs), `${p.id}: ${abs} が存在しません`);
+    const dim = jpegDimensions(fs.readFileSync(abs));
+    assert.ok(dim, `${p.id}: ${abs} からJPEGの寸法を読み取れませんでした`);
+    assert.strictEqual(dim.width, 1024, `${p.id}: 幅が1024pxではありません(実際: ${dim.width}px)`);
+    assert.strictEqual(dim.height, 412, `${p.id}: 高さが412pxではありません(実際: ${dim.height}px)`);
+  });
+});
+
+// ============================================================
 // ブラウザの<script>共有スコープを再現した回帰テスト(2026-09-02の本番障害の再発防止)
 // ============================================================
 test('★ブラウザでの読み込み順(big-events.js → promo-banners.js)を再現してもSyntaxErrorにならない', () => {
@@ -159,5 +234,6 @@ test('★ブラウザでの読み込み順(big-events.js → promo-banners.js)�
   const result = JSON.parse(JSON.stringify(new vm.Script(
     'typeof visiblePromoBanners === "function" ? visiblePromoBanners("2026-09-02").map(p => p.id) : null'
   ).runInContext(ctx)));
-  assert.deepStrictEqual(result, ['dream-grandopen-2026']);
+  // dream-grandopen-2026(会期付き)→ dream-saturday-tournament(常設)の順(dated.concat(evergreen))。
+  assert.deepStrictEqual(result, ['dream-grandopen-2026', 'dream-saturday-tournament']);
 });

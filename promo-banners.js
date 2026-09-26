@@ -42,14 +42,19 @@
  *
  * ■ 新しいプロモを追加するときは下の PROMO_BANNERS に1エントリ足すだけでよい。
  *
- * ■ venueId(店舗自身のページにも同じバナーを出す・2026-09-26追加)
- *   対象の店舗(data.js の VENUES の id)がある場合は `venueId` を書く。書いておくと、
- *   店舗静的ページ(tools/gen-venue-pages.js)が venuePromoBanners(v.id) でこのプロモを見つけ、
- *   その店舗自身のページ上部にも同じバナー(見た目・画像・リンク先はトップと共通の
- *   bigEventBannerHtml()〔big-events.js〕を使うため常に一致する)を静的に埋め込む。
- *   掲載期間の判定はトップと同じ visiblePromoBanners() を経由するので、期間外は店舗ページ側にも出ない。
- *   venueId を書かなくてもトップのバナーには今まで通り出る(店舗ページ側にだけ出ないだけで、
- *   このファイルの他の挙動には影響しない・必須フィールドではない)。
+ * ■ venueId(対象店舗の記録・2026-09-26追加、運営判断により同日中に用途を変更)
+ *   対象の店舗(data.js の VENUES の id)がある場合は `venueId` を書いておいてよい。
+ *   ★2026-09-26当初は「店舗自身のページにだけ同じバナーを出す」判定キー(venuePromoBanners())
+ *   として使っていたが、運営判断により「対象店舗に関わらずトップと全く同じ内容を全ページに出す」
+ *   仕様に変更となったため、site-banner.js の visibleSiteBanners() に置き換えた
+ *   (全ページで全件を表示。店舗を絞り込む判定はもう無い)。venueId は今後また店舗個別の表示が
+ *   要る場面のためのメモとして残しているだけで、現在の表示可否には一切関与しない。
+ *
+ * ■ 会期(days)を持たない常設(evergreen)プロモも登録できる(2026-09-26追加)
+ *   単発イベント(会期あり)は `days` を書けば今まで通り「初日−PROMO_LEAD_DAYS日」〜
+ *   「最終日の翌日 朝6:00」の間だけ表示される。`days` を省略すると掲載期間の判定を
+ *   スキップし、フラグ等を追加しなくても【常に】表示される(毎週開催・無期限の告知向け。
+ *   listing-banner.js のような専用ファイルを新設せず、この配列の1エントリで済ませられる)。
  * ============================================================ */
 
 // Node実行時(tools/gen-sitemap.js 等)は big-events.js が export する関数を _BE 経由で参照する。
@@ -92,11 +97,27 @@ const PROMO_BANNERS = [
     label: 'DreaM グランドオープン記念',         // カルーセルのドット(aria-label)で使う。index.html の ec-dots が ev.label を読む
     days: ['2026-09-05'],                       // 単日開催
     href: '/events/dream-grandopen-2026/',      // バナーのリンク先(実ページ。BIG_EVENTSの hash と違い遷移先はトップのハッシュ内ではない)
-    venueId: 'v42',                             // CASINO BAR DreaM(久留米)。店舗ページにも同じバナーを出す対象(data.jsのVENUES参照)
+    venueId: 'v42',                             // CASINO BAR DreaM(久留米)。data.jsのVENUES参照(現在は表示可否の判定には使わない。上のコメント参照)
     banner: 'img/dream/dream-grandopen-banner.jpg',
     bannerAlt: 'CASINO BAR DreaM グランドオープン記念ポーカートーナメント 9.5 久留米',
     bannerDesc: '久留米・グランドオープン記念',
     bannerClass: 'ev-dream'
+  },
+  {
+    // CASINO BAR DreaM「Saturdayトーナメント」の常設PR掲載(毎週土曜開催・単一店舗・無期限)。
+    // 2026-09-19〜2026-09-26は専用ファイル(dream-promo-banner.js)で個別に持っていたが、
+    // このファイルが常設(days無し)エントリに対応したため、他のプロモと同じ場所に統合した
+    // (同種の仕組みを2箇所に分けて持たない・このファイル冒頭の設計方針)。
+    id: 'dream-saturday-tournament',
+    label: 'DreaM Saturdayトーナメント',
+    // days を持たない = 常設(掲載期間の判定をスキップして常に表示。上のコメント参照)
+    href: '/events/dream-saturday-tournament/',
+    venueId: 'v42',                             // CASINO BAR DreaM(久留米)。data.jsのVENUES参照(現在は表示可否の判定には使わない)
+    banner: 'img/dream/dream-saturday-tournament.jpg',
+    bannerAlt: 'CASINO BAR DreaM Saturdayトーナメント（久留米）',
+    bannerDesc: '毎週土曜日・久留米・18時スタート',
+    bannerClass: 'ev-dream',
+    btnText: '特典を見る →'
   }
 ];
 
@@ -108,32 +129,29 @@ const promoShowFrom = days => {
   return first ? _shiftDateStr(first, -PROMO_LEAD_DAYS) : null;
 };
 
-// トップのバナー領域に出すプロモ(0件〜複数件)。掲載ウィンドウに入っているものすべてを、
-// 掲載開始日の昇順で返す(big-events.js の bigEventWindows/visibleBigEvents と同じ考え方)。
+// トップのバナー領域に出すプロモ(0件〜複数件)。会期(days)を持つものは掲載ウィンドウに
+// 入っているものだけ、掲載開始日の昇順で返す(big-events.js の bigEventWindows/visibleBigEvents
+// と同じ考え方)。days を持たない常設(evergreen)プロモは掲載期間の判定をスキップし、
+// 登録順のまま【常に】末尾に連結する(会期付きのものより後ろ。会期付きが無い日は
+// 常設プロモだけが残る)。
 // 第1引数 today は 'YYYY-MM-DD' 文字列 / Date / 省略のいずれでもよい
 // (big-events.js の resolveNowAndToday 参照。2026-09-06追加。既存呼び出し互換)。
 // 第2引数 promos は big-events.js の visibleBigEvents(today, events) と同じテスト用の差し替え口
 // (省略時は本番の PROMO_BANNERS を使う。テストで本番データを書き換えずに境界値を検証できる)。
 function visiblePromoBanners(today, promos) {
   const { todayStr: t, now } = _resolveNowAndToday(today);
-  return (promos || PROMO_BANNERS)
+  const list = promos || PROMO_BANNERS;
+  const evergreen = list.filter(p => !p.days);
+  const dated = list
     .filter(p => _eventFirstDay(p.days) && _eventLastDay(p.days))
     .map(p => ({ promo: p, from: promoShowFrom(p.days), to: _eventShowUntil(p.days) }))
     // 下限(from)は従来どおり日付文字列で比較、上限は打ち切り時刻(2026-09-06〜)で比較する。
     .filter(w => t >= w.from && _isBeforeShowCutoff(w.promo.days, now))
     .sort((a, b) => a.from.localeCompare(b.from))
     .map(w => w.promo);
-}
-
-// 店舗静的ページ(tools/gen-venue-pages.js)の上部に出す、その店舗自身のプロモ(0件〜複数件)。
-// 判定(掲載期間に入っているか)は visiblePromoBanners() にそのまま委ね、ここでは
-// venueId が一致するものだけに絞り込む(判定ロジックの複製はしない・ファイル冒頭の設計方針と同じ)。
-// 引数は visiblePromoBanners(today, promos) とそろえてある(テストからの差し替え口も同じ)。
-function venuePromoBanners(venueId, today, promos) {
-  if (!venueId) return [];
-  return visiblePromoBanners(today, promos).filter(p => p.venueId === venueId);
+  return dated.concat(evergreen);
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = { PROMO_BANNERS, PROMO_LEAD_DAYS, promoShowFrom, visiblePromoBanners, venuePromoBanners };
+  module.exports = { PROMO_BANNERS, PROMO_LEAD_DAYS, promoShowFrom, visiblePromoBanners };
 }

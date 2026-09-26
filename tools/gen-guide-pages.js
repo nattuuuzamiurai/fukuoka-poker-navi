@@ -64,7 +64,7 @@ if (!REPO_ARG) { console.error('リポジトリのパスを指定してくださ
 const REPO = path.resolve(REPO_ARG);
 
 const shell = require('./site-shell.js');
-const { SITE, POSITIONING, esc, pageHead, FAQ_CSS, faqBlock, adCard, ADCARD_CSS } = shell;
+const { SITE, POSITIONING, esc, pageHead, FAQ_CSS, faqBlock, adCard, ADCARD_CSS, BANNER_CSS, siteBannerSection } = shell;
 const { sitemapFile } = require('./gen-sitemap.js');
 const { AREA_SLUGS, areaVenues, areaList, footerAreaLinksHtml } = require('./area-schedule.js');
 // CATEGORIES(「福岡のポーカー店を目的別に探す」6分類)は tools/guide-categories.js が
@@ -75,6 +75,8 @@ const { CATEGORIES, categoryStoreIds } = require('./guide-categories.js');
 // ---- データ読み込み(読むだけ。data.js・big-events.js には一切書き込まない) ----
 const DATA = require(path.join(REPO, 'data.js'));
 const BIG = require(path.join(REPO, 'big-events.js'));
+// サイト全体のバナー(トップページ最上部と同じ内容)をこのページ上部にも出す(2026-09-26)。
+const SITE_BANNER = require(path.join(REPO, 'site-banner.js'));
 const { VENUES, AREAS } = DATA;
 
 // slug の欠け・重複は生成前に止める(このページから /venues/<slug>/ へのリンクが壊れるため)。
@@ -92,6 +94,8 @@ const CANONICAL = `${SITE}${GUIDE_URL}`;
 
 const FOOTER_AREA_LINKS = footerAreaLinksHtml(VENUES, AREAS);
 const pageFoot = extraScripts => shell.pageFoot(BIG, null, extraScripts, FOOTER_AREA_LINKS);
+// サイト全体のバナー。このページで1回だけ組み立てる。
+const SITE_BANNER_SECTION = siteBannerSection(SITE_BANNER);
 
 // ============================================================
 // 編集判断(data.js にフラグを持たないため、ここに直接持つ)
@@ -510,7 +514,7 @@ function buildGuidePage() {
   const faq = faqBlock(FAQ_ITEMS, { headingId: 'guide-faq' });
 
   const body = `
-<h1>福岡でポーカーを始めるなら — 初心者向け店舗の選び方</h1>
+${SITE_BANNER_SECTION.html}<h1>福岡でポーカーを始めるなら — 初心者向け店舗の選び方</h1>
 <p class="lead">福岡県内には、天神・中洲・北九州・久留米などのエリアを中心に${listedCount}店舗のポーカー店があります。「お店が多すぎて、初心者はどこに行けばいいか分からない」――そう感じる方も多いのではないでしょうか。</p>
 <p class="lead">そこでこのページでは、「トーナメント重視」「リングゲームでじっくり」「お酒も楽しみたい」など、遊び方の目的別に、各店舗がどんな特色で紹介されているかをカテゴリーごとに整理しました。あわせて、公式に初心者講習を掲げている店舗の紹介、エリアごとの探し方、掲載中の全${listedCount}店舗の一覧も用意しています。</p>
 <div class="disclaimer">当サイトは店舗の優劣を独自に採点・ランキング化するものではなく、各店舗の公式情報や、外部のレビューサイト・紹介記事で語られている内容を整理してお伝えするものです。参加前には必ず各店舗の最新の公式情報をご確認ください。<br>${POSITIONING}</div>
@@ -540,8 +544,8 @@ ${faq.script}`;
     breadcrumb,
     ogType: 'article',
     twitterCard: 'summary_large_image',
-    extraCss: FAQ_CSS + GUIDE_CSS + ADCARD_CSS
-  }) + body + pageFoot(null);
+    extraCss: FAQ_CSS + GUIDE_CSS + ADCARD_CSS + BANNER_CSS
+  }) + body + pageFoot(SITE_BANNER_SECTION.scripts);
 }
 
 // ---- 検査 ----

@@ -266,7 +266,8 @@ const BASE_CSS = `  *,*::before,*::after{box-sizing:border-box;margin:0;padding:
   @media(max-width:420px){.stickyAd .sa-desc{display:none}}
 `;
 
-// ---- 店舗ページ上部のPRバナー(2026-09-26追加) ----
+// ---- ページ上部のサイト全体バナー(2026-09-26追加、同日中に「店舗自身のページだけ」から
+// 「対象ページ全部に同じ内容を表示」へ設計変更) ----
 // トップページ(index.html)の「大型イベント バナー」(.evtBanner)と【見た目を完全に一致させる】ための
 // CSS。index.html 側は静的ページ生成(このファイル)を経由しない単独のHTMLファイルなので、
 // CSSそのものを共有(1箇所に集約)できず、コピーを1つ持つ形になっている
@@ -274,8 +275,10 @@ const BASE_CSS = `  *,*::before,*::after{box-sizing:border-box;margin:0;padding:
 // と見た目・配色を変えるときは、この定数側も一緒に直すこと)。
 // ★ HTML生成側(バナー1枚分のマークアップ)は bigEventBannerHtml()〔big-events.js〕に共通化済みで
 //   ここでは複製していない。複製しているのは見た目(CSS)だけ。
-// ★ カルーセル(.evtCarousel等)は含めない。店舗ページは1店舗につき同時に1件程度しか
-//   想定しておらず、該当があれば縦に並べるだけの簡易実装にしている(呼び出し側 venuePromoBannerHtml 参照)。
+// ★ カルーセル(.evtCarousel/.ec-*)も含める(2026-09-26〜)。以前は「店舗ページは1店舗につき
+//   同時に1件程度しか想定していない」として含めていなかったが、対象ページに出す内容が
+//   トップと全く同じ(複数件が同時に有効になりうる)集合に変わったため、index.html と
+//   同じカルーセルCSSをそのまま複製する(中身は index.html の該当CSSと合わせること)。
 const BANNER_CSS = `  :root{--jopt:#1fb6ba;--jopt2:#5fe2e6;--fst:#e0304a;--fst2:#ff6b7f;--ns:#c4141f;--ns2:#ff6b5c}
   .evtBanner{display:block;text-decoration:none;border-radius:16px;overflow:hidden;position:relative;box-shadow:0 6px 26px rgba(0,0,0,.32);border:2px solid var(--ev-bd);background:var(--ev-bg);margin-bottom:6px}
   .evtBanner .eb-img{display:block;width:100%;aspect-ratio:1024/412;object-fit:cover}
@@ -301,17 +304,73 @@ const BANNER_CSS = `  :root{--jopt:#1fb6ba;--jopt2:#5fe2e6;--fst:#e0304a;--fst2:
   .evtBanner .eb-eyebrow{align-self:flex-start;font-size:.68em;font-weight:800;letter-spacing:.06em;color:var(--ev-on);background:linear-gradient(135deg,var(--ev-ac2),var(--ev-ac));padding:3px 10px;border-radius:20px}
   .evtBanner .eb-heading{font-size:1.18em;font-weight:800;line-height:1.35;color:#fff;position:relative}
   .evtBanner .eb-sub{font-size:.83em;line-height:1.4;color:var(--ev-fg);position:relative}
-  .vp-promo-banner{margin:0 0 14px}
+  #siteBanner{margin:0 0 14px}
+  #siteBanner:empty{display:none}
+  /* ===== カルーセル(2件以上のとき)。index.html の同名CSSと同じ内容 =====
+     見た目・挙動を変えるときは index.html の「===== 大型バナーの横スライド(カルーセル) =====」
+     とここを両方直すこと(片方だけ直すとスタイルが揃わない)。 */
+  .evtCarousel{position:relative; --ec-gap:10px}
+  .ec-track{
+    position:relative;
+    display:flex; gap:var(--ec-gap);
+    overflow-x:auto; overscroll-behavior-x:contain;
+    scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  .ec-track::-webkit-scrollbar{height:0}
+  .ec-slide{flex:0 0 86%; min-width:0; scroll-snap-align:start}
+  .ec-slide .evtBanner{margin-bottom:0}
+  .ec-dots{display:flex; justify-content:center; align-items:center; gap:7px; padding:9px 0 2px}
+  .ec-dot{width:7px;height:7px;padding:0;border:none;border-radius:50%;background:#cfc6b6;cursor:pointer;transition:.15s;font-family:inherit}
+  .ec-dot[aria-current="true"]{width:20px;border-radius:4px;background:var(--felt)}
+  .ec-arrow{display:none}
+  .evtCarousel.ec-fits .ec-arrow,
+  .evtCarousel.ec-fits .ec-dots{display:none}
+  @media(min-width:720px) and (max-width:999.98px){
+    .ec-slide{max-width:calc((100% - var(--ec-gap)) / 2)}
+  }
+  @media(min-width:1000px){
+    .ec-slide{max-width:470px}
+  }
+  @media(min-width:720px){
+    .ec-arrow{
+      display:flex; align-items:center; justify-content:center;
+      position:absolute; top:calc(50% - 6px); transform:translateY(-50%); z-index:2;
+      width:34px; height:34px; padding:0 0 3px; border-radius:50%; cursor:pointer;
+      border:1px solid rgba(255,255,255,.4); background:rgba(20,18,14,.55); color:#fff;
+      font-size:1.25em; line-height:1; font-family:inherit; transition:.15s;
+    }
+    .ec-arrow:hover{background:rgba(20,18,14,.85)}
+    .ec-arrow[aria-disabled="true"]{opacity:.22; cursor:default}
+    .ec-arrow[aria-disabled="true"]:hover{background:rgba(20,18,14,.55)}
+    .ec-prev{left:6px}
+    .ec-next{right:6px}
+  }
 `;
 
-// promo-banners.js の venuePromoBanners() が返す配列(0件〜複数件)から、店舗ページ上部に
-// 静的に埋め込むバナーHTMLを組み立てる。バナー1枚分のマークアップは bigEventBannerHtml()
-// (big-events.js。トップページと共通)を呼ぶだけで、ここでは複製しない。
-//   BIG    … big-events.js の require 結果(bigEventBannerHtml を使うため)
-//   promos … promo-banners.js の venuePromoBanners(venueId) の戻り値
-function venuePromoBannerHtml(BIG, promos) {
-  if (!promos || !promos.length) return '';
-  return promos.map(p => `<div class="vp-promo-banner">${BIG.bigEventBannerHtml(p)}</div>`).join('');
+// サイト全体のバナー(2026-09-26追加)。対象ページ(店舗/エリア/大会/初心者ガイド)の
+// パンくず直後・見出し前に、トップページ(index.html)の最上部と全く同じ内容
+// (site-banner.js の visibleSiteBanners())を静的に埋め込む。「何を出すか」の判定は
+// site-banner.js に委ね、ここでは複製しない。
+//   SITE_BANNER … site-banner.js の require 結果
+//   slotId      … 省略時 'siteBanner'(この関数を複数回呼ぶページは無い想定)
+// 戻り値: { html, scripts }
+//   html    … <div id="…">…</div>(パンくず直後・見出し前に置く)
+//   scripts … pageFoot の extraScripts に足す<script>群(カルーセルの操作を有効にする)。
+//             0件のときも呼んでおいて問題ない(initBigEventCarousel は .ec-track が無ければ
+//             何もしない no-op)。
+function siteBannerSection(SITE_BANNER, slotId) {
+  const id = slotId || 'siteBanner';
+  const evs = SITE_BANNER.visibleSiteBanners();
+  // staticPage:true … このページ自体が index.html のハッシュルーターを持たない独立した
+  // 静的ページであることを big-events.js の bigEventBannerHtml() に伝える。WJPT/JOPT/NIPPON/FST
+  // のような `hash`('#wjpt' 等)しか持たないイベントは、この指定が無いと「何にも遷移しない
+  // リンク」になる(big-events.js の bigEventBannerHtml() コメント参照)。
+  const html = SITE_BANNER.siteBannerBlockHtml(evs, id, { staticPage: true });
+  const scripts = `<script src="/site-banner.js"></script>
+<script>(function(){ if (typeof initBigEventCarousel !== 'function') return; var el = document.getElementById(${JSON.stringify(id)}); if (el) initBigEventCarousel(el, 0); })();</script>
+`;
+  return { html, scripts };
 }
 
 /**
@@ -531,6 +590,6 @@ module.exports = {
   BASE_CSS, pageHead, pageFoot,
   FAQ_CSS, faqBlock,
   ptlLink, ADCARD_CSS, adCard,
-  BANNER_CSS, venuePromoBannerHtml,
+  BANNER_CSS, siteBannerSection,
   validateVenueSlugs
 };

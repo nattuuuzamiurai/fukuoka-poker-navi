@@ -36,7 +36,10 @@ const LISTING_BANNER_ENABLED = true;
 const LISTING_BANNER = {
   id: 'listing-recruit',
   label: '掲載店舗募集',                        // カルーセルのドット(aria-label)で使う。index.html の ec-dots が ev.label を読む
-  href: 'guide/partners/',
+  // サイトルート起点の絶対パス(先頭 '/')にすること。2026-09-26にこのバナーを店舗ページ等
+  // (1階層下のURL)にも出すようになったため、相対パスのままだと /venues/<slug>/guide/partners/
+  // のような壊れたリンクになる(index.htmlのようにサイトルート上のページでしか動かない)。
+  href: '/guide/partners/',
   bannerClass: 'ev-listing',
   customBanner: true,                          // 画像を使わずCSSで組む(bigEventBannerHtml側の分岐)
   eyebrow: '掲載店舗様へ',

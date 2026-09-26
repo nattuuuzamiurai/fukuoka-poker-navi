@@ -277,6 +277,73 @@
     .adCard .ac-title{font-size:.82em}
     .adCard .ac-btn{font-size:.68em;padding:7px 10px}
   }
+  :root{--jopt:#1fb6ba;--jopt2:#5fe2e6;--fst:#e0304a;--fst2:#ff6b7f;--ns:#c4141f;--ns2:#ff6b5c}
+  .evtBanner{display:block;text-decoration:none;border-radius:16px;overflow:hidden;position:relative;box-shadow:0 6px 26px rgba(0,0,0,.32);border:2px solid var(--ev-bd);background:var(--ev-bg);margin-bottom:6px}
+  .evtBanner .eb-img{display:block;width:100%;aspect-ratio:1024/412;object-fit:cover}
+  .evtBanner .eb-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 14px;background:linear-gradient(90deg,var(--ev-bg),var(--ev-bg2))}
+  .evtBanner .eb-tag{font-size:.72em;font-weight:800;letter-spacing:.05em;color:var(--ev-fg);display:flex;align-items:center;gap:7px;min-width:0;white-space:nowrap}
+  .evtBanner .eb-tag::before{content:"開催中";flex-shrink:0;white-space:nowrap;background:var(--red);color:#fff;font-size:.85em;padding:2px 8px;border-radius:20px;letter-spacing:.02em}
+  .evtBanner .eb-tag .eb-desc{overflow:hidden;text-overflow:ellipsis}
+  .evtBanner.upcoming .eb-tag::before{content:"まもなく";background:var(--ev-ac);color:var(--ev-on)}
+  .evtBanner .eb-btn{flex-shrink:0;background:linear-gradient(135deg,var(--ev-ac2),var(--ev-ac));color:var(--ev-on);font-weight:800;font-size:.8em;padding:8px 16px;border-radius:20px;white-space:nowrap}
+  .evtBanner.is-archived{filter:grayscale(.8) opacity(.55)}
+  .evtBanner.is-archived .eb-tag::before{content:"終了";background:#6b6055;color:#fff}
+  .evtBanner.ev-wjpt{--ev-bd:#d9a441;--ev-bg:#0a1226;--ev-bg2:#122046;--ev-fg:#f0c56b;--ev-ac:var(--gold);--ev-ac2:var(--gold2);--ev-on:#3a2a06}
+  .evtBanner.ev-jopt{--ev-bd:var(--jopt);--ev-bg:#07171d;--ev-bg2:#0e3d48;--ev-fg:var(--jopt2);--ev-ac:var(--jopt);--ev-ac2:var(--jopt2);--ev-on:#04222a}
+  .evtBanner.ev-nippon{--ev-bd:var(--ns);--ev-bg:#5c0910;--ev-bg2:#a8111c;--ev-fg:#ffd9d4;--ev-ac:var(--ns);--ev-ac2:var(--ns2);--ev-on:#fff}
+  .evtBanner.ev-fst{--ev-bd:var(--fst);--ev-bg:#070c22;--ev-bg2:#1a2455;--ev-fg:var(--fst2);--ev-ac:var(--fst);--ev-ac2:var(--fst2);--ev-on:#fff}
+  .evtBanner.ev-spadie{--ev-bd:#8b5cf6;--ev-bg:#160b2e;--ev-bg2:#2f1a5c;--ev-fg:#c9a8ff;--ev-ac:#8b5cf6;--ev-ac2:#c9a8ff;--ev-on:#1c0f38}
+  .evtBanner.ev-dream{--ev-bd:var(--gold);--ev-bg:#1a0f05;--ev-bg2:#3a2308;--ev-fg:var(--gold2);--ev-ac:var(--red);--ev-ac2:#e0574a;--ev-on:#fff}
+  .evtBanner.ev-dream .eb-tag::before{content:"PR";background:var(--ev-ac);color:var(--ev-on)}
+  .evtBanner.ev-listing{--ev-bd:var(--gold);--ev-bg:var(--felt);--ev-bg2:var(--felt2);--ev-fg:var(--gold2);--ev-ac:var(--gold);--ev-ac2:var(--gold2);--ev-on:#3a2a06}
+  .evtBanner.ev-listing .eb-tag::before{content:none}
+  .evtBanner .eb-custom{display:flex;flex-direction:column;justify-content:center;gap:5px;position:relative;overflow:hidden;padding:20px 18px 16px;aspect-ratio:1024/412;min-height:112px;background:radial-gradient(circle at 90% -12%,rgba(240,197,107,.32),transparent 55%),linear-gradient(135deg,var(--ev-bg2),var(--ev-bg))}
+  .evtBanner .eb-custom::after{content:"♠";position:absolute;right:6px;bottom:-14px;font-size:4.4em;line-height:1;color:rgba(255,255,255,.07);pointer-events:none}
+  .evtBanner .eb-eyebrow{align-self:flex-start;font-size:.68em;font-weight:800;letter-spacing:.06em;color:var(--ev-on);background:linear-gradient(135deg,var(--ev-ac2),var(--ev-ac));padding:3px 10px;border-radius:20px}
+  .evtBanner .eb-heading{font-size:1.18em;font-weight:800;line-height:1.35;color:#fff;position:relative}
+  .evtBanner .eb-sub{font-size:.83em;line-height:1.4;color:var(--ev-fg);position:relative}
+  #siteBanner{margin:0 0 14px}
+  #siteBanner:empty{display:none}
+  /* ===== カルーセル(2件以上のとき)。index.html の同名CSSと同じ内容 =====
+     見た目・挙動を変えるときは index.html の「===== 大型バナーの横スライド(カルーセル) =====」
+     とここを両方直すこと(片方だけ直すとスタイルが揃わない)。 */
+  .evtCarousel{position:relative; --ec-gap:10px}
+  .ec-track{
+    position:relative;
+    display:flex; gap:var(--ec-gap);
+    overflow-x:auto; overscroll-behavior-x:contain;
+    scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  .ec-track::-webkit-scrollbar{height:0}
+  .ec-slide{flex:0 0 86%; min-width:0; scroll-snap-align:start}
+  .ec-slide .evtBanner{margin-bottom:0}
+  .ec-dots{display:flex; justify-content:center; align-items:center; gap:7px; padding:9px 0 2px}
+  .ec-dot{width:7px;height:7px;padding:0;border:none;border-radius:50%;background:#cfc6b6;cursor:pointer;transition:.15s;font-family:inherit}
+  .ec-dot[aria-current="true"]{width:20px;border-radius:4px;background:var(--felt)}
+  .ec-arrow{display:none}
+  .evtCarousel.ec-fits .ec-arrow,
+  .evtCarousel.ec-fits .ec-dots{display:none}
+  @media(min-width:720px) and (max-width:999.98px){
+    .ec-slide{max-width:calc((100% - var(--ec-gap)) / 2)}
+  }
+  @media(min-width:1000px){
+    .ec-slide{max-width:470px}
+  }
+  @media(min-width:720px){
+    .ec-arrow{
+      display:flex; align-items:center; justify-content:center;
+      position:absolute; top:calc(50% - 6px); transform:translateY(-50%); z-index:2;
+      width:34px; height:34px; padding:0 0 3px; border-radius:50%; cursor:pointer;
+      border:1px solid rgba(255,255,255,.4); background:rgba(20,18,14,.55); color:#fff;
+      font-size:1.25em; line-height:1; font-family:inherit; transition:.15s;
+    }
+    .ec-arrow:hover{background:rgba(20,18,14,.85)}
+    .ec-arrow[aria-disabled="true"]{opacity:.22; cursor:default}
+    .ec-arrow[aria-disabled="true"]:hover{background:rgba(20,18,14,.55)}
+    .ec-prev{left:6px}
+    .ec-next{right:6px}
+  }
 </style>
 </head>
 <body>
@@ -287,7 +354,30 @@
   </div>
 </header>
 <main class="wrap"><div class="bc-wrap"><nav class="breadcrumb" aria-label="パンくずリスト"><ol><li><a href="https://fukuokapoker.com/">ふくおかポーカーナビ</a></li><li><a href="https://fukuokapoker.com/#areaNav">エリアから探す</a></li><li><a href="https://fukuokapoker.com/areas/kitakyushu/">北九州</a></li><li><span aria-current="page">TripleBarrel 折尾店</span></li></ol></nav></div>
-<h1>TripleBarrel 折尾店</h1>
+<div id="siteBanner" class="evtCarousel"><div class="ec-track" role="group" aria-label="開催中・開催予定の大会・イベント 2件（横スクロールできます）">
+        <div class="ec-slide"><a class="evtBanner ev-dream" href="/events/dream-saturday-tournament/">
+      <img class="eb-img" src="/img/dream/dream-saturday-tournament.jpg" alt="CASINO BAR DreaM Saturdayトーナメント（久留米）">
+      <div class="eb-foot">
+        <span class="eb-tag"><span class="eb-desc">毎週土曜日・久留米・18時スタート</span></span>
+        <span class="eb-btn">特典を見る →</span>
+      </div>
+    </a></div><div class="ec-slide"><a class="evtBanner ev-listing" href="/guide/partners/">
+      <div class="eb-custom">
+        <span class="eb-eyebrow">掲載店舗様へ</span>
+        <div class="eb-heading">この枠に、あなたのお店の告知を</div>
+        <div class="eb-sub">トップページの目立つ場所に掲載できます</div>
+      </div>
+      <div class="eb-foot">
+        <span class="eb-tag"><span class="eb-desc">お店の告知バナー、掲載受付中</span></span>
+        <span class="eb-btn">詳しくは →</span>
+      </div>
+    </a></div>
+      </div>
+      <button class="ec-arrow ec-prev" type="button" aria-label="前の大会を表示">‹</button>
+      <button class="ec-arrow ec-next" type="button" aria-label="次の大会を表示">›</button>
+      <div class="ec-dots">
+        <button class="ec-dot" type="button" data-i="0" aria-label="DreaM Saturdayトーナメントを表示（1／2枚目）"></button><button class="ec-dot" type="button" data-i="1" aria-label="掲載店舗募集を表示（2／2枚目）"></button>
+      </div></div><h1>TripleBarrel 折尾店</h1>
 <p class="vp-sub">北九州のポーカースポット（JR折尾駅 徒歩4分（西日本シティ銀行の隣）） — トーナメント日程・バイイン・料金システム・アクセス（SNS表記: トリプルバレル折尾店）</p>
 <div class="vp-badges"><span class="vp-badge">初心者講習あり</span></div>
 <figure class="vp-photo">
@@ -533,5 +623,7 @@ function vpScheduleHtml(rows){
   if (note && note.parentNode) note.parentNode.removeChild(note);
 })();
 </script>
+<script src="/site-banner.js"></script>
+<script>(function(){ if (typeof initBigEventCarousel !== 'function') return; var el = document.getElementById("siteBanner"); if (el) initBigEventCarousel(el, 0); })();</script>
 </body>
 </html>

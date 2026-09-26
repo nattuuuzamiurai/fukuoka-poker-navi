@@ -443,9 +443,18 @@ PR #23 の時点では正しかった（自動取込は v3 の1店だけで、�
 | 1件 | バナー1枚。**カルーセルUI（ドット・矢印）は出さない** |
 | 2件以上 | **横スライド（カルーセル）**。縦の占有は常にバナー1枚分 |
 
-実装は `index.html` の `renderBigEventBanner()` / `initBigEventCarousel()`（CSSは `.evtCarousel` 系）。
+実装は `index.html` の `renderBigEventBanner()`（トップの一覧）と、そこから呼ぶ
+`initBigEventCarousel()`（CSSは `.evtCarousel` 系）。
 **外部ライブラリは使わない**（このサイトは依存ゼロで動いている）。ネイティブの横スクロール＋
 CSS `scroll-snap` だけで作ってあり、レジストリに大会を足せば枚数は自動で増える。
+
+**2026-09-26〜: サイト全体に展開**。「何を出すか」（`visibleSiteBanners()`）・「どう描画するか」
+（`siteBannerInnerHtml()`/`siteBannerClass()`/`siteBannerBlockHtml()`）・`initBigEventCarousel()` は
+`site-banner.js` に集約し、店舗ページ・エリアページ・大会ページ・初心者ガイド（`tools/site-shell.js`
+の `siteBannerSection()` 経由）・トップページ内SPAの店舗詳細ビュー（`#venue/vXX`、
+`renderVenuePage()`）からも同じ内容を出す。掲載店舗向け案内（`guide/partners/`）・ウェブコイン
+規制解説（`guide/webcoin-regulation/`）・`about.html`/`contact.html`/`privacy.html`/`terms.html`は
+対象外（中立性・法務ページのため出さない）。
 
 「スライドできる」と伝えるための仕掛けは次の4点セット。**どれか1つを外すと伝わらなくなるので削らないこと**。
 
