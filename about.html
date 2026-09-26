@@ -9,8 +9,7 @@
   function gtag(){dataLayer.push(arguments);}
   // 本番ドメイン以外(GitHub Pagesのリダイレクト元・ローカル確認・プレビュー環境等)からの
   // アクセスをGA4に計測させない。config を呼ばない限りGA4側にヒットは送られないため、
-  // ここでホストを絞る(GA4実測: /index.html や存在しない /_baseline-index.html に
-  // 人手とは考えにくい偏ったPVが計測されていたことへの対応)。
+  // ここでホストを絞る(人手とは考えにくいノイズアクセスの計測を防ぐ対応、2026-08-27)。
   if (location.hostname === 'fukuokapoker.com') {
     gtag('js', new Date());
     gtag('config', 'G-L7091YHTFH');
@@ -24,7 +23,7 @@
 <link rel="icon" href="favicon.png" sizes="192x192" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <!-- お問い合わせ・プライバシーポリシーと違い、このページは運営者情報(E-E-A-T)を
-     機械にも人にも伝えるためのページなので noindex にしない(GEO監査2026-09-03 3章③)。 -->
+     機械にも人にも伝えるためのページなので noindex にしない(2026-09-03)。 -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="ふくおかポーカーナビ">
 <meta property="og:title" content="運営者情報（このサイトについて） | ふくおかポーカーナビ">

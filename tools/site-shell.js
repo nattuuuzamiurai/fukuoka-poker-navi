@@ -430,8 +430,7 @@ ${JSON.stringify(breadcrumbJsonLd(breadcrumb), null, 2)}
   function gtag(){dataLayer.push(arguments);}
   // 本番ドメイン以外(GitHub Pagesのリダイレクト元・ローカル確認・プレビュー環境等)からの
   // アクセスをGA4に計測させない。config を呼ばない限りGA4側にヒットは送られないため、
-  // ここでホストを絞る(GA4実測: /index.html や存在しない /_baseline-index.html に
-  // 人手とは考えにくい偏ったPVが計測されていたことへの対応)。
+  // ここでホストを絞る(人手とは考えにくいノイズアクセスの計測を防ぐ対応、2026-08-27)。
   if (location.hostname === 'fukuokapoker.com') {
     gtag('js', new Date());
     gtag('config', 'G-L7091YHTFH');
