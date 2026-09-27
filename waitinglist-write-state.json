@@ -34,24 +34,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M18T2N3JHRJ914NHJACE9P2P": {
-      "id": "wl-01M18T2N3JHRJ914NHJACE9P2P",
-      "venueId": "v19",
-      "name": "2000 Turbo",
-      "date": "2026-09-27",
-      "start": "16:10",
-      "buyin": 2000,
-      "addon": 1000,
-      "stack": 30000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M1K7AQSX6RK5SDJ0S60MTYCS": {
       "id": "wl-01M1K7AQSX6RK5SDJ0S60MTYCS",
       "venueId": "v27",
@@ -178,24 +160,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M1K7AQSXYPAJN9EY082WQ82B": {
-      "id": "wl-01M1K7AQSXYPAJN9EY082WQ82B",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-09-27",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M1R52TNWG0DZF2A1REGNK9XD": {
       "id": "wl-01M1R52TNWG0DZF2A1REGNK9XD",
       "venueId": "v19",
@@ -291,56 +255,6 @@
       "reentry": true,
       "prize": null,
       "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M25H84MCV3KCFHM6SMCVPF02": {
-      "id": "wl-01M25H84MCV3KCFHM6SMCVPF02",
-      "venueId": "v3",
-      "name": "m 月間戦 SEPTEMBER",
-      "date": "2026-09-27",
-      "start": "13:10",
-      "buyin": 4000,
-      "addon": 0,
-      "stack": 30000,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M25JSW29GGKRT9VH28CYRZZT": {
-      "id": "wl-01M25JSW29GGKRT9VH28CYRZZT",
-      "venueId": "v3",
-      "name": "m VAULT✨New✨",
-      "date": "2026-09-27",
-      "start": "17:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M2SPAW9KN02SESKAQYCYGEXN": {
-      "id": "wl-01M2SPAW9KN02SESKAQYCYGEXN",
-      "venueId": "v3",
-      "name": "m Super Hold'em Turbo",
-      "date": "2026-09-27",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": 1000,
-      "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
       "source": "auto",
       "verified": false
     },
@@ -900,22 +814,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M3E67JCJZ8TKFG28CK2GPNZD": {
-      "id": "wl-01M3E67JCJZ8TKFG28CK2GPNZD",
-      "venueId": "v22",
-      "name": "魂 Day1-C",
-      "date": "2026-09-27",
-      "start": "15:00",
-      "buyin": 0,
-      "addon": null,
-      "stack": 20000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M3E6R0ARB9CSZ2EFZW485XDP": {
       "id": "wl-01M3E6R0ARB9CSZ2EFZW485XDP",
       "venueId": "v22",
@@ -941,22 +839,6 @@
       "buyin": 10000,
       "addon": 10000,
       "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M3E74W9C8C60JM99BPCK45AX": {
-      "id": "wl-01M3E74W9C8C60JM99BPCK45AX",
-      "venueId": "v22",
-      "name": "魂Day1 2.5",
-      "date": "2026-09-27",
-      "start": "19:00",
-      "buyin": 0,
-      "addon": null,
-      "stack": 20000,
       "guarantee": null,
       "reentry": true,
       "prize": null,
