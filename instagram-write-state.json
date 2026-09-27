@@ -2,22 +2,6 @@
   "version": 1,
   "writtenBy": "tools/monitor-instagram-apify.js",
   "entries": {
-    "ig-v18-2026-09-26-nostart-post": {
-      "id": "ig-v18-2026-09-26-nostart-post",
-      "venueId": "v18",
-      "name": "ランダムスタック",
-      "date": "2026-09-26",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
     "ig-v18-2026-09-27-nostart-post": {
       "id": "ig-v18-2026-09-27-nostart-post",
       "venueId": "v18",
@@ -86,24 +70,6 @@
       "source": "semi",
       "verified": false
     },
-    "ig-v20-2026-09-26-nostart-deep-stack": {
-      "id": "ig-v20-2026-09-26-nostart-deep-stack",
-      "venueId": "v20",
-      "name": "DEEP STACK",
-      "date": "2026-09-26",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "semi",
-      "verified": false
-    },
     "ig-v20-2026-09-29-nostart-tnt": {
       "id": "ig-v20-2026-09-29-nostart-tnt",
       "venueId": "v20",
@@ -134,24 +100,6 @@
       "prize": null,
       "tags": [
         "フリーロール"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v21-2026-09-26-1930-kp-2-7td-badugi": {
-      "id": "ig-v21-2026-09-26-1930-kp-2-7td-badugi",
-      "venueId": "v21",
-      "name": "KPポーカーが教えてくれる 2-7TD & Badugi",
-      "date": "2026-09-26",
-      "start": "19:30",
-      "buyin": 1000,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "ミックス"
       ],
       "source": "semi",
       "verified": false
@@ -222,11 +170,11 @@
       "source": "semi",
       "verified": false
     },
-    "ig-v40-2026-09-29-nostart-xpt": {
-      "id": "ig-v40-2026-09-29-nostart-xpt",
+    "ig-v40-2026-09-28-nostart-5": {
+      "id": "ig-v40-2026-09-28-nostart-5",
       "venueId": "v40",
-      "name": "XPT サテライト",
-      "date": "2026-09-29",
+      "name": "小台5周年サテライト",
+      "date": "2026-09-28",
       "start": "",
       "buyin": null,
       "addon": null,
@@ -240,11 +188,11 @@
       "source": "semi",
       "verified": false
     },
-    "ig-v40-2026-09-30-nostart-plo": {
-      "id": "ig-v40-2026-09-30-nostart-plo",
+    "ig-v40-2026-09-29-nostart-plo": {
+      "id": "ig-v40-2026-09-29-nostart-plo",
       "venueId": "v40",
       "name": "フリロPLOトナメ",
-      "date": "2026-09-30",
+      "date": "2026-09-29",
       "start": "",
       "buyin": null,
       "addon": null,

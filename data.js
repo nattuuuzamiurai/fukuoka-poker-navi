@@ -17825,6 +17825,24 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "ig-v40-2026-09-28-nostart-5",
+    "venueId": "v40",
+    "name": "小台5周年サテライト",
+    "date": "2026-09-28",
+    "start": "",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "サテライト"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
     "id": "ig-v40-2026-09-29-nostart-xpt",
     "venueId": "v40",
     "name": "XPT サテライト",
@@ -17838,6 +17856,25 @@ const TOURNAMENTS = [
     "prize": null,
     "tags": [
       "サテライト"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "ig-v40-2026-09-29-nostart-plo",
+    "venueId": "v40",
+    "name": "フリロPLOトナメ",
+    "date": "2026-09-29",
+    "start": "",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "フリーロール",
+      "PLO"
     ],
     "source": "semi",
     "verified": false
