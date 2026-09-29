@@ -26,7 +26,7 @@
  *   --check が落ちる、ということになり、検査そのものが信用できなくなるため。
  *   changefreq・priority はいずれもクローラへの弱いヒントで、Googleはほぼ見ていない。
  *
- * 【lastmod の決め方(GEO監査2026-09-03 3章②への対応)】
+ * 【lastmod の決め方(2026-09-03追加)】
  *   実行日には一切依存させない(上記の理由と同じ)。代わりに、そのURLの中身の元になっている
  *   データソースの【git履歴上の最終更新コミット日時】(`git log -1 --format=%cI -- <ファイル>`)を使う。
  *   同じgit履歴に対しては何度実行しても同じ値が返るため、`--check` の決定論性は壊れない
@@ -81,7 +81,7 @@ const VENUE = { freq: 'weekly', pri: '0.7' };
 // エリアページは複数店を束ねるので、単独の店舗ページより上位の受け皿にあたる。
 // ただし priority は Google がほぼ見ないヒントなので、序列の宣言以上の意味は持たせない。
 const AREA = { freq: 'weekly', pri: '0.8' };
-// 運営者情報ページ(GEO監査で追加・2026-09-03)。更新頻度は低いページなので monthly・低priorityにする。
+// 運営者情報ページ(2026-09-03追加)。更新頻度は低いページなので monthly・低priorityにする。
 const ABOUT = { freq: 'monthly', pri: '0.3' };
 // 初心者向け店舗選びガイド(/guide/beginner/。2026-09-12実装)。「福岡 ポーカー」という
 // 広いクエリを受ける入口で、店舗ページ・エリアページへのハブも兼ねるため、エリアページと
@@ -197,7 +197,7 @@ function buildSitemap(REPO) {
     .filter(a => hasAreaSchedule(DATA.TOURNAMENTS, DATA.RECURRING, areaVenues(DATA.VENUES, a)))
     .forEach(a => urls.push({ loc: `${SITE}/areas/${AREA_SLUGS[a]}/`, lastmod: VENUE_LASTMOD, ...AREA }));
 
-  // 運営者情報ページ(GEO監査で追加・2026-09-03)。ファイル自体が存在するときだけ載せる
+  // 運営者情報ページ(2026-09-03追加)。ファイル自体が存在するときだけ載せる
   // (このリポジトリを使う別環境・過去のコミット等でファイルが無い場合に壊れないようにするため)。
   if (fs.existsSync(path.join(REPO, 'about.html'))) {
     urls.push({ loc: `${SITE}/about.html`, lastmod: lastmodFor(['about.html']), ...ABOUT });
