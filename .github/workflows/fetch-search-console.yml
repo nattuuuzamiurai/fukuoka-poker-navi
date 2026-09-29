@@ -11,13 +11,10 @@ name: Search Console パフォーマンスデータの週次取得
 #   そのため他ワークフローにあるような dry-run 切替・upsert・validate-data ゲートは無い
 #   (このワークフローは「新しい日付のファイルを1組増やす」だけで、既存ファイルを書き換えない)。
 #
-# 【保存先(2026-09-29〜)】このリポジトリ(Public)ではなく、非公開リポジトリ
-#   `nattuuuzamiurai/fukuoka-poker-navi-private-data` の `data/search-console/` に保存する。
-#   実測データ(検索クエリ・掲載順位等)はPublicリポジトリだと `raw.githubusercontent.com` 経由で
-#   認証なしに誰でも読めてしまうため。`tools/fetch-search-console.js` 本体は変更しておらず、
+# 【保存先(2026-09-29〜)】実測データ(検索クエリ・掲載順位等)を非公開化するため、このリポジトリ
+#   (Public)ではなく非公開リポジトリ `nattuuuzamiurai/fukuoka-poker-navi-private-data` の
+#   `data/search-console/` に保存する。`tools/fetch-search-console.js` 本体は変更しておらず、
 #   既存の `--out-dir` オプションで書き込み先を非公開リポジトリのチェックアウト先に向けているだけ。
-#   移行前(2026-09-04〜09-28分)にこのリポジトリへ既にコミットされたぶんはそのまま残っている
-#   (今回の変更は「今後の新規コミットを止めること」が目的で、過去分の削除は対象外)。
 #
 # 【認証】
 #   - Search Console API: サービスアカウント鍵(JSON全体)をリポジトリシークレット

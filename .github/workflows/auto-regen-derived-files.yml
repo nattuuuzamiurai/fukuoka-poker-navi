@@ -109,7 +109,7 @@ jobs:
     runs-on: ubuntu-latest
     # ハングした場合に concurrency(cancel-in-progress: false)で後続実行が長時間ブロックされる
     # のを防ぐ上限。既存ジョブの実行内容(生成スクリプト8本 + git操作)は数分で終わる想定だが、
-    # 余裕を見て20分にしてある(品質管理部指摘・2026-09-16)。
+    # 余裕を見て20分にしてある(2026-09-16)。
     timeout-minutes: 20
     steps:
       - name: リポジトリを取得
