@@ -745,7 +745,10 @@
   .tcard.started .tc-venue a{text-decoration-color:#bcb3a4}
   .tcard.started .tc-venue .area{color:#4a4238}
   .tcard.started .tc-venue .vpin{filter:grayscale(1);opacity:.55}
-  .tcard.feat::before{content:"PR";position:absolute;top:0;right:0;background:var(--gold);color:#170f01;font-size:.62em;font-weight:800;padding:3px 10px;border-bottom-left-radius:9px;letter-spacing:.05em}
+  /* PRラベルはサイト共通の金アクセントと同色だと周囲のボタン・枠線に紛れて広告表示として
+     機能しない。他のPRタグ(.evtBanner .eb-tag::before等)と同じ赤(--red)+白文字に揃える
+     (2026-09-30、同種の是正をevents/dream-saturday-tournament/でも実施済み)。 */
+  .tcard.feat::before{content:"PR";position:absolute;top:0;right:0;background:var(--red);color:#fff;font-size:.62em;font-weight:800;padding:3px 10px;border-bottom-left-radius:9px;letter-spacing:.05em}
   .tc-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
   .tc-time{text-align:center;flex-shrink:0}
   .tc-time b{font-family:"IBM Plex Mono",monospace;font-size:1.15em;font-weight:600;color:var(--txt)}
