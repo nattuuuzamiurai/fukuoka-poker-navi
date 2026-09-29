@@ -43,6 +43,8 @@
 #   - https://fukuokapoker.com/admin.html         → 404 になっていること
 #   - https://fukuokapoker.com/tools/validate-data.js → 404 になっていること
 #   - https://fukuokapoker.com/apify-monitor-state.json → 404 になっていること
+#   - https://fukuokapoker.com/data/search-console/2026-09-28-summary.md → 404 になっていること
+#   - https://fukuokapoker.com/data/search-console/2026-09-28.json → 404 になっていること
 #   - https://fukuokapoker.com/                   → 従来通り表示されること
 #   - https://fukuokapoker.com/venues/ken-poker-kurume/ → 従来通り表示されること
 #   - https://fukuokapoker.com/areas/nakasu/       → 従来通り表示されること
@@ -82,3 +84,11 @@ exclude:
   - apify-monitor-state.json
   - auto-import-stores.json
   - "*-write-state.json"
+
+  # 【2026-09-29・緊急】tools/fetch-search-console.js が毎週自動生成・コミットする
+  # Google Search Consoleの生データ(店舗ページURL・クエリ別のクリック数/表示回数/CTR/
+  # 平均掲載順位)。マーケティング分析専用で、data.js等の表示用データとは別系統。
+  # サイト側のJS/HTMLからは一切読み込まれないが、本設定にexclude漏れがあったため
+  # https://fukuokapoker.com/data/search-console/<日付>.json 等でそのまま配信され、
+  # 認証なしで誰でも直接取得できる状態になっていた(現在進行形の情報漏洩として発覚・是正)。
+  - data/search-console/
