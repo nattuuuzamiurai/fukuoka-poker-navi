@@ -193,18 +193,18 @@ const AREA_INTRO = {
 // ここには「この構成に足りない分」だけを足す)
 // ============================================================
 const GUIDE_CSS = `  .gd-card{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:14px 15px;margin-bottom:10px}
-  .gd-card h3{font-size:.98em;font-weight:800;color:var(--felt);margin-bottom:5px}
+  .gd-card h3{font-size:.98em;font-weight:800;color:var(--txt);margin-bottom:5px}
   .gd-card .mt{font-size:.85em;color:var(--mut);line-height:1.8;margin-bottom:6px}
   .gd-card p{font-size:.88em;line-height:1.8;margin:0 0 2px}
   .gd-card a.vlink{display:inline-block;margin-top:6px;font-size:.85em;font-weight:700;color:#0e6a72;text-decoration:none}
   table.gd-table{border-collapse:collapse;width:100%;min-width:640px;font-size:.82em;background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);overflow:hidden;box-shadow:var(--sha);margin-bottom:6px}
   table.gd-table th,table.gd-table td{padding:7px 8px;text-align:left;border-bottom:1px solid var(--bor);vertical-align:top}
-  table.gd-table th{background:#eef3f1;color:var(--felt);font-weight:800;white-space:nowrap}
-  table.gd-table td.gd-course{text-align:center;font-weight:800;color:var(--felt);white-space:nowrap}
+  table.gd-table th{background:#eef3f1;color:var(--txt);font-weight:800;white-space:nowrap}
+  table.gd-table td.gd-course{text-align:center;font-weight:800;color:var(--txt);white-space:nowrap}
   table.gd-table a{color:#0e6a72;font-weight:700;text-decoration:none}
   table.gd-table tr:last-child td{border-bottom:none}
   .gd-cat{margin-bottom:14px}
-  .gd-cat h3{display:flex;align-items:center;gap:7px;font-size:.95em;font-weight:800;color:var(--felt);margin:18px 0 8px}
+  .gd-cat h3{display:flex;align-items:center;gap:7px;font-size:.95em;font-weight:800;color:var(--txt);margin:18px 0 8px}
   .gd-cat-ic{flex:0 0 auto;width:19px;height:19px;color:var(--gold)}
   .gd-cat-ic svg{display:block;width:100%;height:100%}
   .gd-card-points{margin:6px 0 4px 1.15em;padding:0;font-size:.82em;line-height:1.6;color:var(--txt)}
@@ -216,7 +216,7 @@ const GUIDE_CSS = `  .gd-card{background:var(--sur);border:1px solid var(--bor);
      VENUE_CSSの定義とまったく同じ2行をそのまま持ってくる(複製元と食い違うと事故になるため、
      値を変えずにコピーする)。 */
   ul.vp-list{list-style:none;display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 6px}
-  ul.vp-list a{display:inline-block;background:var(--sur);border:1px solid var(--bor);border-radius:20px;padding:6px 13px;font-size:.85em;font-weight:700;color:var(--felt);text-decoration:none;box-shadow:var(--sha)}
+  ul.vp-list a{display:inline-block;background:var(--sur);border:1px solid var(--bor);border-radius:20px;padding:6px 13px;font-size:.85em;font-weight:700;color:var(--txt);text-decoration:none;box-shadow:var(--sha)}
   /* 目次(ジャンプリンク・2026-09-13新設)。既存の地味なテキストリンクの見た目を踏襲するだけで、
      カードデザインは持たない(見た目を変えない範囲に留める)。 */
   ul.gd-toc{list-style:none;margin:0 0 14px;padding:0;font-size:.88em;line-height:1.9}

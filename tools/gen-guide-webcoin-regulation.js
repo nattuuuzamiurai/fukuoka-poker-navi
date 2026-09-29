@@ -77,7 +77,7 @@ const WC_CSS = `  .wc-toc{list-style:none;margin:0 0 16px;padding:0;font-size:.8
   .wc-toc li::before{content:'▸';position:absolute;left:0;color:var(--gold)}
   .wc-toc a{color:#0e6a72;font-weight:700;text-decoration:none}
   .wc-toc a:hover{text-decoration:underline}
-  .wc-rule{background:var(--sur);border:1px solid var(--bor);border-left:4px solid var(--gold);border-radius:10px;padding:12px 15px;margin:8px 0 14px;font-weight:800;color:var(--felt);font-size:.95em;line-height:1.7}
+  .wc-rule{background:var(--sur);border:1px solid var(--bor);border-left:4px solid var(--gold);border-radius:10px;padding:12px 15px;margin:8px 0 14px;font-weight:800;color:var(--txt);font-size:.95em;line-height:1.7}
   /* 第4章(専門家の見解にとどまる論点)を、確定事実の章と視覚的に区別するための箱。
      破線の枠は「まだ確定していない」ことを示す目的で選んでいる。
      色は新しい色を増やさず、サイト内で既に使っている値(#7a5711=table.sched .gtdの文字色、

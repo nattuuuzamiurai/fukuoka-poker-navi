@@ -143,25 +143,27 @@ function guideLinksHtml(v) {
 
 // ---- 店舗ページ本体 ----
 const VENUE_CSS = `  .vp-sub{font-size:.9em;color:var(--mut);margin-bottom:14px}
-  h2.vp-sec{font-size:1.05em;font-weight:800;color:var(--felt);margin:26px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--gold)}
-  h3.vp-day{font-size:.95em;font-weight:800;color:var(--felt);margin:16px 0 7px}
+  h2.vp-sec{font-size:1.05em;font-weight:800;color:var(--txt);margin:26px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--gold)}
+  h3.vp-day{font-size:.95em;font-weight:800;color:var(--txt);margin:16px 0 7px}
   .vp-empty{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:18px 15px;font-size:.88em;color:var(--mut);text-align:center;line-height:1.9}
   .vp-tags{color:var(--mut);font-size:.9em}
   .vp-warn{color:var(--red);font-size:.9em;font-weight:700}
-  .vp-recur{display:inline-block;background:#eef3f1;border:1px solid var(--bor);color:var(--felt);font-size:.8em;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:5px}
+  .vp-recur{display:inline-block;background:#eef3f1;border:1px solid var(--bor);color:var(--txt);font-size:.8em;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:5px}
   /* 店舗情報カード(2026-09-12改修)。従来の .evt-meta(テキスト羅列)を置き換える。
      .evt-meta 自体は大会ページ(gen-event-pages.js)と共用の site-shell.js BASE_CSS 側にあり、
      そちらは変更しない(店舗ページ専用の見た目なのでここ(VENUE_CSS)に閉じる)。 */
   .vp-badges{margin-bottom:10px}
-  .vp-badge{display:inline-block;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#3a2a06;font-weight:800;font-size:.8em;padding:4px 12px;border-radius:20px;margin:0 6px 6px 0}
+  /* 金の塗り+#3a2a06文字は--gold/--gold2を単一の落ち着いた金に統一したことで実測3.46:1まで
+     コントラストが落ちる(WCAG AA未達)。#170f01に暗くして4.5:1以上を確保する。 */
+  .vp-badge{display:inline-block;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#170f01;font-weight:800;font-size:.8em;padding:4px 12px;border-radius:20px;margin:0 6px 6px 0}
   .vp-info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-bottom:14px}
   .vp-info-card{display:flex;align-items:flex-start;gap:10px;background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:12px 13px;font-size:.88em;line-height:1.65}
   .vp-info-ic{flex:0 0 auto;width:21px;height:21px;margin-top:1px;color:var(--gold)}
   .vp-info-ic svg{display:block;width:100%;height:100%}
-  .vp-info-card b{display:block;color:var(--felt);font-size:.86em;margin-bottom:2px}
+  .vp-info-card b{display:block;color:var(--txt);font-size:.86em;margin-bottom:2px}
   .vp-info-card a{color:#0e6a72;font-weight:700;word-break:break-all}
   .vp-sns-btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:5px}
-  .vp-sns-btn{display:inline-block;background:var(--bg);border:1px solid var(--bor);border-radius:16px;padding:4px 11px;font-size:.85em;font-weight:700;color:var(--felt);text-decoration:none}
+  .vp-sns-btn{display:inline-block;background:var(--bg);border:1px solid var(--bor);border-radius:16px;padding:4px 11px;font-size:.85em;font-weight:700;color:var(--txt);text-decoration:none}
   .vp-sns-btn:hover{border-color:var(--gold)}
   /* Googleマップ埋め込み。addressUnverified の店には出さない(呼び出し側で制御)。 */
   .vp-map{display:block;width:100%;height:260px;border:0;border-radius:var(--r);box-shadow:var(--sha);margin-bottom:14px}
@@ -192,17 +194,18 @@ const VENUE_CSS = `  .vp-sub{font-size:.9em;color:var(--mut);margin-bottom:14px}
   .vp-pricing{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
   .vp-price-row{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:10px 13px;font-size:.9em;line-height:1.6}
   .vp-price-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
-  .vp-price-name{font-weight:800;color:var(--felt)}
-  .vp-price-amount{font-weight:800;color:var(--felt);white-space:nowrap}
+  .vp-price-name{font-weight:800;color:var(--txt)}
+  /* 価格だけをアクセント金+等幅で強調する(index.html の .tc-buyin b・.vp-price-amount と揃える)。 */
+  .vp-price-amount{font-weight:600;font-family:"IBM Plex Mono",monospace;color:var(--gold-ink);white-space:nowrap}
   .vp-price-note{color:var(--mut);font-size:.88em;margin-top:3px}
   ul.vp-list{list-style:none;display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 6px}
-  ul.vp-list a{display:inline-block;background:var(--sur);border:1px solid var(--bor);border-radius:20px;padding:6px 13px;font-size:.85em;font-weight:700;color:var(--felt);text-decoration:none;box-shadow:var(--sha)}
+  ul.vp-list a{display:inline-block;background:var(--sur);border:1px solid var(--bor);border-radius:20px;padding:6px 13px;font-size:.85em;font-weight:700;color:var(--txt);text-decoration:none;box-shadow:var(--sha)}
   /* .vp-cards / .vp-card(「同じエリアの他のポーカー店」「サテライト開催店舗」カード)は
      店舗ページ・イベントページの両方で使うため site-shell.js の BASE_CSS 側に定義してある
      (2箇所に複製すると、片方だけ直して片方を忘れる事故が起きる。README・#evtLinks の教訓と同じ)。 */
   /* リング開催ブロック */
   .vp-ring{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:13px 15px;margin-bottom:14px;font-size:.9em;line-height:1.8}
-  .vp-ring b{color:var(--felt)}
+  .vp-ring b{color:var(--txt)}
   /* 閉店の可能性がある店の注記(2026-09-13新設・"closed":trueの店だけ)。preopen("オープン予定")の
      逆方向。h1直下に目立つ形で出す(.vp-sub〔灰色の小さい文字〕だけでは目立たないため)。 */
   .vp-closed-notice{background:#fdecea;border:1px solid var(--red);border-radius:var(--r);box-shadow:var(--sha);padding:12px 15px;margin-bottom:14px;font-size:.9em;line-height:1.8;color:var(--red);font-weight:700}

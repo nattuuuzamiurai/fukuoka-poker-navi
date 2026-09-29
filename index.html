@@ -25,6 +25,12 @@
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="icon" href="favicon.png" sizes="192x192" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#efece0">
+<!-- 書体(2026-09-29更新): 見出し・大会名・店舗名=Cormorant Garamond(セリフ)、
+     時刻・価格などの数字=IBM Plex Mono(等幅)、本文の日本語=Zen Kaku Gothic New。 -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="ふくおかポーカーナビ">
 <meta property="og:title" content="福岡のポーカー大会・トーナメント日程｜今日の開催も一覧 | ふくおかポーカーナビ">
@@ -130,47 +136,64 @@
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   :root{
-    --felt:#0f3d2e; --felt2:#14513c; --gold:#d9a441; --gold2:#f0c56b;
-    --bg:#f6f4ef; --sur:#ffffff; --bor:#e7e1d6; --txt:#25201b; --mut:#8a8078;
+    /* 配色トークン(方向性A、2026-09-29本番反映)。深緑×金の従来配色から、クリーム地×金1色の
+       配色に更新した。--felt/--felt2はヘッダー/ヒーロー/CTA帯を--bgと同値にして単色パネルに
+       する役割を維持。--gold/--gold2は塗り・枠線・グラデーション用(暗い文字と組み合わせる前提)。 */
+    --felt:#efece0; --felt2:#efece0; --gold:#9c7a2e; --gold2:#9c7a2e;
+    /* --gold-ink: 明るい背景の上に「文字」として金を使う箇所専用の濃い金。--goldをそのまま
+       文字色にすると白/クリーム背景でWCAG AA(4.5:1)を満たさないため、価格・アイコン・
+       アクティブ状態の文字色はこちらを使う(実測4.5:1以上)。 */
+    --gold-ink:#78570c;
+    --bg:#efece0; --sur:#ffffff; --bor:rgba(28,36,29,.12); --txt:#1c241d; --mut:#5c6455;
     --chip:#f0ece3; --red:#c0392b; --grn:#1a9e6f;
-    --sha:0 2px 12px rgba(30,20,5,.08); --r:14px;
+    --sha:0 2px 12px rgba(28,36,29,.08); --r:14px;
   }
   html{scroll-behavior:smooth}
-  body{font-family:"Hiragino Sans","Yu Gothic UI",system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.55;font-size:15px;padding-bottom:calc(78px + env(safe-area-inset-bottom))}
+  body{font-family:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic UI",system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.55;font-size:15px;padding-bottom:calc(78px + env(safe-area-inset-bottom))}
   a{color:inherit;text-decoration:none}
   .wrap{max-width:1000px;margin:0 auto;padding:0 16px}
 
   /* HEADER */
-  header{background:linear-gradient(135deg,var(--felt),var(--felt2));color:#fff;position:sticky;top:0;z-index:40;box-shadow:0 2px 8px rgba(0,0,0,.15);transition:background .15s}
+  header{background:var(--felt);color:var(--txt);position:sticky;top:0;z-index:40;border-bottom:1px solid var(--bor);transition:background .15s}
   header.venue-mode{background:linear-gradient(135deg,#7a5711,var(--gold))}
   .hbar{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;max-width:1000px;margin:0 auto}
   .logo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:1em}
-  .logo .pip{color:var(--gold2)}
-  .back-link{color:#fff;font-size:.85em;font-weight:800;text-decoration:none;flex-shrink:0}
+  .logo .pip{color:var(--gold-ink)}
+  /* 既定(#hbar-list/#hbar-majors)はvar(--felt)地の明るいヘッダーの上に出るため濃色。
+     venue/wjpt/jopt/fst/nippon-modeは引き続き濃色グラデーション地のため白のまま(下の定義)。 */
+  .back-link{color:var(--txt);font-size:.85em;font-weight:800;text-decoration:none;flex-shrink:0}
   .back-link:hover{text-decoration:underline}
   .back-link.partner-link{background:var(--gold2);color:#1a1207;padding:5px 13px;border-radius:999px;font-size:.8em}
   .back-link.partner-link:hover{text-decoration:none;opacity:.88}
-  .venue-header-name{font-weight:800;font-size:.95em;color:#3a2a06;text-align:right;max-width:65%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  header.venue-mode .back-link,header.jopt-mode .back-link,header.fst-mode .back-link,header.nippon-mode .back-link{color:#fff}
+  /* header.venue-modeのグラデーション右端(var(--gold))に対し#3a2a06は実測3.46:1でWCAG AA未達
+     (--gold/--gold2を単一の落ち着いた金に統一したことに伴う調整)。#170f01に暗くして4.5:1以上を確保する。 */
+  .venue-header-name{font-weight:800;font-size:.95em;color:#170f01;text-align:right;max-width:65%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
   /* HERO */
-  .hero{background:linear-gradient(135deg,var(--felt2),var(--felt));color:#fff;padding:18px 16px 20px;text-align:center}
-  .hero h1{font-size:1.32em;font-weight:800;letter-spacing:.01em;line-height:1.3}
-  .hero h1 .hl{color:var(--gold2)}
-  .hero p{color:#d7e5dd;font-size:.86em;margin-top:6px}
-  .hero .stats{display:flex;justify-content:center;gap:16px;margin-top:11px;flex-wrap:wrap}
-  .hero .stat{text-align:center}
-  .hero .stat b{display:block;font-size:1.3em;color:var(--gold2);font-weight:800;line-height:1}
-  .hero .stat span{font-size:.7em;color:#c3d6cd}
+  .hero{background:var(--felt);color:var(--txt);padding:18px 16px 20px;text-align:center}
+  .hero h1{font-family:"Cormorant Garamond","Zen Kaku Gothic New",serif;font-size:1.4em;font-weight:600;letter-spacing:.01em;line-height:1.3}
+  .hero h1 .hl{color:var(--gold-ink)}
+  .hero p{color:var(--mut);font-size:.86em;margin-top:6px}
+  .hero .stats{display:flex;justify-content:center;margin-top:16px;flex-wrap:wrap}
+  .hero .stat{text-align:center;padding:0 16px;border-left:1px solid var(--bor)}
+  .hero .stat:first-child{border-left:none}
+  .hero .stat b{display:block;font-family:"Cormorant Garamond",serif;font-size:1.7em;color:var(--txt);font-weight:600;line-height:1}
+  .hero .stat span{font-size:.66em;color:var(--mut);letter-spacing:.02em}
+  @media(max-width:360px){
+    .hero .stat{padding:0 10px}
+    .hero .stat b{font-size:1.45em}
+  }
 
   /* エリアから探す(目立つ内部リンク。エリア別の静的ページへの導線)。
      見た目は静的ページ(events/<slug>/・areas/<slug>/)のチップリストと揃えてある
      (tools/site-shell.js の BASE_CSS 参照)。中身は自動生成。手で書き換えないこと
      (同期のしくみは tools/gen-area-pages.js を参照)。 */
-  .areaNav{background:var(--felt2);padding:10px 16px}
+  .areaNav{background:var(--felt2);border-top:1px solid var(--bor);padding:10px 16px}
   .areaNav .an-inner{max-width:1000px;margin:0 auto}
-  .areaNav .an-label{font-size:.78em;font-weight:800;color:#cfe3dd;margin-bottom:7px}
+  .areaNav .an-label{font-size:.78em;font-weight:800;color:var(--mut);margin-bottom:7px}
   .areaNav ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px;padding:0;margin:0}
-  .areaNav ul a{display:inline-block;background:var(--sur);border:1px solid var(--bor);border-radius:20px;padding:6px 13px;font-size:.85em;font-weight:700;color:var(--felt);text-decoration:none;box-shadow:var(--sha)}
+  .areaNav ul a{display:inline-block;background:var(--sur);border:1px solid var(--bor);border-radius:20px;padding:6px 13px;font-size:.85em;font-weight:700;color:var(--txt);text-decoration:none;box-shadow:var(--sha)}
 
   /* 初心者向けガイドページへのCTA(2026-09-13新設、2026-09-14デザイン強化)。
      tools/site-shell.js の BASE_CSS .cta と同じ配色・役割だが、あちらは生成ページの
@@ -185,13 +208,13 @@
        新しい色は増やさない)
      - 「▶」の文字矢印を、店舗/ガイドページと同じ様式のインラインSVG(コンパス+矢印)に差し替える
      の3点を行った。煽り文句・点滅は追加しない(編集方針どおり)。 */
-  .cta{display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,var(--felt),var(--felt2));color:#fff;text-decoration:none;padding:14px 16px;text-align:left;box-shadow:var(--sha);border-radius:var(--r);border-top:3px solid var(--gold);margin:14px 16px 0}
-  .cta-ic{flex:0 0 auto;width:36px;height:36px;border-radius:50%;background:rgba(217,164,65,.18);border:1px solid rgba(217,164,65,.55);display:flex;align-items:center;justify-content:center;color:var(--gold2)}
+  .cta{display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,var(--felt),var(--felt2));color:var(--txt);text-decoration:none;padding:14px 16px;text-align:left;box-shadow:var(--sha);border-radius:var(--r);border-top:3px solid var(--gold);margin:14px 16px 0}
+  .cta-ic{flex:0 0 auto;width:36px;height:36px;border-radius:50%;background:rgba(156,122,46,.16);border:1px solid rgba(156,122,46,.5);display:flex;align-items:center;justify-content:center;color:var(--gold-ink)}
   .cta-ic svg{width:20px;height:20px}
   .cta-body{flex:1;min-width:0}
   .cta-title{display:block;font-weight:800}
-  .cta small{display:block;font-weight:600;font-size:.8em;color:#cfe3dd;margin-top:3px}
-  .cta-arrow{flex:0 0 auto;width:20px;height:20px;color:var(--gold2)}
+  .cta small{display:block;font-weight:600;font-size:.8em;color:var(--mut);margin-top:3px}
+  .cta-arrow{flex:0 0 auto;width:20px;height:20px;color:var(--gold-ink)}
   @media(max-width:360px){
     .cta{padding:12px 13px;gap:9px}
     .cta-ic{width:30px;height:30px}
@@ -207,7 +230,10 @@
   .frow::-webkit-scrollbar{height:0}
   .fsel{flex-shrink:0;border:1px solid var(--bor);border-radius:20px;padding:7px 12px;font-size:.83em;font-weight:600;background:var(--sur);color:var(--txt);cursor:pointer;font-family:inherit;outline:none}
   /* 「大型一覧」ボタン(大型イベントのバナー一覧 #majors へ) */
-  .fbtn{flex-shrink:0;display:inline-flex;align-items:center;gap:5px;border:1px solid var(--gold);border-radius:20px;padding:7px 14px;font-size:.83em;font-weight:800;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#3a2a06;cursor:pointer;font-family:inherit;white-space:nowrap;text-decoration:none}
+  /* 金の塗り+#3a2a06文字は--gold/--gold2を単一の落ち着いた金に統一したことで実測3.46:1まで
+     コントラストが落ちる(WCAG AA未達)。#170f01に暗くして4.5:1以上を確保する
+     (同じ対応を .adCard .ac-btn・.stickyAd .sa-btn 等、金塗りボタン全般に適用)。 */
+  .fbtn{flex-shrink:0;display:inline-flex;align-items:center;gap:5px;border:1px solid var(--gold);border-radius:20px;padding:7px 14px;font-size:.83em;font-weight:800;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#170f01;cursor:pointer;font-family:inherit;white-space:nowrap;text-decoration:none}
   .fbtn::before{content:"♠";font-weight:700}
   /* 320px級の狭い端末では3つ並べると行からはみ出す(行は横スクロールするが押しにくい)。
      余白と装飾を詰めて1画面に収める。 */
@@ -223,11 +249,13 @@
   /* 月の切り替え。ボタンの高さは日付チップより低く保つこと(この行の高さ＝下の見出しのY座標が変わるため)。
      ドロップダウンは position:absolute なので、この wrap の外に overflow:hidden を足さないこと。 */
   .dstrip-month-wrap{position:relative;flex:0 0 auto;display:flex;align-items:center;padding-right:10px;margin-right:8px;border-right:1px solid var(--bor)}
-  .dstrip-month{display:inline-flex;align-items:center;gap:5px;font-family:inherit;font-weight:800;color:var(--felt);font-size:.92em;white-space:nowrap;background:var(--sur);border:1px solid var(--bor);border-radius:20px;padding:5px 10px;line-height:1.25;cursor:pointer;outline:none}
+  .dstrip-month{display:inline-flex;align-items:center;gap:5px;font-family:inherit;font-weight:800;color:var(--txt);font-size:.92em;white-space:nowrap;background:var(--sur);border:1px solid var(--bor);border-radius:20px;padding:5px 10px;line-height:1.25;cursor:pointer;outline:none}
   .dstrip-month .dm-caret{font-size:.62em;color:var(--mut);line-height:1;transition:.13s}
-  .dstrip-month:focus-visible{border-color:var(--felt);box-shadow:0 0 0 3px rgba(15,61,46,.18)}
-  .dstrip-month[aria-expanded="true"]{background:var(--felt);border-color:var(--felt);color:#fff}
-  .dstrip-month[aria-expanded="true"] .dm-caret{color:#fff;transform:rotate(180deg)}
+  .dstrip-month:focus-visible{border-color:var(--gold);box-shadow:0 0 0 3px rgba(156,122,46,.25)}
+  /* 展開中の状態表示は「塗り」ではなく「金の枠線+金文字」にする(--feltが--bgと同値の単色地の
+     ため、塗りだと背景と同化して見分けが付かなくなるため)。 */
+  .dstrip-month[aria-expanded="true"]{background:transparent;border-color:var(--gold);color:var(--gold-ink)}
+  .dstrip-month[aria-expanded="true"] .dm-caret{color:var(--gold-ink);transform:rotate(180deg)}
   /* 「今日」に戻るボタン(2026-07-30導入)。月ボタンと同じピル型でトーンだけ変える
      (金＝日付チップの .dchip.today と同じ色。月選択＝緑と混同しない)。
      ★高さは月ボタンと同じに保つこと(この行の高さ＝直下の「トーナメント日程」見出しのY座標が動く。
@@ -238,24 +266,26 @@
        作者スタイルの display は UA の [hidden] 指定に勝つため、これが無いと hidden 属性が効かず
        初期表示でボタンが出てしまう(実装中に踏んだ)。.dmonth-menu[hidden] も同じ理由で置いてある。 */
   .dstrip-today[hidden]{display:none}
-  .dstrip-today{position:relative;margin-left:6px;display:inline-flex;align-items:center;font-family:inherit;font-weight:800;font-size:.92em;white-space:nowrap;color:#b3841f;background:#fff8ea;border:1px solid var(--gold);border-radius:20px;padding:5px 10px;line-height:1.25;cursor:pointer;outline:none}
+  /* クリーム地の塗り(旧#fff8ea)は--feltが--bgと同値になったため地と衝突する。
+     金の枠線+金文字のアウトライン調に統一する(選択中の .dchip.today と同じトーン)。 */
+  .dstrip-today{position:relative;margin-left:6px;display:inline-flex;align-items:center;font-family:inherit;font-weight:800;font-size:.92em;white-space:nowrap;color:var(--gold-ink);background:transparent;border:1px solid var(--gold);border-radius:20px;padding:5px 10px;line-height:1.25;cursor:pointer;outline:none}
   /* 見た目の高さは月ボタンに合わせたまま、タップ領域だけを44px以上に広げる
      (iOS HIG。上下方向にだけ広げるので隣のチップとは重ならない)。 */
   .dstrip-today::after{content:'';position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);height:44px}
-  .dstrip-today:focus-visible{border-color:#b3841f;box-shadow:0 0 0 3px rgba(217,164,65,.3)}
-  .dstrip-today:active{background:#f8ecd2}
-  .dmonth-menu{position:absolute;top:calc(100% + 5px);left:0;z-index:45;display:block;min-width:118px;max-height:262px;overflow-y:auto;background:var(--sur);border:1px solid var(--bor);border-radius:12px;box-shadow:0 8px 22px rgba(30,20,5,.18);padding:5px}
+  .dstrip-today:focus-visible{border-color:var(--gold);box-shadow:0 0 0 3px rgba(156,122,46,.3)}
+  .dstrip-today:active{background:rgba(156,122,46,.16)}
+  .dmonth-menu{position:absolute;top:calc(100% + 5px);left:0;z-index:45;display:block;min-width:118px;max-height:262px;overflow-y:auto;background:var(--sur);border:1px solid var(--bor);border-radius:12px;box-shadow:0 8px 22px rgba(28,36,29,.18);padding:5px}
   .dmonth-menu[hidden]{display:none}
   /* タップ領域は44px以上を確保する(iOS HIG の推奨値。42pxだと押しにくい)。
      メニューは position:absolute なので、ここを変えても下の見出しのY座標には影響しない。 */
   .dm-opt{display:flex;align-items:center;width:100%;min-height:44px;text-align:left;font-family:inherit;font-size:.9em;font-weight:700;color:var(--txt);background:none;border:0;border-radius:9px;padding:8px 14px;white-space:nowrap;cursor:pointer}
-  .dm-opt.on{background:var(--felt);color:#fff}
+  .dm-opt.on{background:rgba(156,122,46,.14);color:var(--gold-ink)}
   /* :hover は必ず hover 可能な環境だけに限定する。タッチ端末(iOS Safari)では
      タップ後に hover 状態が居座り、他所を触るまで色が残って「選択中」に見えるため。 */
   @media(hover:hover){
     .dstrip-month:hover{border-color:var(--gold)}
-    .dstrip-today:hover{background:#fdf0d8;border-color:#b3841f}
-    .dm-opt:hover{background:#f1efe8}
+    .dstrip-today:hover{background:rgba(156,122,46,.1)}
+    .dm-opt:hover{background:rgba(28,36,29,.05)}
   }
   .dm-opt:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
   .dstrip{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
@@ -266,9 +296,9 @@
   .dchip.sun .dc-w{color:var(--red)}
   .dchip.sat .dc-w{color:#2a6fb0}
   .dchip.today{border-color:var(--gold)}
-  .dchip.today .dc-w{color:#b3841f}
-  .dchip.on{background:var(--felt);border-color:var(--felt)}
-  .dchip.on .dc-w,.dchip.on .dc-d{color:#fff}
+  .dchip.today .dc-w{color:var(--gold-ink)}
+  .dchip.on{background:rgba(156,122,46,.14);border-color:var(--gold)}
+  .dchip.on .dc-w,.dchip.on .dc-d{color:var(--gold-ink)}
 
   /* AD SLOT */
   .adslot{max-width:1000px;margin:16px auto 0;padding:0 16px}
@@ -291,7 +321,7 @@
   .stickyAd .sa-body{flex:1;min-width:0}
   .stickyAd .sa-title{font-size:.8em;font-weight:800;color:#fff;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .stickyAd .sa-desc{font-size:.68em;color:#b9b6c9;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .stickyAd .sa-btn{flex-shrink:0;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#3a2a06;font-weight:800;font-size:.76em;padding:8px 14px;border-radius:18px;white-space:nowrap}
+  .stickyAd .sa-btn{flex-shrink:0;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#170f01;font-weight:800;font-size:.76em;padding:8px 14px;border-radius:18px;white-space:nowrap}
   @media(max-width:420px){ .stickyAd .sa-desc{display:none} }
 
   /* AD CARD (自社サービス案内。旧AdSense/PR枠の位置にコンテンツ内カードとして表示。stickyAdとトーンを統一) */
@@ -309,7 +339,7 @@
   .adCard .ac-body{flex:1;min-width:0}
   .adCard .ac-title{font-size:1.02em;font-weight:800;color:#fff}
   .adCard .ac-desc{font-size:.82em;color:#b9b6c9;margin-top:4px}
-  .adCard .ac-btn{flex-shrink:0;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#3a2a06;font-weight:800;font-size:.85em;padding:10px 20px;border-radius:24px;white-space:nowrap;box-shadow:0 0 14px rgba(217,164,65,.3)}
+  .adCard .ac-btn{flex-shrink:0;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#170f01;font-weight:800;font-size:.85em;padding:10px 20px;border-radius:24px;white-space:nowrap;box-shadow:0 0 14px rgba(217,164,65,.3)}
   /* 430px以下(iPhone SE/12/13/14/15等の主要スマホ幅)向けの縮小指定(ページ下部のフルサイズ
      .adCardが対象。トップの縮小版は下の .adslot .adCard 側の指定がこれより優先される)。
      .ac-body の min-width を固定200pxのままにすると、画像+本文+ボタンの合計が実効幅
@@ -371,7 +401,7 @@
      大型一覧(#majors)の終了済みイベントにも同じスタイルを使う。 */
   .evtBanner.is-archived{filter:grayscale(.8) opacity(.55)}
   .evtBanner.is-archived .eb-tag::before{content:"終了";background:#6b6055;color:#fff}
-  .evtBanner.ev-wjpt{--ev-bd:#d9a441;--ev-bg:#0a1226;--ev-bg2:#122046;--ev-fg:#f0c56b;--ev-ac:var(--gold);--ev-ac2:var(--gold2);--ev-on:#3a2a06}
+  .evtBanner.ev-wjpt{--ev-bd:#d9a441;--ev-bg:#0a1226;--ev-bg2:#122046;--ev-fg:#f0c56b;--ev-ac:var(--gold);--ev-ac2:var(--gold2);--ev-on:#170f01}
   .evtBanner.ev-jopt{--ev-bd:var(--jopt);--ev-bg:#07171d;--ev-bg2:#0e3d48;--ev-fg:var(--jopt2);--ev-ac:var(--jopt);--ev-ac2:var(--jopt2);--ev-on:#04222a}
   .evtBanner.ev-nippon{--ev-bd:var(--ns);--ev-bg:#5c0910;--ev-bg2:#a8111c;--ev-fg:#ffd9d4;--ev-ac:var(--ns);--ev-ac2:var(--ns2);--ev-on:#fff}
   .evtBanner.ev-fst{--ev-bd:var(--fst);--ev-bg:#070c22;--ev-bg2:#1a2455;--ev-fg:var(--fst2);--ev-ac:var(--fst);--ev-ac2:var(--fst2);--ev-on:#fff}
@@ -396,9 +426,14 @@
   /* ===== 掲載店舗募集の常設バナー(listing-banner.js・2026-09-17導入) =====
      実写真が無いため画像バナーではなくCSSで組む(bigEventBannerHtml()のev.customBanner分岐)。
      配色はサイト本来のブランド色(--felt/--gold系)にして、大会ごとの色が付く他のバナーと区別する。 */
-  .evtBanner.ev-listing{--ev-bd:var(--gold);--ev-bg:var(--felt);--ev-bg2:var(--felt2);--ev-fg:var(--gold2);--ev-ac:var(--gold);--ev-ac2:var(--gold2);--ev-on:#3a2a06}
+  .evtBanner.ev-listing{--ev-bd:var(--gold);--ev-bg:var(--felt);--ev-bg2:var(--felt2);--ev-fg:var(--gold-ink);--ev-ac:var(--gold);--ev-ac2:var(--gold2);--ev-on:#170f01}
   /* 日付(days)を持たない常設バナーのため「開催中/まもなく/終了」のバッジは出さない。 */
   .evtBanner.ev-listing .eb-tag::before{content:none}
+  /* .eb-heading/.eb-tag は他バナー(wjpt/jopt/nippon/fst/dream)の暗い--ev-bg前提で
+     文字色が白固定になっているが、ev-listingだけ--ev-bgが--feltと同値の明るい紙色のため
+     白文字だと地と同化する。このバリアントだけ濃色(--ev-on)に上書きする。 */
+  .evtBanner.ev-listing .eb-heading{color:var(--ev-on)}
+  .evtBanner.ev-listing .eb-tag{color:var(--ev-on)}
   /* aspect-ratio は .eb-img と同じ 1024/412(上のコメント参照)。min-height はその aspect-ratio
      から出てくる高さの【下限としてだけ】残す(スライド幅が極端に狭いモバイル等で、
      aspect-ratio任せだと文字(eyebrow/heading/sub)が窮屈になり過ぎない保険)。 */
@@ -454,7 +489,7 @@
   /* ドットインジケーター: 何枚あるか / いま何枚目かを示す */
   .ec-dots{display:flex; justify-content:center; align-items:center; gap:7px; padding:9px 0 2px}
   .ec-dot{width:7px;height:7px;padding:0;border:none;border-radius:50%;background:#cfc6b6;cursor:pointer;transition:.15s;font-family:inherit}
-  .ec-dot[aria-current="true"]{width:20px;border-radius:4px;background:var(--felt)}
+  .ec-dot[aria-current="true"]{width:20px;border-radius:4px;background:var(--gold)}
   /* 矢印: タッチ環境ではスワイプが自然なので、広い画面でだけ補助として出す */
   .ec-arrow{display:none}
   /* 全スライドが一度に収まっている(＝スクロールの必要がない)ときは操作UIを出さない。
@@ -505,7 +540,7 @@
   .wjpt-top{border-radius:16px;overflow:hidden;border:2px solid #d9a441;box-shadow:0 6px 26px rgba(0,0,0,.3);margin-bottom:8px}
   .wjpt-top img{display:block;width:100%;height:auto}
   .wjpt-sub{font-size:.85em;color:var(--mut);margin:0 2px 14px;line-height:1.6}
-  .wjpt-sub a{color:var(--felt);font-weight:700;text-decoration:underline}
+  .wjpt-sub a{color:var(--txt);font-weight:700;text-decoration:underline}
   .wjpt-days{display:flex;gap:8px;margin:0 0 16px}
   .wjpt-day{flex:1;min-width:0;padding:9px 4px 8px;border-radius:12px;border:1px solid var(--bor);background:var(--sur);text-align:center;cursor:pointer;transition:.13s;font-family:inherit}
   .wjpt-day .wd-d{display:block;font-size:1.15em;font-weight:800;color:var(--txt);line-height:1.2}
@@ -519,7 +554,7 @@
   .wjpt-tcard .wt-body{flex:1;min-width:0;padding:11px 13px}
   .wjpt-tcard .wt-name{font-size:.98em;font-weight:800;color:var(--txt)}
   .wjpt-tcard .wt-meta{font-size:.8em;color:var(--mut);margin-top:3px;display:flex;flex-wrap:wrap;gap:4px 12px}
-  .wjpt-tcard .wt-meta b{color:var(--felt);font-weight:800}
+  .wjpt-tcard .wt-meta b{color:var(--txt);font-weight:800}
   .wjpt-tcard .wt-tags{margin-top:6px;display:flex;flex-wrap:wrap;gap:5px}
   .wjpt-tcard .wt-tags span{font-size:.7em;font-weight:700;color:#7a5711;background:#fbf1d8;border:1px solid #ecd9a6;border-radius:20px;padding:2px 8px}
   .wjpt-tcard .wt-arrow{flex-shrink:0;align-self:center;padding:0 12px;color:var(--mut);font-size:1.1em}
@@ -528,7 +563,7 @@
   .wjpt-detail-meta h2{font-size:1.1em;font-weight:800;margin-bottom:4px}
   .wjpt-detail-meta .dm-sub{font-size:.82em;color:var(--mut)}
   .wjpt-backrow{margin:2px 0 14px}
-  .wjpt-backrow a{font-size:.85em;font-weight:800;color:var(--felt);text-decoration:none}
+  .wjpt-backrow a{font-size:.85em;font-weight:800;color:var(--txt);text-decoration:none}
 
   /* ===== JOPT 大型イベント(2026/7/30-8/2 福岡・大名) ===== */
   /* JOPTのブランドカラー(ティール)をアクセントにする。WJPT(ゴールド)とは配色で区別する。 */
@@ -578,7 +613,7 @@
   .jopt-detail-meta h2{font-size:1.1em;font-weight:800;margin-bottom:6px}
   .jopt-detail-meta .dm-grid{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:.84em;color:var(--mut)}
   .jopt-detail-meta .dm-grid b{color:#0e6a72;font-weight:800}
-  .jopt-detail-meta .dm-gtd{margin-top:8px;display:inline-block;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#3a2a06;font-weight:800;font-size:.8em;padding:5px 14px;border-radius:20px}
+  .jopt-detail-meta .dm-gtd{margin-top:8px;display:inline-block;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#170f01;font-weight:800;font-size:.8em;padding:5px 14px;border-radius:20px}
   .jopt-detail-meta .dm-gtd-note{font-size:.75em;color:var(--mut);margin-top:4px}
   .jopt-detail-meta .dm-note{margin-top:9px;font-size:.8em;color:var(--txt);background:#f7f5f0;border-left:3px solid var(--jopt);padding:7px 10px;border-radius:0 8px 8px 0;line-height:1.6}
   /* ストラクチャー表 */
@@ -684,12 +719,17 @@
 
   /* DATE GROUP */
   .dgroup{margin-bottom:20px}
-  .dlabel{display:flex;align-items:center;gap:9px;font-weight:800;font-size:.95em;color:var(--felt);margin:0 0 9px}
-  .dlabel .dnum{background:var(--felt);color:#fff;border-radius:9px;min-width:44px;text-align:center;padding:5px 6px;line-height:1.15}
-  .dlabel .dnum small{display:block;font-size:.6em;font-weight:600;opacity:.85}
-  .dlabel .dnum b{font-size:1.15em}
+  .dlabel{display:flex;align-items:center;gap:9px;font-weight:800;font-size:.95em;color:var(--txt);margin:0 0 9px}
+  /* 塗りつぶしの緑ピルから、罫線だけの枠に変更(--feltが--bgと同値になったため)。
+     数字はセリフ体(Cormorant Garamond)にして見出し級の日付らしさを出す。 */
+  .dlabel .dnum{background:transparent;border:1px solid var(--bor);color:var(--txt);border-radius:9px;min-width:44px;text-align:center;padding:5px 6px;line-height:1.15;font-family:"Cormorant Garamond",serif}
+  .dlabel .dnum small{display:block;font-size:.6em;font-weight:600;opacity:.7}
+  .dlabel .dnum b{font-size:1.25em}
   .dlabel .dw{font-size:.78em;color:var(--mut);font-weight:600}
-  .dlabel.today .dnum{background:var(--gold);color:#3a2a06}
+  /* 通常の--gold塗り+#3a2a06文字は実測3.46:1でWCAG AA未達のため、文字色を#170f01まで
+     暗くして4.74:1を確保する(塗りは--goldのまま、鮮やかさは維持)。 */
+  .dlabel.today .dnum{background:var(--gold);border-color:var(--gold);color:#170f01}
+  .dlabel.today .dnum small{opacity:1}
 
   /* TOURNAMENT CARD */
   .tcard{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:15px 16px;margin-bottom:10px;position:relative;overflow:hidden}
@@ -703,27 +743,30 @@
   .tcard.started .tc-name::before{color:#a89f90}
   .tcard.started .tc-time span{color:#544c41}
   .tcard.started .tc-venue a{text-decoration-color:#bcb3a4}
-  .tcard.started .tc-venue .area{background:#e6e1d7;color:#4a4238}
+  .tcard.started .tc-venue .area{color:#4a4238}
   .tcard.started .tc-venue .vpin{filter:grayscale(1);opacity:.55}
-  .tcard.feat::before{content:"PR";position:absolute;top:0;right:0;background:var(--gold);color:#3a2a06;font-size:.62em;font-weight:800;padding:3px 10px;border-bottom-left-radius:9px;letter-spacing:.05em}
+  .tcard.feat::before{content:"PR";position:absolute;top:0;right:0;background:var(--gold);color:#170f01;font-size:.62em;font-weight:800;padding:3px 10px;border-bottom-left-radius:9px;letter-spacing:.05em}
   .tc-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
   .tc-time{text-align:center;flex-shrink:0}
-  .tc-time b{font-size:1.15em;font-weight:800;color:var(--felt)}
+  .tc-time b{font-family:"IBM Plex Mono",monospace;font-size:1.15em;font-weight:600;color:var(--txt)}
   .tc-time span{display:block;font-size:.66em;color:var(--mut);font-weight:600}
   .tc-main{flex:1;min-width:0}
-  .tc-name{font-weight:800;font-size:1.1em;line-height:1.35;letter-spacing:.01em;color:var(--txt)}
-  .tc-name::before{content:"♠";color:var(--gold);margin-right:5px;font-weight:700}
-  /* 店舗(会場)を目立たせる: ピン + 大きめのゴールド下線リンク、エリアは緑チップ */
-  .tc-venue{font-size:1.05em;color:var(--felt);margin-top:5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-weight:800}
+  .tc-name{font-family:"Cormorant Garamond","Zen Kaku Gothic New",serif;font-weight:700;font-size:1.3em;line-height:1.3;letter-spacing:.01em;color:var(--txt)}
+  .tc-name::before{content:"♠";color:var(--gold-ink);margin-right:5px;font-weight:700}
+  /* 店舗(会場)は控えめな中黒区切りのテキストにする(彩度の強いピルバッジを使わない、方向性A)。
+     リンクは太字+下線、エリアは::beforeで中黒(・)を足した淡色テキストにする(JSのマークアップは
+     変更せず、CSSだけで置き換える)。 */
+  .tc-venue{font-size:.95em;color:var(--txt);margin-top:6px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-weight:400}
   .tc-venue .vpin{font-size:.95em;line-height:1;flex-shrink:0}
-  .tc-venue a{color:var(--felt);font-size:1em;font-weight:800;text-decoration:underline;text-decoration-color:var(--gold);text-decoration-thickness:2px;text-underline-offset:2px}
-  .tc-venue a:hover{color:var(--gold);text-decoration-color:var(--gold)}
-  .tc-venue .area{background:#e4efe9;border-radius:5px;padding:2px 8px;font-weight:800;color:var(--felt);font-size:.8em}
+  .tc-venue a{color:var(--txt);font-size:1em;font-weight:700;text-decoration:underline;text-decoration-color:var(--bor);text-decoration-thickness:1px;text-underline-offset:2px}
+  .tc-venue a:hover{color:var(--gold-ink);text-decoration-color:var(--gold)}
+  .tc-venue .area{font-weight:600;color:var(--mut);font-size:.85em}
+  .tc-venue .area::before{content:"・";margin-right:4px;color:var(--mut)}
   .tc-buyin{text-align:right;flex-shrink:0}
-  .tc-buyin b{font-size:1.12em;font-weight:800}
+  .tc-buyin b{font-family:"IBM Plex Mono",monospace;font-size:1.1em;font-weight:600;color:var(--gold-ink)}
   .tc-buyin b.unknown{font-size:.68em;font-weight:700;color:var(--mut);display:block;max-width:80px;line-height:1.3;text-align:right}
   .tc-buyin b.free{font-size:.78em;font-weight:800;color:var(--grn);display:block;max-width:80px;line-height:1.3;text-align:right}
-  .tc-buyin span{display:block;font-size:.64em;color:var(--mut);font-weight:600}
+  .tc-buyin span{display:block;font-size:.64em;color:var(--mut);font-weight:500;font-family:"IBM Plex Mono",monospace}
   /* 店舗アイコン(2026-09-16新設)。「一目でどの店舗かわかるように」
      tc-buyin のさらに右に配置。大会名・バイイン額の視認性を妨げないよう小さめ(36px)の
      円形にとどめる。.vc-thumb(トップの店舗カード用サムネイル)と同じ venueThumbHtml() を
@@ -738,18 +781,21 @@
   .tc-thumb .vc-thumb-ph{font-size:15px}
   .tc-thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
   .tc-thumb:has(img) .vc-thumb-ph{display:none}
-  .tc-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px;align-items:center}
-  /* コントラスト比の是正(2026-08-27点検): 実測でWCAG AA(4.5:1)をわずかに下回っていたため、
-     背景はそのままに文字色だけ濃くしてある(見た目のトーンは変えない)。 */
-  .mtag{font-size:.72em;font-weight:700;padding:2px 9px;border-radius:20px;background:var(--chip);color:#574f45}
-  .mtag.gtd{background:#fdf0d6;color:#6b4a0e}
-  .mtag.re{background:#e6f4ee;color:#106145}
-  .mtag.big{background:#fde8e4;color:#a52f24}
-  .mtag.lowconf{background:#fdf0d6;color:#6b4a0e;font-weight:800}
+  /* GTD/リエントリー可/大型/点数等の個別ピルバッジを廃止し、中黒(・)区切りの淡色テキスト1行に
+     まとめる(方向性A)。JS側のtags配列・spanの出し分けロジックは変更せず、CSS側で
+     ピルの塗り・角丸を外して同一トーンの地の文字に揃え、2つ目以降の要素の前に::beforeで
+     中黒を足す(区切り文字をJSでjoinする代わりにCSSで表現)。 */
+  .tc-meta{display:flex;flex-wrap:wrap;gap:0;margin-top:11px;align-items:center;font-size:.72em;color:var(--mut);font-weight:600;letter-spacing:.01em}
+  .mtag{font-size:inherit;font-weight:inherit;padding:0;border-radius:0;background:none;color:inherit}
+  .mtag+.mtag::before{content:"・";margin:0 5px;color:var(--mut)}
+  .mtag.gtd,.mtag.re,.mtag.big{background:none;color:inherit;font-weight:inherit}
+  .mtag.lowconf{background:none;color:inherit;font-weight:800}
   .tc-foot{display:flex;justify-content:flex-end;align-items:center;margin-top:12px;padding-top:11px;border-top:1px solid var(--bor)}
   .tc-actions{display:flex;gap:7px;align-items:center}
   .abtn{font-size:.76em;font-weight:700;padding:6px 12px;border-radius:8px;border:1px solid var(--bor);cursor:pointer}
-  .abtn.pri{background:var(--felt);color:#fff;border-color:var(--felt)}
+  /* --feltが--bgと同値になったため塗りボタンとして使えない。地の文色(ink)で塗り、
+     .vlink.web(店舗公式サイトのアイコンチップ)と同じ考え方で白アイコン・白文字との対比を保つ。 */
+  .abtn.pri{background:var(--txt);color:#fff;border-color:var(--txt)}
   .ticon{width:29px;height:29px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
   .ticon.x{background:#111}
   .ticon.line{background:#06c755}
@@ -782,11 +828,13 @@
      自動で再度見える設計はそのまま活かす。:has()非対応の古いブラウザではプレースホルダーが
      わずかに透けて見えるだけで、崩れはしない)。 */
   .vc-thumb{position:relative;aspect-ratio:16/9;border-radius:10px;overflow:hidden;margin-bottom:10px;background:linear-gradient(135deg,var(--felt),var(--felt2));display:flex;align-items:center;justify-content:center;flex-shrink:0}
-  .vc-thumb-ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.32);font-size:2.4em;font-weight:800;line-height:1}
+  /* プレースホルダーの♠は白半透明で組んでいたが、深緑黒地の前提だったため、明るいクリーム地の
+     上では白がほぼ同化して見えなくなる。地の文色(ink)の半透明に変更する。 */
+  .vc-thumb-ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(28,36,29,.28);font-size:2.4em;font-weight:800;line-height:1}
   .vc-thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
   .vc-thumb:has(img) .vc-thumb-ph{display:none}
-  .vc-name{font-weight:800;font-size:.98em;display:flex;align-items:center;gap:6px}
-  .vc-name .star{color:var(--gold)}
+  .vc-name{font-family:"Cormorant Garamond","Zen Kaku Gothic New",serif;font-weight:700;font-size:1.05em;display:flex;align-items:center;gap:6px}
+  .vc-name .star{color:var(--gold-ink)}
   /* アクセス文言の長さが店舗ごとにバラバラなため1行に丸めて省略(カード高さの統一)。
      .vc-area は店舗ページ(renderVenuePage)側でも使う共通クラスだが、そちらは.vcardの
      子要素ではないため ".vcard .vc-area" と親要素を限定してここだけに効かせる。 */
@@ -794,8 +842,13 @@
   /* SNSアイコン0件の店でも高さがガクッと詰まらないよう最低高さを確保 */
   .vc-links{display:flex;gap:7px;margin-top:11px;flex-wrap:wrap;min-height:24px}
   .vc-cta{display:inline-block;margin-top:auto;padding-top:11px}
+  /* サムネ・店名以外(エリア・開催件数・SNSリンク・CTA)をまとめる器。狭幅(@media(max-width:560px))
+     ではこの中身ごと非表示にし、アイコン+店名だけの簡易タイルにする(下のメディアクエリ参照)。
+     .vcardがflex-columnのため、CTAのmargin-top:autoを機能させるにはこちら自身もflex-columnで
+     残りの縦幅を占める必要がある。 */
+  .vc-extra{display:flex;flex-direction:column;flex:1;min-width:0}
   .vlink{font-size:.72em;font-weight:700;padding:5px 10px;border-radius:7px;background:var(--chip);color:#6b6055}
-  .vlink.web{background:linear-gradient(135deg,var(--felt),var(--felt2));color:#fff}
+  .vlink.web{background:var(--txt);color:#fff}
   .vlink.x{background:#111;color:#fff}
   .vlink.line{background:#06c755;color:#fff}
   .vlink.ig{background:linear-gradient(45deg,#f09433,#dc2743,#bc1888);color:#fff}
@@ -806,22 +859,26 @@
      見た目は同じトーンになる)。 */
   .vp-info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:14px}
   .vp-info-card{display:flex;align-items:flex-start;gap:10px;background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:12px 13px;font-size:.88em;line-height:1.65}
-  .vp-info-ic{flex:0 0 auto;width:21px;height:21px;margin-top:1px;color:var(--gold)}
+  .vp-info-ic{flex:0 0 auto;width:21px;height:21px;margin-top:1px;color:var(--gold-ink)}
   .vp-info-ic svg{display:block;width:100%;height:100%}
-  .vp-info-card b{display:block;color:var(--felt);font-size:.86em;margin-bottom:2px}
-  .vp-info-card a{color:#0e6a72;font-weight:700;word-break:break-all}
+  .vp-info-card b{display:block;color:var(--txt);font-size:.86em;margin-bottom:2px}
+  .vp-info-card a{color:var(--txt);font-weight:700;word-break:break-all;text-decoration:underline;text-decoration-color:var(--bor)}
   .vp-pricing{display:flex;flex-direction:column;gap:8px;margin-top:14px}
   .vp-price-row{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:10px 13px;font-size:.9em;line-height:1.6}
   .vp-price-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
-  .vp-price-name{font-weight:800;color:var(--felt)}
-  .vp-price-amount{font-weight:800;color:var(--felt);white-space:nowrap}
+  .vp-price-name{font-weight:800;color:var(--txt)}
+  /* 価格だけをアクセント金で強調(等幅フォントでオッズボードのような精度感を出す)。 */
+  .vp-price-amount{font-weight:600;font-family:"IBM Plex Mono",monospace;color:var(--gold-ink);white-space:nowrap}
   .vp-price-note{color:var(--mut);font-size:.88em;margin-top:3px}
   .vp-ring{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:13px 15px;margin-top:14px;font-size:.9em;line-height:1.8}
-  .vp-ring b{color:var(--felt)}
+  .vp-ring b{color:var(--txt)}
 
   /* FOOTER */
   footer{background:#1b2320;color:#9aa39d;padding:26px 16px;font-size:.8em;text-align:center;line-height:1.9}
-  footer a{color:var(--gold2)}
+  /* footerは常に#1b2320固定で明暗テーマの影響を受けないが、リンク色に使っていた--gold2は
+     今回の配色更新で明るい背景向けの値(#9c7a2e)になり、暗背景では実測4.00:1相当までコントラストが
+     落ちるため、暗背景専用の明るい金を直接指定する(実測4.5:1以上)。 */
+  footer a{color:#e3b866}
   /* コントラスト比の是正(2026-08-27点検): 実測3.48:1でWCAG AA(4.5:1)未達だったため文字色を明るくした */
   footer .disc{max-width:640px;margin:10px auto 0;font-size:.92em;color:#858d87}
   /* 大会ページ/エリア別/店舗ページのリンク一覧(#evtLinks/#areaLinks/#venueLinks)。
@@ -840,10 +897,13 @@
     /* minmax(0,1fr) にしないと、店舗名の最小幅で列が広がり狭い画面(320px等)で
        グリッドがコンテナからはみ出して横スクロールが発生する。0 を許可して確実に4列に収める。 */
     .venues{grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
-    .vcard{padding:9px 4px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60px;cursor:pointer;min-width:0}
-    /* この幅では店名の視認性を優先し、写真プレースホルダーも含めテキスト以外は出さない
-       (追加する場合は極小サイズにすること。ここでは追加しない判断とした)。 */
-    .vcard .vc-thumb,.vcard .vc-area,.vcard .vc-links,.vcard .vc-cta{display:none}
+    .vcard{padding:8px 4px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60px;cursor:pointer;min-width:0;gap:0}
+    /* アイコン+店名だけの簡易タイルにする(エリア・開催件数・SNSリンク・詳細CTAは.vc-extraごと
+       隠す。詳細は店舗ページ側で見られる)。サムネは26pxの円形アイコンに縮小して表示する
+       (以前はテキストのみだったが、店がどこか一目で分かるようアイコンを追加)。 */
+    .vcard .vc-thumb{width:26px;height:26px;aspect-ratio:1/1;border-radius:999px;margin:0 auto 4px;flex-shrink:0}
+    .vcard .vc-thumb-ph{font-size:.85em}
+    .vcard .vc-extra{display:none}
     .vc-name{font-size:.68em;line-height:1.25;justify-content:center;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
   }
 
@@ -852,9 +912,9 @@
      自動で同期する(複製すると片方だけ直して片方を忘れる事故を防ぐため。手で書き換えないこと)。 */
   /* FAQ_CSS:START */
   .faq-item{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);margin-bottom:9px;overflow:hidden}
-  .faq-item summary{padding:12px 40px 12px 15px;font-weight:800;color:var(--felt);font-size:.92em;cursor:pointer;list-style:none;position:relative}
+  .faq-item summary{padding:12px 40px 12px 15px;font-weight:800;color:var(--txt);font-size:.92em;cursor:pointer;list-style:none;position:relative}
   .faq-item summary::-webkit-details-marker{display:none}
-  .faq-item summary::after{content:'+';position:absolute;right:15px;top:50%;transform:translateY(-50%);font-weight:800;color:var(--gold);font-size:1.3em;line-height:1}
+  .faq-item summary::after{content:'+';position:absolute;right:15px;top:50%;transform:translateY(-50%);font-weight:800;color:var(--gold-ink);font-size:1.3em;line-height:1}
   .faq-item[open] summary::after{content:'−'}
   .faq-item .faq-a{padding:0 15px 14px;font-size:.86em;line-height:1.85;color:var(--txt)}
   .faq-a a{color:#0e6a72;font-weight:700}
@@ -890,7 +950,7 @@
   </div>
   <div class="hbar" id="hbar-majors" style="display:none">
     <a class="back-link" href="#">← 一覧へ戻る</a>
-    <div class="venue-header-name" style="color:var(--gold2)">大型大会 一覧</div>
+    <div class="venue-header-name" style="color:var(--gold-ink)">大型大会 一覧</div>
   </div>
 </header>
 
@@ -2516,10 +2576,12 @@
       return `<div class="vcard${v.featured?' feat':''}" onclick="if(!event.target.closest('a')) location.href='${vurl}'">
         ${venueThumbHtml(v, 'vc-thumb')}
         <div class="vc-name">${v.featured?'<span class="star">★</span>':''}${escHtml(v.name)}</div>
-        <div class="vc-area">${escHtml(v.area)}　|　${escHtml(v.access||'')}</div>
-        <div class="vc-area" style="margin-top:4px;color:var(--felt);font-weight:700">今後の開催 ${upcoming}件</div>
-        <div class="vc-links">${links.join('')}</div>
-        <a class="abtn pri vc-cta" href="${vurl}">店舗詳細を見る →</a>
+        <div class="vc-extra">
+          <div class="vc-area">${escHtml(v.area)}　|　${escHtml(v.access||'')}</div>
+          <div class="vc-area" style="margin-top:4px;color:var(--txt);font-weight:700">今後の開催 ${upcoming}件</div>
+          <div class="vc-links">${links.join('')}</div>
+          <a class="abtn pri vc-cta" href="${vurl}">店舗詳細を見る →</a>
+        </div>
       </div>`;
     }).join('');
   }

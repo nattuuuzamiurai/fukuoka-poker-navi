@@ -22,6 +22,13 @@
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/favicon.png" sizes="192x192" type="image/png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#efece0">
+<!-- 書体(2026-09-29更新): 見出し・大会名・店舗名=Cormorant Garamond(セリフ)、
+     時刻・価格などの数字=IBM Plex Mono(等幅)、本文の日本語=Zen Kaku Gothic New。
+     index.html の <head> と同じ指定(BASE_CSS 側のfont-family宣言と対で使う)。 -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="ふくおかポーカーナビ">
 <meta property="og:title" content="掲載店舗の皆さまへ｜PR掲載枠・経営管理ダッシュボードのご案内 | ふくおかポーカーナビ">
@@ -72,22 +79,33 @@
 </script>
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-  :root{--felt:#0f3d2e;--felt2:#14513c;--gold:#d9a441;--gold2:#f0c56b;--bg:#f6f4ef;--sur:#fff;--bor:#e7e1d6;--txt:#25201b;--mut:#8a8078;--red:#c0392b;--r:14px;--sha:0 2px 12px rgba(30,20,5,.08)}
+  :root{
+    /* 配色トークン(方向性A、2026-09-29本番反映)。深緑×金の従来配色から、クリーム地×金1色の
+       配色に更新した。--felt/--felt2はヘッダー等を--bgと同値にして単色パネルにする役割を維持。
+       --gold/--gold2は塗り・枠線用(暗い文字と組み合わせる前提)。 */
+    --felt:#efece0;--felt2:#efece0;--gold:#9c7a2e;--gold2:#9c7a2e;
+    /* --gold-ink: 明るい背景の上に「文字」として金を使う箇所専用の濃い金(WCAG AA 4.5:1確保)。 */
+    --gold-ink:#78570c;
+    --bg:#efece0;--sur:#fff;--bor:rgba(28,36,29,.12);--txt:#1c241d;--mut:#5c6455;--red:#c0392b;--r:14px;--sha:0 2px 12px rgba(28,36,29,.08)
+  }
   html{scroll-behavior:smooth}
-  body{font-family:"Hiragino Sans","Yu Gothic UI",system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.6;font-size:15px;padding-bottom:calc(78px + env(safe-area-inset-bottom))}
+  body{font-family:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic UI",system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.6;font-size:15px;padding-bottom:calc(78px + env(safe-area-inset-bottom))}
   a{color:inherit}
   .wrap{max-width:900px;margin:0 auto;padding:0 16px}
-  header{background:linear-gradient(135deg,var(--felt),var(--felt2));color:#fff;position:sticky;top:0;z-index:40;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+  header{background:var(--felt);color:var(--txt);position:sticky;top:0;z-index:40;border-bottom:1px solid var(--bor)}
   .hbar{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;max-width:900px;margin:0 auto}
-  .logo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:1em;color:#fff;text-decoration:none}
-  .logo .pip{color:var(--gold2)}
-  .back-link{color:#fff;font-size:.85em;font-weight:800;text-decoration:none}
+  .logo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:1em;color:var(--txt);text-decoration:none}
+  .logo .pip{color:var(--gold-ink)}
+  .back-link{color:var(--txt);font-size:.85em;font-weight:800;text-decoration:none}
   main{padding:20px 0 40px}
-  h1{font-size:1.35em;font-weight:800;line-height:1.35;margin-bottom:6px}
+  h1{font-family:"Cormorant Garamond","Zen Kaku Gothic New",serif;font-size:1.5em;font-weight:700;line-height:1.35;margin-bottom:6px}
   .lead{color:var(--mut);font-size:.9em;margin-bottom:14px}
   .evt-meta{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:13px 15px;margin-bottom:14px;font-size:.9em;line-height:1.8}
-  .evt-meta b{color:var(--felt)}
-  .evt-meta .prize{display:inline-block;margin-top:4px;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#3a2a06;font-weight:800;font-size:.9em;padding:4px 12px;border-radius:20px}
+  .evt-meta b{color:var(--txt)}
+  /* 金の塗り+#3a2a06文字は--gold/--gold2を単一の落ち着いた金に統一したことで実測3.46:1まで
+     コントラストが落ちる(WCAG AA未達)。#170f01に暗くして4.5:1以上を確保する
+     (同じ対応を .adCard .ac-btn・.stickyAd .sa-btn 等、金塗りボタン全般に適用)。 */
+  .evt-meta .prize{display:inline-block;margin-top:4px;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#170f01;font-weight:800;font-size:.9em;padding:4px 12px;border-radius:20px}
   .disclaimer{font-size:.8em;color:var(--mut);line-height:1.7;background:#f7f5f0;border:1px solid var(--bor);border-radius:10px;padding:11px 13px;margin-bottom:16px}
   .disclaimer b{color:var(--txt)}
   .archived{font-size:.86em;line-height:1.7;color:#5b4a1e;background:#fbf1d8;border:1px solid #ecd9a6;border-radius:10px;padding:11px 13px;margin-bottom:14px}
@@ -110,33 +128,34 @@
   nav.breadcrumb [aria-current="page"]{color:var(--txt);font-weight:700}
   /* 大会バナー(当サイト作成)。狭い画面でも横幅いっぱいに収め、読み込み前後で高さが動かないようにする */
   .evt-banner{display:block;width:100%;height:auto;aspect-ratio:1024/412;border-radius:var(--r);box-shadow:var(--sha);margin-bottom:14px}
-  .cta{display:block;text-align:center;background:linear-gradient(135deg,var(--felt),var(--felt2));color:#fff;font-weight:800;text-decoration:none;border-radius:var(--r);padding:13px 16px;margin:6px 0 20px;box-shadow:var(--sha)}
-  .cta small{display:block;font-weight:600;font-size:.8em;color:#cfe3dd;margin-top:3px}
-  h2.day{font-size:1.05em;font-weight:800;color:var(--felt);margin:22px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--gold)}
+  .cta{display:block;text-align:center;background:linear-gradient(135deg,var(--felt),var(--felt2));color:var(--txt);font-weight:800;text-decoration:none;border-radius:var(--r);padding:13px 16px;margin:6px 0 20px;box-shadow:var(--sha)}
+  .cta small{display:block;font-weight:600;font-size:.8em;color:var(--mut);margin-top:3px}
+  h2.day{font-size:1.05em;font-weight:800;color:var(--txt);margin:22px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--gold)}
   table.sched{border-collapse:collapse;width:100%;font-size:.85em;background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);overflow:hidden;box-shadow:var(--sha);margin-bottom:6px}
   table.sched th,table.sched td{padding:8px 9px;text-align:left;border-bottom:1px solid var(--bor);vertical-align:top}
-  table.sched th{background:#eef3f1;color:var(--felt);font-weight:800;font-size:.92em;white-space:nowrap}
-  table.sched td.no{color:var(--felt);font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
-  table.sched td.start{white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:700}
+  table.sched th{background:#eef3f1;color:var(--txt);font-weight:800;font-size:.92em;white-space:nowrap}
+  table.sched td.no{color:var(--txt);font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums;font-family:"IBM Plex Mono",monospace}
+  table.sched td.start{white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:600;font-family:"IBM Plex Mono",monospace}
   table.sched td.buyin{white-space:nowrap}
   table.sched tr:last-child td{border-bottom:none}
   table.sched .gtd{display:inline-block;background:#fbf1d8;border:1px solid #ecd9a6;color:#7a5711;font-size:.85em;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:5px}
   /* 「項目 / 内容」形式(FST)。項目名は左の見出し列になる */
   table.sched tbody th{width:1%;white-space:nowrap}
-  table.sched td.fst-prize{font-weight:800;color:var(--felt);font-variant-numeric:tabular-nums}
+  /* 価格はアクセント金+等幅で強調する(index.html の .tc-buyin b・.vp-price-amount と同じ考え方)。 */
+  table.sched td.fst-prize{font-weight:600;color:var(--gold-ink);font-variant-numeric:tabular-nums;font-family:"IBM Plex Mono",monospace}
   .sched-wrap{overflow-x:auto}
   .links{font-size:.88em;line-height:2;margin:18px 0 8px}
   .links a{color:#0e6a72;font-weight:700}
   /* 大会ページ末尾の「エリア別の店舗トーナメント」への導線。店舗ページの .vp-list と同じ見た目。 */
   ul.evt-areas{list-style:none;display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 6px;padding:0}
-  ul.evt-areas a{display:inline-block;background:var(--sur);border:1px solid var(--bor);border-radius:20px;padding:6px 13px;font-size:.85em;font-weight:700;color:var(--felt);text-decoration:none;box-shadow:var(--sha)}
+  ul.evt-areas a{display:inline-block;background:var(--sur);border:1px solid var(--bor);border-radius:20px;padding:6px 13px;font-size:.85em;font-weight:700;color:var(--txt);text-decoration:none;box-shadow:var(--sha)}
   /* 店舗カード(店舗ページの「同じエリアの他のポーカー店」・イベントページの「サテライト開催店舗」で共用)。
      2026-08-27導入(大型大会は一時的なので、店舗どうしの内部リンクでリピートを作る)。
      ここに1つだけ置く(gen-venue-pages.js / gen-event-pages.js の両方から使うため複製しない)。 */
   .vp-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin:2px 0 6px}
   .vp-card{display:block;background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:12px 13px;text-decoration:none;color:inherit}
   .vp-card:hover{border-color:var(--gold)}
-  .vp-card-name{font-weight:800;font-size:.92em;color:var(--felt);line-height:1.3}
+  .vp-card-name{font-family:"Cormorant Garamond","Zen Kaku Gothic New",serif;font-weight:700;font-size:1em;color:var(--txt);line-height:1.3}
   .vp-card-sub{font-size:.78em;color:var(--mut);margin-top:4px}
   /* 「現在サテライトを開催中」の告知。店舗ページ(gen-venue-pages.js)とエリアページ(gen-area-pages.js)の
      両方で使うため、ここに1つだけ置く(.vp-cards と同じ理由。複製すると片方だけ直して片方を忘れる)。
@@ -145,7 +164,10 @@
   .vp-fst b{color:#14333d}
   .vp-fst a{color:#0e6a72;font-weight:700}
   footer{background:#1b2320;color:#9aa39d;padding:22px 16px;font-size:.8em;text-align:center;line-height:1.9}
-  footer a{color:var(--gold2)}
+  /* footerは常に#1b2320固定で明暗テーマの影響を受けないが、リンク色に使っていた--gold2は
+     今回の配色更新で明るい背景向けの値になり暗背景でのコントラストが不足するため、
+     暗背景専用の明るい金を直接指定する(実測4.5:1以上。index.html footer a と同じ値)。 */
+  footer a{color:#e3b866}
   /* 大会ページ一覧・エリア別リンク行(pageFoot の permanentEventLinks・areaLinksHtml)。
      JSを実行しないクローラがevents/venues/areasページに辿り着く唯一の経路(このファイル冒頭の
      コメント参照)なのでリンクの中身・件数は変更しないが、閲覧者向けの見た目としては優先度が低いため
@@ -158,22 +180,24 @@
   .stickyAd .sa-body{flex:1;min-width:0}
   .stickyAd .sa-title{font-size:.8em;font-weight:800;color:#fff;line-height:1.25}
   .stickyAd .sa-desc{font-size:.68em;color:#b9b6c9;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .stickyAd .sa-btn{flex-shrink:0;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#3a2a06;font-weight:800;font-size:.76em;padding:8px 14px;border-radius:18px;white-space:nowrap;text-decoration:none}
+  .stickyAd .sa-btn{flex-shrink:0;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#170f01;font-weight:800;font-size:.76em;padding:8px 14px;border-radius:18px;white-space:nowrap;text-decoration:none}
   @media(max-width:420px){.stickyAd .sa-desc{display:none}}
   .pt-toc{list-style:none;margin:0 0 16px;padding:0;font-size:.88em;line-height:1.9}
   .pt-toc li{padding-left:1.1em;position:relative}
   .pt-toc li::before{content:'▸';position:absolute;left:0;color:var(--gold)}
   .pt-toc a{color:#0e6a72;font-weight:700;text-decoration:none}
   .pt-toc a:hover{text-decoration:underline}
-  .pt-price{background:linear-gradient(135deg,var(--gold2),var(--gold));color:#3a2a06;border-radius:var(--r);padding:14px 16px;margin:10px 0 16px;font-weight:800;font-size:1.05em;box-shadow:var(--sha)}
+  /* 金の塗り+#3a2a06文字は--gold/--gold2を単一の落ち着いた金に統一したことで実測3.46:1まで
+     コントラストが落ちる(WCAG AA未達)。#170f01に暗くして4.5:1以上を確保する。 */
+  .pt-price{background:linear-gradient(135deg,var(--gold2),var(--gold));color:#170f01;border-radius:var(--r);padding:14px 16px;margin:10px 0 16px;font-weight:800;font-size:1.05em;box-shadow:var(--sha)}
   .pt-price small{display:block;font-weight:600;font-size:.72em;margin-top:4px;color:#5a4109}
   .pt-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin:8px 0 16px}
   .pt-card{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:13px 14px}
-  .pt-card h4{font-size:.92em;font-weight:800;color:var(--felt);margin-bottom:5px}
+  .pt-card h4{font-size:.92em;font-weight:800;color:var(--txt);margin-bottom:5px}
   .pt-card p{font-size:.85em;line-height:1.75;color:var(--txt)}
   .pt-badge{display:inline-block;background:#fbf1d8;border:1px solid #ecd9a6;color:#7a5711;font-size:.78em;font-weight:700;padding:2px 9px;border-radius:10px;margin-left:6px;vertical-align:middle}
   .pt-note{background:var(--sur);border:1px solid var(--bor);border-left:4px solid var(--gold);border-radius:10px;padding:13px 15px;margin:10px 0 16px;font-size:.88em;line-height:1.8;color:var(--txt)}
-  .pt-note b{color:var(--felt)}
+  .pt-note b{color:var(--txt)}
   /* ---- 比較表(table.compare) ----
      列幅がコンテンツ量でぶれて崩れて見えないよう、先頭列に width:44% を明示している。
      配色は新しい色を増やさず、サイトで既に使っている値を再利用する
@@ -181,10 +205,10 @@
   table.compare{border-collapse:collapse;width:100%;margin-top:10px;font-size:.86em;background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);overflow:hidden;box-shadow:var(--sha)}
   table.compare th,table.compare td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--bor);vertical-align:top}
   table.compare tr:last-child td{border-bottom:none}
-  table.compare thead th{background:#eef3f1;color:var(--felt);font-weight:800;font-size:.85em}
-  table.compare td.yes{color:var(--felt);font-weight:800}
+  table.compare thead th{background:#eef3f1;color:var(--txt);font-weight:800;font-size:.85em}
+  table.compare td.yes{color:var(--txt);font-weight:800}
   table.compare td.pr{background:#eef3f1}
-  table.compare th.pr{background:#eef3f1;color:var(--felt)}
+  table.compare th.pr{background:#eef3f1;color:var(--txt)}
   /* ---- 画面イメージ(受付/来店中/会計/経営ダッシュボード/マイページ/フロアマップ/同卓プレイヤー情報) ----
      カード高さを flex:1 で強制的に揃える実装は採用しない。.mini-floor は aspect-ratio で
      高さを決めており、flex:1によるグリッド高さ揃えに依存すると縦横比が崩れるため、
@@ -194,14 +218,14 @@
      空きトラックを畳んで1frのカードに幅を回す)。3枚以上のギャラリーでは挙動は変わらない。 */
   .preview-gallery{margin-top:10px;display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;align-items:start}
   figure.preview{margin:0}
-  figure.preview figcaption{font-size:.82em;font-weight:800;color:var(--felt);margin-bottom:8px}
+  figure.preview figcaption{font-size:.82em;font-weight:800;color:var(--txt);margin-bottom:8px}
   figure.preview figcaption span{display:block;font-weight:600;color:var(--mut);font-size:.78em;margin-top:1px}
   .device{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:13px;display:flex;flex-direction:column;gap:9px}
   .app-header{display:flex;justify-content:space-between;align-items:baseline;padding-bottom:8px;border-bottom:1px solid var(--bor);font-size:.72em;color:var(--mut)}
   .app-header b{color:var(--txt);font-size:.9em}
   .stat-mini-row{display:flex;flex-wrap:wrap;gap:6px}
   .stat-mini{flex:1 1 70px;min-width:0;background:#eef3f1;border-radius:8px;padding:8px 6px;text-align:center}
-  .stat-mini .v{font-weight:800;font-size:.95em;color:var(--felt);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+  .stat-mini .v{font-weight:800;font-size:.95em;color:var(--txt);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
   .stat-mini .l{font-size:.66em;color:var(--mut);margin-top:1px;overflow-wrap:anywhere}
   .visit-row{display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px dashed var(--bor);font-size:.76em}
   .visit-row:last-child{border-bottom:none}
@@ -209,7 +233,7 @@
   .visit-row .n{flex:1}
   .tag-mini{font-size:.68em;padding:2px 7px;border-radius:999px;font-weight:800}
   .tag-mini.new{background:#fbf1d8;color:#7a5711}
-  .tag-mini.rep{background:#eef3f1;color:var(--felt)}
+  .tag-mini.rep{background:#eef3f1;color:var(--txt)}
   .guest-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px dashed var(--bor);font-size:.78em}
   .guest-row:last-child{border-bottom:none}
   .guest-row .n{flex:1;font-weight:700}
@@ -223,10 +247,10 @@
   .mini-bars{display:flex;align-items:flex-end;gap:5px;height:74px;padding:0 2px}
   .mini-bar-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;height:100%}
   .mini-bar-col .bar{width:100%;border-radius:3px 3px 2px 2px;background:#eef3f1}
-  .mini-bar-col.today .bar{background:var(--felt)}
+  .mini-bar-col.today .bar{background:var(--gold)}
   .mini-bar-col .bl{font-size:.62em;color:var(--mut)}
   .mini-bar-col .bv{font-size:.66em;color:var(--mut);font-variant-numeric:tabular-nums}
-  .mini-bar-col.today .bv{color:var(--felt);font-weight:800}
+  .mini-bar-col.today .bv{color:var(--gold-ink);font-weight:800}
   .seg-chip-row{display:flex;flex-wrap:wrap;gap:6px}
   .seg-chip{font-size:.74em;background:#eef3f1;border:1px solid var(--bor);border-radius:999px;padding:5px 11px;color:var(--txt)}
   .guest-card{display:flex;flex-direction:column;gap:8px}
@@ -239,10 +263,12 @@
   /* フロアマップ: aspect-ratio で高さを固定し、中の座席・テーブル・ディーラー表示はすべて
      絶対配置にする(親のflex/gridの高さ揃えに依存させない。上記コメント参照)。 */
   .mini-floor{position:relative;width:100%;aspect-ratio:4/3;overflow:hidden;background:var(--bg);border:1px dashed var(--bor);border-radius:10px}
-  .mini-table{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);width:64%;height:46%;border:2px solid var(--felt);border-radius:50%;background:var(--sur);display:flex;align-items:center;justify-content:center;font-size:.62em;font-weight:800;color:var(--mut)}
-  .mini-dealer{position:absolute;left:50%;top:10%;transform:translate(-50%,-50%);width:30px;height:16px;border-radius:4px;background:var(--felt);color:#fff;font-size:.56em;font-weight:800;display:flex;align-items:center;justify-content:center}
+  /* リング卓(felt系)はトーナメント卓(下の.tourney系、金)と区別できるよう地の文色(ink)にする
+     (--feltが--bgと同値になったため、テーブル illustration の輪郭色として使えない)。 */
+  .mini-table{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);width:64%;height:46%;border:2px solid var(--txt);border-radius:50%;background:var(--sur);display:flex;align-items:center;justify-content:center;font-size:.62em;font-weight:800;color:var(--mut)}
+  .mini-dealer{position:absolute;left:50%;top:10%;transform:translate(-50%,-50%);width:30px;height:16px;border-radius:4px;background:var(--txt);color:#fff;font-size:.56em;font-weight:800;display:flex;align-items:center;justify-content:center}
   .mini-seat{position:absolute;width:26px;height:26px;border-radius:50%;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;font-size:.56em;font-weight:800;letter-spacing:-.03em;border:2px solid var(--bor);background:var(--sur);color:var(--mut)}
-  .mini-seat.filled{background:#eef3f1;border-color:var(--felt);color:var(--felt)}
+  .mini-seat.filled{background:#eef3f1;border-color:var(--txt);color:var(--txt)}
   /* トーナメント卓のフロアマップは、リング卓(felt系)と区別できるようゴールド系にする。 */
   .mini-seat.filled.tourney{background:#fbf1d8;border-color:var(--gold);color:#7a5711}
   .mini-table.tourney{border-color:var(--gold)}
