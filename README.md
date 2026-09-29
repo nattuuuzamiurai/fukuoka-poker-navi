@@ -58,7 +58,7 @@ AdSense/PR枠が埋まるまでの間、自社アプリの導線を3か所に置
 | ファイル | 役割 |
 |---|---|
 | `index.html` | 公開サイト本体（モバイルファースト・単一HTML）。FAQ（`<!-- FAQ_JSONLD/FAQ_CSS/FAQ_SECTION -->` の3箇所）は**自動同期**（下記 `tools/gen-top-faq.js` を参照。手で書き換えないこと） |
-| `about.html` | **運営者情報ページ**（GEO監査2026-09-03 3章③・E-E-A-T強化）。運営会社・サイトの目的・情報源と更新方針・免責事項を掲載。代表者名・所在地は運営の公開可否判断待ちのため未記載（判断が出るまで追記しない）。他の静的ページと違い `noindex` にしない（機械にも運営者情報を伝えるためのページ） |
+| `about.html` | **運営者情報ページ**（2026-09-03追加・E-E-A-T強化）。運営会社・サイトの目的・情報源と更新方針・免責事項を掲載。代表者名・所在地は運営の公開可否判断待ちのため未記載（判断が出るまで追記しない）。他の静的ページと違い `noindex` にしない（機械にも運営者情報を伝えるためのページ） |
 | `admin.html` | 管理コンソール（店舗を選ぶ→画像/テキストを渡す→登録するだけの1画面） |
 | `dev-server.py` | 管理コンソール用のローカルサーバー（`/save-data` で `data.js` に自動保存） |
 | `data.js` | 表示用の正規化済みデータ（`VENUES` / `TOURNAMENTS` / `AREAS` / `RECURRING`）とスキーマ定義。`VENUES` の `slug` は店舗静的ページのURL（`/venues/<slug>/`）そのもの。**一度公開したslugは変更しない**（URLが変わって被リンクを失う）。店舗を追加したらslugも付ける（付け忘れは `tools/gen-venue-pages.js` が店名を挙げて異常終了する） |
@@ -77,7 +77,7 @@ AdSense/PR枠が埋まるまでの間、自社アプリの導線を3か所に置
 | `tools/gen-event-pages.js` | 上記イベント静的ページと**トップの恒久リンク行（`index.html` の `#evtLinks` 1行）**の**生成スクリプト**。データは `jopt-data.js` と `index.html` の `const WJPT` からそのまま読み込む（数値を手打ちしない=転記ミス防止）。実行: `node tools/gen-event-pages.js <リポジトリのパス>`（`--check` を付けると書き込まずに一致確認だけ行い、ズレていれば非ゼロ終了）。**JOPT等のデータや `big-events.js` を更新したら必ず再実行すること**（静的ページはデータのスナップショットのため） |
 | `tools/gen-venue-pages.js` | 店舗静的ページと**トップの店舗リンク行（`index.html` の `#venueLinks` 1行）**の**生成スクリプト**。データは `data.js` の `VENUES` / `TOURNAMENTS` / `RECURRING` からそのまま読み込む。実行: `node tools/gen-venue-pages.js <リポジトリのパス>`（`--check` あり）。**`data.js` を更新したら必ず再実行すること**（下記「`data.js` を更新したら」。自動取込ぶん（Waitinglist / Instagram監視）は各日次ワークフローが自動で再生成する）。**2026-09-13・内部リンク追加**: `tools/guide-categories.js` の `CATEGORIES` からこの店が属する目的別カテゴリーを引き、該当すれば本文末尾に「福岡のポーカー店の選び方（◯◯編）」へのリンクを自動で足す（`data.js` に別フィールドを持たせず、ガイドページ側のデータをそのまま参照するので、カテゴリー構成が変わっても再生成するだけで追随する。closed:true の店には自動的に出ない）。**2026-09-17・料金システム検索対応**: `pricing` を持つ店では「料金・システム」の h2 見出しを店名入り（「◯◯の料金・システム」）にし、title / description / `.vp-sub` にも「料金システム」の語を入れる（「店舗名 システム」「店舗名 料金システム」の検索で店舗ページが拾われやすくするため）。`pricing` の無い店の文面は従来のまま変えない |
 | `tools/venue-schedule.js` | 店舗ページの日程表を組み立てるコードの**唯一の所有者**。生成時（Node）と閲覧時（ブラウザに埋め込む `SCHEDULE_JS`）で同じ1本を共有する。**焼き込む期間を店舗別に決める `venueRange()`** もここが持つ（`gen-venue-pages.js` の見出しと `gen-sitemap.js` の掲載判定が同じ基準を使うため）。ただし**定期開催の重複判定だけは持たない**（トップのSPAも同じ判定を必要とするため `recurring-dedupe.js` に外出しし、こちらは `require` して呼ぶだけ）。テスト: `node tools/venue-schedule.test.js` |
-| `tools/gen-area-pages.js` | エリア静的ページ（`/areas/<slug>/`）と、**トップの2箇所**（フッターのエリアリンク行 `#areaLinks` 1行、および**ヒーロー直下の「エリアから探す」ナビ `#areaNav-list`**（2026-08-27追加。閲覧者にも見える目立つ導線で、狙いは同じだが置き場所が違う））の**生成スクリプト**。狙う検索が店舗ページと違い、「天神 ポーカー」「小倉 ポーカー」のように**店名を知らない人が地名だけで探す**入口を受ける。**`ItemList` 構造化データ**（2026-09-03追加・GEO監査3章⑤）: そのエリアの店舗カード配列（`venueCards` が使うのと同じ `venues`）をそのままJSON-LD化（新規データ収集なし）。`BreadcrumbList` とは別スクリプトタグ。実行: `node tools/gen-area-pages.js <リポジトリのパス>`（`--check` あり）。**`data.js` を更新したら店舗ページと一緒に必ず再実行すること**（自動取込ぶんは両日次ワークフローが自動で再生成する）。**2026-09-13・内部リンク追加**: `AREA_CONTENT` を持つ全エリアの導入文末尾に「福岡のポーカー店ガイド」（`/guide/beginner/`）へのリンクを自動追記する（7エリア分を手で書き分けない） |
+| `tools/gen-area-pages.js` | エリア静的ページ（`/areas/<slug>/`）と、**トップの2箇所**（フッターのエリアリンク行 `#areaLinks` 1行、および**ヒーロー直下の「エリアから探す」ナビ `#areaNav-list`**（2026-08-27追加。閲覧者にも見える目立つ導線で、狙いは同じだが置き場所が違う））の**生成スクリプト**。狙う検索が店舗ページと違い、「天神 ポーカー」「小倉 ポーカー」のように**店名を知らない人が地名だけで探す**入口を受ける。**`ItemList` 構造化データ**（2026-09-03追加）: そのエリアの店舗カード配列（`venueCards` が使うのと同じ `venues`）をそのままJSON-LD化（新規データ収集なし）。`BreadcrumbList` とは別スクリプトタグ。実行: `node tools/gen-area-pages.js <リポジトリのパス>`（`--check` あり）。**`data.js` を更新したら店舗ページと一緒に必ず再実行すること**（自動取込ぶんは両日次ワークフローが自動で再生成する）。**2026-09-13・内部リンク追加**: `AREA_CONTENT` を持つ全エリアの導入文末尾に「福岡のポーカー店ガイド」（`/guide/beginner/`）へのリンクを自動追記する（7エリア分を手で書き分けない） |
 | `tools/gen-guide-pages.js` | 上記 `guide/beginner/index.html` の**生成スクリプト**。店舗の slug・アクセス・営業時間・エリアは `data.js` の `VENUES` からそのまま読み込む（手書きしない）ため、日次の自動取込で `data.js` が更新されても再生成するだけで内容が追随する。「初心者講習の実施明記」等 `data.js` に対応フラグが無い編集判断は、このファイルの `BEGINNER_COURSE_IDS` 等の配列に直接持つ（`venue-listing-rules.js` と同じ考え方＝店の実態を人が確認していないと決められない情報を、note文字列の正規表現一致のような脆い方法で自動判定しない）。実行: `node tools/gen-guide-pages.js <リポジトリのパス>`（`--check` あり）。**`data.js` を更新したら店舗ページ・エリアページと一緒に必ず再実行すること**（自動取込ぶんは3つの日次ワークフローが自動で再生成する）。**「福岡のポーカー店を目的別に探す」の `CATEGORIES` 本体は `tools/guide-categories.js` に切り出し済み**（2026-09-13。店舗ページからも参照するため） |
 | `tools/gen-guide-webcoin-regulation.js` | 上記 `guide/webcoin-regulation/index.html` の**生成スクリプト**（2026-09-14）。`gen-guide-pages.js` とはあえて別ファイルにしている（理由は同ファイル冒頭のコメント。要約: 店舗横断の比較・紹介ロジックを継承する必要が無く、共有すると将来の変更で店舗リンクが誤って紛れ込むリスクがあるため）。本文は `data.js` に依存しない読み物記事だが、共通フッター（`#evtLinks`・エリアリンク行）を組み立てるため `pageFoot()` 経由で `big-events.js` / `data.js` は読む。`verify()` が生成物に `/venues/` へのリンクが1件でも混入したら異常終了する（レビュー申し送り「特定店舗を評価しない立場をリンク構造でも崩さない」の機械的な歯止め）。実行: `node tools/gen-guide-webcoin-regulation.js <リポジトリのパス>`（`--check` あり）。テスト: `node tools/gen-guide-webcoin-regulation.test.js` |
 | `tools/gen-guide-partners.js` | 上記 `guide/partners/index.html` の**生成スクリプト**（2026-09-19）。`gen-guide-webcoin-regulation.js` と同じく店舗横断の比較・紹介ロジックを持たない独立ファイル。`siteStats(DATA)` が掲載店舗数（`VENUES` のうち `!v.preopen && !v.closed`。`gen-guide-pages.js` の「35店舗」と同じ条件）・トーナメント日程数（`TOURNAMENTS` のうち本日(JST)以降の日付のみ、定期開催の展開は含まない）を毎回算出し、meta description・og:description・JSON-LD・本文リード文の4箇所に反映する（過去にこの2数値をハードコードして実データとズレた品質チェック指摘があり、以後ハードコードに戻さない）。`gen-guide-pages.js` はCLI専用でrequireできないため、テスト（`tools/gen-guide-partners.test.js`）では実際に生成済みの `guide/beginner/index.html` の店舗数と突き合わせるクロスチェックを行っている。`.github/workflows/auto-regen-derived-files.yml` の日次自動再生成の対象にも含まれる。実行: `node tools/gen-guide-partners.js <リポジトリのパス>`（`--check` あり）。テスト: `node tools/gen-guide-partners.test.js` |
@@ -86,9 +86,9 @@ AdSense/PR枠が埋まるまでの間、自社アプリの導線を3か所に置
 | `tools/machine-write-state.js` | **「機械が最後に書いた値」の控えと、そこから導く【所有】の判定の唯一の所有者**。`data.js` の1行が「機械が書いたままの行」なのか「人が作った行・人が直した行」なのかを、印を増やさずに見分ける。3つの書き込み経路（Waitinglist取込み / Instagram監視 / 店舗画像の取込み）が同じ1本を使う。詳細は下記「人が入力した値を機械が壊さない仕組み」。テスト: `node tools/machine-write-state.test.js`（守る／守らないの**両方向**を固定してある） |
 | `tools/validate-data.js` | **`data.js` をコミットしてよいかを判定する共通ゲート**（構文 / `TOURNAMENTS` の件数 / `id` 重複 / **日付書式 `YYYY-MM-DD`（実在する日付か）**）。落ちたときは**不正値と該当トーナメント（venueId・id・name）**を出す。実行: `node tools/validate-data.js .`。2つの日次ワークフロー（Waitinglist取込み / Instagram監視）が**コミット前と `git pull --rebase` の後**にこれを呼ぶ。**取込んでよい行かの判定（`dateProblem` / `extractedRowProblem` / `duplicateIdProblem`）と、その前段の正規化（`normalizeExtractedRow` … `9:00`→`09:00`・全角コロン・読めない金額をその項目だけ `null` に）もこのファイルが持ち**、取込み側（`monitor-instagram-apify.js` / `import-venue-image.js`）が `require` して使う（同じ規則を2箇所に書くと必ず片方が古くなり、「取込み側は通すのにゲートで落ちる＝毎朝ジョブが止まる」ズレが生じるため）。**ゲート側にしか無い検査（件数）もあるので「取込み側を通れば必ずゲートも通る」ではない**点に注意。テスト: `node tools/validate-data.test.js` |
 | `tools/venue-listing-rules.js` | **店ごとの掲載ルールの唯一の所有者**（運営判断・2026-08-05）。「A&K（`v35`）は参加費を一切記録しない」「TripleBarrel 折尾店（`v40`）は `大還元` を含む行を除外」「KING&QUEEN SUITED 直方店（`v20`）は `華金` を含む行を除外」の3件と、その**理由**（なぜそうするのか）を持つ。`tools/monitor-instagram-apify.js`（自動）と `tools/import-venue-image.js`（手動）の**両方が `require` する**（判定を書き分けない）。**行そのものの性質で決まる `isClosureRow` などとは種類が違い、その店の実態を人が知っていないと決められない規則**なのでファイルを分けてある。名前の正規化（`normalizeName`）の実体もここ。**除外は必ず `venueId` で絞る**（`大還元` は他店の正当な大会名にも実在する）。詳細は下記「店ごとの掲載ルール」。テスト: `node tools/venue-listing-rules.test.js`（**両方向**＋実データ全大会名への誤ヒット走査） |
-| `tools/gen-sitemap.js` | **`sitemap.xml` の唯一の所有者**。トップ＋イベントページ＋店舗ページ＋エリアページ＋`/about.html`＋ガイド系ページ（`/guide/beginner/`・`/guide/webcoin-regulation/`）の全URLをここだけで組み立てる（詳細は下記「sitemap.xml の所有者」）。**`<lastmod>` はgit履歴ベース**（GEO監査2026-09-03 3章②）: `git log -1 --format=%cI -- <対応するデータファイル>` で決定論的に求める（ビルド実行時刻には依存しない。詳細はファイル冒頭のコメント「lastmod の決め方」）。単独実行も可: `node tools/gen-sitemap.js <リポジトリのパス>`（`--check` あり）。テスト: `node tools/gen-sitemap.test.js` |
-| `tools/site-shell.js` | 静的ページ共通の「外側」（`<head>`・GA4タグ・共通CSS・ヘッダー・フッター・自社広告・大会の恒久リンク行）。イベントページと店舗ページで骨格が食い違わないよう、出どころを1つにしてある。**純粋なモジュールで、require しても何も書き込まない**。**`faqBlock(items, opts)`/`FAQ_CSS`**（2026-09-03追加・GEO監査3章①④）: 質問配列(`{q, aHtml, aText}`)から「表示用HTML(`<details>`アコーディオン) + FAQPage構造化データ」を同時生成する共通関数。以前は `gen-event-pages.js` の `fstFaqBlock()` がFST専用にハードコードされていたのをここに切り出し、FSTページ・トップページ(`tools/gen-top-faq.js`)の両方から呼ぶ |
-| `tools/gen-top-faq.js` | **トップページ（`index.html`）「よくある質問」セクションの生成スクリプト**（GEO監査2026-09-03 3章①への対応）。質問配列（内容はこのファイルに直書き。事実確認済み＝コンテンツ制作 `geo-content-draft-2026-09.md`）を `tools/site-shell.js` の `faqBlock()` に渡し、`index.html` の3箇所（`<head>` のFAQPage JSON-LD／`<style>` のFAQ用CSS／`<main>` の表示HTML）を `<!-- FAQ_xxx:START/END -->` マーカーで同期する。実行: `node tools/gen-top-faq.js <リポジトリのパス>`（`--check` あり）。**FAQの文言を変えるときは `about.html` の「情報源・更新方針」節（更新頻度の記述）と食い違わないよう同時に直すこと** |
+| `tools/gen-sitemap.js` | **`sitemap.xml` の唯一の所有者**。トップ＋イベントページ＋店舗ページ＋エリアページ＋`/about.html`＋ガイド系ページ（`/guide/beginner/`・`/guide/webcoin-regulation/`）の全URLをここだけで組み立てる（詳細は下記「sitemap.xml の所有者」）。**`<lastmod>` はgit履歴ベース**（2026-09-03追加）: `git log -1 --format=%cI -- <対応するデータファイル>` で決定論的に求める（ビルド実行時刻には依存しない。詳細はファイル冒頭のコメント「lastmod の決め方」）。単独実行も可: `node tools/gen-sitemap.js <リポジトリのパス>`（`--check` あり）。テスト: `node tools/gen-sitemap.test.js` |
+| `tools/site-shell.js` | 静的ページ共通の「外側」（`<head>`・GA4タグ・共通CSS・ヘッダー・フッター・自社広告・大会の恒久リンク行）。イベントページと店舗ページで骨格が食い違わないよう、出どころを1つにしてある。**純粋なモジュールで、require しても何も書き込まない**。**`faqBlock(items, opts)`/`FAQ_CSS`**（2026-09-03追加）: 質問配列(`{q, aHtml, aText}`)から「表示用HTML(`<details>`アコーディオン) + FAQPage構造化データ」を同時生成する共通関数。以前は `gen-event-pages.js` の `fstFaqBlock()` がFST専用にハードコードされていたのをここに切り出し、FSTページ・トップページ(`tools/gen-top-faq.js`)の両方から呼ぶ |
+| `tools/gen-top-faq.js` | **トップページ（`index.html`）「よくある質問」セクションの生成スクリプト**（2026-09-03追加）。質問配列（内容はこのファイルに直書き。事実確認済み＝コンテンツ制作 `geo-content-draft-2026-09.md`）を `tools/site-shell.js` の `faqBlock()` に渡し、`index.html` の3箇所（`<head>` のFAQPage JSON-LD／`<style>` のFAQ用CSS／`<main>` の表示HTML）を `<!-- FAQ_xxx:START/END -->` マーカーで同期する。実行: `node tools/gen-top-faq.js <リポジトリのパス>`（`--check` あり）。**FAQの文言を変えるときは `about.html` の「情報源・更新方針」節（更新頻度の記述）と食い違わないよう同時に直すこと** |
 | `tools/import-venue-image.js` | 店舗から直接届いたトーナメント月間スケジュール画像を取り込むCLIツール（詳細は下記「データ取得アーキテクチャ」）。実行: `node tools/import-venue-image.js --venue <id> --image <path>`（`--dry-run` あり） |
 | `tools/venue-schedule-vision.js` | 画像→Tournamentスキーマの配列に正規化するVision抽出ロジック（`ANTHROPIC_API_KEY` が必要）。`tools/import-venue-image.js` と `tools/monitor-instagram-apify.js` から呼ばれる。**出力の切り捨て（`stop_reason: "max_tokens"` / 閉じフェンス欠落 / `stop_reason` 無しでのストリーム終了）を検出したら、部分的に採用せず必ず失敗させる**。`max_tokens` が ~16K を超えるため**ストリーミング（`stream: true`）で呼ぶ**（理由は下記「データ取得アーキテクチャ」の**Visionの出力が途中で切れた場合**）。テスト: `node tools/venue-schedule-vision.test.js` |
 | `tools/tournament-merge.js` | `data.js` の `TOURNAMENTS` に1店舗ぶんの取得結果を安全にupsertする共通ロジック（対象店舗以外・過去日には一切触れない）。**`tools/import-venue-image.js` と `tools/monitor-instagram-apify.js` の2つだけが `require` する**。⚠ **Waitinglist取込み（`tools/import-waitinglist.js`）は自前の `mergeStore` を持つ別実装で、このモジュールを使っていない**（ここを変えてもWaitinglist取込みには影響しない。逆も同じ）。行レベルの突き合わせ用に `stats.pastDated`（**実際に過去日だった行数**。残差で定義してはいけない理由は同ファイルのコメント）を返す |
@@ -189,7 +189,7 @@ node tools/gen-guide-partners.js .       # 掲載店舗向け案内ページ(店
 - **片方を実行し忘れてsitemapが古くなることもない**（どちらを実行しても全URLが揃う）
 - `changefreq` / `priority` は**日付で変えない**。終了した大会を低優先度に落とす分岐を入れると
   「データを触っていないのに翌日 `--check` が落ちる」ことになるため。この2項目はクローラへの弱いヒントに過ぎない
-- **`<lastmod>`（2026-09-03追加・GEO監査3章②）もビルド実行時刻には依存させない。**
+- **`<lastmod>`（2026-09-03追加）もビルド実行時刻には依存させない。**
   代わりに、そのURLに対応するデータファイルの**git履歴上の最終更新コミット日時**
   （`git log -1 --format=%cI -- <ファイル>`）を使う。同じgit履歴に対しては常に同じ値になるため
   `--check` の決定論性は壊れない。対応するファイルが見つからない/gitが使えない場合は
@@ -876,7 +876,7 @@ Waitinglist のような構造化JSON APIが無いため、HTMLをパースし�
 上記「店舗からの画像直送」は今も有効な手動フォールバックだが、**Apify(apify.com)の既製Instagram
 スクレイパー(pay-per-result、$1〜1.6/1000件)を使えば、正規の第三者サービス経由で5店舗の投稿一覧を
 自動取得できる。**(2026-09-01時点。v34は対象外・完全手動運用。詳細は下記「対象店舗」)
-自社アカウントへのログインも検知回避も不要(以前試作して不採用にした方式とは無関係)。
+自社アカウントへのログインも不要(以前試作して不採用にした方式とは無関係)。
 
 ```
 [5店舗ぶん: tools/fetch-venue-posts-apify.js でApifyから最近の投稿一覧を取得]
@@ -894,7 +894,7 @@ Waitinglist のような構造化JSON APIが無いため、HTMLをパースし�
 ```
 
 - **実行**: GitHub Actions `.github/workflows/monitor-instagram-apify.yml` が **07:10 JST** に実行。
-  Apifyは正規の従量課金APIで検知回避の必要が無いため、Waitinglist取込みのような確率抽選・
+  Apifyは正規の従量課金APIのため、Waitinglist取込みのような確率抽選・
   ランダム遅延・巡回ウィンドウは無く、単純なcron。差分があるときだけ `github-actions[bot]` が
   コミット＆プッシュする
   - **★2026-08-05: 毎日 → 「JST 25日〜翌10日は毎日 / 期間外は週1回(月曜)」に変更**(運営判断・費用削減)。
@@ -3846,7 +3846,7 @@ git rm <ファイル> && git commit -m "revert: 状態ファイルを削除し�
   `.vp-sub` の末尾に「（SNS表記: ◯◯）」と控えめに1回だけ表示する。第1号はKENポーカー久留米
   (`v21`。当サイト表記「KENポーカー（久留米）」に対し、X・InstagramともSNS表示名は「KEN POKER」
   であることを確認済み)。裏が取れていない店には付けない(大多数の店は今まで通り持たない)。
-- **`priceRange`(料金帯)は、LocalBusiness に priceRange が無いという指摘を受けて2026-09-16追加**。
+- **`priceRange`(料金帯)は、LocalBusiness に priceRange が無かったため2026-09-16追加**。
   `data.js` の `"pricing"`(入場料・チップ購入/引き出し等、店ごとに書式がバラバラな自由記述の配列。
   既に追加済みだったが表示用HTMLのみに使われ構造化データには未反映だった)からは**自動パースしない**
   (`hours`→`hoursSpec` と同じ理由。書式がバラバラな値を機械的にパースすると誤変換のリスクがある)。

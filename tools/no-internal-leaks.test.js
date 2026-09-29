@@ -10,30 +10,45 @@
  * 文書ルールだけでは同じ種類のミスの再発を防げないため、実際に配信される内容を対象に
  * 機械的に検査し、混入があればテストを落とす。
  *
- * 【対象(スコープ内)】サイト訪問者に実際に配信されるファイルだけに限定する。
- *   1. `tools/gen-venue-pages.js` / `gen-area-pages.js` / `gen-event-pages.js` /
- *      `gen-guide-pages.js` / `gen-guide-webcoin-regulation.js` を実際に実行した「後」の
- *      venues/<slug>/index.html・areas/<slug>/index.html・events/<slug>/index.html・
- *      guide/<slug>/index.html・ルート index.html。
- *      (コミット済みの生成物をそのまま読むのではなく、実行し直した結果を見る。
- *       生成テンプレート側に混入が入り込んだが再生成・コミットし忘れているケースを
- *       見逃さないため。生成先はこのリポジトリ本体ではなく一時ディレクトリにコピーした
- *       複製で、このテストの実行がリポジトリの作業ツリーを書き換えることはない)
- *   2. `<script src>` で直接配信されるJS/JSONファイル(data.js, big-events.js,
- *      promo-banners.js, listing-banner.js, site-banner.js, fst-schedule-data.js,
- *      jopt-data.js, jopt-result-data.js, nippon-series-data.js, recurring-dedupe.js 等)。
- *      ただし実際に配信されるかどうかは `_config.yml` の `exclude:` が最終的な正とする
- *      (例: jopt-result-data.js / fukuoka-venues.json は同ファイルで配信除外済みのため、
- *      このリストに残っていても実際に除外されていれば自動的にスキップする)。
+ * 【対象(スコープ内)】
+ *   1. サイト訪問者に実際に配信されるファイル(全 LEAK_PATTERNS で検査):
+ *      a. `tools/gen-venue-pages.js` / `gen-area-pages.js` / `gen-event-pages.js` /
+ *         `gen-guide-pages.js` / `gen-guide-webcoin-regulation.js` を実際に実行した「後」の
+ *         venues/<slug>/index.html・areas/<slug>/index.html・events/<slug>/index.html・
+ *         guide/<slug>/index.html・ルート index.html。
+ *         (コミット済みの生成物をそのまま読むのではなく、実行し直した結果を見る。
+ *          生成テンプレート側に混入が入り込んだが再生成・コミットし忘れているケースを
+ *          見逃さないため。生成先はこのリポジトリ本体ではなく一時ディレクトリにコピーした
+ *          複製で、このテストの実行がリポジトリの作業ツリーを書き換えることはない)
+ *      b. `<script src>` で直接配信されるJS/JSONファイル(data.js, big-events.js,
+ *         promo-banners.js, listing-banner.js, site-banner.js, fst-schedule-data.js,
+ *         jopt-data.js, jopt-result-data.js, nippon-series-data.js, recurring-dedupe.js 等)。
+ *         ただし実際に配信されるかどうかは `_config.yml` の `exclude:` が最終的な正とする
+ *         (例: jopt-result-data.js / fukuoka-venues.json は同ファイルで配信除外済みのため、
+ *         このリストに残っていても実際に除外されていれば自動的にスキップする)。
+ *   2. `tools/*.js` 本体のソースコード・`README.md`(2026-09-29拡張・SOURCE_SCOPE_PATTERNS で検査):
+ *      GitHub Pages配信からは `_config.yml` の `exclude:` で除外済みだが、このリポジトリは
+ *      Publicのため GitHub上のファイル閲覧・`git clone` で誰でも読める。CLAUDE.mdの対象範囲
+ *      (ソースコード本体・コメント、README等のドキュメント)に合わせ、「サイト訪問者への
+ *      配信物ではない」ことを理由にスコープ外にしていたのを見直した(以前はスコープ外だった
+ *      理由の説明も含め、旧版の経緯はgit履歴を参照)。
+ *      ★全 LEAK_PATTERNS ではなく `SOURCE_SCOPE_PATTERNS`(サブセット)で検査する。
+ *      理由: `内部PR番号`(`PR #\d+`)は本リポジトリがPublicである以上GitHub上のPRページで
+ *      誰でも直接閲覧できる情報であり、README.mdの開発履歴セクションだけで50件以上の正当な
+ *      参照があるため機械的に「漏洩」とは扱わない。`依頼番号`も開発者向けドキュメント内の
+ *      作業管理ラベルとしての使用は許容する。`社長`は tools/machine-write-state.js に
+ *      「社長(=このサイトを実際に運用する担当者)の手作業を増やさない」という設計意図の
+ *      説明として使われており、CLAUDE.mdの「役割の言及自体はOK」の基準内(判断の詳細な
+ *      中身は含まない)と判断し許容する。それ以外(部署名・検知回避・セッションCookie注入・
+ *      内部指摘の原文引用・検索実測データ・内部監査文書参照・実測数値の直書き)は
+ *      tools/*.js・README.mdでも引き続き検知する。
+ *      ★`tools/no-internal-leaks.test.js`(このファイル自身)と`tools/gen-guide-partners.test.js`は
+ *      検査対象から除外する。前者は検知パターンの回帰確認のため「混入時の文言」をそのまま
+ *      テストの入力値として保持する設計であり、後者も同様に社内語彙のリストをテストの
+ *      入力値として保持している。どちらも実際の混入ではなく検知ロジックを検証するための
+ *      意図的なサンプルであり、除外しないと自己参照的に必ず失敗する。
  *
  * 【対象外(意図的なスコープ外)】
- *   - `tools/*.js` 本体のソースコード・`*.test.js` … GitHub Pages配信からは
- *     `_config.yml` の `exclude: tools/` で除外済みだが、CIワークフローが直接
- *     `node tools/xxx.js` として実行するため削除はできない。「サイト訪問者への配信物」では
- *     ないためこのテストの対象にしない。
- *   - `README.md` … `_config.yml` で配信除外済み。開発者向け文書に社内経緯を記録すること
- *     自体の是非(Publicリポジトリである以上ソース閲覧は可能)は本テストとは別の、
- *     まだ判断待ちの論点であり、意図的にここでは扱わない。
  *   - `.github/workflows/*.yml` / `_config.yml` … GitHub上でのみ参照される設定で、
  *     サイト訪問者への配信物ではない。
  *   - `fukuoka-venues.json` … `_config.yml` で配信除外済み。かつ個別にサニタイズ済み。
@@ -42,7 +57,8 @@
  *
  * 【検知パターンの拡張】
  *   `LEAK_PATTERNS` に `{ label, pattern }` を追加するだけでよい(配列なので増やしやすい)。
- *   今後見つかった新しい混入パターンはここに追記していく。
+ *   サイト配信物だけに適用したい(tools/*.js・README.mdには適用したくない)場合は
+ *   `siteOnly: true` を付ける。今後見つかった新しい混入パターンはここに追記していく。
  */
 
 'use strict';
@@ -60,8 +76,13 @@ const REPO = path.resolve(__dirname, '..');
 // 検知パターン(拡張しやすいよう配列で持つ。今後見つかったものはここに追加していく)
 // ============================================================
 const LEAK_PATTERNS = [
-  // 社内の組織名(このリポジトリの運営体制を示す語彙。公開する理由が無い)
-  { label: '社長', pattern: /社長/g },
+  // 社内の組織名(このリポジトリの運営体制を示す語彙。公開する理由が無い)。
+  // 【siteOnly】'社長' だけは tools/*.js・README.md では検査しない
+  // (tools/machine-write-state.js に「社長の手作業を増やさない」という設計意図の
+  // 説明として使われており、判断の詳細な中身を含まない役割の言及に留まるため。
+  // ファイル冒頭のコメント「対象(スコープ内)」参照)。他の部署名はそのような正当な
+  // 用途が無いため、tools/*.js・README.mdでも引き続き検知する。
+  { label: '社長', pattern: /社長/g, siteOnly: true },
   { label: 'マーケティング部', pattern: /マーケティング部/g },
   { label: '品質管理部', pattern: /品質管理部/g },
   { label: 'レビュー部', pattern: /レビュー部/g },
@@ -70,9 +91,12 @@ const LEAK_PATTERNS = [
   { label: '経営管理オフィス', pattern: /経営管理オフィス/g },
   { label: '人事部', pattern: /人事部/g },
   { label: 'コンテンツ制作部', pattern: /コンテンツ制作部/g },
-  // 内部の管理番号(社内の作業管理に使っているだけで、読者には意味を持たない)
-  { label: '内部PR番号', pattern: /PR\s*#\d+/g },
-  { label: '依頼番号', pattern: /依頼\d+/g },
+  // 内部の管理番号(社内の作業管理に使っているだけで、読者には意味を持たない)。
+  // 【siteOnly】PR番号・依頼番号は tools/*.js・README.mdでは検査しない(本リポジトリは
+  // Publicで、PR番号自体はGitHub上のPRページで誰でも直接閲覧できる情報であり、
+  // README.mdの開発履歴セクションには開発者向けの正当な参照が50件以上ある)。
+  { label: '内部PR番号', pattern: /PR\s*#\d+/g, siteOnly: true },
+  { label: '依頼番号', pattern: /依頼\d+/g, siteOnly: true },
   // 規約回避・不正アクセスを示唆する語(2026-09-16、fetch-venue-posts-apify.js に
   // 具体的な設計案の中身が残っていたことを受けて追加)
   { label: '検知回避', pattern: /検知回避/g },
@@ -83,11 +107,26 @@ const LEAK_PATTERNS = [
   { label: '内部指摘の引用(とのことだった)', pattern: /とのことだった/g },
   // Search Console/GA4の実測データ(インプレッション数・検索順位・PV数等)を分析結果ごと
   // コメントに残した混入(2026-09-26、index.htmlの複数箇所に「Search Console実測で
-  // ○○のインプレッションが実質0件」等の具体的な数値が残っていたことを受けて追加)
-  { label: '検索実測データの直書き(Search Console実測)', pattern: /Search Console実測/g },
-  { label: '検索実測データの直書き(GA4実測)', pattern: /GA4実測/g },
+  // ○○のインプレッションが実質0件」等の具体的な数値が残っていたことを受けて追加)。
+  // 2026-09-29: tools/*.js・README.mdへのスコープ拡張に伴い「実績」表記の変種も拾うよう広げた
+  // (gen-venue-pages.js 等に「Search Console実績」表記の混入が見つかったため)。
+  { label: '検索実測データの直書き(Search Console実測/実績)', pattern: /Search Console\s*実(測|績)/g },
+  { label: '検索実測データの直書き(GA4実測/実績)', pattern: /GA4実(測|績)/g },
   { label: '内部監査文書の章番号参照', pattern: /監査20\d\d-\d\d-\d\d/g },
+  // 検索パフォーマンスの具体的な実測数値(表示回数・クリック数・順位)の直書き
+  // (2026-09-29、gen-venue-pages.js/gen-area-pages.js等のtools/*.jsコメントに、店舗名・
+  // エリア名とセットで「CasinoX: 表示78・クリック0」「北九州エリアは表示92・クリック1」等の
+  // 具体的な実測データが残っていたことを受けて追加。店舗名を特定した検知パターンは
+  // 店舗の増減で保守が必要になるため、数値パターン側で拾う設計にしてある)。
+  { label: '検索実測データの直書き(表示回数)', pattern: /表示[0-9]+回?|[0-9]+表示/g },
+  { label: '検索実測データの直書き(クリック数)', pattern: /クリック[0-9]+/g },
+  { label: '検索実測データの直書き(順位)', pattern: /順位[0-9]/g },
+  { label: '検索実測データの直書き(平均順位)', pattern: /平均[0-9]+(?:\.[0-9]+)?位/g },
 ];
+
+// tools/*.js・README.mdの検査に使うサブセット(内部PR番号・依頼番号・社長を除く。理由は
+// LEAK_PATTERNS 定義および ファイル冒頭のコメント「対象(スコープ内)」参照)。
+const SOURCE_SCOPE_PATTERNS = LEAK_PATTERNS.filter(p => !p.siteOnly);
 
 // ============================================================
 // _config.yml の exclude: を見て、公開JS/JSONファイル候補のうち
@@ -130,16 +169,17 @@ function publicDataFiles(repoRoot) {
 }
 
 // ============================================================
-// テキストを行単位で走査し、LEAK_PATTERNSにマッチした箇所をすべて集める
+// テキストを行単位で走査し、指定した検知パターン配列にマッチした箇所をすべて集める
+// (patterns を省略した場合は LEAK_PATTERNS 全件を使う)
 // ============================================================
-function scanFile(relLabel, absPath, violations) {
-  scanText(relLabel, fs.readFileSync(absPath, 'utf8'), violations);
+function scanFile(relLabel, absPath, violations, patterns) {
+  scanText(relLabel, fs.readFileSync(absPath, 'utf8'), violations, patterns);
 }
 
-function scanText(relLabel, content, violations) {
+function scanText(relLabel, content, violations, patterns = LEAK_PATTERNS) {
   const lines = content.split('\n');
   lines.forEach((line, idx) => {
-    for (const { label, pattern } of LEAK_PATTERNS) {
+    for (const { label, pattern } of patterns) {
       pattern.lastIndex = 0;
       let m;
       while ((m = pattern.exec(line)) !== null) {
@@ -253,6 +293,42 @@ test('script srcで直接配信されるJS/JSONファイルに社内限定語彙
   );
 });
 
+// tools/*.js のうち、検知パターンの回帰確認のために「混入時の文言」をそのまま保持している
+// 自己参照的なファイル(このファイル自身と、同種の役割を持つ gen-guide-partners.test.js)。
+// 実際の混入ではなく検知ロジックの検証用サンプルのため、除外しないと自己参照的に必ず失敗する。
+const SOURCE_SCOPE_SELF_TEST_FILES = new Set(['no-internal-leaks.test.js', 'gen-guide-partners.test.js']);
+
+function sourceScopeTargets(repoRoot) {
+  const targets = [];
+  const toolsDir = path.join(repoRoot, 'tools');
+  for (const entry of fs.readdirSync(toolsDir, { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith('.js')) continue;
+    if (SOURCE_SCOPE_SELF_TEST_FILES.has(entry.name)) continue;
+    targets.push({ label: path.join('tools', entry.name), abs: path.join(toolsDir, entry.name) });
+  }
+  const readme = path.join(repoRoot, 'README.md');
+  if (fs.existsSync(readme)) targets.push({ label: 'README.md', abs: readme });
+  return targets;
+}
+
+test('tools/*.jsのソースコード本体・コメント、README.mdに社内限定語彙が混入していない', () => {
+  // 【スコープ】CLAUDE.mdの対象範囲(ソースコード本体・コメント、README等のドキュメント)に
+  // 合わせ、サイト訪問者への配信物ではない tools/*.js・README.md も検査する
+  // (Publicリポジトリなので GitHub上のファイル閲覧・git clone で誰でも読めるため)。
+  // 【使うパターン】LEAK_PATTERNS 全件ではなく SOURCE_SCOPE_PATTERNS(内部PR番号・依頼番号・
+  // 社長を除いたサブセット)を使う。理由はファイル冒頭のコメントおよび LEAK_PATTERNS 定義を参照。
+  const targets = sourceScopeTargets(REPO);
+  assert.ok(targets.length > 0, '検査対象のtools/*.js・README.mdが1件も見つかりませんでした');
+
+  const violations = [];
+  for (const { label, abs } of targets) scanFile(label, abs, violations, SOURCE_SCOPE_PATTERNS);
+
+  assert.equal(
+    violations.length, 0,
+    `以下のソースファイルに社内限定語彙が混入しています:\n${formatViolations(violations)}`
+  );
+});
+
 test('_config.ymlのexclude指定により、jopt-result-data.js / fukuoka-venues.jsonは配信対象外と判定される', () => {
   // このテスト自体の前提(exclude読み取りロジック)が壊れていないことを固定しておく。
   // 壊れると「配信されないから検査しなくてよい」判定が誤って甘くなる方向に倒れるため。
@@ -264,9 +340,11 @@ test('_config.ymlのexclude指定により、jopt-result-data.js / fukuoka-venue
 
 // ============================================================
 // 回帰確認: tools/fetch-venue-posts-apify.js には以前、削除済みの設計案についての
-// 具体的な記述が残っていた(2026-09-16修正)。tools/*.js 自体はこのテストのスキャン
-// 対象外だが、「検知パターン自体は正しく反応する/しない」ことを固定しておく
-// (修正前相当の文言 → マッチする。修正後の実ファイル → マッチしない)。
+// 具体的な記述が残っていた(2026-09-16修正)。「検知パターン自体は正しく反応する/しない」
+// ことを固定しておく(修正前相当の文言 → マッチする。修正後の実ファイル → マッチしない)。
+// 2026-09-29のスコープ拡張により、このファイルは上の「tools/*.jsのソースコード本体・
+// コメント、README.mdに社内限定語彙が混入していない」テストでも実際にスキャンされる
+// (SOURCE_SCOPE_PATTERNS に検知回避・セッションCookie注入は含まれているため)。
 // ============================================================
 test('検知パターンの回帰確認: NGワードを含む文言は検知され、実ファイルの現在の文言は検知されない', () => {
   const beforeFix = [
@@ -338,9 +416,11 @@ test('検知パターンの回帰確認: 検索実測データ・内部監査文
 
   const before = [];
   scanText('(回帰確認用)修正前の文言', beforeFix, before);
-  assert.ok(before.some(v => v.label === '検索実測データの直書き(Search Console実測)'), '「Search Console実測」が検知されませんでした');
-  assert.ok(before.some(v => v.label === '検索実測データの直書き(GA4実測)'), '「GA4実測」が検知されませんでした');
+  assert.ok(before.some(v => v.label === '検索実測データの直書き(Search Console実測/実績)'), '「Search Console実測」が検知されませんでした');
+  assert.ok(before.some(v => v.label === '検索実測データの直書き(GA4実測/実績)'), '「GA4実測」が検知されませんでした');
   assert.ok(before.some(v => v.label === '内部監査文書の章番号参照'), '「監査20XX-XX-XX」が検知されませんでした');
+  assert.ok(before.some(v => v.label === '検索実測データの直書き(表示回数)'), '「表示64」等の表示回数が検知されませんでした');
+  assert.ok(before.some(v => v.label === '検索実測データの直書き(平均順位)'), '「平均7.4位」が検知されませんでした');
 
   const after = [];
   scanText('(回帰確認用)修正後の文言', afterFixSamples, after);
@@ -348,4 +428,64 @@ test('検知パターンの回帰確認: 検索実測データ・内部監査文
     after.length, 0,
     `圧縮後の文言にまだ検知パターンがマッチしています:\n${formatViolations(after)}`
   );
+});
+
+// ============================================================
+// 回帰確認: tools/gen-venue-pages.js・gen-area-pages.js に残っていた、店舗名・エリア名と
+// セットの具体的な実測数値(表示回数・クリック数・順位、2026-09-29に是正)が検知パターンで
+// 再現できることを固定しておく。店舗名・エリア名そのものは検知語彙に含めていない
+// (店舗の増減のたびに保守が必要になるため)。数値パターン側で拾えることを確認する。
+// ============================================================
+test('検知パターンの回帰確認: 店舗名・エリア名併記の実測数値は検知され、圧縮後の文言は検知されない', () => {
+  const beforeFix = [
+    'CasinoX福岡今泉店(v28)のように…表示回数だけが付く(CasinoX: 表示78・クリック0/',
+    'CRownCLown中洲: 表示92・クリック1、いずれも2026-09-07時点28日間)。',
+    '北九州エリアは表示92・クリック1だった。',
+    '「黒崎 ポーカー」表示週29件前後・順位9位台、「折尾 ポーカー」表示週5件・順位6.6位',
+    'ARIA中洲はSearch Console実測で表示9回・順位9.8位という',
+  ].join('\n');
+  const afterFixSamples = [
+    '店名+エリア+駅名で括弧が長い店では、検索結果でtitleが切れる位置より後ろに「日程」が来てしまい、',
+    'スニペット上で見えないままになるページがあった。',
+    '北九州のように複数の町(小倉・黒崎・折尾など)をまとめた広域区分。',
+    '配列末尾の店舗がこの状態になっていた(2026-08-30)。',
+  ].join('\n');
+
+  const before = [];
+  scanText('(回帰確認用)修正前の文言', beforeFix, before);
+  assert.ok(before.some(v => v.label === '検索実測データの直書き(表示回数)'), '「表示78」等の表示回数が検知されませんでした');
+  assert.ok(before.some(v => v.label === '検索実測データの直書き(クリック数)'), '「クリック0」等のクリック数が検知されませんでした');
+  assert.ok(before.some(v => v.label === '検索実測データの直書き(順位)'), '「順位9位台」等の順位が検知されませんでした');
+
+  const after = [];
+  scanText('(回帰確認用)修正後の文言', afterFixSamples, after);
+  assert.equal(
+    after.length, 0,
+    `圧縮後の文言にまだ検知パターンがマッチしています:\n${formatViolations(after)}`
+  );
+});
+
+// ============================================================
+// 回帰確認: tools/*.js・README.mdのスコープ拡張が実際に機能することを固定しておく。
+// - 自己参照ファイル(このファイル自身・gen-guide-partners.test.js)はスキャン対象から除外される
+// - それ以外の tools/*.js・README.md は実際にスキャン対象に含まれる
+// - SOURCE_SCOPE_PATTERNS は siteOnly(内部PR番号・依頼番号・社長)を含まない
+// ============================================================
+test('スコープ拡張の配線確認: 自己参照ファイルは除外され、それ以外のtools/*.js・README.mdは対象に含まれる', () => {
+  const targets = sourceScopeTargets(REPO);
+  const labels = targets.map(t => t.label);
+
+  for (const excluded of SOURCE_SCOPE_SELF_TEST_FILES) {
+    assert.ok(
+      !labels.includes(path.join('tools', excluded)),
+      `自己参照ファイル ${excluded} が検査対象から除外されていません`
+    );
+  }
+  assert.ok(labels.includes(path.join('tools', 'gen-venue-pages.js')), 'gen-venue-pages.js が検査対象に含まれていません');
+  assert.ok(labels.includes('README.md'), 'README.md が検査対象に含まれていません');
+
+  assert.ok(!SOURCE_SCOPE_PATTERNS.some(p => p.label === '内部PR番号'), 'SOURCE_SCOPE_PATTERNSに内部PR番号が含まれてしまっています');
+  assert.ok(!SOURCE_SCOPE_PATTERNS.some(p => p.label === '依頼番号'), 'SOURCE_SCOPE_PATTERNSに依頼番号が含まれてしまっています');
+  assert.ok(!SOURCE_SCOPE_PATTERNS.some(p => p.label === '社長'), 'SOURCE_SCOPE_PATTERNSに社長が含まれてしまっています');
+  assert.ok(SOURCE_SCOPE_PATTERNS.some(p => p.label === 'マーケティング部'), 'SOURCE_SCOPE_PATTERNSにマーケティング部が含まれていません');
 });
