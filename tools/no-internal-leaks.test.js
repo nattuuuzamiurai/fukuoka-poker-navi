@@ -26,12 +26,14 @@
  *         ただし実際に配信されるかどうかは `_config.yml` の `exclude:` が最終的な正とする
  *         (例: jopt-result-data.js / fukuoka-venues.json は同ファイルで配信除外済みのため、
  *         このリストに残っていても実際に除外されていれば自動的にスキップする)。
- *   2. `tools/*.js` 本体のソースコード・`README.md`(2026-09-29拡張・SOURCE_SCOPE_PATTERNS で検査):
+ *   2. `tools/*.js` 本体のソースコード・`README.md`・`.github/workflows/*.yml`
+ *      (2026-09-29拡張、後者は同日追加・SOURCE_SCOPE_PATTERNS で検査):
  *      GitHub Pages配信からは `_config.yml` の `exclude:` で除外済みだが、このリポジトリは
  *      Publicのため GitHub上のファイル閲覧・`git clone` で誰でも読める。CLAUDE.mdの対象範囲
  *      (ソースコード本体・コメント、README等のドキュメント)に合わせ、「サイト訪問者への
  *      配信物ではない」ことを理由にスコープ外にしていたのを見直した(以前はスコープ外だった
- *      理由の説明も含め、旧版の経緯はgit履歴を参照)。
+ *      理由の説明も含め、旧版の経緯はgit履歴を参照)。`.github/workflows/*.yml` はワークフローの
+ *      YAMLコメント(`#`)に社内限定語彙が混入した実例が見つかったため、同じ理由でスコープに追加した。
  *      ★全 LEAK_PATTERNS ではなく `SOURCE_SCOPE_PATTERNS`(サブセット)で検査する。
  *      理由: `内部PR番号`(`PR #\d+`)は本リポジトリがPublicである以上GitHub上のPRページで
  *      誰でも直接閲覧できる情報であり、README.mdの開発履歴セクションだけで50件以上の正当な
@@ -49,8 +51,8 @@
  *      意図的なサンプルであり、除外しないと自己参照的に必ず失敗する。
  *
  * 【対象外(意図的なスコープ外)】
- *   - `.github/workflows/*.yml` / `_config.yml` … GitHub上でのみ参照される設定で、
- *     サイト訪問者への配信物ではない。
+ *   - `_config.yml` … GitHub上でのみ参照される設定で、サイト訪問者への配信物ではない
+ *     (`.github/workflows/*.yml` は2026-09-29〜スコープに含める。上記2.参照)。
  *   - `fukuoka-venues.json` … `_config.yml` で配信除外済み。かつ個別にサニタイズ済み。
  *   - `ogp-design-spec.md` その他、`_config.yml` の `exclude:` に載っている
  *     Jekyll配信対象外ファイル全般。
@@ -308,17 +310,27 @@ function sourceScopeTargets(repoRoot) {
   }
   const readme = path.join(repoRoot, 'README.md');
   if (fs.existsSync(readme)) targets.push({ label: 'README.md', abs: readme });
+  const workflowsDir = path.join(repoRoot, '.github', 'workflows');
+  if (fs.existsSync(workflowsDir)) {
+    for (const entry of fs.readdirSync(workflowsDir, { withFileTypes: true })) {
+      if (!entry.isFile() || !entry.name.endsWith('.yml')) continue;
+      targets.push({
+        label: path.join('.github', 'workflows', entry.name),
+        abs: path.join(workflowsDir, entry.name),
+      });
+    }
+  }
   return targets;
 }
 
-test('tools/*.jsのソースコード本体・コメント、README.mdに社内限定語彙が混入していない', () => {
+test('tools/*.jsのソースコード本体・コメント、README.md、.github/workflows/*.ymlに社内限定語彙が混入していない', () => {
   // 【スコープ】CLAUDE.mdの対象範囲(ソースコード本体・コメント、README等のドキュメント)に
-  // 合わせ、サイト訪問者への配信物ではない tools/*.js・README.md も検査する
-  // (Publicリポジトリなので GitHub上のファイル閲覧・git clone で誰でも読めるため)。
+  // 合わせ、サイト訪問者への配信物ではない tools/*.js・README.md・.github/workflows/*.yml も
+  // 検査する(Publicリポジトリなので GitHub上のファイル閲覧・git clone で誰でも読めるため)。
   // 【使うパターン】LEAK_PATTERNS 全件ではなく SOURCE_SCOPE_PATTERNS(内部PR番号・依頼番号・
   // 社長を除いたサブセット)を使う。理由はファイル冒頭のコメントおよび LEAK_PATTERNS 定義を参照。
   const targets = sourceScopeTargets(REPO);
-  assert.ok(targets.length > 0, '検査対象のtools/*.js・README.mdが1件も見つかりませんでした');
+  assert.ok(targets.length > 0, '検査対象のtools/*.js・README.md・.github/workflows/*.ymlが1件も見つかりませんでした');
 
   const violations = [];
   for (const { label, abs } of targets) scanFile(label, abs, violations, SOURCE_SCOPE_PATTERNS);
@@ -466,12 +478,13 @@ test('検知パターンの回帰確認: 店舗名・エリア名併記の実測
 });
 
 // ============================================================
-// 回帰確認: tools/*.js・README.mdのスコープ拡張が実際に機能することを固定しておく。
+// 回帰確認: tools/*.js・README.md・.github/workflows/*.ymlのスコープ拡張が実際に機能する
+// ことを固定しておく。
 // - 自己参照ファイル(このファイル自身・gen-guide-partners.test.js)はスキャン対象から除外される
-// - それ以外の tools/*.js・README.md は実際にスキャン対象に含まれる
+// - それ以外の tools/*.js・README.md・.github/workflows/*.yml は実際にスキャン対象に含まれる
 // - SOURCE_SCOPE_PATTERNS は siteOnly(内部PR番号・依頼番号・社長)を含まない
 // ============================================================
-test('スコープ拡張の配線確認: 自己参照ファイルは除外され、それ以外のtools/*.js・README.mdは対象に含まれる', () => {
+test('スコープ拡張の配線確認: 自己参照ファイルは除外され、それ以外のtools/*.js・README.md・.github/workflows/*.ymlは対象に含まれる', () => {
   const targets = sourceScopeTargets(REPO);
   const labels = targets.map(t => t.label);
 
@@ -483,9 +496,47 @@ test('スコープ拡張の配線確認: 自己参照ファイルは除外され
   }
   assert.ok(labels.includes(path.join('tools', 'gen-venue-pages.js')), 'gen-venue-pages.js が検査対象に含まれていません');
   assert.ok(labels.includes('README.md'), 'README.md が検査対象に含まれていません');
+  assert.ok(
+    labels.includes(path.join('.github', 'workflows', 'fetch-search-console.yml')),
+    'fetch-search-console.yml が検査対象に含まれていません'
+  );
+  assert.ok(
+    labels.filter(l => l.startsWith(path.join('.github', 'workflows'))).length > 1,
+    '.github/workflows/*.yml が1件しか検査対象に含まれていません(全ymlを拾えていない可能性)'
+  );
 
   assert.ok(!SOURCE_SCOPE_PATTERNS.some(p => p.label === '内部PR番号'), 'SOURCE_SCOPE_PATTERNSに内部PR番号が含まれてしまっています');
   assert.ok(!SOURCE_SCOPE_PATTERNS.some(p => p.label === '依頼番号'), 'SOURCE_SCOPE_PATTERNSに依頼番号が含まれてしまっています');
   assert.ok(!SOURCE_SCOPE_PATTERNS.some(p => p.label === '社長'), 'SOURCE_SCOPE_PATTERNSに社長が含まれてしまっています');
   assert.ok(SOURCE_SCOPE_PATTERNS.some(p => p.label === 'マーケティング部'), 'SOURCE_SCOPE_PATTERNSにマーケティング部が含まれていません');
+});
+
+// ============================================================
+// 回帰確認: .github/workflows/*.yml のスコープ追加前は、YAMLコメント(`#`)内の
+// 部署名混入がこのテストの対象外だったため見逃されていた(2026-09-29に是正)。
+// YAMLの`#`コメント記法でも検知パターンが行内容としてそのままマッチすることを固定しておく。
+// ============================================================
+test('検知パターンの回帰確認: YAMLの#コメント内の部署名混入も検知され、圧縮後の文言は検知されない', () => {
+  const beforeFix = [
+    '    # 余裕を見て20分にしてある(品質管理部指摘・2026-09-16)。',
+    '# 【背景】これまでPR単位の自動テストが無く、動作確認は品質管理部が手動で実行していた。',
+  ].join('\n');
+  const afterFixSamples = [
+    '    # 余裕を見て20分にしてある(2026-09-16)。',
+    '# 【背景】これまでPR単位の自動テストが無く、動作確認は都度手動で実行していた。',
+  ].join('\n');
+
+  const before = [];
+  scanText('(回帰確認用)修正前のYAMLコメント', beforeFix, before, SOURCE_SCOPE_PATTERNS);
+  assert.ok(
+    before.filter(v => v.label === '品質管理部').length === 2,
+    'YAMLの#コメント内の「品質管理部」が2件とも検知されませんでした'
+  );
+
+  const after = [];
+  scanText('(回帰確認用)修正後のYAMLコメント', afterFixSamples, after, SOURCE_SCOPE_PATTERNS);
+  assert.equal(
+    after.length, 0,
+    `圧縮後のYAMLコメントにまだ検知パターンがマッチしています:\n${formatViolations(after)}`
+  );
 });

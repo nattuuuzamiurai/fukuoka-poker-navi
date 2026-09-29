@@ -2,9 +2,8 @@ name: Search Console パフォーマンスデータの週次取得
 
 # Google Search Console API(Search Analytics: query)から、対象プロパティ
 # (https://fukuokapoker.com/)のクエリ別・ページ別パフォーマンス(クリック数・表示回数・
-# CTR・平均掲載順位)を直近28日分取得し、`data/search-console/<実行日(JST)>.json` と
-# 同ディレクトリのサマリー(Markdown)を毎回コミットする。詳細は tools/fetch-search-console.js
-# のヘッダコメントを参照。
+# CTR・平均掲載順位)を直近28日分取得し、`<実行日(JST)>.json` と同日付のサマリー(Markdown)を
+# 毎回コミットする。詳細は tools/fetch-search-console.js のヘッダコメントを参照。
 #
 # ★このデータは分析用(マーケティングのGEO/SEO監査)であり、サイト自体の表示には使わない。
 #   `data.js`(表示用データ)や、それを日次で書き換える import-waitinglist.yml /
@@ -12,10 +11,20 @@ name: Search Console パフォーマンスデータの週次取得
 #   そのため他ワークフローにあるような dry-run 切替・upsert・validate-data ゲートは無い
 #   (このワークフローは「新しい日付のファイルを1組増やす」だけで、既存ファイルを書き換えない)。
 #
-# 【認証】サービスアカウント鍵(JSON全体)をリポジトリシークレット GSC_SERVICE_ACCOUNT_KEY
-#   として登録し、環境変数でスクリプトに渡す。スクリプト側はメモリ上でJSONとして読み込むだけで、
-#   鍵の中身をディスクに書き出すことも、ログに出すこともしない
-#   (tools/fetch-search-console.js の loadCredentials() 参照)。
+# 【保存先(2026-09-29〜)】実測データ(検索クエリ・掲載順位等)を非公開化するため、このリポジトリ
+#   (Public)ではなく非公開リポジトリ `nattuuuzamiurai/fukuoka-poker-navi-private-data` の
+#   `data/search-console/` に保存する。`tools/fetch-search-console.js` 本体は変更しておらず、
+#   既存の `--out-dir` オプションで書き込み先を非公開リポジトリのチェックアウト先に向けているだけ。
+#
+# 【認証】
+#   - Search Console API: サービスアカウント鍵(JSON全体)をリポジトリシークレット
+#     GSC_SERVICE_ACCOUNT_KEY として登録し、環境変数でスクリプトに渡す。スクリプト側は
+#     メモリ上でJSONとして読み込むだけで、鍵の中身をディスクに書き出すことも、ログに出すこともしない
+#     (tools/fetch-search-console.js の loadCredentials() 参照)。
+#   - 非公開データリポジトリへの書き込み: デプロイキー(write権限、当該リポジトリ専用)を
+#     リポジトリシークレット PRIVATE_DATA_DEPLOY_KEY として登録し、`actions/checkout` の
+#     `ssh-key` に渡す(鍵はジョブ終了後に自動で破棄される)。このリポジトリ自体への
+#     書き込み権限は不要になったため、`permissions: contents:` は read で足りる。
 #
 # 【対象範囲外】このワークフローはコード(スクリプト自体)のみを自動デプロイ対象とする。
 #   Google Cloud側の設定(サービスアカウント・API有効化・GSCプロパティへの権限付与)は
@@ -30,7 +39,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 # 同時実行を防ぐ(手動実行と週次cronが重なって競合するのを避ける)
 concurrency:
@@ -43,10 +52,13 @@ jobs:
     steps:
       - name: リポジトリを取得
         uses: actions/checkout@v4
+
+      - name: 非公開データリポジトリを取得
+        uses: actions/checkout@v4
         with:
-          # 浅いクローンだと push 直前の `git pull --rebase` がマージベースを解決できないことがある
-          # (他ワークフロー: import-waitinglist.yml / import-texaspoker.yml と同じ理由)。
-          fetch-depth: 0
+          repository: nattuuuzamiurai/fukuoka-poker-navi-private-data
+          ssh-key: ${{ secrets.PRIVATE_DATA_DEPLOY_KEY }}
+          path: private-data
 
       - name: Node.js をセットアップ
         uses: actions/setup-node@v4
@@ -56,31 +68,17 @@ jobs:
       - name: Search Console からパフォーマンスデータを取得
         env:
           GSC_SERVICE_ACCOUNT_KEY: ${{ secrets.GSC_SERVICE_ACCOUNT_KEY }}
-        run: node tools/fetch-search-console.js
+        run: node tools/fetch-search-console.js --out-dir=private-data/data/search-console
 
-      - name: 差分があればコミット & プッシュ
+      - name: 差分があれば非公開データリポジトリにコミット & プッシュ
+        working-directory: private-data
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          committed=0
-          if test -n "$(git status --porcelain)"; then
-            git add -A
-            git commit -m "chore: Search Consoleパフォーマンスデータを取得 ($(TZ=Asia/Tokyo date +%Y-%m-%d))"
-            committed=1
-          else
-            echo "取得内容に差分なし(同日中の再実行など)。"
-          fi
-          # checkout から push までの間に main が進むと push が弾かれる。
-          # このジョブが書くのは data/search-console/ 配下の新しい日付ファイルだけなので、
-          # 他ジョブ(data.js 系)と行が衝突する可能性は実質無い。衝突したらジョブを失敗させて
-          # 人が気づけるようにする(他ワークフローと同じ方針)。
-          git pull --rebase
-          if test "$(git rev-list --count "@{u}..HEAD")" = "0"; then
-            echo "rebase で自分のコミットが空になりました(同じ内容が既に main にあります)。"
-            committed=0
-          fi
-          if test "$committed" = "0"; then
-            echo "差分なし。プッシュしません。"
+          if test -z "$(git status --porcelain)"; then
+            echo "取得内容に差分なし(同日中の再実行など)。プッシュしません。"
             exit 0
           fi
+          git add -A
+          git commit -m "chore: Search Consoleパフォーマンスデータを取得 ($(TZ=Asia/Tokyo date +%Y-%m-%d))"
           git push

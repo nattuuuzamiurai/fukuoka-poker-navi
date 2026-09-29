@@ -6,8 +6,8 @@ name: Instagram投稿の自動監視(Apify)
 #  tools/monitor-instagram-apify.js のコメント・README「対象店舗」参照)
 # 詳細は tools/monitor-instagram-apify.js のコメント参照。
 #
-# Apifyは正規の第三者スクレイピングサービス(pay-per-result)で、自社アカウントへのログイン・
-# 検知回避は行わない。そのためWaitinglist取込み(import-waitinglist.yml)と違い、確率抽選・
+# Apifyは正規の第三者スクレイピングサービス(pay-per-result)で、自社アカウントへのログインは
+# 行わない。そのためWaitinglist取込み(import-waitinglist.yml)と違い、確率抽選・
 # ランダム遅延・巡回ウィンドウのような複雑な設計は不要で、単純なcronにしてある。
 #
 # 【2026-08-05: 毎日1回 → 月末月初は毎日+期間外は週1 に変更(運営判断・費用削減)】

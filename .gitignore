@@ -9,3 +9,8 @@ __pycache__/
 # tools/fetch-photos.js が生成するホットペッパー グルメの店舗写真キャッシュ。
 # CIで(gen-venue-pages.js を呼ぶ各ワークフローの中で)毎回生成する成果物なのでコミットしない。
 data/photos.generated.json
+
+# .github/workflows/fetch-search-console.yml がCI上でこのディレクトリ名に
+# 非公開データリポジトリ(fukuoka-poker-navi-private-data)をチェックアウトする。
+# ローカルで同様の構成を試す場合に誤ってこのPublicリポジトリへコミットしないためのガード。
+private-data/
