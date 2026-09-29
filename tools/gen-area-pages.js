@@ -77,12 +77,12 @@ const SITE_BANNER_SECTION = siteBannerSection(SITE_BANNER);
 const FST_REG = BIG.bigEventById('fst');
 
 const AREA_CSS = `  .vp-sub{font-size:.9em;color:var(--mut);margin-bottom:14px}
-  h2.vp-sec{font-size:1.05em;font-weight:800;color:var(--felt);margin:26px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--gold)}
-  h3.vp-day{font-size:.95em;font-weight:800;color:var(--felt);margin:16px 0 7px}
+  h2.vp-sec{font-size:1.05em;font-weight:800;color:var(--txt);margin:26px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--gold)}
+  h3.vp-day{font-size:.95em;font-weight:800;color:var(--txt);margin:16px 0 7px}
   .vp-empty{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:18px 15px;font-size:.88em;color:var(--mut);text-align:center;line-height:1.9}
   .vp-tags{color:var(--mut);font-size:.9em}
   .vp-warn{color:var(--red);font-size:.9em;font-weight:700}
-  .vp-recur{display:inline-block;background:#eef3f1;border:1px solid var(--bor);color:var(--felt);font-size:.8em;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:5px}
+  .vp-recur{display:inline-block;background:#eef3f1;border:1px solid var(--bor);color:var(--txt);font-size:.8em;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:5px}
   /* 閉店の可能性がある店のバッジ(2026-09-13新設)。.vp-recur(オープン予定等・中立トーン)と
      同じ大きさ・出し方だが、注意を引くよう赤系にしている(preopenの逆方向)。 */
   .vp-closed-badge{display:inline-block;background:#fdecea;border:1px solid var(--red);color:var(--red);font-size:.8em;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:5px}
@@ -90,10 +90,10 @@ const AREA_CSS = `  .vp-sub{font-size:.9em;color:var(--mut);margin-bottom:14px}
   .ap-cards{display:grid;gap:10px;margin:4px 0 6px}
   .ap-card{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:12px 14px}
   .ap-card .nm{font-weight:800;font-size:.98em}
-  .ap-card .nm a{color:var(--felt);text-decoration:none}
+  .ap-card .nm a{color:var(--txt);text-decoration:none}
   .ap-card .mt{font-size:.84em;color:var(--mut);line-height:1.8;margin-top:3px}
   ul.vp-list{list-style:none;display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 6px}
-  ul.vp-list a{display:inline-block;background:var(--sur);border:1px solid var(--bor);border-radius:20px;padding:6px 13px;font-size:.85em;font-weight:700;color:var(--felt);text-decoration:none;box-shadow:var(--sha)}
+  ul.vp-list a{display:inline-block;background:var(--sur);border:1px solid var(--bor);border-radius:20px;padding:6px 13px;font-size:.85em;font-weight:700;color:var(--txt);text-decoration:none;box-shadow:var(--sha)}
 `;
 
 /**

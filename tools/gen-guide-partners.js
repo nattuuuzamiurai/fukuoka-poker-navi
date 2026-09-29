@@ -89,15 +89,17 @@ const PT_CSS = `  .pt-toc{list-style:none;margin:0 0 16px;padding:0;font-size:.8
   .pt-toc li::before{content:'▸';position:absolute;left:0;color:var(--gold)}
   .pt-toc a{color:#0e6a72;font-weight:700;text-decoration:none}
   .pt-toc a:hover{text-decoration:underline}
-  .pt-price{background:linear-gradient(135deg,var(--gold2),var(--gold));color:#3a2a06;border-radius:var(--r);padding:14px 16px;margin:10px 0 16px;font-weight:800;font-size:1.05em;box-shadow:var(--sha)}
+  /* 金の塗り+#3a2a06文字は--gold/--gold2を単一の落ち着いた金に統一したことで実測3.46:1まで
+     コントラストが落ちる(WCAG AA未達)。#170f01に暗くして4.5:1以上を確保する。 */
+  .pt-price{background:linear-gradient(135deg,var(--gold2),var(--gold));color:#170f01;border-radius:var(--r);padding:14px 16px;margin:10px 0 16px;font-weight:800;font-size:1.05em;box-shadow:var(--sha)}
   .pt-price small{display:block;font-weight:600;font-size:.72em;margin-top:4px;color:#5a4109}
   .pt-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin:8px 0 16px}
   .pt-card{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:13px 14px}
-  .pt-card h4{font-size:.92em;font-weight:800;color:var(--felt);margin-bottom:5px}
+  .pt-card h4{font-size:.92em;font-weight:800;color:var(--txt);margin-bottom:5px}
   .pt-card p{font-size:.85em;line-height:1.75;color:var(--txt)}
   .pt-badge{display:inline-block;background:#fbf1d8;border:1px solid #ecd9a6;color:#7a5711;font-size:.78em;font-weight:700;padding:2px 9px;border-radius:10px;margin-left:6px;vertical-align:middle}
   .pt-note{background:var(--sur);border:1px solid var(--bor);border-left:4px solid var(--gold);border-radius:10px;padding:13px 15px;margin:10px 0 16px;font-size:.88em;line-height:1.8;color:var(--txt)}
-  .pt-note b{color:var(--felt)}
+  .pt-note b{color:var(--txt)}
   /* ---- 比較表(table.compare) ----
      列幅がコンテンツ量でぶれて崩れて見えないよう、先頭列に width:44% を明示している。
      配色は新しい色を増やさず、サイトで既に使っている値を再利用する
@@ -105,10 +107,10 @@ const PT_CSS = `  .pt-toc{list-style:none;margin:0 0 16px;padding:0;font-size:.8
   table.compare{border-collapse:collapse;width:100%;margin-top:10px;font-size:.86em;background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);overflow:hidden;box-shadow:var(--sha)}
   table.compare th,table.compare td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--bor);vertical-align:top}
   table.compare tr:last-child td{border-bottom:none}
-  table.compare thead th{background:#eef3f1;color:var(--felt);font-weight:800;font-size:.85em}
-  table.compare td.yes{color:var(--felt);font-weight:800}
+  table.compare thead th{background:#eef3f1;color:var(--txt);font-weight:800;font-size:.85em}
+  table.compare td.yes{color:var(--txt);font-weight:800}
   table.compare td.pr{background:#eef3f1}
-  table.compare th.pr{background:#eef3f1;color:var(--felt)}
+  table.compare th.pr{background:#eef3f1;color:var(--txt)}
   /* ---- 画面イメージ(受付/来店中/会計/経営ダッシュボード/マイページ/フロアマップ/同卓プレイヤー情報) ----
      カード高さを flex:1 で強制的に揃える実装は採用しない。.mini-floor は aspect-ratio で
      高さを決めており、flex:1によるグリッド高さ揃えに依存すると縦横比が崩れるため、
@@ -118,14 +120,14 @@ const PT_CSS = `  .pt-toc{list-style:none;margin:0 0 16px;padding:0;font-size:.8
      空きトラックを畳んで1frのカードに幅を回す)。3枚以上のギャラリーでは挙動は変わらない。 */
   .preview-gallery{margin-top:10px;display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;align-items:start}
   figure.preview{margin:0}
-  figure.preview figcaption{font-size:.82em;font-weight:800;color:var(--felt);margin-bottom:8px}
+  figure.preview figcaption{font-size:.82em;font-weight:800;color:var(--txt);margin-bottom:8px}
   figure.preview figcaption span{display:block;font-weight:600;color:var(--mut);font-size:.78em;margin-top:1px}
   .device{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:13px;display:flex;flex-direction:column;gap:9px}
   .app-header{display:flex;justify-content:space-between;align-items:baseline;padding-bottom:8px;border-bottom:1px solid var(--bor);font-size:.72em;color:var(--mut)}
   .app-header b{color:var(--txt);font-size:.9em}
   .stat-mini-row{display:flex;flex-wrap:wrap;gap:6px}
   .stat-mini{flex:1 1 70px;min-width:0;background:#eef3f1;border-radius:8px;padding:8px 6px;text-align:center}
-  .stat-mini .v{font-weight:800;font-size:.95em;color:var(--felt);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+  .stat-mini .v{font-weight:800;font-size:.95em;color:var(--txt);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
   .stat-mini .l{font-size:.66em;color:var(--mut);margin-top:1px;overflow-wrap:anywhere}
   .visit-row{display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px dashed var(--bor);font-size:.76em}
   .visit-row:last-child{border-bottom:none}
@@ -133,7 +135,7 @@ const PT_CSS = `  .pt-toc{list-style:none;margin:0 0 16px;padding:0;font-size:.8
   .visit-row .n{flex:1}
   .tag-mini{font-size:.68em;padding:2px 7px;border-radius:999px;font-weight:800}
   .tag-mini.new{background:#fbf1d8;color:#7a5711}
-  .tag-mini.rep{background:#eef3f1;color:var(--felt)}
+  .tag-mini.rep{background:#eef3f1;color:var(--txt)}
   .guest-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px dashed var(--bor);font-size:.78em}
   .guest-row:last-child{border-bottom:none}
   .guest-row .n{flex:1;font-weight:700}
@@ -147,10 +149,10 @@ const PT_CSS = `  .pt-toc{list-style:none;margin:0 0 16px;padding:0;font-size:.8
   .mini-bars{display:flex;align-items:flex-end;gap:5px;height:74px;padding:0 2px}
   .mini-bar-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;height:100%}
   .mini-bar-col .bar{width:100%;border-radius:3px 3px 2px 2px;background:#eef3f1}
-  .mini-bar-col.today .bar{background:var(--felt)}
+  .mini-bar-col.today .bar{background:var(--gold)}
   .mini-bar-col .bl{font-size:.62em;color:var(--mut)}
   .mini-bar-col .bv{font-size:.66em;color:var(--mut);font-variant-numeric:tabular-nums}
-  .mini-bar-col.today .bv{color:var(--felt);font-weight:800}
+  .mini-bar-col.today .bv{color:var(--gold-ink);font-weight:800}
   .seg-chip-row{display:flex;flex-wrap:wrap;gap:6px}
   .seg-chip{font-size:.74em;background:#eef3f1;border:1px solid var(--bor);border-radius:999px;padding:5px 11px;color:var(--txt)}
   .guest-card{display:flex;flex-direction:column;gap:8px}
@@ -163,10 +165,12 @@ const PT_CSS = `  .pt-toc{list-style:none;margin:0 0 16px;padding:0;font-size:.8
   /* フロアマップ: aspect-ratio で高さを固定し、中の座席・テーブル・ディーラー表示はすべて
      絶対配置にする(親のflex/gridの高さ揃えに依存させない。上記コメント参照)。 */
   .mini-floor{position:relative;width:100%;aspect-ratio:4/3;overflow:hidden;background:var(--bg);border:1px dashed var(--bor);border-radius:10px}
-  .mini-table{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);width:64%;height:46%;border:2px solid var(--felt);border-radius:50%;background:var(--sur);display:flex;align-items:center;justify-content:center;font-size:.62em;font-weight:800;color:var(--mut)}
-  .mini-dealer{position:absolute;left:50%;top:10%;transform:translate(-50%,-50%);width:30px;height:16px;border-radius:4px;background:var(--felt);color:#fff;font-size:.56em;font-weight:800;display:flex;align-items:center;justify-content:center}
+  /* リング卓(felt系)はトーナメント卓(下の.tourney系、金)と区別できるよう地の文色(ink)にする
+     (--feltが--bgと同値になったため、テーブル illustration の輪郭色として使えない)。 */
+  .mini-table{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);width:64%;height:46%;border:2px solid var(--txt);border-radius:50%;background:var(--sur);display:flex;align-items:center;justify-content:center;font-size:.62em;font-weight:800;color:var(--mut)}
+  .mini-dealer{position:absolute;left:50%;top:10%;transform:translate(-50%,-50%);width:30px;height:16px;border-radius:4px;background:var(--txt);color:#fff;font-size:.56em;font-weight:800;display:flex;align-items:center;justify-content:center}
   .mini-seat{position:absolute;width:26px;height:26px;border-radius:50%;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;font-size:.56em;font-weight:800;letter-spacing:-.03em;border:2px solid var(--bor);background:var(--sur);color:var(--mut)}
-  .mini-seat.filled{background:#eef3f1;border-color:var(--felt);color:var(--felt)}
+  .mini-seat.filled{background:#eef3f1;border-color:var(--txt);color:var(--txt)}
   /* トーナメント卓のフロアマップは、リング卓(felt系)と区別できるようゴールド系にする。 */
   .mini-seat.filled.tourney{background:#fbf1d8;border-color:var(--gold);color:#7a5711}
   .mini-table.tourney{border-color:var(--gold)}
