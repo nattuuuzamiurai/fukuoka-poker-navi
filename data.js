@@ -10655,6 +10655,22 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01M3P6HY984MKDJ1XXWG7XZCGA",
+    "venueId": "v22",
+    "name": "【10枚保証】魂サテライトフリーロール",
+    "date": "2026-09-30",
+    "start": "19:00",
+    "buyin": 0,
+    "addon": 1000,
+    "stack": 20000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "wl-01M3E7MZS1E75XW2K5X62G8Y7X",
     "venueId": "v22",
     "name": "深夜のトナメ",
@@ -10663,6 +10679,22 @@ const TOURNAMENTS = [
     "buyin": 5000,
     "addon": 5000,
     "stack": 30000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3P6N4HJHGNBAGHWZYRJ1D86",
+    "venueId": "v22",
+    "name": "【10枚保証】魂サテライトフリーロール",
+    "date": "2026-10-01",
+    "start": "19:00",
+    "buyin": 0,
+    "addon": 1000,
+    "stack": 20000,
     "guarantee": null,
     "reentry": true,
     "prize": null,
@@ -10695,6 +10727,38 @@ const TOURNAMENTS = [
     "buyin": 10000,
     "addon": 10000,
     "stack": 40000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3P6PVD79PWHB4RTBZXGZC93",
+    "venueId": "v22",
+    "name": "深夜のトナメSS",
+    "date": "2026-10-03",
+    "start": "23:30",
+    "buyin": 10000,
+    "addon": 10000,
+    "stack": 40000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3P6SAJAJXR4Q6EJX2EB30FM",
+    "venueId": "v22",
+    "name": "魂Day1-D",
+    "date": "2026-10-04",
+    "start": "12:00",
+    "buyin": 0,
+    "addon": null,
+    "stack": 20000,
     "guarantee": null,
     "reentry": true,
     "prize": null,
@@ -12939,6 +13003,24 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01M3NW58FG9CJJ8RFFS7G6XNXP",
+    "venueId": "v27",
+    "name": "DOJO FREEZOUT",
+    "date": "2026-10-01",
+    "start": "19:00",
+    "buyin": 4000,
+    "addon": null,
+    "stack": 50000,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "wl-01M1K7AQSXQGQ049YFWTJ44XHD",
     "venueId": "v27",
     "name": "ヘッズアップ〜DOJO破り〜",
@@ -12953,6 +13035,22 @@ const TOURNAMENTS = [
     "tags": [
       "ターボ"
     ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NY4BTQ0KQ3SPDTGH0Z9RFV",
+    "venueId": "v27",
+    "name": "Poker魂 DAY1 in DOJO",
+    "date": "2026-10-02",
+    "start": "19:00",
+    "buyin": 2000,
+    "addon": null,
+    "stack": 20000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
     "source": "auto",
     "verified": false
   },
@@ -12975,10 +13073,734 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01M3NY5QQ0X48HR8V2NHKKAX09",
+    "venueId": "v27",
+    "name": "Poker魂 DAY1 in DOJO",
+    "date": "2026-10-03",
+    "start": "17:00",
+    "buyin": 2000,
+    "addon": null,
+    "stack": 20000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "wl-01M1K7AQSXWE5Q4138KWJ2BX6V",
     "venueId": "v27",
     "name": "ヘッズアップ〜DOJO破り〜",
     "date": "2026-10-04",
+    "start": "12:00",
+    "buyin": 5000,
+    "addon": null,
+    "stack": 15000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NYKXW9T1DEKV141N9VJDYG",
+    "venueId": "v27",
+    "name": "モンスターディープスタック",
+    "date": "2026-10-04",
+    "start": "13:00",
+    "buyin": 5000,
+    "addon": null,
+    "stack": 100000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NTZ485Y4NXVRZVVFPT81TV",
+    "venueId": "v27",
+    "name": "ヘッズアップ〜DOJO破り〜",
+    "date": "2026-10-05",
+    "start": "12:00",
+    "buyin": 5000,
+    "addon": null,
+    "stack": 15000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NYP9284GFFJK66Q6W4HW4C",
+    "venueId": "v27",
+    "name": "DOJO TOURNAMENT 1000",
+    "date": "2026-10-05",
+    "start": "19:00",
+    "buyin": 1000,
+    "addon": 1000,
+    "stack": 20000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NTZ48XGR3PH7BMEYFMYTMG",
+    "venueId": "v27",
+    "name": "ヘッズアップ〜DOJO破り〜",
+    "date": "2026-10-06",
+    "start": "12:00",
+    "buyin": 5000,
+    "addon": null,
+    "stack": 15000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NYQMWBY4R518SKX5FPY2M9",
+    "venueId": "v27",
+    "name": "ミステリーバウンティ",
+    "date": "2026-10-06",
+    "start": "19:00",
+    "buyin": 4000,
+    "addon": 4000,
+    "stack": 30000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NTZ48X743KQCG3XEHC97YF",
+    "venueId": "v27",
+    "name": "ヘッズアップ〜DOJO破り〜",
+    "date": "2026-10-07",
+    "start": "12:00",
+    "buyin": 5000,
+    "addon": null,
+    "stack": 15000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NTZ48XNQJ78QFBTYVC2RXN",
+    "venueId": "v27",
+    "name": "ヘッズアップ〜DOJO破り〜",
+    "date": "2026-10-08",
+    "start": "12:00",
+    "buyin": 5000,
+    "addon": null,
+    "stack": 15000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NX4NSYJ0AR726Z71SE7Z70",
+    "venueId": "v27",
+    "name": "DOJO FREEZOUT",
+    "date": "2026-10-08",
+    "start": "19:00",
+    "buyin": 4000,
+    "addon": null,
+    "stack": 50000,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NTZ48XBBA2QFPZK489SJZP",
+    "venueId": "v27",
+    "name": "ヘッズアップ〜DOJO破り〜",
+    "date": "2026-10-09",
+    "start": "12:00",
+    "buyin": 5000,
+    "addon": null,
+    "stack": 15000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NTZ48X29WPQJHZTF6XS276",
+    "venueId": "v27",
+    "name": "ヘッズアップ〜DOJO破り〜",
+    "date": "2026-10-10",
+    "start": "12:00",
+    "buyin": 5000,
+    "addon": null,
+    "stack": 15000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NTZ48XTH27TDS9EJMZZWFK",
+    "venueId": "v27",
+    "name": "ヘッズアップ〜DOJO破り〜",
+    "date": "2026-10-11",
+    "start": "12:00",
+    "buyin": 5000,
+    "addon": null,
+    "stack": 15000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NTZ48XDE2YKJNMHW5BSMQ2",
+    "venueId": "v27",
+    "name": "ヘッズアップ〜DOJO破り〜",
+    "date": "2026-10-12",
+    "start": "12:00",
+    "buyin": 5000,
+    "addon": null,
+    "stack": 15000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NTZ48X4FY36XN93733NDR1",
+    "venueId": "v27",
+    "name": "ヘッズアップ〜DOJO破り〜",
+    "date": "2026-10-13",
+    "start": "12:00",
+    "buyin": 5000,
+    "addon": null,
+    "stack": 15000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NYQMWZGT4Y9FFEPW7MYM9J",
+    "venueId": "v27",
+    "name": "ミステリーバウンティ",
+    "date": "2026-10-13",
+    "start": "19:00",
+    "buyin": 4000,
+    "addon": 4000,
+    "stack": 30000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NTZ48X18C1BVSQZZA0P7XG",
+    "venueId": "v27",
+    "name": "ヘッズアップ〜DOJO破り〜",
+    "date": "2026-10-14",
+    "start": "12:00",
+    "buyin": 5000,
+    "addon": null,
+    "stack": 15000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NTZ48XNVQ2J2MPWM5TQ059",
+    "venueId": "v27",
+    "name": "ヘッズアップ〜DOJO破り〜",
+    "date": "2026-10-15",
+    "start": "12:00",
+    "buyin": 5000,
+    "addon": null,
+    "stack": 15000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NX4NTQJJ7FF5GAS07MWXVW",
+    "venueId": "v27",
+    "name": "DOJO FREEZOUT",
+    "date": "2026-10-15",
+    "start": "19:00",
+    "buyin": 4000,
+    "addon": null,
+    "stack": 50000,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NTZ48XTT8DCPQAEYSZVG47",
+    "venueId": "v27",
+    "name": "ヘッズアップ〜DOJO破り〜",
+    "date": "2026-10-16",
+    "start": "12:00",
+    "buyin": 5000,
+    "addon": null,
+    "stack": 15000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NTZ48XCR3YFJEPN4VK54DK",
+    "venueId": "v27",
+    "name": "ヘッズアップ〜DOJO破り〜",
+    "date": "2026-10-17",
+    "start": "12:00",
+    "buyin": 5000,
+    "addon": null,
+    "stack": 15000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NTZ48X135311MGF5A5VV3K",
+    "venueId": "v27",
+    "name": "ヘッズアップ〜DOJO破り〜",
+    "date": "2026-10-18",
+    "start": "12:00",
+    "buyin": 5000,
+    "addon": null,
+    "stack": 15000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NTZ48X3ZQHRFS19JZ7MSSA",
+    "venueId": "v27",
+    "name": "ヘッズアップ〜DOJO破り〜",
+    "date": "2026-10-19",
+    "start": "12:00",
+    "buyin": 5000,
+    "addon": null,
+    "stack": 15000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NTZ48XJK5VFT8XZQEDN2ZK",
+    "venueId": "v27",
+    "name": "ヘッズアップ〜DOJO破り〜",
+    "date": "2026-10-20",
+    "start": "12:00",
+    "buyin": 5000,
+    "addon": null,
+    "stack": 15000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NYQMWZQAQAFYKS075GS739",
+    "venueId": "v27",
+    "name": "ミステリーバウンティ",
+    "date": "2026-10-20",
+    "start": "19:00",
+    "buyin": 4000,
+    "addon": 4000,
+    "stack": 30000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NTZ48XVVGXGBYB55NF9J47",
+    "venueId": "v27",
+    "name": "ヘッズアップ〜DOJO破り〜",
+    "date": "2026-10-21",
+    "start": "12:00",
+    "buyin": 5000,
+    "addon": null,
+    "stack": 15000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NTZ48XV1BC63GTYRDX8R54",
+    "venueId": "v27",
+    "name": "ヘッズアップ〜DOJO破り〜",
+    "date": "2026-10-22",
+    "start": "12:00",
+    "buyin": 5000,
+    "addon": null,
+    "stack": 15000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NX4NTQRPZRY69XZJXBNGXN",
+    "venueId": "v27",
+    "name": "DOJO FREEZOUT",
+    "date": "2026-10-22",
+    "start": "19:00",
+    "buyin": 4000,
+    "addon": null,
+    "stack": 50000,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NTZ48XF2XATBD47WKTSKEH",
+    "venueId": "v27",
+    "name": "ヘッズアップ〜DOJO破り〜",
+    "date": "2026-10-23",
+    "start": "12:00",
+    "buyin": 5000,
+    "addon": null,
+    "stack": 15000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NTZ48XZETC299F733RXQ5N",
+    "venueId": "v27",
+    "name": "ヘッズアップ〜DOJO破り〜",
+    "date": "2026-10-24",
+    "start": "12:00",
+    "buyin": 5000,
+    "addon": null,
+    "stack": 15000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NTZ48X9Z96T2SY7CFX0P0X",
+    "venueId": "v27",
+    "name": "ヘッズアップ〜DOJO破り〜",
+    "date": "2026-10-25",
+    "start": "12:00",
+    "buyin": 5000,
+    "addon": null,
+    "stack": 15000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NTZ48XESEESM9E4BKCGV43",
+    "venueId": "v27",
+    "name": "ヘッズアップ〜DOJO破り〜",
+    "date": "2026-10-26",
+    "start": "12:00",
+    "buyin": 5000,
+    "addon": null,
+    "stack": 15000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NTZ48XJH26MEVPYTK1C33A",
+    "venueId": "v27",
+    "name": "ヘッズアップ〜DOJO破り〜",
+    "date": "2026-10-27",
+    "start": "12:00",
+    "buyin": 5000,
+    "addon": null,
+    "stack": 15000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NYQMWZBDHA2V9JPGS47MJH",
+    "venueId": "v27",
+    "name": "ミステリーバウンティ",
+    "date": "2026-10-27",
+    "start": "19:00",
+    "buyin": 4000,
+    "addon": 4000,
+    "stack": 30000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NTZ48XF7YK76MMH5DF9464",
+    "venueId": "v27",
+    "name": "ヘッズアップ〜DOJO破り〜",
+    "date": "2026-10-28",
+    "start": "12:00",
+    "buyin": 5000,
+    "addon": null,
+    "stack": 15000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NTZ48XMX43772ZME77HVZM",
+    "venueId": "v27",
+    "name": "ヘッズアップ〜DOJO破り〜",
+    "date": "2026-10-29",
+    "start": "12:00",
+    "buyin": 5000,
+    "addon": null,
+    "stack": 15000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NX5R5E773H5SZ8RY647HJ0",
+    "venueId": "v27",
+    "name": "DOJO FREEZOUT",
+    "date": "2026-10-29",
+    "start": "19:00",
+    "buyin": 4000,
+    "addon": null,
+    "stack": 50000,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NTZ48X6DCPC3SQBKWRKGN9",
+    "venueId": "v27",
+    "name": "ヘッズアップ〜DOJO破り〜",
+    "date": "2026-10-30",
+    "start": "12:00",
+    "buyin": 5000,
+    "addon": null,
+    "stack": 15000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NTZ48X8JXBMHVBD9GXWXYE",
+    "venueId": "v27",
+    "name": "ヘッズアップ〜DOJO破り〜",
+    "date": "2026-10-31",
+    "start": "12:00",
+    "buyin": 5000,
+    "addon": null,
+    "stack": 15000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NTZ48X1XR10P87TD8Z3X1N",
+    "venueId": "v27",
+    "name": "ヘッズアップ〜DOJO破り〜",
+    "date": "2026-11-01",
+    "start": "12:00",
+    "buyin": 5000,
+    "addon": null,
+    "stack": 15000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NTZ48X7M11E5YE4SPMG5H3",
+    "venueId": "v27",
+    "name": "ヘッズアップ〜DOJO破り〜",
+    "date": "2026-11-02",
+    "start": "12:00",
+    "buyin": 5000,
+    "addon": null,
+    "stack": 15000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M3NTZ48X296G98YTEG0YDYP9",
+    "venueId": "v27",
+    "name": "ヘッズアップ〜DOJO破り〜",
+    "date": "2026-11-03",
     "start": "12:00",
     "buyin": 5000,
     "addon": null,
