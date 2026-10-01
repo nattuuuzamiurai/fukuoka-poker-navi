@@ -2,22 +2,6 @@
   "version": 1,
   "writtenBy": "tools/import-waitinglist.js",
   "entries": {
-    "wl-01KZTSYPAF05S1A61AKQ674G4F": {
-      "id": "wl-01KZTSYPAF05S1A61AKQ674G4F",
-      "venueId": "v3",
-      "name": "【3.5K 飲み放題！】m Booze up",
-      "date": "2026-09-30",
-      "start": "18:00",
-      "buyin": 3500,
-      "addon": 1500,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01KZTSYPAFVRY6HJS41GTAZM35": {
       "id": "wl-01KZTSYPAFVRY6HJS41GTAZM35",
       "venueId": "v3",
@@ -39,24 +23,6 @@
       "venueId": "v27",
       "name": "ヘッズアップ〜DOJO破り〜",
       "date": "2026-10-03",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M1K7AQSX8GDZ86FBB0PJ9DBD": {
-      "id": "wl-01M1K7AQSX8GDZ86FBB0PJ9DBD",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-09-30",
       "start": "12:00",
       "buyin": 5000,
       "addon": null,
@@ -414,24 +380,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M369W6M2MKHAX7MR86Z5YTK6": {
-      "id": "wl-01M369W6M2MKHAX7MR86Z5YTK6",
-      "venueId": "v3",
-      "name": "m MAD shuffle Turbo",
-      "date": "2026-09-30",
-      "start": "21:00",
-      "buyin": 2000,
-      "addon": 1000,
-      "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M36A589QJT857H25PD9ZJNWK": {
       "id": "wl-01M36A589QJT857H25PD9ZJNWK",
       "venueId": "v3",
@@ -703,22 +651,6 @@
       "buyin": 10000,
       "addon": 10000,
       "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M3E7MZS1E75XW2K5X62G8Y7X": {
-      "id": "wl-01M3E7MZS1E75XW2K5X62G8Y7X",
-      "venueId": "v22",
-      "name": "深夜のトナメ",
-      "date": "2026-09-30",
-      "start": "23:30",
-      "buyin": 5000,
-      "addon": 5000,
-      "stack": 30000,
       "guarantee": null,
       "reentry": true,
       "prize": null,
@@ -1493,22 +1425,6 @@
       "buyin": 4000,
       "addon": 4000,
       "stack": 30000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M3P6HY984MKDJ1XXWG7XZCGA": {
-      "id": "wl-01M3P6HY984MKDJ1XXWG7XZCGA",
-      "venueId": "v22",
-      "name": "【10枚保証】魂サテライトフリーロール",
-      "date": "2026-09-30",
-      "start": "19:00",
-      "buyin": 0,
-      "addon": 1000,
-      "stack": 20000,
       "guarantee": null,
       "reentry": true,
       "prize": null,
