@@ -2,24 +2,6 @@
   "version": 1,
   "writtenBy": "tools/monitor-instagram-apify.js",
   "entries": {
-    "ig-v18-2026-09-30-nostart-free-roll": {
-      "id": "ig-v18-2026-09-30-nostart-free-roll",
-      "venueId": "v18",
-      "name": "FREE ROLL",
-      "date": "2026-09-30",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "フリーロール"
-      ],
-      "source": "semi",
-      "verified": false
-    },
     "ig-v20-2026-10-01-nostart-c-entry-tourney": {
       "id": "ig-v20-2026-10-01-nostart-c-entry-tourney",
       "venueId": "v20",
