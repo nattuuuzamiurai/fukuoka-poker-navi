@@ -36,24 +36,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M1K7AQSXJM7G78PAWR4YA5E3": {
-      "id": "wl-01M1K7AQSXJM7G78PAWR4YA5E3",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-10-01",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M1K7AQSXQGQ049YFWTJ44XHD": {
       "id": "wl-01M1K7AQSXQGQ049YFWTJ44XHD",
       "venueId": "v27",
@@ -124,22 +106,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M1VEJGW4JFQ0CQ2GYFV4VE3P": {
-      "id": "wl-01M1VEJGW4JFQ0CQ2GYFV4VE3P",
-      "venueId": "v19",
-      "name": "FREEZE OUT TOURNAMENT",
-      "date": "2026-10-01",
-      "start": "18:30",
-      "buyin": 3000,
-      "addon": null,
-      "stack": 30000,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M1VEJGW4P2ECPGZDWFD46201": {
       "id": "wl-01M1VEJGW4P2ECPGZDWFD46201",
       "venueId": "v19",
@@ -165,22 +131,6 @@
       "buyin": 3000,
       "addon": null,
       "stack": 30000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M367PQ888T0D5FY3JK2F5JCH": {
-      "id": "wl-01M367PQ888T0D5FY3JK2F5JCH",
-      "venueId": "v3",
-      "name": "m LIVE LEAGUE season1",
-      "date": "2026-10-01",
-      "start": "18:00",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
       "guarantee": null,
       "reentry": true,
       "prize": null,
@@ -540,22 +490,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M3DTKJ7TSPY7KB0VZ6HMA2ZW": {
-      "id": "wl-01M3DTKJ7TSPY7KB0VZ6HMA2ZW",
-      "venueId": "v3",
-      "name": "m WTB Turbo",
-      "date": "2026-10-01",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": 1000,
-      "stack": 30000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M3DTQVWX8CDT2V0CN0GTQ98Y": {
       "id": "wl-01M3DTQVWX8CDT2V0CN0GTQ98Y",
       "venueId": "v3",
@@ -651,22 +585,6 @@
       "buyin": 10000,
       "addon": 10000,
       "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M3EANW1F6DHBG9SXRBVJD2C4": {
-      "id": "wl-01M3EANW1F6DHBG9SXRBVJD2C4",
-      "venueId": "v22",
-      "name": "深夜のトナメ",
-      "date": "2026-10-01",
-      "start": "23:30",
-      "buyin": 5000,
-      "addon": 5000,
-      "stack": 30000,
       "guarantee": null,
       "reentry": true,
       "prize": null,
@@ -1214,24 +1132,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M3NW58FG9CJJ8RFFS7G6XNXP": {
-      "id": "wl-01M3NW58FG9CJJ8RFFS7G6XNXP",
-      "venueId": "v27",
-      "name": "DOJO FREEZOUT",
-      "date": "2026-10-01",
-      "start": "19:00",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 50000,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M3NX4NSYJ0AR726Z71SE7Z70": {
       "id": "wl-01M3NX4NSYJ0AR726Z71SE7Z70",
       "venueId": "v27",
@@ -1425,22 +1325,6 @@
       "buyin": 4000,
       "addon": 4000,
       "stack": 30000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M3P6N4HJHGNBAGHWZYRJ1D86": {
-      "id": "wl-01M3P6N4HJHGNBAGHWZYRJ1D86",
-      "venueId": "v22",
-      "name": "【10枚保証】魂サテライトフリーロール",
-      "date": "2026-10-01",
-      "start": "19:00",
-      "buyin": 0,
-      "addon": 1000,
-      "stack": 20000,
       "guarantee": null,
       "reentry": true,
       "prize": null,
