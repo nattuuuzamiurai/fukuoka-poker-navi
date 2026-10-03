@@ -2,24 +2,6 @@
   "version": 1,
   "writtenBy": "tools/monitor-instagram-apify.js",
   "entries": {
-    "ig-v18-2026-10-02-1900-post": {
-      "id": "ig-v18-2026-10-02-1900-post",
-      "venueId": "v18",
-      "name": "大還元フリロ",
-      "date": "2026-10-02",
-      "start": "19:00",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "フリーロール"
-      ],
-      "source": "semi",
-      "verified": false
-    },
     "ig-v18-2026-10-03-1900-boss-bd": {
       "id": "ig-v18-2026-10-03-1900-boss-bd",
       "venueId": "v18",
@@ -726,24 +708,6 @@
       "source": "semi",
       "verified": false
     },
-    "ig-v35-2026-10-02-1915-free-roll": {
-      "id": "ig-v35-2026-10-02-1915-free-roll",
-      "venueId": "v35",
-      "name": "FREE ROLL",
-      "date": "2026-10-02",
-      "start": "19:15",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "フリーロール"
-      ],
-      "source": "semi",
-      "verified": false
-    },
     "ig-v35-2026-10-03-1500-e-tournament": {
       "id": "ig-v35-2026-10-03-1500-e-tournament",
       "venueId": "v35",
@@ -1229,22 +1193,6 @@
       "stack": null,
       "guarantee": null,
       "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v40-2026-10-02-nostart-5": {
-      "id": "ig-v40-2026-10-02-nostart-5",
-      "venueId": "v40",
-      "name": "小島5周年サンクス杯",
-      "date": "2026-10-02",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
       "prize": null,
       "tags": [],
       "source": "semi",
