@@ -13813,6 +13813,22 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01M3XN30X6Z49ZENHNTM37RG5B",
+    "venueId": "v27",
+    "name": "DOJO LEAGUE 第1節　NLH",
+    "date": "2026-10-03",
+    "start": "14:00",
+    "buyin": 3000,
+    "addon": null,
+    "stack": 30000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "wl-01M3NY5QQ0X48HR8V2NHKKAX09",
     "venueId": "v27",
     "name": "Poker魂 DAY1 in DOJO",
