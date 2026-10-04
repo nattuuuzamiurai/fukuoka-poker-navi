@@ -2,24 +2,6 @@
   "version": 1,
   "writtenBy": "tools/monitor-instagram-apify.js",
   "entries": {
-    "ig-v18-2026-10-03-1900-boss-bd": {
-      "id": "ig-v18-2026-10-03-1900-boss-bd",
-      "venueId": "v18",
-      "name": "BOSS BDトナメ",
-      "date": "2026-10-03",
-      "start": "19:00",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "バウンティ"
-      ],
-      "source": "semi",
-      "verified": false
-    },
     "ig-v18-2026-10-05-1900-deep-stuck": {
       "id": "ig-v18-2026-10-05-1900-deep-stuck",
       "venueId": "v18",
@@ -410,24 +392,6 @@
       "source": "semi",
       "verified": false
     },
-    "ig-v20-2026-10-03-nostart-deep-stack": {
-      "id": "ig-v20-2026-10-03-nostart-deep-stack",
-      "venueId": "v20",
-      "name": "DEEP STACK",
-      "date": "2026-10-03",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "semi",
-      "verified": false
-    },
     "ig-v20-2026-10-06-nostart-post": {
       "id": "ig-v20-2026-10-06-nostart-post",
       "venueId": "v20",
@@ -705,22 +669,6 @@
       "tags": [
         "ディープ"
       ],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v35-2026-10-03-1500-e-tournament": {
-      "id": "ig-v35-2026-10-03-1500-e-tournament",
-      "venueId": "v35",
-      "name": "初心者E無料 TOURNAMENT",
-      "date": "2026-10-03",
-      "start": "15:00",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
       "source": "semi",
       "verified": false
     },
