@@ -18,24 +18,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M1K7AQSXWE5Q4138KWJ2BX6V": {
-      "id": "wl-01M1K7AQSXWE5Q4138KWJ2BX6V",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-10-04",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M1VEJGW4146RRFP3P8WXK9PN": {
       "id": "wl-01M1VEJGW4146RRFP3P8WXK9PN",
       "venueId": "v19",
@@ -362,58 +344,6 @@
       "prize": null,
       "tags": [
         "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M3DTT3SZ5550WKSDT3CR680J": {
-      "id": "wl-01M3DTT3SZ5550WKSDT3CR680J",
-      "venueId": "v3",
-      "name": "m LIVE LEAGUE season1",
-      "date": "2026-10-04",
-      "start": "13:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 60000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M3DTYKMAFSTRTSH1SF1DP4V2": {
-      "id": "wl-01M3DTYKMAFSTRTSH1SF1DP4V2",
-      "venueId": "v3",
-      "name": "m FT Bounty",
-      "date": "2026-10-04",
-      "start": "18:00",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M3DV1TZPFVJFAGYZGVC1CJWR": {
-      "id": "wl-01M3DV1TZPFVJFAGYZGVC1CJWR",
-      "venueId": "v3",
-      "name": "m DICE Poker Turbo",
-      "date": "2026-10-04",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": 1000,
-      "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
       ],
       "source": "auto",
       "verified": false
@@ -1046,22 +976,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M3NYKXW9T1DEKV141N9VJDYG": {
-      "id": "wl-01M3NYKXW9T1DEKV141N9VJDYG",
-      "venueId": "v27",
-      "name": "モンスターディープスタック",
-      "date": "2026-10-04",
-      "start": "13:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 100000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M3NYP9284GFFJK66Q6W4HW4C": {
       "id": "wl-01M3NYP9284GFFJK66Q6W4HW4C",
       "venueId": "v27",
@@ -1135,22 +1049,6 @@
       "buyin": 4000,
       "addon": 4000,
       "stack": 30000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M3P6SAJAJXR4Q6EJX2EB30FM": {
-      "id": "wl-01M3P6SAJAJXR4Q6EJX2EB30FM",
-      "venueId": "v22",
-      "name": "魂Day1-D",
-      "date": "2026-10-04",
-      "start": "12:00",
-      "buyin": 0,
-      "addon": null,
-      "stack": 20000,
       "guarantee": null,
       "reentry": true,
       "prize": null,
@@ -2085,6 +1983,78 @@
       "reentry": true,
       "prize": null,
       "tags": [],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M42V5W04766SG6D55GRPQWPW": {
+      "id": "wl-01M42V5W04766SG6D55GRPQWPW",
+      "venueId": "v19",
+      "name": "2000 Turbo",
+      "date": "2026-10-11",
+      "start": "16:10",
+      "buyin": 2000,
+      "addon": 1000,
+      "stack": 30000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ターボ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M42V5W04AV0GKVWDA8X23E7N": {
+      "id": "wl-01M42V5W04AV0GKVWDA8X23E7N",
+      "venueId": "v19",
+      "name": "2000 Turbo",
+      "date": "2026-11-01",
+      "start": "16:10",
+      "buyin": 2000,
+      "addon": 1000,
+      "stack": 30000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ターボ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M42V5W04QBVPYB9QY7WXVKJZ": {
+      "id": "wl-01M42V5W04QBVPYB9QY7WXVKJZ",
+      "venueId": "v19",
+      "name": "2000 Turbo",
+      "date": "2026-10-18",
+      "start": "16:10",
+      "buyin": 2000,
+      "addon": 1000,
+      "stack": 30000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ターボ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M42V5W04SGSFZA258QPN557M": {
+      "id": "wl-01M42V5W04SGSFZA258QPN557M",
+      "venueId": "v19",
+      "name": "2000 Turbo",
+      "date": "2026-10-25",
+      "start": "16:10",
+      "buyin": 2000,
+      "addon": 1000,
+      "stack": 30000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ターボ"
+      ],
       "source": "auto",
       "verified": false
     }

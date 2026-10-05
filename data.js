@@ -30169,6 +30169,24 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01M42V5W04766SG6D55GRPQWPW",
+    "venueId": "v19",
+    "name": "2000 Turbo",
+    "date": "2026-10-11",
+    "start": "16:10",
+    "buyin": 2000,
+    "addon": 1000,
+    "stack": 30000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "wl-01M1VEJGW4146RRFP3P8WXK9PN",
     "venueId": "v19",
     "name": "FREEZE OUT TOURNAMENT",
@@ -30181,6 +30199,60 @@ const TOURNAMENTS = [
     "reentry": false,
     "prize": null,
     "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M42V5W04QBVPYB9QY7WXVKJZ",
+    "venueId": "v19",
+    "name": "2000 Turbo",
+    "date": "2026-10-18",
+    "start": "16:10",
+    "buyin": 2000,
+    "addon": 1000,
+    "stack": 30000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M42V5W04SGSFZA258QPN557M",
+    "venueId": "v19",
+    "name": "2000 Turbo",
+    "date": "2026-10-25",
+    "start": "16:10",
+    "buyin": 2000,
+    "addon": 1000,
+    "stack": 30000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M42V5W04AV0GKVWDA8X23E7N",
+    "venueId": "v19",
+    "name": "2000 Turbo",
+    "date": "2026-11-01",
+    "start": "16:10",
+    "buyin": 2000,
+    "addon": 1000,
+    "stack": 30000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
     "source": "auto",
     "verified": false
   },
