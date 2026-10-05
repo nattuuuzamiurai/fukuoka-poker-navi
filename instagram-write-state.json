@@ -672,22 +672,6 @@
       "source": "semi",
       "verified": false
     },
-    "ig-v35-2026-10-04-1800-shin-cup": {
-      "id": "ig-v35-2026-10-04-1800-shin-cup",
-      "venueId": "v35",
-      "name": "Shin CUP",
-      "date": "2026-10-04",
-      "start": "18:00",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
     "ig-v35-2026-10-05-1915-free-roll": {
       "id": "ig-v35-2026-10-05-1915-free-roll",
       "venueId": "v35",
@@ -1143,24 +1127,6 @@
       "reentry": true,
       "prize": null,
       "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v40-2026-10-04-nostart-post": {
-      "id": "ig-v40-2026-10-04-nostart-post",
-      "venueId": "v40",
-      "name": "ヘッズアップ祭ミニリング",
-      "date": "2026-10-04",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "リーグ"
-      ],
       "source": "semi",
       "verified": false
     },
