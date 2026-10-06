@@ -441,14 +441,14 @@
   /* ===== 掲載店舗募集の常設バナー(listing-banner.js・2026-09-17導入) =====
      実写真が無いため画像バナーではなくCSSで組む(bigEventBannerHtml()のev.customBanner分岐)。
      配色はサイト本来のブランド色(--felt/--gold系)にして、大会ごとの色が付く他のバナーと区別する。 */
-  .evtBanner.ev-listing{--ev-bd:var(--gold);--ev-bg:var(--felt);--ev-bg2:var(--felt2);--ev-fg:var(--gold-ink);--ev-ac:var(--gold);--ev-ac2:var(--gold2);--ev-on:#170f01}
+  .evtBanner.ev-listing{--ev-bd:var(--ink);--ev-bg:var(--ink);--ev-bg2:#1C2A40;--ev-fg:#E9D6A8;--ev-ac:var(--gold-soft);--ev-ac2:var(--gold-soft);--ev-on:var(--ink);box-shadow:0 14px 30px -18px rgba(14,26,43,.6)}
   /* 日付(days)を持たない常設バナーのため「開催中/まもなく/終了」のバッジは出さない。 */
   .evtBanner.ev-listing .eb-tag::before{content:none}
   /* .eb-heading/.eb-tag は他バナー(wjpt/jopt/nippon/fst/dream)の暗い--ev-bg前提で
      文字色が白固定になっているが、ev-listingだけ--ev-bgが--feltと同値の明るい紙色のため
      白文字だと地と同化する。このバリアントだけ濃色(--ev-on)に上書きする。 */
-  .evtBanner.ev-listing .eb-heading{color:var(--ev-on)}
-  .evtBanner.ev-listing .eb-tag{color:var(--ev-on)}
+  .evtBanner.ev-listing .eb-heading{color:var(--bg);font-size:1.3em}
+  .evtBanner.ev-listing .eb-tag{color:var(--ev-fg)}
   /* aspect-ratio は .eb-img と同じ 1024/412(上のコメント参照)。min-height はその aspect-ratio
      から出てくる高さの【下限としてだけ】残す(スライド幅が極端に狭いモバイル等で、
      aspect-ratio任せだと文字(eyebrow/heading/sub)が窮屈になり過ぎない保険)。 */
