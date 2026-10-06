@@ -513,7 +513,7 @@ function buildPage(REPO) {
     twitterCard: 'summary_large_image',
     extraCss: PT_CSS
   });
-  const foot = pageFoot(BIG, null, null, areaLinks);
+  const foot = pageFoot(BIG, null, null, areaLinks, { noStickyAd: true });
   return head + buildBody(stats) + foot;
 }
 

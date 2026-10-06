@@ -518,7 +518,7 @@ const ptlLink = medium => `${PTL_URL}?utm_source=fukuokapoker&utm_medium=${mediu
 //   HTMLコメントとして pageFoot() の返り値(テンプレートリテラル)の中に書いていたため、
 //   生成後の公開ページ(店舗・エリア・大会・ガイドページ等54ページ)のHTMLソースにそのまま
 //   出力され、View Sourceで内部の改訂理由が読める状態になっていた(2026-09-26是正)。
-function pageFoot(BIG, currentPath, extraScripts, areaLinksHtml) {
+function pageFoot(BIG, currentPath, extraScripts, areaLinksHtml, opts) {
   // 恒久リンク行(全大会・日付に関係なく常に出す)と、
   // 「大会特集」(掲載中の1件だけ・日によって変わるのでブラウザ側で判定)は【両方】出す。
   // 後者は生成時に焼き込まない(静的ページは再生成しない限り更新されず、古い大会が残り続けるため)。
@@ -531,6 +531,15 @@ function pageFoot(BIG, currentPath, extraScripts, areaLinksHtml) {
   // (index.html の #evtLinks/#areaLinks/#venueLinks と同じ考え方。詳しくはCSS側のコメント参照)。
   const areaLinksRow = areaLinksHtml ? `
   <div class="footer-linklist" style="margin-top:6px">エリアから探す: ${areaLinksHtml}</div>` : '';
+  // 画面下の固定帯(自社アプリの広告)。opts.noStickyAd のページでは出さない。
+  const stickyAdHtml = (opts && opts.noStickyAd) ? '' : `<div class="stickyAd">
+  <img src="/img/ptl-bulldog.webp" alt="" width="38" height="38">
+  <div class="sa-body">
+    <div class="sa-title">成績、記録してますか？</div>
+    <div class="sa-desc">ポーカートナメ成績表(無料) — buyin・順位・収支を記録</div>
+  </div>
+  <a class="sa-btn" href="${ptlLink('sticky_banner')}" target="_blank" rel="noopener">使ってみる →</a>
+</div>`;
   return `</main>
 <footer>
   <div><b style="color:#fff">ふくおかポーカーナビ</b> — 福岡ポーカートーナメント日程アグリゲーター</div>
@@ -540,14 +549,7 @@ function pageFoot(BIG, currentPath, extraScripts, areaLinksHtml) {
 </footer>
 <script src="/big-events.js"></script>
 <script>if (typeof mountBigEventFooter === 'function') mountBigEventFooter('evtFeature');</script>
-<div class="stickyAd">
-  <img src="/img/ptl-bulldog.webp" alt="" width="38" height="38">
-  <div class="sa-body">
-    <div class="sa-title">成績、記録してますか？</div>
-    <div class="sa-desc">ポーカートナメ成績表(無料) — buyin・順位・収支を記録</div>
-  </div>
-  <a class="sa-btn" href="${ptlLink('sticky_banner')}" target="_blank" rel="noopener">使ってみる →</a>
-</div>
+${stickyAdHtml}
 ${extraScripts || ''}</body>
 </html>`;
 }
