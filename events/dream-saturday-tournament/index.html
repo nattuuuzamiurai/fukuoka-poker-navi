@@ -22,7 +22,7 @@
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/favicon.png" sizes="192x192" type="image/png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<meta name="theme-color" content="#efece0">
+<meta name="theme-color" content="#F1F3F6">
 <!-- 書体(2026-09-29更新): 見出し・大会名・店舗名=Cormorant Garamond(セリフ)、
      時刻・価格などの数字=IBM Plex Mono(等幅)、本文の日本語=Zen Kaku Gothic New。
      tools/site-shell.js の pageHead() と同じ指定(このページはgen-event-pages.jsの
@@ -93,10 +93,10 @@
     /* 配色トークン(方向性A、2026-09-29本番反映)。深緑×金の従来配色から、クリーム地×金1色の
        配色に更新した。--felt/--felt2はヘッダー等を--bgと同値にして単色パネルにする役割を維持。
        --gold/--gold2は塗り・枠線用(暗い文字と組み合わせる前提)。 */
-    --felt:#efece0;--felt2:#efece0;--gold:#9c7a2e;--gold2:#9c7a2e;
+    --felt:#F1F3F6;--felt2:#F1F3F6;--gold:#B07418;--gold2:#B07418;
     /* --gold-ink: 明るい背景の上に「文字」として金を使う箇所専用の濃い金(WCAG AA 4.5:1確保)。 */
-    --gold-ink:#78570c;
-    --bg:#efece0;--sur:#fff;--bor:rgba(28,36,29,.12);--txt:#1c241d;--mut:#5c6455;--red:#c0392b;--r:14px;--sha:0 2px 12px rgba(28,36,29,.08)
+    --gold-ink:#8A5A12;
+    --bg:#F1F3F6;--sur:#fff;--bor:rgba(14,26,43,.12);--txt:#0E1A2B;--mut:#56617A;--red:#c0392b;--r:14px;--sha:0 2px 12px rgba(14,26,43,.08)
   }
   html{scroll-behavior:smooth}
   body{font-family:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic UI",system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.6;font-size:15px;padding-bottom:calc(78px + env(safe-area-inset-bottom))}
@@ -163,8 +163,8 @@
   nav.breadcrumb a{color:#0e6a72;font-weight:700;text-decoration:none}
   nav.breadcrumb a:hover{text-decoration:underline}
   nav.breadcrumb [aria-current="page"]{color:var(--txt);font-weight:700}
-  footer{background:#1b2320;color:#9aa39d;padding:22px 16px;font-size:.8em;text-align:center;line-height:1.9}
-    /* footerは常に#1b2320固定で明暗テーマの影響を受けないが、リンク色に使っていた--gold2は
+  footer{background:#0E1A2B;color:#9aa39d;padding:22px 16px;font-size:.8em;text-align:center;line-height:1.9}
+    /* footerは常に#0E1A2B固定で明暗テーマの影響を受けないが、リンク色に使っていた--gold2は
      今回の配色更新で明るい背景向けの値になり暗背景でのコントラストが不足するため、
      暗背景専用の明るい金を直接指定する(実測4.5:1以上。index.html footer a と同じ値)。 */
   footer a{color:#e3b866}

@@ -25,7 +25,7 @@
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="icon" href="favicon.png" sizes="192x192" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<meta name="theme-color" content="#F4F1EA">
+<meta name="theme-color" content="#F1F3F6">
 <!-- 書体(2026-09-29更新): 見出し・大会名・店舗名=Cormorant Garamond(セリフ)、
      時刻・価格などの数字=IBM Plex Mono(等幅)、本文の日本語=Zen Kaku Gothic New。 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -212,6 +212,9 @@
     .hero .stat b{font-size:34px}
   }
 
+  /* 大型バナーは、ヒーローの直下に来る。見出しとの間を空ける */
+  section.hero + .wrap{margin-top:16px}
+
   /* エリアから探す。目次のような横並びの文字リンク(中身は gen-area-pages.js が書き換える) */
   .areaNav{border-top:1px solid var(--txt);padding:18px var(--pad) 22px}
   .areaNav .an-inner{max-width:var(--maxw);margin:0 auto}
@@ -258,6 +261,10 @@
     .fbtn{padding:8px 11px;font-size:13px}
     .fbtn::before{display:none}
   }
+
+  /* 絞り込みの2段目(エリア・種類・大型一覧)。日付の帯とは別の塊として、大型バナーの後ろに置く */
+  .filters--sub{border-bottom:0;margin-top:14px;animation:none}
+  .filters--sub .frow{padding-top:6px}
 
   /* DATE STRIP(日付選択)。日付は大きな数字の列として見せる */
   .dstrip-row{display:flex;align-items:stretch;max-width:var(--maxw);margin:0 auto;padding:16px var(--pad) 2px}
@@ -986,25 +993,43 @@
   </div>
 </section>
 
-<!-- トップの自社広告枠。位置(大型バナーより上)は変えない。
-     高さを詰めた分だけ文言も短くしてある(`.adslot .adCard` のCSSを参照)。 -->
-<div class="adslot">
-  <a class="adCard" href="https://poker-tourney-log--family.expo.app?utm_source=fukuokapoker&utm_medium=content_card&utm_campaign=selfpromo" target="_blank" rel="noopener">
-    <img src="img/ptl-bulldog.webp" alt="" width="44" height="44">
-    <div class="ac-body">
-      <div class="ac-title">トーナメントの成績、記録してますか？</div>
-      <!-- 「何ができるアプリか」は必ず残すこと(ここは最も露出の多い枠でCTRに効く)。
-           高さを詰めた分、2行に収まる長さにまとめてある。 -->
-      <div class="ac-desc">buyin・順位・収支を記録できる無料アプリ</div>
-    </div>
-    <span class="ac-btn">使ってみる →</span>
-  </a>
-</div>
-
 <!-- 大型バナー(PR掲載を含む)。広告枠の直下に置く。描画はJS(renderBigEventBanner)。 -->
 <div class="wrap">
 <div id="bigEventBanner"></div>
 <p class="bigban-disc">当サイトは店舗・主催者が公開している情報を集約する媒体であり、賭博行為の勧誘・仲介を行うものではありません。</p>
+</div>
+
+<div class="filters">
+  <div class="dstrip-row">
+    <!-- 月の切り替え(2026-07-30導入「7のところ押したら何月って選択できるように」)。
+         選択肢は ALL_TOURNAMENTS から自動導出する(buildMonthMenu)。月をハードコードしないこと。 -->
+    <div class="dstrip-month-wrap">
+      <button type="button" class="dstrip-month" id="dstripMonth"
+              aria-haspopup="listbox" aria-expanded="false" aria-controls="dstripMonthMenu">
+        <span id="dstripMonthLabel"></span><span class="dm-caret" aria-hidden="true">▼</span>
+      </button>
+      <div class="dmonth-menu" id="dstripMonthMenu" role="listbox" aria-label="表示する月を選ぶ" hidden></div>
+      <!-- 「今日」に戻るボタン(2026-07-30導入「月が変わると今日の日付に戻るのがめんどくさい」)。
+           日付の操作なので日付UI(月ボタン)の隣に置く。エリア/種類フィルタの .frow は役割が違い、
+           かつ320px幅ですでに横スクロールしているため4つ目を足さない。
+           ★今日を選んでいる間は hidden(タブ順からも外れる)。切り替えは syncTodayBtn()。 -->
+      <button type="button" class="dstrip-today" id="dstripToday" aria-label="今日に戻る" hidden>今日</button>
+    </div>
+    <div class="dstrip" id="dstrip"></div>
+  </div>
+</div>
+
+<div class="filters filters--sub">
+  <div class="frow">
+    <select class="fsel" id="sel-area" aria-label="エリアで絞り込む"><option value="all">全エリア</option></select>
+    <select class="fsel" id="sel-tag" aria-label="種類で絞り込む">
+      <option value="all">全種類</option>
+      <option value="サテライト">サテライト</option>
+      <option value="PLO">PLO</option>
+      <option value="NLH">NLH（通常）</option>
+    </select>
+    <a class="fbtn" href="#majors">大型一覧</a>
+  </div>
 </div>
 
 <!-- 【エリアから探す】エリア別の静的ページ(/areas/配下)への目立つ内部リンク。
@@ -1050,36 +1075,6 @@
   <span class="cta-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
 </a>
 
-<div class="filters">
-  <div class="dstrip-row">
-    <!-- 月の切り替え(2026-07-30導入「7のところ押したら何月って選択できるように」)。
-         選択肢は ALL_TOURNAMENTS から自動導出する(buildMonthMenu)。月をハードコードしないこと。 -->
-    <div class="dstrip-month-wrap">
-      <button type="button" class="dstrip-month" id="dstripMonth"
-              aria-haspopup="listbox" aria-expanded="false" aria-controls="dstripMonthMenu">
-        <span id="dstripMonthLabel"></span><span class="dm-caret" aria-hidden="true">▼</span>
-      </button>
-      <div class="dmonth-menu" id="dstripMonthMenu" role="listbox" aria-label="表示する月を選ぶ" hidden></div>
-      <!-- 「今日」に戻るボタン(2026-07-30導入「月が変わると今日の日付に戻るのがめんどくさい」)。
-           日付の操作なので日付UI(月ボタン)の隣に置く。エリア/種類フィルタの .frow は役割が違い、
-           かつ320px幅ですでに横スクロールしているため4つ目を足さない。
-           ★今日を選んでいる間は hidden(タブ順からも外れる)。切り替えは syncTodayBtn()。 -->
-      <button type="button" class="dstrip-today" id="dstripToday" aria-label="今日に戻る" hidden>今日</button>
-    </div>
-    <div class="dstrip" id="dstrip"></div>
-  </div>
-  <div class="frow">
-    <select class="fsel" id="sel-area" aria-label="エリアで絞り込む"><option value="all">全エリア</option></select>
-    <select class="fsel" id="sel-tag" aria-label="種類で絞り込む">
-      <option value="all">全種類</option>
-      <option value="サテライト">サテライト</option>
-      <option value="PLO">PLO</option>
-      <option value="NLH">NLH（通常）</option>
-    </select>
-    <a class="fbtn" href="#majors">大型一覧</a>
-  </div>
-</div>
-
 <main class="wrap">
   <div id="page-list">
     <!-- 大型イベント(big-events.js)＋単発の店舗プロモーション(promo-banners.js)のバナー。
@@ -1114,15 +1109,6 @@
   <div id="page-nippon" style="display:none"></div>
 
   <div id="page-majors" style="display:none"></div>
-
-  <a class="adCard" style="margin:26px 0 4px" href="https://poker-tourney-log--family.expo.app?utm_source=fukuokapoker&utm_medium=content_card&utm_campaign=selfpromo" target="_blank" rel="noopener">
-    <img src="img/ptl-bulldog.webp" alt="" loading="lazy" width="56" height="56">
-    <div class="ac-body">
-      <div class="ac-title">今日の戦績、記録に残しませんか？</div>
-      <div class="ac-desc">ポーカートナメ成績表なら buyin・順位・収支をすぐ記録。無料アプリはこちら</div>
-    </div>
-    <span class="ac-btn">使ってみる →</span>
-  </a>
 
   <!-- FAQ(AI検索エンジン向けに静的HTMLとしても内容を読めるようにする対応、2026-09-03)。
        JSを実行しないクローラにも読める静的HTML。
