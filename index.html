@@ -895,6 +895,29 @@
     *,*::before,*::after{animation:none!important;transition:none!important}
   }
 
+  /* スマホ幅の上部の詰め。見出し「トーナメント日程」を最初の画面に近づけるため、
+     余白と文字の大きさだけを変える(文言・順番・広告の位置は変えない)。 */
+  @media(max-width:719.98px){
+    .hbar{min-height:52px;padding-top:9px;padding-bottom:9px}
+    .hero{padding-top:16px;padding-bottom:12px;gap:10px}
+    .hero > .faq-item summary{padding-top:6px;padding-bottom:6px}
+    .hero .stats{border-top-width:1px}
+    .hero .stat{padding-top:8px}
+    .hero .stat b{font-size:30px}
+    .hero .stat span{margin-top:3px;font-size:11px;word-break:auto-phrase}
+    .frow{gap:6px}
+    .fbtn{padding:7px 12px;font-size:13px}
+    .cta{margin-top:16px;padding:13px 16px}
+    .filters{margin-top:14px}
+    .dstrip-row{padding-top:10px}
+    .dchip{width:46px;padding:5px 0 7px}
+    .dchip .dc-d{font-size:22px;margin-top:1px}
+    .frow{padding-top:8px;padding-bottom:10px}
+    .fsel{padding-top:7px;padding-bottom:7px;font-size:13px}
+    .adslot{margin-top:12px}
+    main .shead:first-of-type{margin-top:22px}
+    .bigban-disc{margin-top:6px}
+  }
   /* FAQ(トップページ「よくある質問」)。events/fst-2026-fukuoka/ と同じ見た目にするため、
      CSSの実体は tools/site-shell.js の FAQ_CSS 1本だけに置き、ここは tools/gen-top-faq.js が
      自動で同期する(複製すると片方だけ直して片方を忘れる事故を防ぐため。手で書き換えないこと)。 */
@@ -962,6 +985,27 @@
     <div class="stat"><b id="stat-today">–</b><span>本日開催</span></div>
   </div>
 </section>
+
+<!-- トップの自社広告枠。位置(大型バナーより上)は変えない。
+     高さを詰めた分だけ文言も短くしてある(`.adslot .adCard` のCSSを参照)。 -->
+<div class="adslot">
+  <a class="adCard" href="https://poker-tourney-log--family.expo.app?utm_source=fukuokapoker&utm_medium=content_card&utm_campaign=selfpromo" target="_blank" rel="noopener">
+    <img src="img/ptl-bulldog.webp" alt="" width="44" height="44">
+    <div class="ac-body">
+      <div class="ac-title">トーナメントの成績、記録してますか？</div>
+      <!-- 「何ができるアプリか」は必ず残すこと(ここは最も露出の多い枠でCTRに効く)。
+           高さを詰めた分、2行に収まる長さにまとめてある。 -->
+      <div class="ac-desc">buyin・順位・収支を記録できる無料アプリ</div>
+    </div>
+    <span class="ac-btn">使ってみる →</span>
+  </a>
+</div>
+
+<!-- 大型バナー(PR掲載を含む)。広告枠の直下に置く。描画はJS(renderBigEventBanner)。 -->
+<div class="wrap">
+<div id="bigEventBanner"></div>
+<p class="bigban-disc">当サイトは店舗・主催者が公開している情報を集約する媒体であり、賭博行為の勧誘・仲介を行うものではありません。</p>
+</div>
 
 <!-- 【エリアから探す】エリア別の静的ページ(/areas/配下)への目立つ内部リンク。
      フッターの店舗別・エリア別リンク行と同じ理由(JSを実行しないクローラにも拾わせる静的リンク)だが、
@@ -1036,28 +1080,11 @@
   </div>
 </div>
 
-<!-- トップの自社広告枠。位置(大型バナーより上)は変えない。
-     高さを詰めた分だけ文言も短くしてある(`.adslot .adCard` のCSSを参照)。 -->
-<div class="adslot">
-  <a class="adCard" href="https://poker-tourney-log--family.expo.app?utm_source=fukuokapoker&utm_medium=content_card&utm_campaign=selfpromo" target="_blank" rel="noopener">
-    <img src="img/ptl-bulldog.webp" alt="" width="44" height="44">
-    <div class="ac-body">
-      <div class="ac-title">トーナメントの成績、記録してますか？</div>
-      <!-- 「何ができるアプリか」は必ず残すこと(ここは最も露出の多い枠でCTRに効く)。
-           高さを詰めた分、2行に収まる長さにまとめてある。 -->
-      <div class="ac-desc">buyin・順位・収支を記録できる無料アプリ</div>
-    </div>
-    <span class="ac-btn">使ってみる →</span>
-  </a>
-</div>
-
 <main class="wrap">
   <div id="page-list">
     <!-- 大型イベント(big-events.js)＋単発の店舗プロモーション(promo-banners.js)のバナー。
          renderBigEventBanner() が両レジストリから描画する(プロモは常に先頭)。
          0件=空(領域ごと非表示) / 1件=バナー1枚 / 2件以上=横スライド(カルーセル)。中身はJS生成。 -->
-    <div id="bigEventBanner"></div>
-    <p class="bigban-disc">当サイトは店舗・主催者が公開している情報を集約する媒体であり、賭博行為の勧誘・仲介を行うものではありません。</p>
     <div class="shead">
       <!-- ★この見出しの文言・高さは変えないこと。README「トップのバナーの見せ方」の
            見出しY実測値(320px=469/640/642等)が、この文字列の折り返し行数を前提に
