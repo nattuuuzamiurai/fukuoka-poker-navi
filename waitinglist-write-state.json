@@ -50,22 +50,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M1VFKCHWMCA8RE4SDPZ0P8M7": {
-      "id": "wl-01M1VFKCHWMCA8RE4SDPZ0P8M7",
-      "venueId": "v19",
-      "name": "KO BOUNTY TOURNAMENT",
-      "date": "2026-10-05",
-      "start": "18:10",
-      "buyin": 3000,
-      "addon": null,
-      "stack": 30000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M369PXJAJWPVZKYNQHWATY2Q": {
       "id": "wl-01M369PXJAJWPVZKYNQHWATY2Q",
       "venueId": "v3",
@@ -344,40 +328,6 @@
       "prize": null,
       "tags": [
         "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M3DVQ67RJBV2FXMQRABXNS3F": {
-      "id": "wl-01M3DVQ67RJBV2FXMQRABXNS3F",
-      "venueId": "v3",
-      "name": "m GLORY",
-      "date": "2026-10-05",
-      "start": "18:00",
-      "buyin": 3500,
-      "addon": 2000,
-      "stack": 35000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M3NTZ485Y4NXVRZVVFPT81TV": {
-      "id": "wl-01M3NTZ485Y4NXVRZVVFPT81TV",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-10-05",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
       ],
       "source": "auto",
       "verified": false
@@ -976,22 +926,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M3NYP9284GFFJK66Q6W4HW4C": {
-      "id": "wl-01M3NYP9284GFFJK66Q6W4HW4C",
-      "venueId": "v27",
-      "name": "DOJO TOURNAMENT 1000",
-      "date": "2026-10-05",
-      "start": "19:00",
-      "buyin": 1000,
-      "addon": 1000,
-      "stack": 20000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M3NYQMWBY4R518SKX5FPY2M9": {
       "id": "wl-01M3NYQMWBY4R518SKX5FPY2M9",
       "venueId": "v27",
@@ -1102,24 +1036,6 @@
       "prize": null,
       "tags": [
         "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M3ZWJ46PPECS2JZ2XW82N882": {
-      "id": "wl-01M3ZWJ46PPECS2JZ2XW82N882",
-      "venueId": "v3",
-      "name": "m Super Hold'em Turbo",
-      "date": "2026-10-05",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": 1000,
-      "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
       ],
       "source": "auto",
       "verified": false
@@ -1775,22 +1691,6 @@
       "tags": [
         "ディープ"
       ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M4061CWQ87CQHZKJ4VAT5X15": {
-      "id": "wl-01M4061CWQ87CQHZKJ4VAT5X15",
-      "venueId": "v22",
-      "name": "深夜のトナメ",
-      "date": "2026-10-05",
-      "start": "23:30",
-      "buyin": 5000,
-      "addon": 5000,
-      "stack": 30000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
       "source": "auto",
       "verified": false
     },
