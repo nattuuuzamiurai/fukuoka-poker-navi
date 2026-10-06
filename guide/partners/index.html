@@ -190,12 +190,13 @@
   .pt-toc a:hover{text-decoration:underline}
   /* 金の塗り+#3a2a06文字は--gold/--gold2を単一の落ち着いた金に統一したことで実測3.46:1まで
      コントラストが落ちる(WCAG AA未達)。#170f01に暗くして4.5:1以上を確保する。 */
-  .pt-price{background:linear-gradient(135deg,var(--gold2),var(--gold));color:#170f01;border-radius:var(--r);padding:14px 16px;margin:10px 0 16px;font-weight:800;font-size:1.05em;box-shadow:var(--sha)}
-  .pt-price small{display:block;font-weight:600;font-size:.72em;margin-top:4px;color:#5a4109}
-  .pt-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin:8px 0 16px}
-  .pt-card{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:13px 14px}
-  .pt-card h4{font-size:.92em;font-weight:800;color:var(--txt);margin-bottom:5px}
-  .pt-card p{font-size:.85em;line-height:1.75;color:var(--txt)}
+  .pt-price{background:var(--ink);color:var(--bg);border-radius:var(--r);padding:18px 20px;margin:12px 0 18px;font-weight:800;font-size:1.3em;line-height:1.4;border-left:6px solid var(--gold-soft);box-shadow:0 14px 28px -20px rgba(14,26,43,.6)}
+  .pt-price small{display:block;font-weight:600;font-size:.62em;margin-top:6px;color:#C9C6BC}
+  .pt-cards{counter-reset:ptc;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:10px 0 18px}
+  .pt-card{counter-increment:ptc;background:var(--sur);border:1px solid var(--bor);border-top:4px solid var(--gold);border-radius:var(--r);padding:16px 16px 14px}
+  .pt-card::before{content:counter(ptc,decimal-leading-zero);display:block;font-family:var(--f-num);font-size:26px;font-weight:600;color:var(--gold-ink);line-height:1;margin-bottom:8px}
+  .pt-card h4{font-family:var(--f-display);font-size:1.02em;font-weight:700;color:var(--txt);margin-bottom:6px}
+  .pt-card p{font-size:.88em;line-height:1.75;color:var(--mut)}
   .pt-badge{display:inline-block;background:#fbf1d8;border:1px solid #ecd9a6;color:#7a5711;font-size:.78em;font-weight:700;padding:2px 9px;border-radius:10px;margin-left:6px;vertical-align:middle}
   .pt-note{background:var(--sur);border:1px solid var(--bor);border-left:4px solid var(--gold);border-radius:10px;padding:13px 15px;margin:10px 0 16px;font-size:.88em;line-height:1.8;color:var(--txt)}
   .pt-note b{color:var(--txt)}
@@ -206,10 +207,10 @@
   table.compare{border-collapse:collapse;width:100%;margin-top:10px;font-size:.86em;background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);overflow:hidden;box-shadow:var(--sha)}
   table.compare th,table.compare td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--bor);vertical-align:top}
   table.compare tr:last-child td{border-bottom:none}
-  table.compare thead th{background:#eef3f1;color:var(--txt);font-weight:800;font-size:.85em}
-  table.compare td.yes{color:var(--txt);font-weight:800}
-  table.compare td.pr{background:#eef3f1}
-  table.compare th.pr{background:#eef3f1;color:var(--txt)}
+  table.compare thead th{background:var(--chip);color:var(--txt);font-weight:800;font-size:.9em}
+  table.compare td.yes{color:var(--txt);font-weight:800;text-align:center}
+  table.compare td.pr{background:rgba(176,116,24,.09);color:var(--gold-ink);font-weight:700;font-size:.95em;line-height:1.55}
+  table.compare th.pr{background:var(--ink);color:var(--bg)}
   /* ---- 画面イメージ(受付/来店中/会計/経営ダッシュボード/マイページ/フロアマップ/同卓プレイヤー情報) ----
      カード高さを flex:1 で強制的に揃える実装は採用しない。.mini-floor は aspect-ratio で
      高さを決めており、flex:1によるグリッド高さ揃えに依存すると縦横比が崩れるため、
@@ -219,11 +220,11 @@
      空きトラックを畳んで1frのカードに幅を回す)。3枚以上のギャラリーでは挙動は変わらない。 */
   .preview-gallery{margin-top:10px;display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;align-items:start}
   figure.preview{margin:0}
-  figure.preview figcaption{font-size:.82em;font-weight:800;color:var(--txt);margin-bottom:8px}
-  figure.preview figcaption span{display:block;font-weight:600;color:var(--mut);font-size:.78em;margin-top:1px}
-  .device{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:13px;display:flex;flex-direction:column;gap:9px}
-  .app-header{display:flex;justify-content:space-between;align-items:baseline;padding-bottom:8px;border-bottom:1px solid var(--bor);font-size:.72em;color:var(--mut)}
-  .app-header b{color:var(--txt);font-size:.9em}
+  figure.preview figcaption{font-family:var(--f-display);font-size:1em;font-weight:700;color:var(--txt);margin-bottom:10px}
+  figure.preview figcaption span{display:block;font-family:var(--f-body);font-weight:600;color:var(--mut);font-size:.78em;margin-top:2px}
+  .device{background:var(--sur);border:1px solid var(--txt);border-radius:10px;box-shadow:0 14px 28px -22px rgba(14,26,43,.55);padding:14px;display:flex;flex-direction:column;gap:9px}
+  .app-header{display:flex;justify-content:space-between;align-items:baseline;padding-bottom:8px;border-bottom:2px solid var(--txt);font-size:.72em;color:var(--mut)}
+  .app-header b{color:var(--txt);font-size:.95em}
   .stat-mini-row{display:flex;flex-wrap:wrap;gap:6px}
   .stat-mini{flex:1 1 70px;min-width:0;background:#eef3f1;border-radius:8px;padding:8px 6px;text-align:center}
   .stat-mini .v{font-weight:800;font-size:.95em;color:var(--txt);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
