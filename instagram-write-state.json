@@ -2,24 +2,6 @@
   "version": 1,
   "writtenBy": "tools/monitor-instagram-apify.js",
   "entries": {
-    "ig-v18-2026-10-05-1900-deep-stuck": {
-      "id": "ig-v18-2026-10-05-1900-deep-stuck",
-      "venueId": "v18",
-      "name": "DEEP STUCK",
-      "date": "2026-10-05",
-      "start": "19:00",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "semi",
-      "verified": false
-    },
     "ig-v18-2026-10-06-1900-1k-multi": {
       "id": "ig-v18-2026-10-06-1900-1k-multi",
       "venueId": "v18",
@@ -672,24 +654,6 @@
       "source": "semi",
       "verified": false
     },
-    "ig-v35-2026-10-05-1915-free-roll": {
-      "id": "ig-v35-2026-10-05-1915-free-roll",
-      "venueId": "v35",
-      "name": "FREE ROLL",
-      "date": "2026-10-05",
-      "start": "19:15",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "フリーロール"
-      ],
-      "source": "semi",
-      "verified": false
-    },
     "ig-v35-2026-10-06-1915-cup": {
       "id": "ig-v35-2026-10-06-1915-cup",
       "venueId": "v35",
@@ -1125,22 +1089,6 @@
       "stack": null,
       "guarantee": null,
       "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v40-2026-10-05-nostart-5": {
-      "id": "ig-v40-2026-10-05-nostart-5",
-      "venueId": "v40",
-      "name": "小島5周年サンクス杯",
-      "date": "2026-10-05",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
       "prize": null,
       "tags": [],
       "source": "semi",
