@@ -28,7 +28,7 @@
      index.html の <head> と同じ指定(BASE_CSS 側のfont-family宣言と対で使う)。 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Zen+Old+Mincho:wght@500;700&display=swap" rel="stylesheet">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="ふくおかポーカーナビ">
 <meta property="og:title" content="KING&amp;QUEEN SUITED 直方店｜店舗情報・トーナメント日程（筑豊・直方駅 徒歩約4分） | ふくおかポーカーナビ">
@@ -90,36 +90,36 @@
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   :root{
-    /* 配色トークン(方向性A、2026-09-29本番反映)。深緑×金の従来配色から、クリーム地×金1色の
-       配色に更新した。--felt/--felt2はヘッダー等を--bgと同値にして単色パネルにする役割を維持。
-       --gold/--gold2は塗り・枠線用(暗い文字と組み合わせる前提)。 */
-    --felt:#efece0;--felt2:#efece0;--gold:#9c7a2e;--gold2:#9c7a2e;
-    /* --gold-ink: 明るい背景の上に「文字」として金を使う箇所専用の濃い金(WCAG AA 4.5:1確保)。 */
-    --gold-ink:#78570c;
-    --bg:#efece0;--sur:#fff;--bor:rgba(28,36,29,.12);--txt:#1c241d;--mut:#5c6455;--red:#c0392b;--r:14px;--sha:0 2px 12px rgba(28,36,29,.08)
+    /* 配色・書体のトークン(2026-10刷新「朱と墨の紙面」)。index.html の :root と同じ値を使う。
+       --gold は塗りと罫線、--gold-ink は紙地の上の文字(WCAG AA 4.5:1以上)。 */
+    --felt:#F1F3F6;--felt2:#E4E8EE;--gold:#B07418;--gold2:#C9892B;--gold-ink:#8A5A12;--gold-soft:#F2C27A;
+    --bg:#F1F3F6;--sur:#FAFBFC;--chip:#E4E8EE;--bor:rgba(14,26,43,.14);--txt:#0E1A2B;--mut:#56617A;--ink:#0E1A2B;
+    --red:#B42318;--r:6px;--sha:none;
+    --f-display:"Zen Old Mincho","Hiragino Mincho ProN","Yu Mincho",serif;
+    --f-num:"Cormorant Garamond","IBM Plex Mono",serif;
   }
   html{scroll-behavior:smooth}
   body{font-family:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic UI",system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.6;font-size:15px;padding-bottom:calc(78px + env(safe-area-inset-bottom))}
   a{color:inherit}
   .wrap{max-width:900px;margin:0 auto;padding:0 16px}
-  header{background:var(--felt);color:var(--txt);position:sticky;top:0;z-index:40;border-bottom:1px solid var(--bor)}
+  header{background:rgba(241,243,246,.92);-webkit-backdrop-filter:saturate(1.2) blur(10px);backdrop-filter:saturate(1.2) blur(10px);color:var(--txt);position:sticky;top:0;z-index:40;border-bottom:1px solid var(--bor)}
   .hbar{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;max-width:900px;margin:0 auto}
-  .logo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:1em;color:var(--txt);text-decoration:none}
+  .logo{display:flex;align-items:center;gap:10px;font-family:var(--f-display);font-weight:700;font-size:17px;letter-spacing:.02em;color:var(--txt);text-decoration:none}
   .logo .pip{color:var(--gold-ink)}
   .back-link{color:var(--txt);font-size:.85em;font-weight:800;text-decoration:none}
   main{padding:20px 0 40px}
-  h1{font-family:"Cormorant Garamond","Zen Kaku Gothic New",serif;font-size:1.5em;font-weight:700;line-height:1.35;margin-bottom:6px}
+  h1{font-family:var(--f-display);font-size:1.55em;font-weight:700;line-height:1.3;letter-spacing:-.01em;margin-bottom:8px}
   .lead{color:var(--mut);font-size:.9em;margin-bottom:14px}
   .evt-meta{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:13px 15px;margin-bottom:14px;font-size:.9em;line-height:1.8}
   .evt-meta b{color:var(--txt)}
   /* 金の塗り+#3a2a06文字は--gold/--gold2を単一の落ち着いた金に統一したことで実測3.46:1まで
      コントラストが落ちる(WCAG AA未達)。#170f01に暗くして4.5:1以上を確保する
      (同じ対応を .adCard .ac-btn・.stickyAd .sa-btn 等、金塗りボタン全般に適用)。 */
-  .evt-meta .prize{display:inline-block;margin-top:4px;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#170f01;font-weight:800;font-size:.9em;padding:4px 12px;border-radius:20px}
+  .evt-meta .prize{display:inline-block;margin-top:4px;background:linear-gradient(135deg,var(--gold2),var(--gold));color:var(--ink);font-weight:800;font-size:.9em;padding:4px 12px;border-radius:20px}
   .disclaimer{font-size:.8em;color:var(--mut);line-height:1.7;background:#f7f5f0;border:1px solid var(--bor);border-radius:10px;padding:11px 13px;margin-bottom:16px}
   .disclaimer b{color:var(--txt)}
-  .archived{font-size:.86em;line-height:1.7;color:#5b4a1e;background:#fbf1d8;border:1px solid #ecd9a6;border-radius:10px;padding:11px 13px;margin-bottom:14px}
-  .archived b{color:#3a2a06}
+  .archived{font-size:.86em;line-height:1.7;color:var(--txt);background:var(--chip);border:1px solid var(--bor);border-radius:10px;padding:11px 13px;margin-bottom:14px}
+  .archived b{color:var(--txt)}
   /* 「まだ発表されていない」ことの告知(FST)。終了(.archived)と区別できる色にする */
   .tba{font-size:.86em;line-height:1.7;color:#26424e;background:#eef6f8;border:1px solid #cfe3e9;border-radius:10px;padding:11px 13px;margin-bottom:14px}
   .tba b{color:#14333d}
@@ -138,9 +138,10 @@
   nav.breadcrumb [aria-current="page"]{color:var(--txt);font-weight:700}
   /* 大会バナー(当サイト作成)。狭い画面でも横幅いっぱいに収め、読み込み前後で高さが動かないようにする */
   .evt-banner{display:block;width:100%;height:auto;aspect-ratio:1024/412;border-radius:var(--r);box-shadow:var(--sha);margin-bottom:14px}
-  .cta{display:block;text-align:center;background:linear-gradient(135deg,var(--felt),var(--felt2));color:var(--txt);font-weight:800;text-decoration:none;border-radius:var(--r);padding:13px 16px;margin:6px 0 20px;box-shadow:var(--sha)}
-  .cta small{display:block;font-weight:600;font-size:.8em;color:var(--mut);margin-top:3px}
-  h2.day{font-size:1.05em;font-weight:800;color:var(--txt);margin:22px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--gold)}
+  .cta{display:block;text-align:center;background:var(--ink);color:var(--bg);font-weight:700;text-decoration:none;border-radius:var(--r);padding:15px 18px;margin:8px 0 22px;transition:background .2s}
+  .cta:hover{background:#1C2A40}
+  .cta small{display:block;font-weight:600;font-size:.8em;color:#B5B2A8;margin-top:3px}
+  h2.day{font-family:var(--f-display);font-size:1.12em;font-weight:700;color:var(--txt);margin:26px 0 10px;padding-bottom:8px;border-bottom:1px solid var(--txt)}
   table.sched{border-collapse:collapse;width:100%;font-size:.85em;background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);overflow:hidden;box-shadow:var(--sha);margin-bottom:6px}
   table.sched th,table.sched td{padding:8px 9px;text-align:left;border-bottom:1px solid var(--bor);vertical-align:top}
   table.sched th{background:#eef3f1;color:var(--txt);font-weight:800;font-size:.92em;white-space:nowrap}
@@ -173,7 +174,7 @@
   .vp-fst{font-size:.86em;line-height:1.7;color:#26424e;background:#eef6f8;border:1px solid #cfe3e9;border-radius:10px;padding:11px 13px;margin-bottom:14px}
   .vp-fst b{color:#14333d}
   .vp-fst a{color:#0e6a72;font-weight:700}
-  footer{background:#1b2320;color:#9aa39d;padding:22px 16px;font-size:.8em;text-align:center;line-height:1.9}
+  footer{background:var(--ink);color:#B5B2A8;padding:36px 16px 34px;font-size:.8em;text-align:center;line-height:1.9}
   /* footerは常に#1b2320固定で明暗テーマの影響を受けないが、リンク色に使っていた--gold2は
      今回の配色更新で明るい背景向けの値になり暗背景でのコントラストが不足するため、
      暗背景専用の明るい金を直接指定する(実測4.5:1以上。index.html footer a と同じ値)。 */
@@ -183,14 +184,14 @@
      コメント参照)なのでリンクの中身・件数は変更しないが、閲覧者向けの見た目としては優先度が低いため
      縮小・ミュートする(2026-09-01。index.htmlの同種の行と揃える)。色は同じ#1b2320背景で
      WCAG AA 4.5:1を満たす#858d87(index.html footer .disc で確認済みの値)を流用する。 */
-  footer .footer-linklist{font-size:.68em;color:#858d87}
-  footer .footer-linklist a{color:#858d87}
-  .stickyAd{position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;align-items:center;gap:10px;padding:9px 12px calc(9px + env(safe-area-inset-bottom));background:radial-gradient(120% 220% at 6% 0%,rgba(96,214,255,.20),transparent 55%),radial-gradient(120% 220% at 100% 100%,rgba(200,110,255,.16),transparent 55%),linear-gradient(160deg,#12101d,#191325 60%,#140f1e);border-top:1px solid rgba(255,255,255,.08);box-shadow:0 -4px 18px rgba(5,0,15,.35)}
-  .stickyAd img{width:38px;height:38px;flex-shrink:0;filter:drop-shadow(0 0 8px rgba(120,210,255,.4))}
+  footer .footer-linklist{font-size:.68em;color:#8C9089}
+  footer .footer-linklist a{color:#8C9089}
+  .stickyAd{position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;align-items:center;gap:12px;padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:var(--ink);color:var(--bg);border-top:3px solid var(--gold)}
+  .stickyAd img{width:36px;height:36px;flex-shrink:0;border-radius:6px}
   .stickyAd .sa-body{flex:1;min-width:0}
-  .stickyAd .sa-title{font-size:.8em;font-weight:800;color:#fff;line-height:1.25}
-  .stickyAd .sa-desc{font-size:.68em;color:#b9b6c9;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .stickyAd .sa-btn{flex-shrink:0;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#170f01;font-weight:800;font-size:.76em;padding:8px 14px;border-radius:18px;white-space:nowrap;text-decoration:none}
+  .stickyAd .sa-title{font-size:13px;font-weight:700;color:var(--bg);line-height:1.3}
+  .stickyAd .sa-desc{font-size:11.5px;color:#B5B2A8;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .stickyAd .sa-btn{flex-shrink:0;background:var(--gold);color:var(--ink);font-weight:700;font-size:12.5px;padding:8px 14px;border-radius:4px;white-space:nowrap;text-decoration:none}
   @media(max-width:420px){.stickyAd .sa-desc{display:none}}
   .vp-sub{font-size:.9em;color:var(--mut);margin-bottom:14px}
   h2.vp-sec{font-size:1.05em;font-weight:800;color:var(--txt);margin:26px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--gold)}
@@ -261,12 +262,12 @@
   .vp-closed-notice{background:#fdecea;border:1px solid var(--red);border-radius:var(--r);box-shadow:var(--sha);padding:12px 15px;margin-bottom:14px;font-size:.9em;line-height:1.8;color:var(--red);font-weight:700}
   /* .vp-fst(FSTサテライト開催中の告知)は site-shell.js の BASE_CSS 側に移設した
      (2026-08-28。エリアページでも使うため。複製すると片方だけ直して片方を忘れる)。 */
-  .adCard{display:flex;align-items:center;gap:16px;flex-wrap:wrap;text-decoration:none;border-radius:var(--r);padding:20px 22px;background:radial-gradient(120% 160% at 8% 0%,rgba(96,214,255,.20),transparent 55%),radial-gradient(120% 160% at 100% 100%,rgba(200,110,255,.16),transparent 55%),linear-gradient(160deg,#12101d,#191325 60%,#140f1e);border:1px solid rgba(255,255,255,.08);box-shadow:0 4px 18px rgba(5,0,15,.3)}
-  .adCard img{width:56px;height:56px;flex-shrink:0;filter:drop-shadow(0 0 10px rgba(120,210,255,.4))}
+  .adCard{display:flex;align-items:center;gap:16px;flex-wrap:wrap;text-decoration:none;color:var(--txt);border-radius:var(--r);padding:18px 20px;background:var(--sur);border:1px solid var(--bor);border-left:4px solid var(--gold)}
+  .adCard img{width:52px;height:52px;flex-shrink:0;border-radius:8px}
   .adCard .ac-body{flex:1;min-width:0}
-  .adCard .ac-title{font-size:1.02em;font-weight:800;color:#fff}
-  .adCard .ac-desc{font-size:.82em;color:#b9b6c9;margin-top:4px}
-  .adCard .ac-btn{flex-shrink:0;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#170f01;font-weight:800;font-size:.85em;padding:10px 20px;border-radius:24px;white-space:nowrap;box-shadow:0 0 14px rgba(217,164,65,.3)}
+  .adCard .ac-title{font-family:var(--f-display);font-size:17px;font-weight:700;line-height:1.4;color:var(--txt)}
+  .adCard .ac-desc{font-size:13px;color:var(--mut);margin-top:3px}
+  .adCard .ac-btn{flex-shrink:0;background:var(--ink);color:var(--bg);font-weight:700;font-size:13px;padding:10px 18px;border-radius:4px;white-space:nowrap}
   /* 430px以下(iPhone SE/12/13/14/15等の主要スマホ幅)向けの縮小指定。
      .ac-body の min-width を固定200pxのままにすると、画像+本文+ボタンの合計が実効幅
      (~310〜340px)に収まらずボタンが見切れる。.stickyAd で min-width:0 +
