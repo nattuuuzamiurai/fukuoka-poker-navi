@@ -330,7 +330,6 @@ ${SITE_BANNER_SECTION.html}<h1>JOPT 2026 Fukuoka #01 結果・優勝者 ＆ タ�
   <b>会場</b>　${esc(JOPT.venue || 'UNITEDLAB')}（${esc(JOPT.address || '福岡県福岡市中央区大名1-3-36')}）<br>
   <b>メインイベント</b>　<span class="prize">プライズ保証 ¥15,000,000</span>
 </div>
-<div class="disclaimer">当サイトはJOPTの主催者・公式媒体ではありません。公開情報をもとに当サイトが独自に集約した<b>非公式のまとめ</b>です。掲載内容は2026年7月時点の公式情報にもとづきますが、当サイトによる転記の誤りが含まれる可能性があります。プライズ額は主催者発表で、JOPTではプライズは賞金ではなく選手契約として扱われます。参加前に必ず<a href="${esc(JOPT.guideUrl)}" target="_blank" rel="noopener">公式サイト</a>をご確認ください。<br>${POSITIONING}</div>
 <h2 class="day">結果・優勝者（Main Event）</h2>
 <div class="sched-wrap"><table class="sched">
   <tbody>
@@ -348,6 +347,8 @@ ${schedTable(JOPT.tournaments)}
 ${pastSatelliteVenuesBlock(BIG.bigEventById('jopt'), 'JOPT 2026 Fukuoka #01')}
 ${venueScheduleBlock()}
 ${adCard()}
+<div class="disclaimer">当サイトはJOPTの主催者・公式媒体ではありません。公開情報をもとに当サイトが独自に集約した<b>非公式のまとめ</b>です。掲載内容は2026年7月時点の公式情報にもとづきますが、当サイトによる転記の誤りが含まれる可能性があります。プライズ額は主催者発表で、JOPTではプライズは賞金ではなく選手契約として扱われます。参加前に必ず<a href="${esc(JOPT.guideUrl)}" target="_blank" rel="noopener">公式サイト</a>をご確認ください。<br>${POSITIONING}</div>
+
 <div class="links">
   ▶ <a href="${esc(JOPT.guideUrl)}" target="_blank" rel="noopener">JOPT公式サイト</a>${JOPT.scheduleUrl ? `　／　<a href="${esc(JOPT.scheduleUrl)}" target="_blank" rel="noopener">公式スケジュール</a>` : ''}<br>
   ▶ <a href="/">福岡の他のポーカートーナメント日程を見る</a>
@@ -391,12 +392,13 @@ ${SITE_BANNER_SECTION.html}<h1>WJPT 2026 タイムスケジュール</h1>
   <b>会期</b>　2026年7月18日（土）〜7月20日（月・祝）<br>
   <b>エリア</b>　${esc(WJPT.area || '北九州')}
 </div>
-<div class="disclaimer">当サイトはWJPTの主催者・公式媒体ではありません。公開情報をもとに当サイトが独自に集約した<b>非公式のまとめ</b>です。掲載内容は開催当時の公式情報にもとづきますが、当サイトによる転記の誤りが含まれる可能性があります。イベント終了後は内容を更新していません。掲載元: <a href="${esc(WJPT.guideUrl)}" target="_blank" rel="noopener">公式プレイヤーズガイド</a>（開催当時）。<br>${POSITIONING}</div>
 <a class="cta" href="/#wjpt">▶ 各トーナメントの公式ストラクチャー画像を見る<small>インタラクティブ版(告知シート画像つき)</small></a>
 ${schedTable(WJPT.tournaments)}
 ${pastSatelliteVenuesBlock(BIG.bigEventById('wjpt'), 'WJPT 2026')}
 ${venueScheduleBlock()}
 ${adCard()}
+<div class="disclaimer">当サイトはWJPTの主催者・公式媒体ではありません。公開情報をもとに当サイトが独自に集約した<b>非公式のまとめ</b>です。掲載内容は開催当時の公式情報にもとづきますが、当サイトによる転記の誤りが含まれる可能性があります。イベント終了後は内容を更新していません。掲載元: <a href="${esc(WJPT.guideUrl)}" target="_blank" rel="noopener">公式プレイヤーズガイド</a>（開催当時）。<br>${POSITIONING}</div>
+
 <div class="links">
   ▶ <a href="/">福岡の今後のポーカートーナメント日程を見る</a>
 </div>`;
@@ -486,13 +488,14 @@ ${SITE_BANNER_SECTION.html}<h1>NIPPON SERIES FUKUOKA 2026 タイムスケジュ�
   <b>アクセス</b>　${esc(NIPPON.access)}<br>
   <b>MAIN EVENT（#17）</b>　<span class="prize">Prize 5,000,000 ＋ inゼリー １年分</span>
 </div>
-<div class="disclaimer">当サイトはNIPPON SERIESの主催者・公式媒体ではありません。公開情報をもとに当サイトが独自に集約した<b>非公式のまとめ</b>です。掲載内容は<b>2026年7月29日時点</b>の公式情報にもとづきますが、当サイトによる転記の誤りが含まれる可能性があります。Fee・Prize は公式表記のまま掲載しており、「+ 1,000」の内訳は公式に明記がないため当サイトでは言い換えていません。参加前に必ず<a href="${esc(NIPPON.siteUrl)}" target="_blank" rel="noopener">公式イベントページ</a>をご確認ください。<br>${POSITIONING}</div>
 <a class="cta" href="/#nippon">▶ 日付で絞り込んで見る<small>インタラクティブ版（日別タブ・各イベントの公式ストラクチャーへのリンクつき）</small></a>
 ${schedTableNippon(NIPPON.events)}
 <p class="lead" style="margin-top:14px">※ MAIN EVENT（#17）は Day 1A〜Day 1D Last Chance と Day 2 &amp; FINAL に分かれているため、同じ番号が複数の日に登場します。ブラインドストラクチャーは公式の各トーナメントページをご確認ください。</p>
 ${pastSatelliteVenuesBlock(BIG.bigEventById('nippon'), 'NIPPON SERIES FUKUOKA 2026')}
 ${venueScheduleBlock()}
 ${adCard()}
+<div class="disclaimer">当サイトはNIPPON SERIESの主催者・公式媒体ではありません。公開情報をもとに当サイトが独自に集約した<b>非公式のまとめ</b>です。掲載内容は<b>2026年7月29日時点</b>の公式情報にもとづきますが、当サイトによる転記の誤りが含まれる可能性があります。Fee・Prize は公式表記のまま掲載しており、「+ 1,000」の内訳は公式に明記がないため当サイトでは言い換えていません。参加前に必ず<a href="${esc(NIPPON.siteUrl)}" target="_blank" rel="noopener">公式イベントページ</a>をご確認ください。<br>${POSITIONING}</div>
+
 <div class="links">
   ▶ <a href="${esc(NIPPON.siteUrl)}" target="_blank" rel="noopener">NIPPON SERIES 公式イベントページ</a>　／　<a href="${esc(NIPPON.guidePdfUrl)}" target="_blank" rel="noopener">公式Players Guide(PDF)</a><br>
   ▶ <a href="/">福岡の他のポーカートーナメント日程を見る</a>
@@ -723,7 +726,6 @@ ${SITE_BANNER_SECTION.html}<h1>FST 5.0（FUKUOKA SUPER TOURNAMENT）2026 福岡 
 </div>
 <p class="lead" style="margin-top:-6px">※ 公式では「FST5.0」（スペースなし）とも表記されます。</p>
 <div class="tba"><b>${esc(FST.asOf)}時点で、メイン会場の全日程（タイムスケジュール）が判明しました。</b>ブラインドストラクチャー等の詳細は引き続き公式から発表されていません。下表は現時点で公表されている MAIN EVENT と CHAMPIONSHIP の概要です。</div>
-<div class="disclaimer">当サイトはFSTの主催者・公式媒体ではありません。公開情報をもとに当サイトが独自に集約した<b>非公式のまとめ</b>です。掲載しているバナーは当サイトが作成したもので、ロゴ・大会名等の権利は主催者に帰属します。掲載内容は<b>${esc(FST.asOf)}時点</b>の公式告知にもとづきますが、当サイトによる転記の誤りが含まれる可能性があります。発表済みの内容も変更される場合があります。参加前に必ず<a href="${esc(FST.x)}" target="_blank" rel="noopener">公式X（@fst_202408）</a>等の公式情報をご確認ください。<br>${POSITIONING}</div>
 <a class="cta" href="/#fst">▶ サイト内のFSTサテライト（チケット獲得トーナメント）を見る<small>インタラクティブ版（日付・店舗つきで直近の開催予定を表示）</small></a>
 ${tables}
 <p class="lead" style="margin-top:14px">※ エントリー方法の「FSTチケット」は、県内各店で開催されるサテライトで獲得できるチケットを指します。サテライトの開催予定は<a href="/#fst">トップページのFSTページ</a>に掲載しています。</p>
@@ -738,6 +740,8 @@ ${venueScheduleBlock()}
 ${schedTableFst(FST_SCHEDULE.tournaments)}
 ${faq.html}
 ${adCard()}
+<div class="disclaimer">当サイトはFSTの主催者・公式媒体ではありません。公開情報をもとに当サイトが独自に集約した<b>非公式のまとめ</b>です。掲載しているバナーは当サイトが作成したもので、ロゴ・大会名等の権利は主催者に帰属します。掲載内容は<b>${esc(FST.asOf)}時点</b>の公式告知にもとづきますが、当サイトによる転記の誤りが含まれる可能性があります。発表済みの内容も変更される場合があります。参加前に必ず<a href="${esc(FST.x)}" target="_blank" rel="noopener">公式X（@fst_202408）</a>等の公式情報をご確認ください。<br>${POSITIONING}</div>
+
 <div class="links">
   ▶ <a href="${esc(FST.x)}" target="_blank" rel="noopener">公式X（@fst_202408）</a>　／　<a href="${esc(FST.linktree)}" target="_blank" rel="noopener">公式Linktree</a>　／　<a href="${esc(FST.instagram)}" target="_blank" rel="noopener">公式Instagram</a><br>
   ▶ <a href="/">福岡の他のポーカートーナメント日程を見る</a>
@@ -836,7 +840,6 @@ ${SITE_BANNER_SECTION.html}<h1>SPADIE FUKUOKA 1st（2026年11月12日〜・UNITE
   <b>位置づけ</b>　SPADIEシリーズ初の九州開催（主催者・関連媒体の紹介による）
 </div>
 <div class="tba"><b>${SPADIE_AS_OF}時点で、SPADIE FUKUOKA 1stは開催と会場・開催開始日が発表された段階です。</b>buyin（参加費）・大会形式（NLH/PLOなど）・詳細スケジュール・チケット/参加方法は、現時点では公式から発表されていません（Players Guideは後日公開予定とされています）。判明次第、当ページを更新します。最新情報は<a href="${esc(SPADIE_X)}" target="_blank" rel="noopener">公式X（@SPADIE_FUKUOKA）</a>でご確認ください。</div>
-<div class="disclaimer">当サイトはSPADIE FUKUOKA 1stの主催者・公式媒体ではありません。公開情報をもとに当サイトが独自に集約した<b>非公式のまとめ</b>です。掲載しているバナーは当サイトが作成したもので、ロゴ・大会名等の権利は主催者に帰属します。掲載内容は<b>${SPADIE_AS_OF}時点</b>の公開情報にもとづきますが、当サイトによる転記の誤りが含まれる可能性があります。発表済みの内容も変更される場合があります。参加前に必ず<a href="${esc(SPADIE_X)}" target="_blank" rel="noopener">公式X（@SPADIE_FUKUOKA）</a>等の公式情報をご確認ください。<br>${POSITIONING}</div>
 <h2 class="day">開催概要</h2>
 <p class="lead">開催開始日は2026年11月12日（木）、会場は福岡市中央区大名のUNITEDLAB（〒810-0041 福岡県福岡市中央区大名1-3-36）です。アクセスは地下鉄空港線 天神駅から徒歩約10分、赤坂駅から徒歩約9分、西鉄福岡（天神）駅から徒歩約11分です。</p>
 <p class="lead" style="margin-top:-6px">${SPADIE_AS_OF}時点で、当サイトが確認できた一次情報（主催者プレスリリース）には開催開始日（11月12日）のみが明記されており、終了日の記載はありません。一部媒体では「11月12日（木）〜15日（日）」の4日間と報じられていますが、当サイトでは主催者公式（X: @SPADIE_FUKUOKA）による終了日の明記を確認でき次第、本ページに反映します。</p>
@@ -861,6 +864,8 @@ ${SITE_BANNER_SECTION.html}<h1>SPADIE FUKUOKA 1st（2026年11月12日〜・UNITE
 ${faq.html}
 ${venueScheduleBlock()}
 ${adCard()}
+<div class="disclaimer">当サイトはSPADIE FUKUOKA 1stの主催者・公式媒体ではありません。公開情報をもとに当サイトが独自に集約した<b>非公式のまとめ</b>です。掲載しているバナーは当サイトが作成したもので、ロゴ・大会名等の権利は主催者に帰属します。掲載内容は<b>${SPADIE_AS_OF}時点</b>の公開情報にもとづきますが、当サイトによる転記の誤りが含まれる可能性があります。発表済みの内容も変更される場合があります。参加前に必ず<a href="${esc(SPADIE_X)}" target="_blank" rel="noopener">公式X（@SPADIE_FUKUOKA）</a>等の公式情報をご確認ください。<br>${POSITIONING}</div>
+
 <div class="links">
   ▶ <a href="${esc(SPADIE_X)}" target="_blank" rel="noopener">公式X（@SPADIE_FUKUOKA）</a><br>
   ▶ <a href="/">福岡の他のポーカートーナメント日程を見る</a>

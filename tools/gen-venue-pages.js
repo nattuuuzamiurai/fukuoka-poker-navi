@@ -666,7 +666,6 @@ ${SITE_BANNER_SECTION.html}<h1>${esc(v.name)}</h1>
 ${venueInfoCardsHtml(v)}
 </div>${mapBlock}${pricingBlock ? `
 <h2 class="vp-sec">${esc(v.name)}の料金・システム</h2>${pricingBlock}` : ''}${fstSatBlock}${pastSatBlock}
-<div class="disclaimer">${noteBlock}当サイトは店舗が公開している情報を集約している媒体で、この店舗の運営者ではありません。日程・料金・営業状況は変更されることがあるため、参加前に必ず店舗の公式情報・SNSをご確認ください。${sourceBlock}<br>${POSITIONING}</div>
 <a class="cta" href="/#venue/${esc(v.id)}">▶ 月を切り替えて日程を見る<small>サイト内の月別カレンダー（前月・翌月に移動できます）</small></a>${eventPageLinkBlock}
 <h2 class="vp-sec" id="vp-sched-title">${schedTitle}</h2>
 <p class="lead" id="vp-sched-note">${schedNote}</p>
@@ -674,6 +673,8 @@ ${venueInfoCardsHtml(v)}
 <h2 class="vp-sec">リングゲーム</h2>${ringBlock}` : ''}
 ${adCard()}
 ${areaBlock}${guideLinksHtml(v)}
+<div class="disclaimer">${noteBlock}当サイトは店舗が公開している情報を集約している媒体で、この店舗の運営者ではありません。日程・料金・営業状況は変更されることがあるため、参加前に必ず店舗の公式情報・SNSをご確認ください。${sourceBlock}<br>${POSITIONING}</div>
+
 <div class="links">
   ▶ <a href="/">福岡のポーカートーナメント日程を日付順に見る（全${VENUES.length}店舗）</a><br>
   ▶ <a href="/#venue/${esc(v.id)}">${esc(v.name)} の月別カレンダー</a>
