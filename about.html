@@ -16,6 +16,10 @@
   }
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Zen+Old+Mincho:wght@500;700&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#F1F3F6">
 <title>運営者情報（このサイトについて） | ふくおかポーカーナビ</title>
 <meta name="description" content="「ふくおかポーカーナビ」の運営者について。サイトの目的・情報源と更新方針・免責事項をご案内します。">
 <link rel="canonical" href="https://fukuokapoker.com/about.html">
@@ -42,48 +46,40 @@
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   :root{
-    --felt:#0f3d2e; --felt2:#14513c; --gold:#d9a441; --gold2:#f0c56b;
-    --bg:#f6f4ef; --sur:#ffffff; --bor:#e7e1d6; --txt:#25201b; --mut:#8a8078;
-    --r:14px; --sha:0 2px 12px rgba(30,20,5,.08);
+    --felt:#F1F3F6; --felt2:#E4E8EE; --gold:#B07418; --gold2:#C9892B; --gold-ink:#8A5A12; --gold-soft:#F2C27A;
+    --bg:#F1F3F6; --sur:#FAFBFC; --chip:#E4E8EE; --bor:rgba(14,26,43,.14); --txt:#0E1A2B; --mut:#56617A; --ink:#0E1A2B;
+    --f-display:"Zen Old Mincho","Hiragino Mincho ProN","Yu Mincho",serif;
+    --f-body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic UI",system-ui,sans-serif;
+    --r:6px; --sha:none;
   }
-  body{font-family:"Hiragino Sans","Yu Gothic UI",system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.75;font-size:15px;padding-bottom:calc(78px + env(safe-area-inset-bottom))}
-  a{color:var(--felt)}
+  body{font-family:var(--f-body);background:var(--bg);color:var(--txt);line-height:1.75;font-size:15px;padding-bottom:calc(78px + env(safe-area-inset-bottom))}
+  a{color:var(--gold-ink)}
   .wrap{max-width:720px;margin:0 auto;padding:0 16px}
-  header{background:linear-gradient(135deg,var(--felt),var(--felt2));color:#fff;padding:14px 18px}
+  header{background:rgba(241,243,246,.92);-webkit-backdrop-filter:saturate(1.2) blur(10px);backdrop-filter:saturate(1.2) blur(10px);color:var(--txt);padding:14px 18px;position:sticky;top:0;z-index:40;border-bottom:1px solid var(--bor)}
   .hbar{display:flex;align-items:center;justify-content:space-between;max-width:720px;margin:0 auto}
-  .logo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:1.06em;text-decoration:none;color:#fff}
-  .logo .pip{color:var(--gold2)}
-  .back{color:#cfe6db;font-size:.82em;text-decoration:none}
+  .logo{display:flex;align-items:center;gap:9px;font-family:var(--f-display);font-weight:700;font-size:1.06em;text-decoration:none;color:var(--txt)}
+  .logo .pip{color:var(--gold)}
+  .back{color:var(--txt);font-size:.82em;font-weight:700;text-decoration:none}
   main{padding:28px 0 50px}
-  h1{font-size:1.3em;font-weight:800;margin-bottom:6px}
+  h1{font-family:var(--f-display);font-size:1.3em;font-weight:700;margin-bottom:6px}
   .updated{color:var(--mut);font-size:.82em;margin-bottom:22px}
   .card{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);box-shadow:var(--sha);padding:24px 22px}
-  h2{font-size:1.02em;font-weight:800;color:var(--felt);margin:22px 0 8px}
+  h2{font-family:var(--f-display);font-size:1.05em;font-weight:700;color:var(--txt);margin:22px 0 8px}
   h2:first-child{margin-top:0}
   p, li{font-size:.92em;color:var(--txt)}
   ul{margin:6px 0 6px 1.3em}
   li{margin-bottom:4px}
   .note{font-size:.82em;color:var(--mut);margin-top:4px}
-  footer{background:#1b2320;color:#9aa39d;padding:22px 16px;font-size:.8em;text-align:center}
-  footer a{color:var(--gold2)}
+  footer{background:var(--ink);color:#B5B2A8;padding:22px 16px;font-size:.8em;text-align:center}
+  footer a{color:var(--gold-soft)}
 
   /* STICKY AD (自社サービス案内。全ページ共通で画面下部に固定表示) */
-  .stickyAd{
-    position:fixed; left:0; right:0; bottom:0; z-index:50;
-    display:flex; align-items:center; gap:10px;
-    padding:9px 12px calc(9px + env(safe-area-inset-bottom));
-    background:
-      radial-gradient(120% 220% at 6% 0%, rgba(96,214,255,.20), transparent 55%),
-      radial-gradient(120% 220% at 100% 100%, rgba(200,110,255,.16), transparent 55%),
-      linear-gradient(160deg,#12101d,#191325 60%,#140f1e);
-    border-top:1px solid rgba(255,255,255,.08);
-    box-shadow:0 -4px 18px rgba(5,0,15,.35);
-  }
+  .stickyAd{position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;align-items:center;gap:10px;padding:9px 12px calc(9px + env(safe-area-inset-bottom));background:var(--ink);border-top:3px solid var(--gold)}
   .stickyAd img{width:38px;height:38px;flex-shrink:0;filter:drop-shadow(0 0 8px rgba(120,210,255,.4))}
   .stickyAd .sa-body{flex:1;min-width:0}
   .stickyAd .sa-title{font-size:.8em;font-weight:800;color:#fff;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .stickyAd .sa-desc{font-size:.68em;color:#b9b6c9;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .stickyAd .sa-btn{flex-shrink:0;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#3a2a06;font-weight:800;font-size:.76em;padding:8px 14px;border-radius:18px;white-space:nowrap}
+  .stickyAd .sa-btn{flex-shrink:0;background:var(--gold);color:var(--ink);font-weight:800;font-size:.76em;padding:8px 14px;border-radius:4px;white-space:nowrap}
   @media(max-width:420px){ .stickyAd .sa-desc{display:none} }
 </style>
 </head>
