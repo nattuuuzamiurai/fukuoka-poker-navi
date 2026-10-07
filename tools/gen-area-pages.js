@@ -356,7 +356,6 @@ ${others.map(a => `  <li><a href="/areas/${AREA_SLUGS[a]}/">${esc(a)}（${areaVe
   const body = `
 ${SITE_BANNER_SECTION.html}<h1>${h1}</h1>
 <p class="vp-sub">${sub}</p>${multiStationNote}${fstAreaBlock}
-<div class="disclaimer">当サイトは店舗が公開している情報を集約している媒体で、掲載店舗の運営者ではありません。日程・料金・営業状況は変更されることがあるため、参加前に必ず各店舗の公式情報・SNSをご確認ください。<br>${POSITIONING}</div>
 <h2 class="vp-sec">${esc(area)}のポーカー店（${venues.length}店舗）</h2>
 <div class="ap-cards">
 ${venueCards(venues)}
@@ -366,6 +365,8 @@ ${adCard()}
 <p class="lead" id="ap-sched-note">${schedNote}</p>
 <div id="ap-sched">${schedHtml}</div>${otherBlock}
 ${areaContent}
+<div class="disclaimer">当サイトは店舗が公開している情報を集約している媒体で、掲載店舗の運営者ではありません。日程・料金・営業状況は変更されることがあるため、参加前に必ず各店舗の公式情報・SNSをご確認ください。<br>${POSITIONING}</div>
+
 <div class="links">
   ▶ <a href="/">福岡のポーカートーナメント日程を日付順に見る（全${VENUES.length}店舗）</a>
 </div>`;
