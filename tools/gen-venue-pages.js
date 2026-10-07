@@ -163,7 +163,7 @@ const VENUE_CSS = `  .vp-sub{font-size:.9em;color:var(--mut);margin-bottom:14px}
   .vp-info-card b{display:block;color:var(--txt);font-size:.86em;margin-bottom:2px}
   .vp-info-card a{color:#0e6a72;font-weight:700;word-break:break-all}
   .vp-sns-btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:5px}
-  .vp-sns-btn{display:inline-block;background:var(--bg);border:1px solid var(--bor);border-radius:16px;padding:4px 11px;font-size:.85em;font-weight:700;color:var(--txt);text-decoration:none}
+  .vp-sns-btn{display:inline-block;background:var(--bg);border:1px solid var(--bor);border-radius:16px;padding:4px 11px;font-size:.85em;font-weight:700;color:var(--txt);text-decoration:none;transition:border-color .2s}
   .vp-sns-btn:hover{border-color:var(--gold)}
   /* Googleマップ埋め込み。addressUnverified の店には出さない(呼び出し側で制御)。 */
   .vp-map{display:block;width:100%;height:260px;border:0;border-radius:var(--r);box-shadow:var(--sha);margin-bottom:14px}
