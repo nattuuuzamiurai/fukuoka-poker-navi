@@ -116,16 +116,16 @@ function page(bodyHtml, extraStyle) {
 function buildCommon() {
   const venueCount = DATA.VENUES.length;
   const style = `
-    body{background:linear-gradient(135deg,#0f3d2e,#14513c)}
-    .wm{position:absolute;font-size:340px;opacity:.07;line-height:1;user-select:none}
+    body{background:linear-gradient(135deg,#0E1A2B,#1C2A40)}
+    .wm{position:absolute;font-size:340px;opacity:.08;line-height:1;user-select:none;color:#F2C27A}
     .wm.a{left:-60px;top:-90px}
     .wm.b{right:-60px;bottom:-110px}
     .center{align-items:center;justify-content:center;text-align:center;gap:22px}
     .logo{font-size:56px;font-weight:800;display:flex;align-items:center;gap:16px}
-    .logo .pip{color:#f0c56b;font-size:60px}
-    .sub{font-size:28px;font-weight:700;color:#e9f2ec}
+    .logo .pip{color:#F2C27A;font-size:60px}
+    .sub{font-size:28px;font-weight:700;color:#D6DEE8}
     .chips{display:flex;gap:16px;margin-top:18px}
-    .chip{background:#fff;color:#0f3d2e;font-size:19px;box-shadow:0 2px 12px rgba(0,0,0,.25)}
+    .chip{background:#FAFBFC;color:#0E1A2B;font-size:19px;box-shadow:0 2px 12px rgba(0,0,0,.25)}
   `;
   const body = `
     <div class="wm a">♠</div>
