@@ -2,24 +2,6 @@
   "version": 1,
   "writtenBy": "tools/monitor-instagram-apify.js",
   "entries": {
-    "ig-v18-2026-10-09-1900-mystery-bounty": {
-      "id": "ig-v18-2026-10-09-1900-mystery-bounty",
-      "venueId": "v18",
-      "name": "MYSTERY BOUNTY",
-      "date": "2026-10-09",
-      "start": "19:00",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "バウンティ"
-      ],
-      "source": "semi",
-      "verified": false
-    },
     "ig-v18-2026-10-12-1900-deep-stuck": {
       "id": "ig-v18-2026-10-12-1900-deep-stuck",
       "venueId": "v18",
@@ -552,23 +534,6 @@
       "source": "semi",
       "verified": false
     },
-    "ig-v21-2026-10-09-1930-spadie-freez-4000": {
-      "id": "ig-v21-2026-10-09-1930-spadie-freez-4000",
-      "venueId": "v21",
-      "name": "SPADIE Freez 4000",
-      "date": "2026-10-09",
-      "start": "19:30",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false,
-      "lowConfidence": true
-    },
     "ig-v21-2026-10-10-1830-fst-3itm": {
       "id": "ig-v21-2026-10-10-1830-fst-3itm",
       "venueId": "v21",
@@ -882,24 +847,6 @@
       "reentry": false,
       "prize": null,
       "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v35-2026-10-09-1915-free-roll": {
-      "id": "ig-v35-2026-10-09-1915-free-roll",
-      "venueId": "v35",
-      "name": "FREE ROLL",
-      "date": "2026-10-09",
-      "start": "19:15",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "フリーロール"
-      ],
       "source": "semi",
       "verified": false
     },
