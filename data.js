@@ -18849,6 +18849,22 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01M4FGZZF425PTV26HJR2Z47P8",
+    "venueId": "v27",
+    "name": "DOJO LEAGUE 第2節　ASSASSIN",
+    "date": "2026-10-10",
+    "start": "14:00",
+    "buyin": 3000,
+    "addon": null,
+    "stack": 30000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "wl-01M3NTZ48XTH27TDS9EJMZZWFK",
     "venueId": "v27",
     "name": "ヘッズアップ〜DOJO破り〜",
@@ -18863,6 +18879,22 @@ const TOURNAMENTS = [
     "tags": [
       "ターボ"
     ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M4FH4WWF07EH34ZVGY7MY5XW",
+    "venueId": "v27",
+    "name": "ZEUSシンイチロウ祝勝トナメ",
+    "date": "2026-10-11",
+    "start": "13:00",
+    "buyin": 5000,
+    "addon": 5000,
+    "stack": 100000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
     "source": "auto",
     "verified": false
   },

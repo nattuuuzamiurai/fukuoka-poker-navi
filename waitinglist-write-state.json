@@ -466,24 +466,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M3NTZ48XBBA2QFPZK489SJZP": {
-      "id": "wl-01M3NTZ48XBBA2QFPZK489SJZP",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-10-09",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M3NTZ48XCR3YFJEPN4VK54DK": {
       "id": "wl-01M3NTZ48XCR3YFJEPN4VK54DK",
       "venueId": "v27",
@@ -838,22 +820,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M3ZW7QYZGW4BRR3D6HB89MDZ": {
-      "id": "wl-01M3ZW7QYZGW4BRR3D6HB89MDZ",
-      "venueId": "v3",
-      "name": "m ORIGIN",
-      "date": "2026-10-09",
-      "start": "18:00",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M3ZWFSTS8BNQK60T0ESFP9DJ": {
       "id": "wl-01M3ZWFSTS8BNQK60T0ESFP9DJ",
       "venueId": "v3",
@@ -897,24 +863,6 @@
       "buyin": 2000,
       "addon": 1000,
       "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M3ZWNGVPKNT0A7VXD334PM7R": {
-      "id": "wl-01M3ZWNGVPKNT0A7VXD334PM7R",
-      "venueId": "v3",
-      "name": "ｍ Hyper Deep Turbo",
-      "date": "2026-10-09",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": null,
-      "stack": 100000,
       "guarantee": null,
       "reentry": true,
       "prize": null,
@@ -1488,22 +1436,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M40A7YG689B9JQFSD4446RHH": {
-      "id": "wl-01M40A7YG689B9JQFSD4446RHH",
-      "venueId": "v22",
-      "name": "魂Day1-H",
-      "date": "2026-10-09",
-      "start": "19:00",
-      "buyin": 0,
-      "addon": null,
-      "stack": 20000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M40A910JDPBCWR1Q7BGX6G7M": {
       "id": "wl-01M40A910JDPBCWR1Q7BGX6G7M",
       "venueId": "v22",
@@ -1624,22 +1556,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M4DD2HZ0PQ0D3YPK5BEQ2K0F": {
-      "id": "wl-01M4DD2HZ0PQ0D3YPK5BEQ2K0F",
-      "venueId": "v22",
-      "name": "魂Day1-J",
-      "date": "2026-10-09",
-      "start": "23:00",
-      "buyin": 0,
-      "addon": null,
-      "stack": 20000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M4DD4P1NGWTF8JQ84TT6CXZZ": {
       "id": "wl-01M4DD4P1NGWTF8JQ84TT6CXZZ",
       "venueId": "v22",
@@ -1665,6 +1581,38 @@
       "buyin": 0,
       "addon": null,
       "stack": 20000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M4FGZZF425PTV26HJR2Z47P8": {
+      "id": "wl-01M4FGZZF425PTV26HJR2Z47P8",
+      "venueId": "v27",
+      "name": "DOJO LEAGUE 第2節　ASSASSIN",
+      "date": "2026-10-10",
+      "start": "14:00",
+      "buyin": 3000,
+      "addon": null,
+      "stack": 30000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M4FH4WWF07EH34ZVGY7MY5XW": {
+      "id": "wl-01M4FH4WWF07EH34ZVGY7MY5XW",
+      "venueId": "v27",
+      "name": "ZEUSシンイチロウ祝勝トナメ",
+      "date": "2026-10-11",
+      "start": "13:00",
+      "buyin": 5000,
+      "addon": 5000,
+      "stack": 100000,
       "guarantee": null,
       "reentry": true,
       "prize": null,
