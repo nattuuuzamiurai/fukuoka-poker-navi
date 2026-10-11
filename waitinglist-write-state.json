@@ -178,24 +178,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M36A88PP1B2NKEQPJGWQKN7F": {
-      "id": "wl-01M36A88PP1B2NKEQPJGWQKN7F",
-      "venueId": "v3",
-      "name": "m Monster Stack",
-      "date": "2026-10-10",
-      "start": "13:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 60000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M36A88Q31FVD5H0CY861S9NK": {
       "id": "wl-01M36A88Q31FVD5H0CY861S9NK",
       "venueId": "v3",
@@ -327,24 +309,6 @@
       "venueId": "v27",
       "name": "ヘッズアップ〜DOJO破り〜",
       "date": "2026-11-03",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M3NTZ48X29WPQJHZTF6XS276": {
-      "id": "wl-01M3NTZ48X29WPQJHZTF6XS276",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-10-10",
       "start": "12:00",
       "buyin": 5000,
       "addon": null,
@@ -854,24 +818,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M3ZWM25CX8MZ9AEYHB2A1CM3": {
-      "id": "wl-01M3ZWM25CX8MZ9AEYHB2A1CM3",
-      "venueId": "v3",
-      "name": "m MAD shuffle Turbo",
-      "date": "2026-10-10",
-      "start": "21:00",
-      "buyin": 2000,
-      "addon": 1000,
-      "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M3ZWPGVGAGSSEESJP5ZVG13J": {
       "id": "wl-01M3ZWPGVGAGSSEESJP5ZVG13J",
       "venueId": "v3",
@@ -887,22 +833,6 @@
       "tags": [
         "ターボ"
       ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M3ZWVJW18R903PMJJ889XBN1": {
-      "id": "wl-01M3ZWVJW18R903PMJJ889XBN1",
-      "venueId": "v3",
-      "name": "m Brain ~LONG EDITION~",
-      "date": "2026-10-10",
-      "start": "17:10",
-      "buyin": 3500,
-      "addon": 0,
-      "stack": 10000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
       "source": "auto",
       "verified": false
     },
@@ -1436,22 +1366,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M40A910JDPBCWR1Q7BGX6G7M": {
-      "id": "wl-01M40A910JDPBCWR1Q7BGX6G7M",
-      "venueId": "v22",
-      "name": "魂 Day1-K",
-      "date": "2026-10-10",
-      "start": "19:00",
-      "buyin": 0,
-      "addon": null,
-      "stack": 20000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M40AGWM1KFC0BN4XCGJCYWE1": {
       "id": "wl-01M40AGWM1KFC0BN4XCGJCYWE1",
       "venueId": "v22",
@@ -1556,22 +1470,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M4DD4P1NGWTF8JQ84TT6CXZZ": {
-      "id": "wl-01M4DD4P1NGWTF8JQ84TT6CXZZ",
-      "venueId": "v22",
-      "name": "魂Day1-L",
-      "date": "2026-10-10",
-      "start": "23:00",
-      "buyin": 0,
-      "addon": null,
-      "stack": 20000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M4DD79T08M4TR9DEE9N6H6P2": {
       "id": "wl-01M4DD79T08M4TR9DEE9N6H6P2",
       "venueId": "v22",
@@ -1581,22 +1479,6 @@
       "buyin": 0,
       "addon": null,
       "stack": 20000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M4FGZZF425PTV26HJR2Z47P8": {
-      "id": "wl-01M4FGZZF425PTV26HJR2Z47P8",
-      "venueId": "v27",
-      "name": "DOJO LEAGUE 第2節　ASSASSIN",
-      "date": "2026-10-10",
-      "start": "14:00",
-      "buyin": 3000,
-      "addon": null,
-      "stack": 30000,
       "guarantee": null,
       "reentry": true,
       "prize": null,
@@ -1617,6 +1499,78 @@
       "reentry": true,
       "prize": null,
       "tags": [],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M4J8Y0DH782136RV8DF78EMA": {
+      "id": "wl-01M4J8Y0DH782136RV8DF78EMA",
+      "venueId": "v19",
+      "name": "3000 Deep Stack",
+      "date": "2026-11-07",
+      "start": "16:10",
+      "buyin": 3000,
+      "addon": 2000,
+      "stack": 40000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ディープ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M4J8Y0DH8EWVQV852CBBX1K1": {
+      "id": "wl-01M4J8Y0DH8EWVQV852CBBX1K1",
+      "venueId": "v19",
+      "name": "3000 Deep Stack",
+      "date": "2026-10-24",
+      "start": "16:10",
+      "buyin": 3000,
+      "addon": 2000,
+      "stack": 40000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ディープ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M4J8Y0DHVZZ6QTDCFR39Y6MT": {
+      "id": "wl-01M4J8Y0DHVZZ6QTDCFR39Y6MT",
+      "venueId": "v19",
+      "name": "3000 Deep Stack",
+      "date": "2026-10-17",
+      "start": "16:10",
+      "buyin": 3000,
+      "addon": 2000,
+      "stack": 40000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ディープ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M4J8Y0DHZMT2KGA1YFXB0EVV": {
+      "id": "wl-01M4J8Y0DHZMT2KGA1YFXB0EVV",
+      "venueId": "v19",
+      "name": "3000 Deep Stack",
+      "date": "2026-10-31",
+      "start": "16:10",
+      "buyin": 3000,
+      "addon": 2000,
+      "stack": 40000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ディープ"
+      ],
       "source": "auto",
       "verified": false
     }
