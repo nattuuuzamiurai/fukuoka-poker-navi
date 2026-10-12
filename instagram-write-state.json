@@ -306,24 +306,6 @@
       "source": "semi",
       "verified": false
     },
-    "ig-v20-2026-10-10-nostart-deep-stack": {
-      "id": "ig-v20-2026-10-10-nostart-deep-stack",
-      "venueId": "v20",
-      "name": "DEEP STACK",
-      "date": "2026-10-10",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "semi",
-      "verified": false
-    },
     "ig-v20-2026-10-13-nostart-post": {
       "id": "ig-v20-2026-10-13-nostart-post",
       "venueId": "v20",
@@ -531,40 +513,6 @@
       "tags": [
         "ディープ"
       ],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v21-2026-10-10-1830-fst-3itm": {
-      "id": "ig-v21-2026-10-10-1830-fst-3itm",
-      "venueId": "v21",
-      "name": "FST 3ITM 女選手祝勝カップ",
-      "date": "2026-10-10",
-      "start": "18:30",
-      "buyin": 3000,
-      "addon": null,
-      "stack": 30000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "FST"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v21-2026-10-11-1800-post": {
-      "id": "ig-v21-2026-10-11-1800-post",
-      "venueId": "v21",
-      "name": "ダンポーカー大運動会トーナメント",
-      "date": "2026-10-11",
-      "start": "18:00",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
       "source": "semi",
       "verified": false
     },
@@ -845,38 +793,6 @@
       "stack": null,
       "guarantee": null,
       "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v35-2026-10-10-1500-e-tournament": {
-      "id": "ig-v35-2026-10-10-1500-e-tournament",
-      "venueId": "v35",
-      "name": "初心者E無料 TOURNAMENT",
-      "date": "2026-10-10",
-      "start": "15:00",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v35-2026-10-11-1800-hayato-hayato-tournament": {
-      "id": "ig-v35-2026-10-11-1800-hayato-hayato-tournament",
-      "venueId": "v35",
-      "name": "中級者講習 講師 Hayato氏 Hayato TOURNAMENT",
-      "date": "2026-10-11",
-      "start": "18:00",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": true,
       "prize": null,
       "tags": [],
       "source": "semi",
@@ -1219,40 +1135,6 @@
       "reentry": true,
       "prize": null,
       "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v40-2026-10-10-nostart-post": {
-      "id": "ig-v40-2026-10-10-nostart-post",
-      "venueId": "v40",
-      "name": "ミニマスクイベント",
-      "date": "2026-10-10",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v40-2026-10-11-nostart-post": {
-      "id": "ig-v40-2026-10-11-nostart-post",
-      "venueId": "v40",
-      "name": "ヘッズアップ祭ミニリング",
-      "date": "2026-10-11",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "リーグ"
-      ],
       "source": "semi",
       "verified": false
     },
