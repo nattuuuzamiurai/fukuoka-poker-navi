@@ -592,24 +592,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M3NTZ48XTH27TDS9EJMZZWFK": {
-      "id": "wl-01M3NTZ48XTH27TDS9EJMZZWFK",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-10-11",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M3NTZ48XTT8DCPQAEYSZVG47": {
       "id": "wl-01M3NTZ48XTT8DCPQAEYSZVG47",
       "venueId": "v27",
@@ -781,58 +763,6 @@
       "reentry": true,
       "prize": null,
       "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M3ZWFSTS8BNQK60T0ESFP9DJ": {
-      "id": "wl-01M3ZWFSTS8BNQK60T0ESFP9DJ",
-      "venueId": "v3",
-      "name": "m VAULT✨New✨",
-      "date": "2026-10-11",
-      "start": "17:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M3ZWGGHFDH9ZHKDAP6K726NY": {
-      "id": "wl-01M3ZWGGHFDH9ZHKDAP6K726NY",
-      "venueId": "v3",
-      "name": "m LIVE LEAGUE season1",
-      "date": "2026-10-11",
-      "start": "13:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 60000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M3ZWPGVGAGSSEESJP5ZVG13J": {
-      "id": "wl-01M3ZWPGVGAGSSEESJP5ZVG13J",
-      "venueId": "v3",
-      "name": "ｍ Hyper Deep Turbo",
-      "date": "2026-10-11",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": null,
-      "stack": 100000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
       "source": "auto",
       "verified": false
     },
@@ -1366,22 +1296,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M40AGWM1KFC0BN4XCGJCYWE1": {
-      "id": "wl-01M40AGWM1KFC0BN4XCGJCYWE1",
-      "venueId": "v22",
-      "name": "魂Day1-M",
-      "date": "2026-10-11",
-      "start": "12:00",
-      "buyin": 0,
-      "addon": null,
-      "stack": 20000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M40T11SBGYK1NQ9WQWBK395M": {
       "id": "wl-01M40T11SBGYK1NQ9WQWBK395M",
       "venueId": "v3",
@@ -1395,24 +1309,6 @@
       "reentry": true,
       "prize": null,
       "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M42V5W04766SG6D55GRPQWPW": {
-      "id": "wl-01M42V5W04766SG6D55GRPQWPW",
-      "venueId": "v19",
-      "name": "2000 Turbo",
-      "date": "2026-10-11",
-      "start": "16:10",
-      "buyin": 2000,
-      "addon": 1000,
-      "stack": 30000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
       "source": "auto",
       "verified": false
     },
@@ -1467,38 +1363,6 @@
       "tags": [
         "ターボ"
       ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M4DD79T08M4TR9DEE9N6H6P2": {
-      "id": "wl-01M4DD79T08M4TR9DEE9N6H6P2",
-      "venueId": "v22",
-      "name": "魂Day1-N",
-      "date": "2026-10-11",
-      "start": "15:00",
-      "buyin": 0,
-      "addon": null,
-      "stack": 20000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M4FH4WWF07EH34ZVGY7MY5XW": {
-      "id": "wl-01M4FH4WWF07EH34ZVGY7MY5XW",
-      "venueId": "v27",
-      "name": "ZEUSシンイチロウ祝勝トナメ",
-      "date": "2026-10-11",
-      "start": "13:00",
-      "buyin": 5000,
-      "addon": 5000,
-      "stack": 100000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
       "source": "auto",
       "verified": false
     },
