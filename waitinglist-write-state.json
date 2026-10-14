@@ -18,22 +18,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M369QY02T487QJ7WXJFPEE7P": {
-      "id": "wl-01M369QY02T487QJ7WXJFPEE7P",
-      "venueId": "v3",
-      "name": "m LIVE LEAGUE season1",
-      "date": "2026-10-13",
-      "start": "18:00",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M369QY0D038N04FB6MT33Y0F": {
       "id": "wl-01M369QY0D038N04FB6MT33Y0F",
       "venueId": "v3",
@@ -327,24 +311,6 @@
       "venueId": "v27",
       "name": "ヘッズアップ〜DOJO破り〜",
       "date": "2026-10-19",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M3NTZ48X4FY36XN93733NDR1": {
-      "id": "wl-01M3NTZ48X4FY36XN93733NDR1",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-10-13",
       "start": "12:00",
       "buyin": 5000,
       "addon": null,
@@ -716,22 +682,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M3NYQMWZGT4Y9FFEPW7MYM9J": {
-      "id": "wl-01M3NYQMWZGT4Y9FFEPW7MYM9J",
-      "venueId": "v27",
-      "name": "ミステリーバウンティ",
-      "date": "2026-10-13",
-      "start": "19:00",
-      "buyin": 4000,
-      "addon": 4000,
-      "stack": 30000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M3NYQMWZQAQAFYKS075GS739": {
       "id": "wl-01M3NYQMWZQAQAFYKS075GS739",
       "venueId": "v27",
@@ -844,24 +794,6 @@
       "prize": null,
       "tags": [
         "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M3ZXJKM6JSZEBB4432F93WCB": {
-      "id": "wl-01M3ZXJKM6JSZEBB4432F93WCB",
-      "venueId": "v3",
-      "name": "m Bounty Turbo",
-      "date": "2026-10-13",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": 1000,
-      "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
       ],
       "source": "auto",
       "verified": false
@@ -1580,40 +1512,6 @@
       "start": "18:10",
       "buyin": 3000,
       "addon": null,
-      "stack": 30000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M4QRWG547W1D40NA22AV36T4": {
-      "id": "wl-01M4QRWG547W1D40NA22AV36T4",
-      "venueId": "v22",
-      "name": "FreeRoll",
-      "date": "2026-10-13",
-      "start": "19:00",
-      "buyin": 0,
-      "addon": 1500,
-      "stack": 20000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M4QSPYJNRNPXRBR7MB0AQKA6": {
-      "id": "wl-01M4QSPYJNRNPXRBR7MB0AQKA6",
-      "venueId": "v22",
-      "name": "深夜のトナメ",
-      "date": "2026-10-13",
-      "start": "23:30",
-      "buyin": 5000,
-      "addon": 5000,
       "stack": 30000,
       "guarantee": null,
       "reentry": true,
