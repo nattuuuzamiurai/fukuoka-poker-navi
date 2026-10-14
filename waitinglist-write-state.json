@@ -252,24 +252,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M3NTZ48X18C1BVSQZZA0P7XG": {
-      "id": "wl-01M3NTZ48X18C1BVSQZZA0P7XG",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-10-14",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M3NTZ48X1XR10P87TD8Z3X1N": {
       "id": "wl-01M3NTZ48X1XR10P87TD8Z3X1N",
       "venueId": "v27",
@@ -698,22 +680,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M3ZX6MRRRZMR12V07QF92HXT": {
-      "id": "wl-01M3ZX6MRRRZMR12V07QF92HXT",
-      "venueId": "v3",
-      "name": "【3.5K 飲み放題！】m Booze up",
-      "date": "2026-10-14",
-      "start": "18:00",
-      "buyin": 3500,
-      "addon": 1500,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M3ZX6MSN4D5J4YH5H6Y0AFDG": {
       "id": "wl-01M3ZX6MSN4D5J4YH5H6Y0AFDG",
       "venueId": "v3",
@@ -805,24 +771,6 @@
       "date": "2026-10-15",
       "start": "21:00",
       "buyin": 2000,
-      "addon": 1000,
-      "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M3ZXKZRZHZ9WZ7H5TE9F2ZR5": {
-      "id": "wl-01M3ZXKZRZHZ9WZ7H5TE9F2ZR5",
-      "venueId": "v3",
-      "name": "m DICE Poker Turbo",
-      "date": "2026-10-14",
-      "start": "21:00",
-      "buyin": 2500,
       "addon": 1000,
       "stack": 25000,
       "guarantee": null,
@@ -1512,40 +1460,6 @@
       "start": "18:10",
       "buyin": 3000,
       "addon": null,
-      "stack": 30000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M4QSR3TRTQ1GB4V48X29784F": {
-      "id": "wl-01M4QSR3TRTQ1GB4V48X29784F",
-      "venueId": "v22",
-      "name": "FreeRoll",
-      "date": "2026-10-14",
-      "start": "19:00",
-      "buyin": 0,
-      "addon": 1500,
-      "stack": 20000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M4QSRMEC6SG43DXKGARS9K8T": {
-      "id": "wl-01M4QSRMEC6SG43DXKGARS9K8T",
-      "venueId": "v22",
-      "name": "深夜のトナメ",
-      "date": "2026-10-14",
-      "start": "23:30",
-      "buyin": 5000,
-      "addon": 5000,
       "stack": 30000,
       "guarantee": null,
       "reentry": true,
