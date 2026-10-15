@@ -2,22 +2,6 @@
   "version": 1,
   "writtenBy": "tools/import-waitinglist.js",
   "entries": {
-    "wl-01M1VEJGW4146RRFP3P8WXK9PN": {
-      "id": "wl-01M1VEJGW4146RRFP3P8WXK9PN",
-      "venueId": "v19",
-      "name": "FREEZE OUT TOURNAMENT",
-      "date": "2026-10-15",
-      "start": "18:30",
-      "buyin": 3000,
-      "addon": null,
-      "stack": 30000,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M369QY0D038N04FB6MT33Y0F": {
       "id": "wl-01M369QY0D038N04FB6MT33Y0F",
       "venueId": "v3",
@@ -71,22 +55,6 @@
       "venueId": "v3",
       "name": "m LIVE LEAGUE season1",
       "date": "2026-11-03",
-      "start": "18:00",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M369RKQGSMK2VVCZSMA61761": {
-      "id": "wl-01M369RKQGSMK2VVCZSMA61761",
-      "venueId": "v3",
-      "name": "m LIVE LEAGUE season1",
-      "date": "2026-10-15",
       "start": "18:00",
       "buyin": 4000,
       "addon": null,
@@ -504,24 +472,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M3NTZ48XNVQ2J2MPWM5TQ059": {
-      "id": "wl-01M3NTZ48XNVQ2J2MPWM5TQ059",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-10-15",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M3NTZ48XTT8DCPQAEYSZVG47": {
       "id": "wl-01M3NTZ48XTT8DCPQAEYSZVG47",
       "venueId": "v27",
@@ -587,24 +537,6 @@
       "stack": 15000,
       "guarantee": null,
       "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M3NX4NTQJJ7FF5GAS07MWXVW": {
-      "id": "wl-01M3NX4NTQJJ7FF5GAS07MWXVW",
-      "venueId": "v27",
-      "name": "DOJO FREEZOUT",
-      "date": "2026-10-15",
-      "start": "19:00",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 50000,
-      "guarantee": null,
-      "reentry": false,
       "prize": null,
       "tags": [
         "ターボ"
@@ -760,24 +692,6 @@
       "prize": null,
       "tags": [
         "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M3ZXKFHQWA9QX6H3ZW5SX6VX": {
-      "id": "wl-01M3ZXKFHQWA9QX6H3ZW5SX6VX",
-      "venueId": "v3",
-      "name": "m MAD shuffle Turbo",
-      "date": "2026-10-15",
-      "start": "21:00",
-      "buyin": 2000,
-      "addon": 1000,
-      "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
       ],
       "source": "auto",
       "verified": false
