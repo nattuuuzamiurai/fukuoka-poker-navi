@@ -472,24 +472,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M3NTZ48XTT8DCPQAEYSZVG47": {
-      "id": "wl-01M3NTZ48XTT8DCPQAEYSZVG47",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-10-16",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M3NTZ48XV1BC63GTYRDX8R54": {
       "id": "wl-01M3NTZ48XV1BC63GTYRDX8R54",
       "venueId": "v27",
@@ -675,42 +657,6 @@
       "reentry": false,
       "prize": null,
       "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M3ZXEQR925QHSVDHN7J7K3TA": {
-      "id": "wl-01M3ZXEQR925QHSVDHN7J7K3TA",
-      "venueId": "v3",
-      "name": "m ULTIMA",
-      "date": "2026-10-16",
-      "start": "17:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 60000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M3ZXTYVG433KV0K5RT29P3ER": {
-      "id": "wl-01M3ZXTYVG433KV0K5RT29P3ER",
-      "venueId": "v3",
-      "name": "m Super Hold'em Turbo",
-      "date": "2026-10-16",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": 1000,
-      "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
       "source": "auto",
       "verified": false
     },
@@ -1375,6 +1321,92 @@
       "buyin": 3000,
       "addon": null,
       "stack": 30000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M51Z7XQG3A8A655SQDN3FP3T": {
+      "id": "wl-01M51Z7XQG3A8A655SQDN3FP3T",
+      "venueId": "v22",
+      "name": "FreeRoll",
+      "date": "2026-10-17",
+      "start": "15:00",
+      "buyin": 0,
+      "addon": 1500,
+      "stack": 20000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ターボ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M51ZCEPZ04WAF9YPHP5HFM2W": {
+      "id": "wl-01M51ZCEPZ04WAF9YPHP5HFM2W",
+      "venueId": "v22",
+      "name": "CRownCLown 女王決定戦",
+      "date": "2026-10-17",
+      "start": "15:00",
+      "buyin": 5000,
+      "addon": null,
+      "stack": 100000,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "ディープ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M51ZDFGG6NJKQ76A1Y2SHCS5": {
+      "id": "wl-01M51ZDFGG6NJKQ76A1Y2SHCS5",
+      "venueId": "v22",
+      "name": "深夜のトナメSS",
+      "date": "2026-10-17",
+      "start": "23:30",
+      "buyin": 10000,
+      "addon": 10000,
+      "stack": 40000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M51ZE4FD7194YJGNH9C98Z8R": {
+      "id": "wl-01M51ZE4FD7194YJGNH9C98Z8R",
+      "venueId": "v22",
+      "name": "CRownCLown 女王決定戦",
+      "date": "2026-10-18",
+      "start": "15:00",
+      "buyin": 5000,
+      "addon": null,
+      "stack": 50000,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "ディープ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M51ZEM7DQ8Y6V7MAVNV4A1Q0": {
+      "id": "wl-01M51ZEM7DQ8Y6V7MAVNV4A1Q0",
+      "venueId": "v22",
+      "name": "深夜のトナメSS",
+      "date": "2026-10-18",
+      "start": "23:30",
+      "buyin": 10000,
+      "addon": 10000,
+      "stack": 40000,
       "guarantee": null,
       "reentry": true,
       "prize": null,

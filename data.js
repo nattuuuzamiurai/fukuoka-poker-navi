@@ -15620,6 +15620,92 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01M51Z7XQG3A8A655SQDN3FP3T",
+    "venueId": "v22",
+    "name": "FreeRoll",
+    "date": "2026-10-17",
+    "start": "15:00",
+    "buyin": 0,
+    "addon": 1500,
+    "stack": 20000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M51ZCEPZ04WAF9YPHP5HFM2W",
+    "venueId": "v22",
+    "name": "CRownCLown 女王決定戦",
+    "date": "2026-10-17",
+    "start": "15:00",
+    "buyin": 5000,
+    "addon": null,
+    "stack": 100000,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "ディープ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M51ZDFGG6NJKQ76A1Y2SHCS5",
+    "venueId": "v22",
+    "name": "深夜のトナメSS",
+    "date": "2026-10-17",
+    "start": "23:30",
+    "buyin": 10000,
+    "addon": 10000,
+    "stack": 40000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M51ZE4FD7194YJGNH9C98Z8R",
+    "venueId": "v22",
+    "name": "CRownCLown 女王決定戦",
+    "date": "2026-10-18",
+    "start": "15:00",
+    "buyin": 5000,
+    "addon": null,
+    "stack": 50000,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "ディープ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M51ZEM7DQ8Y6V7MAVNV4A1Q0",
+    "venueId": "v22",
+    "name": "深夜のトナメSS",
+    "date": "2026-10-18",
+    "start": "23:30",
+    "buyin": 10000,
+    "addon": 10000,
+    "stack": 40000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "s70712",
     "venueId": "v25",
     "name": "GⅡ ブランドGETトーナメント",
