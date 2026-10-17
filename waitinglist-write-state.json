@@ -184,24 +184,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M36A88Q3JX3B0J8J3XV8DP1X": {
-      "id": "wl-01M36A88Q3JX3B0J8J3XV8DP1X",
-      "venueId": "v3",
-      "name": "m Monster Stack",
-      "date": "2026-10-17",
-      "start": "13:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 60000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M3NTZ48X135311MGF5A5VV3K": {
       "id": "wl-01M3NTZ48X135311MGF5A5VV3K",
       "venueId": "v27",
@@ -333,24 +315,6 @@
       "venueId": "v27",
       "name": "ヘッズアップ〜DOJO破り〜",
       "date": "2026-10-25",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M3NTZ48XCR3YFJEPN4VK54DK": {
-      "id": "wl-01M3NTZ48XCR3YFJEPN4VK54DK",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-10-17",
       "start": "12:00",
       "buyin": 5000,
       "addon": null,
@@ -657,24 +621,6 @@
       "reentry": false,
       "prize": null,
       "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M3ZXVGM3WGQ9YV1AD73H8284": {
-      "id": "wl-01M3ZXVGM3WGQ9YV1AD73H8284",
-      "venueId": "v3",
-      "name": "m MAD shuffle Turbo",
-      "date": "2026-10-17",
-      "start": "21:00",
-      "buyin": 2000,
-      "addon": 1000,
-      "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
       "source": "auto",
       "verified": false
     },
@@ -994,24 +940,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M4J8Y0DHVZZ6QTDCFR39Y6MT": {
-      "id": "wl-01M4J8Y0DHVZZ6QTDCFR39Y6MT",
-      "venueId": "v19",
-      "name": "3000 Deep Stack",
-      "date": "2026-10-17",
-      "start": "16:10",
-      "buyin": 3000,
-      "addon": 2000,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M4J8Y0DHZMT2KGA1YFXB0EVV": {
       "id": "wl-01M4J8Y0DHZMT2KGA1YFXB0EVV",
       "venueId": "v19",
@@ -1232,22 +1160,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M4Q2578MD0YQMSJAY56E2S5F": {
-      "id": "wl-01M4Q2578MD0YQMSJAY56E2S5F",
-      "venueId": "v3",
-      "name": "m FT Bounty",
-      "date": "2026-10-17",
-      "start": "18:00",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M4Q25N2V8H3Q5937NT49CKAC": {
       "id": "wl-01M4Q25N2V8H3Q5937NT49CKAC",
       "venueId": "v3",
@@ -1321,58 +1233,6 @@
       "buyin": 3000,
       "addon": null,
       "stack": 30000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M51Z7XQG3A8A655SQDN3FP3T": {
-      "id": "wl-01M51Z7XQG3A8A655SQDN3FP3T",
-      "venueId": "v22",
-      "name": "FreeRoll",
-      "date": "2026-10-17",
-      "start": "15:00",
-      "buyin": 0,
-      "addon": 1500,
-      "stack": 20000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M51ZCEPZ04WAF9YPHP5HFM2W": {
-      "id": "wl-01M51ZCEPZ04WAF9YPHP5HFM2W",
-      "venueId": "v22",
-      "name": "CRownCLown 女王決定戦",
-      "date": "2026-10-17",
-      "start": "15:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 100000,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M51ZDFGG6NJKQ76A1Y2SHCS5": {
-      "id": "wl-01M51ZDFGG6NJKQ76A1Y2SHCS5",
-      "venueId": "v22",
-      "name": "深夜のトナメSS",
-      "date": "2026-10-17",
-      "start": "23:30",
-      "buyin": 10000,
-      "addon": 10000,
-      "stack": 40000,
       "guarantee": null,
       "reentry": true,
       "prize": null,
