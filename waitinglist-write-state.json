@@ -184,24 +184,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M3NTZ48X135311MGF5A5VV3K": {
-      "id": "wl-01M3NTZ48X135311MGF5A5VV3K",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-10-18",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M3NTZ48X1XR10P87TD8Z3X1N": {
       "id": "wl-01M3NTZ48X1XR10P87TD8Z3X1N",
       "venueId": "v27",
@@ -590,24 +572,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M3ZX7MTPBA194MAFBYHBQD7Y": {
-      "id": "wl-01M3ZX7MTPBA194MAFBYHBQD7Y",
-      "venueId": "v3",
-      "name": "m LIVE LEAGUE season1",
-      "date": "2026-10-18",
-      "start": "13:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 60000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M3ZXBA01866SKK3YQ25QFBC9": {
       "id": "wl-01M3ZXBA01866SKK3YQ25QFBC9",
       "venueId": "v3",
@@ -624,24 +588,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M3ZXW40YQ5ZFPP9AXY9RPXR2": {
-      "id": "wl-01M3ZXW40YQ5ZFPP9AXY9RPXR2",
-      "venueId": "v3",
-      "name": "ｍ Hyper Deep Turbo",
-      "date": "2026-10-18",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": null,
-      "stack": 100000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M3ZXZ5V25WSAJAD0X2HGH9J4": {
       "id": "wl-01M3ZXZ5V25WSAJAD0X2HGH9J4",
       "venueId": "v3",
@@ -651,22 +597,6 @@
       "buyin": 3500,
       "addon": null,
       "stack": 50000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M3ZY0J5KMAA3SFXDEXC5DMEJ": {
-      "id": "wl-01M3ZY0J5KMAA3SFXDEXC5DMEJ",
-      "venueId": "v3",
-      "name": "m VAULT✨New✨",
-      "date": "2026-10-18",
-      "start": "17:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
       "guarantee": null,
       "reentry": true,
       "prize": null,
@@ -855,24 +785,6 @@
       "venueId": "v19",
       "name": "2000 Turbo",
       "date": "2026-11-01",
-      "start": "16:10",
-      "buyin": 2000,
-      "addon": 1000,
-      "stack": 30000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M42V5W04QBVPYB9QY7WXVKJZ": {
-      "id": "wl-01M42V5W04QBVPYB9QY7WXVKJZ",
-      "venueId": "v19",
-      "name": "2000 Turbo",
-      "date": "2026-10-18",
       "start": "16:10",
       "buyin": 2000,
       "addon": 1000,
@@ -1240,33 +1152,15 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M51ZE4FD7194YJGNH9C98Z8R": {
-      "id": "wl-01M51ZE4FD7194YJGNH9C98Z8R",
+    "wl-01M57H637HCWWH1EJPWNC4XT1N": {
+      "id": "wl-01M57H637HCWWH1EJPWNC4XT1N",
       "venueId": "v22",
-      "name": "CRownCLown 女王決定戦",
-      "date": "2026-10-18",
-      "start": "15:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 50000,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M51ZEM7DQ8Y6V7MAVNV4A1Q0": {
-      "id": "wl-01M51ZEM7DQ8Y6V7MAVNV4A1Q0",
-      "venueId": "v22",
-      "name": "深夜のトナメSS",
-      "date": "2026-10-18",
+      "name": "深夜のトナメ",
+      "date": "2026-10-19",
       "start": "23:30",
-      "buyin": 10000,
-      "addon": 10000,
-      "stack": 40000,
+      "buyin": 5000,
+      "addon": 5000,
+      "stack": 30000,
       "guarantee": null,
       "reentry": true,
       "prize": null,

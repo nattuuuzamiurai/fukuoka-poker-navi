@@ -15706,6 +15706,22 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01M57H637HCWWH1EJPWNC4XT1N",
+    "venueId": "v22",
+    "name": "深夜のトナメ",
+    "date": "2026-10-19",
+    "start": "23:30",
+    "buyin": 5000,
+    "addon": 5000,
+    "stack": 30000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "s70712",
     "venueId": "v25",
     "name": "GⅡ ブランドGETトーナメント",
