@@ -220,24 +220,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M3NTZ48X3ZQHRFS19JZ7MSSA": {
-      "id": "wl-01M3NTZ48X3ZQHRFS19JZ7MSSA",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-10-19",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M3NTZ48X6DCPC3SQBKWRKGN9": {
       "id": "wl-01M3NTZ48X6DCPC3SQBKWRKGN9",
       "venueId": "v27",
@@ -588,22 +570,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M3ZXZ5V25WSAJAD0X2HGH9J4": {
-      "id": "wl-01M3ZXZ5V25WSAJAD0X2HGH9J4",
-      "venueId": "v3",
-      "name": "m WAVE（Mystery Bounty）",
-      "date": "2026-10-19",
-      "start": "18:00",
-      "buyin": 3500,
-      "addon": null,
-      "stack": 50000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M3ZY1FEYM9WRQR9590VVYDM0": {
       "id": "wl-01M3ZY1FEYM9WRQR9590VVYDM0",
       "venueId": "v3",
@@ -613,24 +579,6 @@
       "buyin": 2500,
       "addon": 1000,
       "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M3ZY22AZ6YHZEA7PB7TZ2DSV": {
-      "id": "wl-01M3ZY22AZ6YHZEA7PB7TZ2DSV",
-      "venueId": "v3",
-      "name": "m Turbo 60000",
-      "date": "2026-10-19",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": null,
-      "stack": 60000,
       "guarantee": null,
       "reentry": true,
       "prize": null,
@@ -1128,38 +1076,6 @@
       "start": "18:10",
       "buyin": 3000,
       "addon": null,
-      "stack": 30000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M4QM4Q76TR53GHWSFACWJ93F": {
-      "id": "wl-01M4QM4Q76TR53GHWSFACWJ93F",
-      "venueId": "v19",
-      "name": "KO BOUNTY TOURNAMENT",
-      "date": "2026-10-19",
-      "start": "18:10",
-      "buyin": 3000,
-      "addon": null,
-      "stack": 30000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M57H637HCWWH1EJPWNC4XT1N": {
-      "id": "wl-01M57H637HCWWH1EJPWNC4XT1N",
-      "venueId": "v22",
-      "name": "深夜のトナメ",
-      "date": "2026-10-19",
-      "start": "23:30",
-      "buyin": 5000,
-      "addon": 5000,
       "stack": 30000,
       "guarantee": null,
       "reentry": true,
