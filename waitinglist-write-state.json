@@ -384,24 +384,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M3NTZ48XVVGXGBYB55NF9J47": {
-      "id": "wl-01M3NTZ48XVVGXGBYB55NF9J47",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-10-21",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M3NTZ48XZETC299F733RXQ5N": {
       "id": "wl-01M3NTZ48XZETC299F733RXQ5N",
       "venueId": "v27",
@@ -488,22 +470,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M3ZX6MSNQJWN4Z2F2MGD1QCD": {
-      "id": "wl-01M3ZX6MSNQJWN4Z2F2MGD1QCD",
-      "venueId": "v3",
-      "name": "【3.5K 飲み放題！】m Booze up",
-      "date": "2026-10-21",
-      "start": "18:00",
-      "buyin": 3500,
-      "addon": 1500,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M3ZXBA01866SKK3YQ25QFBC9": {
       "id": "wl-01M3ZXBA01866SKK3YQ25QFBC9",
       "venueId": "v3",
@@ -517,24 +483,6 @@
       "reentry": false,
       "prize": null,
       "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M3ZY1FEYM9WRQR9590VVYDM0": {
-      "id": "wl-01M3ZY1FEYM9WRQR9590VVYDM0",
-      "venueId": "v3",
-      "name": "m Bounty Turbo",
-      "date": "2026-10-21",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": 1000,
-      "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
       "source": "auto",
       "verified": false
     },
@@ -1209,22 +1157,6 @@
       "tags": [
         "ディープ"
       ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M5CY3DVWS3EWD2M4VSZQQX0X": {
-      "id": "wl-01M5CY3DVWS3EWD2M4VSZQQX0X",
-      "venueId": "v27",
-      "name": "DOJO LEAGUE 第6節　GAMECHII",
-      "date": "2026-10-21",
-      "start": "19:00",
-      "buyin": 3000,
-      "addon": null,
-      "stack": 30000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
       "source": "auto",
       "verified": false
     }
