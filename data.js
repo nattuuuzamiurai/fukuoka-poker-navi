@@ -15756,25 +15756,7 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
-    "id": "wl-01M5HKTQ7ERT1PJX1RR2CS9GP9",
-    "venueId": "v22",
-    "name": "FreeRoll",
-    "date": "2026-10-24",
-    "start": "15:00",
-    "buyin": 0,
-    "addon": 1500,
-    "stack": 20000,
-    "guarantee": null,
-    "reentry": true,
-    "prize": null,
-    "tags": [
-      "ターボ"
-    ],
-    "source": "auto",
-    "verified": false
-  },
-  {
-    "id": "wl-01M5HKZ5AFME5T9ZV79W9G3H6G",
+    "id": "wl-01M5MAXWFY143RB86MATY3BH1F",
     "venueId": "v22",
     "name": "Saturday",
     "date": "2026-10-24",
@@ -15808,25 +15790,7 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
-    "id": "wl-01M5HM0FK7T24B9QV2HA7PZXPA",
-    "venueId": "v22",
-    "name": "FreeRoll",
-    "date": "2026-10-25",
-    "start": "15:00",
-    "buyin": 0,
-    "addon": 1500,
-    "stack": 20000,
-    "guarantee": null,
-    "reentry": true,
-    "prize": null,
-    "tags": [
-      "ターボ"
-    ],
-    "source": "auto",
-    "verified": false
-  },
-  {
-    "id": "wl-01M5HM1Z1C9BM47XM9M62B5A6N",
+    "id": "wl-01M5MAYK0TB695SBNM0AH4RJ6J",
     "venueId": "v22",
     "name": "Sunday",
     "date": "2026-10-25",
@@ -15876,24 +15840,6 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
-    "id": "wl-01M5HM74HH2RB21BYZPJR16XZS",
-    "venueId": "v22",
-    "name": "FreeRoll",
-    "date": "2026-10-27",
-    "start": "19:00",
-    "buyin": 0,
-    "addon": 1500,
-    "stack": 20000,
-    "guarantee": null,
-    "reentry": true,
-    "prize": null,
-    "tags": [
-      "ターボ"
-    ],
-    "source": "auto",
-    "verified": false
-  },
-  {
     "id": "wl-01M5HM800XN8PHNHH64C350TB2",
     "venueId": "v22",
     "name": "深夜のトナメ",
@@ -15906,24 +15852,6 @@ const TOURNAMENTS = [
     "reentry": true,
     "prize": null,
     "tags": [],
-    "source": "auto",
-    "verified": false
-  },
-  {
-    "id": "wl-01M5HMAXCHFNWRHPNRJDHBNMQ2",
-    "venueId": "v22",
-    "name": "FreeRoll",
-    "date": "2026-10-28",
-    "start": "19:00",
-    "buyin": 0,
-    "addon": 1500,
-    "stack": 20000,
-    "guarantee": null,
-    "reentry": true,
-    "prize": null,
-    "tags": [
-      "ターボ"
-    ],
     "source": "auto",
     "verified": false
   },
