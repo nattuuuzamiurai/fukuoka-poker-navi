@@ -237,6 +237,16 @@ const AREA_CTR_COPY = {
   }
 };
 
+// 周辺の飲食店情報への外部リンク(2026-10-08)。
+// 久留米エリアに掲載中のポーカー店2店(KENポーカー・A&K)が、同じ久留米市内の飲食店
+// 紹介サイト「久留米飲み屋ナビ」にも掲載されていると判明した。トーナメント参加前後の
+// 食事・飲み会の店探しに実利があるため、久留米エリアページのみにリンクを追加する
+// (他エリアには対応する姉妹サイトが無いため追加しない)。リンク先は久留米市内の飲み屋街を
+// 4エリアまとめて紹介しているガイド記事(当サイトの久留米ページはエリアを分けていないため)。
+const AREA_RESTAURANT_GUIDE_LINKS = {
+  '久留米': 'https://nattuuuzamiurai.github.io/kurume-bar-navi/guides/',
+};
+
 // エリア紹介ブロック(該当が無いエリアでは何も出さない=構成が壊れない)。
 // 【末尾のガイドページ導線(2026-09-13新設・内部リンク追加)】ガイドページ(/guide/beginner/)への
 // リンクがこれまでトップページのCTA・フッターのみで、エリアページからの導線が無かった
@@ -246,9 +256,13 @@ const AREA_CTR_COPY = {
 function areaContentBlock(area) {
   const text = AREA_CONTENT[area];
   if (!text) return '';
+  const restaurantGuideUrl = AREA_RESTAURANT_GUIDE_LINKS[area];
+  const restaurantGuideLine = restaurantGuideUrl
+    ? `\n<p class="lead">トーナメント前後に立ち寄れる周辺の飲食店情報は<a href="${esc(restaurantGuideUrl)}" target="_blank" rel="noopener">久留米飲み屋ナビ</a>でも確認できます。</p>`
+    : '';
   return `
 <h2 class="vp-sec">${esc(area)}エリアについて</h2>
-<p class="lead">${esc(text)}目的別の選び方は<a href="/guide/beginner/">福岡のポーカー店ガイド</a>もご覧ください。</p>`;
+<p class="lead">${esc(text)}目的別の選び方は<a href="/guide/beginner/">福岡のポーカー店ガイド</a>もご覧ください。</p>${restaurantGuideLine}`;
 }
 
 function buildArea(area) {
