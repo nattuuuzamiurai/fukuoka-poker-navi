@@ -30294,6 +30294,40 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01M5S8GF4J1D22HEQ5F7HB5FKA",
+    "venueId": "v3",
+    "name": "m Turbo 60000",
+    "date": "2026-10-31",
+    "start": "21:00",
+    "buyin": 2500,
+    "addon": null,
+    "stack": 60000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M5S8HSQ3WSB0Z03FTJ203MSN",
+    "venueId": "v3",
+    "name": "m VAULT✨New✨",
+    "date": "2026-11-01",
+    "start": "17:10",
+    "buyin": 4000,
+    "addon": null,
+    "stack": 40000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "wl-01M369QY0DQPDBZ2ZP6R5HWE95",
     "venueId": "v3",
     "name": "m LIVE LEAGUE season1",
