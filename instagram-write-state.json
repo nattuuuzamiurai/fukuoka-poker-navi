@@ -2,22 +2,6 @@
   "version": 1,
   "writtenBy": "tools/monitor-instagram-apify.js",
   "entries": {
-    "ig-v18-2026-10-27-1900-1k-multi": {
-      "id": "ig-v18-2026-10-27-1900-1k-multi",
-      "venueId": "v18",
-      "name": "1K MULTI",
-      "date": "2026-10-27",
-      "start": "19:00",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
     "ig-v18-2026-10-28-1900-free-roll": {
       "id": "ig-v18-2026-10-28-1900-free-roll",
       "venueId": "v18",
@@ -84,24 +68,6 @@
       "source": "semi",
       "verified": false
     },
-    "ig-v20-2026-10-27-nostart-post": {
-      "id": "ig-v20-2026-10-27-nostart-post",
-      "venueId": "v20",
-      "name": "新人フリーロール",
-      "date": "2026-10-27",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "フリーロール"
-      ],
-      "source": "semi",
-      "verified": false
-    },
     "ig-v20-2026-10-28-nostart-free-roll": {
       "id": "ig-v20-2026-10-28-nostart-free-roll",
       "venueId": "v20",
@@ -150,24 +116,6 @@
       "prize": null,
       "tags": [
         "ディープ"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v21-2026-10-27-1930-spadie-plo": {
-      "id": "ig-v21-2026-10-27-1930-spadie-plo",
-      "venueId": "v21",
-      "name": "SPADIE PLOトナメ",
-      "date": "2026-10-27",
-      "start": "19:30",
-      "buyin": 3000,
-      "addon": null,
-      "stack": 30000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "PLO"
       ],
       "source": "semi",
       "verified": false
@@ -240,22 +188,6 @@
       "source": "semi",
       "verified": false
     },
-    "ig-v35-2026-10-27-1915-standard-tournament": {
-      "id": "ig-v35-2026-10-27-1915-standard-tournament",
-      "venueId": "v35",
-      "name": "STANDARD TOURNAMENT",
-      "date": "2026-10-27",
-      "start": "19:15",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
     "ig-v35-2026-10-28-1915-free-roll": {
       "id": "ig-v35-2026-10-28-1915-free-roll",
       "venueId": "v35",
@@ -321,25 +253,6 @@
       "reentry": true,
       "prize": null,
       "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v40-2026-10-27-nostart-plo": {
-      "id": "ig-v40-2026-10-27-nostart-plo",
-      "venueId": "v40",
-      "name": "フリロPLOトナメ",
-      "date": "2026-10-27",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "フリーロール",
-        "PLO"
-      ],
       "source": "semi",
       "verified": false
     },
