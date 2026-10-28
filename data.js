@@ -31028,6 +31028,24 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01M5YJRKWG34MT4SGSQ7J6AVJD",
+    "venueId": "v3",
+    "name": "m MAD shuffle Turbo",
+    "date": "2026-11-20",
+    "start": "21:00",
+    "buyin": 2000,
+    "addon": 1000,
+    "stack": 25000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "wl-01M5VJHY276VYEJA30RWCT7760",
     "venueId": "v3",
     "name": "m Monster Stack ✨NEW✨",

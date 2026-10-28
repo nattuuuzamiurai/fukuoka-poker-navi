@@ -2,22 +2,6 @@
   "version": 1,
   "writtenBy": "tools/import-waitinglist.js",
   "entries": {
-    "wl-01M369QY0D038N04FB6MT33Y0F": {
-      "id": "wl-01M369QY0D038N04FB6MT33Y0F",
-      "venueId": "v3",
-      "name": "m LIVE LEAGUE season1",
-      "date": "2026-10-27",
-      "start": "18:00",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M369QY0DPY134GMJGV1ZPH5V": {
       "id": "wl-01M369QY0DPY134GMJGV1ZPH5V",
       "venueId": "v3",
@@ -208,24 +192,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M3NTZ48XJH26MEVPYTK1C33A": {
-      "id": "wl-01M3NTZ48XJH26MEVPYTK1C33A",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-10-27",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M3NTZ48XMX43772ZME77HVZM": {
       "id": "wl-01M3NTZ48XMX43772ZME77HVZM",
       "venueId": "v27",
@@ -259,22 +225,6 @@
       "tags": [
         "ターボ"
       ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M3NYQMWZBDHA2V9JPGS47MJH": {
-      "id": "wl-01M3NYQMWZBDHA2V9JPGS47MJH",
-      "venueId": "v27",
-      "name": "ミステリーバウンティ",
-      "date": "2026-10-27",
-      "start": "19:00",
-      "buyin": 4000,
-      "addon": 4000,
-      "stack": 30000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
       "source": "auto",
       "verified": false
     },
@@ -446,24 +396,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M4Q1RFQXQWWF2K6HEF7FAD3J": {
-      "id": "wl-01M4Q1RFQXQWWF2K6HEF7FAD3J",
-      "venueId": "v3",
-      "name": "m Turbo 60000",
-      "date": "2026-10-27",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": null,
-      "stack": 60000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M4Q1RVNC6XMWDBG2AGVP0B30": {
       "id": "wl-01M4Q1RVNC6XMWDBG2AGVP0B30",
       "venueId": "v3",
@@ -598,22 +530,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M5C7TPH6S9CMYX142JVHN1WN": {
-      "id": "wl-01M5C7TPH6S9CMYX142JVHN1WN",
-      "venueId": "v19",
-      "name": "FST Satellite",
-      "date": "2026-10-27",
-      "start": "18:30",
-      "buyin": 3000,
-      "addon": 1000,
-      "stack": 30000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M5C7TPH6Z9PM4JKXS0222KFE": {
       "id": "wl-01M5C7TPH6Z9PM4JKXS0222KFE",
       "venueId": "v19",
@@ -689,22 +605,6 @@
       "stack": 30000,
       "guarantee": null,
       "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M5HM800XN8PHNHH64C350TB2": {
-      "id": "wl-01M5HM800XN8PHNHH64C350TB2",
-      "venueId": "v22",
-      "name": "深夜のトナメ",
-      "date": "2026-10-27",
-      "start": "23:30",
-      "buyin": 5000,
-      "addon": 5000,
-      "stack": 30000,
-      "guarantee": null,
-      "reentry": true,
       "prize": null,
       "tags": [],
       "source": "auto",
@@ -1477,6 +1377,24 @@
       "date": "2026-11-22",
       "start": "21:00",
       "buyin": 2500,
+      "addon": 1000,
+      "stack": 25000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ターボ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M5YJRKWG34MT4SGSQ7J6AVJD": {
+      "id": "wl-01M5YJRKWG34MT4SGSQ7J6AVJD",
+      "venueId": "v3",
+      "name": "m MAD shuffle Turbo",
+      "date": "2026-11-20",
+      "start": "21:00",
+      "buyin": 2000,
       "addon": 1000,
       "stack": 25000,
       "guarantee": null,
