@@ -18,43 +18,11 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M369QY0DQPDBZ2ZP6R5HWE95": {
-      "id": "wl-01M369QY0DQPDBZ2ZP6R5HWE95",
-      "venueId": "v3",
-      "name": "m LIVE LEAGUE season1",
-      "date": "2026-11-03",
-      "start": "18:00",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M369RKR1ENZ6Z35KWQS55H0N": {
       "id": "wl-01M369RKR1ENZ6Z35KWQS55H0N",
       "venueId": "v3",
       "name": "m LIVE LEAGUE season1",
       "date": "2026-11-05",
-      "start": "18:00",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M369RKR1P07TZ1507KPGF2Y9": {
-      "id": "wl-01M369RKR1P07TZ1507KPGF2Y9",
-      "venueId": "v3",
-      "name": "m LIVE LEAGUE season1",
-      "date": "2026-10-29",
       "start": "18:00",
       "buyin": 4000,
       "addon": null,
@@ -167,42 +135,6 @@
       "stack": 15000,
       "guarantee": null,
       "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M3NTZ48XMX43772ZME77HVZM": {
-      "id": "wl-01M3NTZ48XMX43772ZME77HVZM",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-10-29",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M3NX5R5E773H5SZ8RY647HJ0": {
-      "id": "wl-01M3NX5R5E773H5SZ8RY647HJ0",
-      "venueId": "v27",
-      "name": "DOJO FREEZOUT",
-      "date": "2026-10-29",
-      "start": "19:00",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 50000,
-      "guarantee": null,
-      "reentry": false,
       "prize": null,
       "tags": [
         "ターボ"
@@ -380,24 +312,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M4Q1V4YM8ZGDBSM2H7WM8T4D": {
-      "id": "wl-01M4Q1V4YM8ZGDBSM2H7WM8T4D",
-      "venueId": "v3",
-      "name": "m Bounty Turbo",
-      "date": "2026-10-29",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": 1000,
-      "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M4Q23D0MY7252PF5G1YC5421": {
       "id": "wl-01M4Q23D0MY7252PF5G1YC5421",
       "venueId": "v3",
@@ -499,22 +413,6 @@
       "venueId": "v19",
       "name": "FREEZE OUT TOURNAMENT",
       "date": "2026-11-05",
-      "start": "18:30",
-      "buyin": 3000,
-      "addon": null,
-      "stack": 30000,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M5C7W2WHMJN43Q3Z5TWAJYRR": {
-      "id": "wl-01M5C7W2WHMJN43Q3Z5TWAJYRR",
-      "venueId": "v19",
-      "name": "FREEZE OUT TOURNAMENT",
-      "date": "2026-10-29",
       "start": "18:30",
       "buyin": 3000,
       "addon": null,
@@ -1751,6 +1649,408 @@
       "tags": [
         "ディープ"
       ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M6396SEJFY24FH07681GJMFG": {
+      "id": "wl-01M6396SEJFY24FH07681GJMFG",
+      "venueId": "v3",
+      "name": "⚔ VS m Turbo ⚔",
+      "date": "2026-12-04",
+      "start": "21:00",
+      "buyin": 2500,
+      "addon": 1000,
+      "stack": 40000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ターボ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M639CJ802DAEWYSXM8W7YENA": {
+      "id": "wl-01M639CJ802DAEWYSXM8W7YENA",
+      "venueId": "v3",
+      "name": "m Super Hold'em Turbo",
+      "date": "2026-12-01",
+      "start": "21:00",
+      "buyin": 2500,
+      "addon": 1000,
+      "stack": 25000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ターボ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M639DF8JR60Y1J6PWD07TAZS": {
+      "id": "wl-01M639DF8JR60Y1J6PWD07TAZS",
+      "venueId": "v3",
+      "name": "ｍ Hyper Deep Turbo",
+      "date": "2026-12-02",
+      "start": "21:00",
+      "buyin": 2500,
+      "addon": null,
+      "stack": 100000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ターボ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M639FBE22BDAAEK1HZEX6T9R": {
+      "id": "wl-01M639FBE22BDAAEK1HZEX6T9R",
+      "venueId": "v3",
+      "name": "m Bounty Turbo",
+      "date": "2026-12-03",
+      "start": "21:00",
+      "buyin": 2500,
+      "addon": 1000,
+      "stack": 25000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ターボ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M639GJ5T8AMZ50WH21RZQX6G": {
+      "id": "wl-01M639GJ5T8AMZ50WH21RZQX6G",
+      "venueId": "v3",
+      "name": "m Super Hold'em Turbo",
+      "date": "2026-11-27",
+      "start": "21:00",
+      "buyin": 2500,
+      "addon": 1000,
+      "stack": 25000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ターボ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M639J7623GP1Q8C76AFDMMBV": {
+      "id": "wl-01M639J7623GP1Q8C76AFDMMBV",
+      "venueId": "v3",
+      "name": "m ULTIMA",
+      "date": "2026-12-04",
+      "start": "17:10",
+      "buyin": 4000,
+      "addon": 1000,
+      "stack": 40000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ディープ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M639KFKQ6AKR596J10PDE7NG": {
+      "id": "wl-01M639KFKQ6AKR596J10PDE7NG",
+      "venueId": "v3",
+      "name": "m Monster Stack ✨NEW✨",
+      "date": "2026-12-12",
+      "start": "13:10",
+      "buyin": 4000,
+      "addon": null,
+      "stack": 60000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ディープ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M639KFMN1PWWMN5ZXHPVBYTZ": {
+      "id": "wl-01M639KFMN1PWWMN5ZXHPVBYTZ",
+      "venueId": "v3",
+      "name": "m Monster Stack ✨NEW✨",
+      "date": "2027-01-09",
+      "start": "13:10",
+      "buyin": 4000,
+      "addon": null,
+      "stack": 60000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ディープ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M639KFMNHN9ZAKV28ABGZN4Z": {
+      "id": "wl-01M639KFMNHN9ZAKV28ABGZN4Z",
+      "venueId": "v3",
+      "name": "m Monster Stack ✨NEW✨",
+      "date": "2026-12-19",
+      "start": "13:10",
+      "buyin": 4000,
+      "addon": null,
+      "stack": 60000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ディープ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M639KFMNMXPZDE16ZX25KC3G": {
+      "id": "wl-01M639KFMNMXPZDE16ZX25KC3G",
+      "venueId": "v3",
+      "name": "m Monster Stack ✨NEW✨",
+      "date": "2027-01-02",
+      "start": "13:10",
+      "buyin": 4000,
+      "addon": null,
+      "stack": 60000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ディープ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M639KFMNQQZQZFDY65H5VZJE": {
+      "id": "wl-01M639KFMNQQZQZFDY65H5VZJE",
+      "venueId": "v3",
+      "name": "m Monster Stack ✨NEW✨",
+      "date": "2026-12-26",
+      "start": "13:10",
+      "buyin": 4000,
+      "addon": null,
+      "stack": 60000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ディープ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M639Q77MVB9ASA471EJ4MVGM": {
+      "id": "wl-01M639Q77MVB9ASA471EJ4MVGM",
+      "venueId": "v3",
+      "name": "m FELIX",
+      "date": "2026-12-06",
+      "start": "13:10",
+      "buyin": 4500,
+      "addon": null,
+      "stack": 45000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M63CP8NYV9J2DWJVCSXYNE48": {
+      "id": "wl-01M63CP8NYV9J2DWJVCSXYNE48",
+      "venueId": "v3",
+      "name": "m LIVE LEAGUE ~WEEKEND~",
+      "date": "2026-11-03",
+      "start": "13:10",
+      "buyin": 4000,
+      "addon": null,
+      "stack": 60000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ディープ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M63DV36C09HA6DCB25GM69EV": {
+      "id": "wl-01M63DV36C09HA6DCB25GM69EV",
+      "venueId": "v3",
+      "name": "m ORIGIN",
+      "date": "2026-11-03",
+      "start": "18:00",
+      "buyin": 4000,
+      "addon": null,
+      "stack": 40000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M63E9FQVAY2WCHCKNGTPK7KC": {
+      "id": "wl-01M63E9FQVAY2WCHCKNGTPK7KC",
+      "venueId": "v22",
+      "name": "Friday",
+      "date": "2026-10-30",
+      "start": "19:00",
+      "buyin": 2000,
+      "addon": 1500,
+      "stack": 20000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ターボ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M63EBBCJ5V0DQN0QCD3459M6": {
+      "id": "wl-01M63EBBCJ5V0DQN0QCD3459M6",
+      "venueId": "v22",
+      "name": "深夜のトナメSS",
+      "date": "2026-10-30",
+      "start": "23:30",
+      "buyin": 10000,
+      "addon": 10000,
+      "stack": 40000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M63EC78S8H9E96HQYZJ94YC1": {
+      "id": "wl-01M63EC78S8H9E96HQYZJ94YC1",
+      "venueId": "v22",
+      "name": "Saturday",
+      "date": "2026-10-31",
+      "start": "19:00",
+      "buyin": 2000,
+      "addon": 1500,
+      "stack": 20000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ターボ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M63ECXRAKMKVFSPH22RTKTA3": {
+      "id": "wl-01M63ECXRAKMKVFSPH22RTKTA3",
+      "venueId": "v22",
+      "name": "Sunday",
+      "date": "2026-11-01",
+      "start": "19:00",
+      "buyin": 2000,
+      "addon": 1500,
+      "stack": 20000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ターボ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M63EHPPSRPMZ9W2A77RV5W6S": {
+      "id": "wl-01M63EHPPSRPMZ9W2A77RV5W6S",
+      "venueId": "v22",
+      "name": "FreeRoll",
+      "date": "2026-10-31",
+      "start": "15:00",
+      "buyin": 0,
+      "addon": 1500,
+      "stack": 20000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ターボ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M63EK32AQ169N4B1DS7014R9": {
+      "id": "wl-01M63EK32AQ169N4B1DS7014R9",
+      "venueId": "v22",
+      "name": "FreeRoll",
+      "date": "2026-11-01",
+      "start": "15:00",
+      "buyin": 0,
+      "addon": 1500,
+      "stack": 20000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ターボ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M63EM08682WQM7M0TMTVXVPB": {
+      "id": "wl-01M63EM08682WQM7M0TMTVXVPB",
+      "venueId": "v22",
+      "name": "深夜のトナメSS",
+      "date": "2026-10-31",
+      "start": "23:30",
+      "buyin": 10000,
+      "addon": 10000,
+      "stack": 40000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M63EMTAN9SNSPRRJH0M85MFZ": {
+      "id": "wl-01M63EMTAN9SNSPRRJH0M85MFZ",
+      "venueId": "v22",
+      "name": "深夜のトナメSS",
+      "date": "2026-11-01",
+      "start": "23:30",
+      "buyin": 10000,
+      "addon": 10000,
+      "stack": 40000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M63EP9EGX2WJ4D0K8EJB9QQ4": {
+      "id": "wl-01M63EP9EGX2WJ4D0K8EJB9QQ4",
+      "venueId": "v22",
+      "name": "深夜のトナメ",
+      "date": "2026-11-02",
+      "start": "23:30",
+      "buyin": 5000,
+      "addon": 5000,
+      "stack": 30000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [],
       "source": "auto",
       "verified": false
     }
