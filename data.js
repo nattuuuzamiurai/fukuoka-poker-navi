@@ -11927,6 +11927,232 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "ig-v18-2026-11-03-nostart-1k",
+    "venueId": "v18",
+    "name": "1Kトナメ",
+    "date": "2026-11-03",
+    "start": "",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "ig-v18-2026-11-04-nostart-deep",
+    "venueId": "v18",
+    "name": "DEEPトナメ",
+    "date": "2026-11-04",
+    "start": "",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "ディープ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "ig-v18-2026-11-05-nostart-post",
+    "venueId": "v18",
+    "name": "周年前夜祭トナメ",
+    "date": "2026-11-05",
+    "start": "",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "特別開催"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "ig-v18-2026-11-06-nostart-iris",
+    "venueId": "v18",
+    "name": "IRIS周年",
+    "date": "2026-11-06",
+    "start": "",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "特別開催"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "ig-v18-2026-11-07-nostart-iris",
+    "venueId": "v18",
+    "name": "IRIS周年",
+    "date": "2026-11-07",
+    "start": "",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "特別開催"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "ig-v18-2026-11-10-nostart-1k",
+    "venueId": "v18",
+    "name": "1Kトナメ",
+    "date": "2026-11-10",
+    "start": "",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "ig-v18-2026-11-11-nostart-post",
+    "venueId": "v18",
+    "name": "ゆにさんラストトナメ",
+    "date": "2026-11-11",
+    "start": "",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "特別開催"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "ig-v18-2026-11-14-nostart-post",
+    "venueId": "v18",
+    "name": "月間トナメ",
+    "date": "2026-11-14",
+    "start": "",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "ig-v18-2026-11-18-nostart-deep",
+    "venueId": "v18",
+    "name": "DEEPトナメ",
+    "date": "2026-11-18",
+    "start": "",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "ディープ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "ig-v18-2026-11-21-nostart-post",
+    "venueId": "v18",
+    "name": "ミステリーバウンティ",
+    "date": "2026-11-21",
+    "start": "",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "バウンティ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "ig-v18-2026-11-24-nostart-1k",
+    "venueId": "v18",
+    "name": "1Kトナメ",
+    "date": "2026-11-24",
+    "start": "",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "ig-v18-2026-11-25-nostart-deep",
+    "venueId": "v18",
+    "name": "DEEPトナメ",
+    "date": "2026-11-25",
+    "start": "",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "ディープ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "ig-v18-2026-11-28-nostart-post",
+    "venueId": "v18",
+    "name": "月末大還元祭",
+    "date": "2026-11-28",
+    "start": "",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "特別開催"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
     "id": "kq0702",
     "venueId": "v20",
     "name": "Chip Entry Tournament",
