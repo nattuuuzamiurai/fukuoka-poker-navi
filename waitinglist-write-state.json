@@ -88,24 +88,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M3NTZ48X6DCPC3SQBKWRKGN9": {
-      "id": "wl-01M3NTZ48X6DCPC3SQBKWRKGN9",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-10-30",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M3NTZ48X7M11E5YE4SPMG5H3": {
       "id": "wl-01M3NTZ48X7M11E5YE4SPMG5H3",
       "venueId": "v27",
@@ -138,24 +120,6 @@
       "prize": null,
       "tags": [
         "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M3ZYPHV92G3VRQZC0JCJAXP9": {
-      "id": "wl-01M3ZYPHV92G3VRQZC0JCJAXP9",
-      "venueId": "v3",
-      "name": "m ULTIMA",
-      "date": "2026-10-30",
-      "start": "17:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 60000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ディープ"
       ],
       "source": "auto",
       "verified": false
@@ -291,24 +255,6 @@
       "reentry": true,
       "prize": null,
       "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M4Q1SB1FSP5EC1AZ6VZM76Q3": {
-      "id": "wl-01M4Q1SB1FSP5EC1AZ6VZM76Q3",
-      "venueId": "v3",
-      "name": "m MAD shuffle Turbo",
-      "date": "2026-10-30",
-      "start": "21:00",
-      "buyin": 2000,
-      "addon": 1000,
-      "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
       "source": "auto",
       "verified": false
     },
@@ -1900,40 +1846,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M63E9FQVAY2WCHCKNGTPK7KC": {
-      "id": "wl-01M63E9FQVAY2WCHCKNGTPK7KC",
-      "venueId": "v22",
-      "name": "Friday",
-      "date": "2026-10-30",
-      "start": "19:00",
-      "buyin": 2000,
-      "addon": 1500,
-      "stack": 20000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M63EBBCJ5V0DQN0QCD3459M6": {
-      "id": "wl-01M63EBBCJ5V0DQN0QCD3459M6",
-      "venueId": "v22",
-      "name": "深夜のトナメSS",
-      "date": "2026-10-30",
-      "start": "23:30",
-      "buyin": 10000,
-      "addon": 10000,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M63EC78S8H9E96HQYZJ94YC1": {
       "id": "wl-01M63EC78S8H9E96HQYZJ94YC1",
       "venueId": "v22",
@@ -2046,6 +1958,22 @@
       "start": "23:30",
       "buyin": 5000,
       "addon": 5000,
+      "stack": 30000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M66MM4VYWDZ4CP83W2MHFA21": {
+      "id": "wl-01M66MM4VYWDZ4CP83W2MHFA21",
+      "venueId": "v27",
+      "name": "DOJO LEAGUE 第9節　HALF LIFE",
+      "date": "2026-10-31",
+      "start": "14:00",
+      "buyin": 3000,
+      "addon": null,
       "stack": 30000,
       "guarantee": null,
       "reentry": true,

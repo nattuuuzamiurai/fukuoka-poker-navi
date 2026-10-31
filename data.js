@@ -20113,6 +20113,22 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01M66MM4VYWDZ4CP83W2MHFA21",
+    "venueId": "v27",
+    "name": "DOJO LEAGUE 第9節　HALF LIFE",
+    "date": "2026-10-31",
+    "start": "14:00",
+    "buyin": 3000,
+    "addon": null,
+    "stack": 30000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "wl-01M3NTZ48X1XR10P87TD8Z3X1N",
     "venueId": "v27",
     "name": "ヘッズアップ〜DOJO破り〜",
