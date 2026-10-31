@@ -246,24 +246,6 @@
       "source": "semi",
       "verified": false
     },
-    "ig-v21-2026-10-30-1930-fst": {
-      "id": "ig-v21-2026-10-30-1930-fst",
-      "venueId": "v21",
-      "name": "FST 祝勝トナメ",
-      "date": "2026-10-30",
-      "start": "19:30",
-      "buyin": 3000,
-      "addon": null,
-      "stack": 30000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": "SPADIE",
-      "tags": [
-        "FST"
-      ],
-      "source": "semi",
-      "verified": false
-    },
     "ig-v21-2026-10-31-1830-cup": {
       "id": "ig-v21-2026-10-31-1830-cup",
       "venueId": "v21",
@@ -280,24 +262,6 @@
       "source": "semi",
       "verified": false
     },
-    "ig-v35-2026-10-30-1915-free-roll": {
-      "id": "ig-v35-2026-10-30-1915-free-roll",
-      "venueId": "v35",
-      "name": "FREE ROLL",
-      "date": "2026-10-30",
-      "start": "19:15",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "フリーロール"
-      ],
-      "source": "semi",
-      "verified": false
-    },
     "ig-v35-2026-10-31-1700-tournament": {
       "id": "ig-v35-2026-10-31-1700-tournament",
       "venueId": "v35",
@@ -311,24 +275,6 @@
       "reentry": true,
       "prize": null,
       "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v40-2026-10-30-nostart-post": {
-      "id": "ig-v40-2026-10-30-nostart-post",
-      "venueId": "v40",
-      "name": "ヘッズアップ祭ミニリング",
-      "date": "2026-10-30",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "リーグ"
-      ],
       "source": "semi",
       "verified": false
     }
