@@ -227,56 +227,6 @@
       ],
       "source": "semi",
       "verified": false
-    },
-    "ig-v20-2026-10-31-nostart-deep-stack": {
-      "id": "ig-v20-2026-10-31-nostart-deep-stack",
-      "venueId": "v20",
-      "name": "DEEP STACK",
-      "date": "2026-10-31",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v21-2026-10-31-1830-cup": {
-      "id": "ig-v21-2026-10-31-1830-cup",
-      "venueId": "v21",
-      "name": "ポルCUP",
-      "date": "2026-10-31",
-      "start": "18:30",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v35-2026-10-31-1700-tournament": {
-      "id": "ig-v35-2026-10-31-1700-tournament",
-      "venueId": "v35",
-      "name": "ハロウィン TOURNAMENT",
-      "date": "2026-10-31",
-      "start": "17:00",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
     }
   }
 }
