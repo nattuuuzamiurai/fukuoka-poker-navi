@@ -228,24 +228,6 @@
       "source": "semi",
       "verified": false
     },
-    "ig-v35-2026-11-02-1915-free-roll": {
-      "id": "ig-v35-2026-11-02-1915-free-roll",
-      "venueId": "v35",
-      "name": "FREE ROLL",
-      "date": "2026-11-02",
-      "start": "19:15",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": "late",
-      "prize": null,
-      "tags": [
-        "フリーロール"
-      ],
-      "source": "semi",
-      "verified": false
-    },
     "ig-v35-2026-11-03-1730-1000-highroller-50000": {
       "id": "ig-v35-2026-11-03-1730-1000-highroller-50000",
       "venueId": "v35",
