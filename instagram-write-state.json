@@ -2,22 +2,6 @@
   "version": 1,
   "writtenBy": "tools/monitor-instagram-apify.js",
   "entries": {
-    "ig-v18-2026-11-03-nostart-1k": {
-      "id": "ig-v18-2026-11-03-nostart-1k",
-      "venueId": "v18",
-      "name": "1Kトナメ",
-      "date": "2026-11-03",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
     "ig-v18-2026-11-04-nostart-deep": {
       "id": "ig-v18-2026-11-04-nostart-deep",
       "venueId": "v18",
@@ -225,22 +209,6 @@
       "tags": [
         "特別開催"
       ],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v35-2026-11-03-1730-1000-highroller-50000": {
-      "id": "ig-v35-2026-11-03-1730-1000-highroller-50000",
-      "venueId": "v35",
-      "name": "$1000 HighRoller -50000-",
-      "date": "2026-11-03",
-      "start": "17:30",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": "late",
-      "prize": null,
-      "tags": [],
       "source": "semi",
       "verified": false
     },
