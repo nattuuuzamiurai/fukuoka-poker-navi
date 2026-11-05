@@ -52,22 +52,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M4Q1AE7C3Z131T4XBD7G1R58": {
-      "id": "wl-01M4Q1AE7C3Z131T4XBD7G1R58",
-      "venueId": "v3",
-      "name": "【4K飲み放題！】ｍ Booze up ✨NEW✨",
-      "date": "2026-11-04",
-      "start": "18:00",
-      "buyin": 4000,
-      "addon": 1500,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M4Q1AE7SD1K5MMG790B5ZPED": {
       "id": "wl-01M4Q1AE7SD1K5MMG790B5ZPED",
       "venueId": "v3",
@@ -283,24 +267,6 @@
       "date": "2026-11-05",
       "start": "21:00",
       "buyin": 2500,
-      "addon": 1000,
-      "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M5VGTKPC3SSEB0FR0MF544QB": {
-      "id": "wl-01M5VGTKPC3SSEB0FR0MF544QB",
-      "venueId": "v3",
-      "name": "m MAD shuffle Turbo",
-      "date": "2026-11-04",
-      "start": "21:00",
-      "buyin": 2000,
       "addon": 1000,
       "stack": 25000,
       "guarantee": null,
@@ -1498,24 +1464,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M6AMBVVG9FQSH47TVN2EVCG3": {
-      "id": "wl-01M6AMBVVG9FQSH47TVN2EVCG3",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-11-04",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M6AMBVWA0X6BDF9290R1MAM1": {
       "id": "wl-01M6AMBVWA0X6BDF9290R1MAM1",
       "venueId": "v27",
@@ -2293,24 +2241,6 @@
       "reentry": true,
       "prize": null,
       "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M6ASGNJB008W4AT3NYY4XSC1": {
-      "id": "wl-01M6ASGNJB008W4AT3NYY4XSC1",
-      "venueId": "v27",
-      "name": "DOJO LEAGUE 第10節 TAG TEAM",
-      "date": "2026-11-04",
-      "start": "19:00",
-      "buyin": 3000,
-      "addon": null,
-      "stack": 30000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
       "source": "auto",
       "verified": false
     },
