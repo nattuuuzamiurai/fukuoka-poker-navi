@@ -13226,6 +13226,253 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "ig-v20-2026-11-05-nostart-c-entry-tourney",
+    "venueId": "v20",
+    "name": "C ENTRY TOURNEY",
+    "date": "2026-11-05",
+    "start": "",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "ig-v20-2026-11-07-nostart-deep-stack",
+    "venueId": "v20",
+    "name": "DEEP STACK",
+    "date": "2026-11-07",
+    "start": "",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "ディープ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "ig-v20-2026-11-10-nostart-satelite",
+    "venueId": "v20",
+    "name": "SATELITE",
+    "date": "2026-11-10",
+    "start": "",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "サテライト",
+      "FST"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "ig-v20-2026-11-11-nostart-free-roll",
+    "venueId": "v20",
+    "name": "FREE ROLL",
+    "date": "2026-11-11",
+    "start": "",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "フリーロール"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "ig-v20-2026-11-12-nostart-c-entry-tourney",
+    "venueId": "v20",
+    "name": "C ENTRY TOURNEY",
+    "date": "2026-11-12",
+    "start": "",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "ig-v20-2026-11-14-nostart-deep-stack",
+    "venueId": "v20",
+    "name": "DEEP STACK",
+    "date": "2026-11-14",
+    "start": "",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "ディープ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "ig-v20-2026-11-17-nostart-satelite",
+    "venueId": "v20",
+    "name": "SATELITE",
+    "date": "2026-11-17",
+    "start": "",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "サテライト",
+      "FST"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "ig-v20-2026-11-18-nostart-free-roll",
+    "venueId": "v20",
+    "name": "FREE ROLL",
+    "date": "2026-11-18",
+    "start": "",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "フリーロール"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "ig-v20-2026-11-19-nostart-c-entry-tourney",
+    "venueId": "v20",
+    "name": "C ENTRY TOURNEY",
+    "date": "2026-11-19",
+    "start": "",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "ig-v20-2026-11-21-nostart-deep-stack",
+    "venueId": "v20",
+    "name": "DEEP STACK",
+    "date": "2026-11-21",
+    "start": "",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "ディープ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "ig-v20-2026-11-24-nostart-satelite",
+    "venueId": "v20",
+    "name": "SATELITE",
+    "date": "2026-11-24",
+    "start": "",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "サテライト",
+      "FST"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "ig-v20-2026-11-25-nostart-free-roll",
+    "venueId": "v20",
+    "name": "FREE ROLL",
+    "date": "2026-11-25",
+    "start": "",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "フリーロール"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "ig-v20-2026-11-26-nostart-c-entry-tourney",
+    "venueId": "v20",
+    "name": "C ENTRY TOURNEY",
+    "date": "2026-11-26",
+    "start": "",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [],
+    "source": "semi",
+    "verified": false
+  },
+  {
+    "id": "ig-v20-2026-11-28-nostart-deep-stack",
+    "venueId": "v20",
+    "name": "DEEP STACK",
+    "date": "2026-11-28",
+    "start": "",
+    "buyin": null,
+    "addon": null,
+    "stack": null,
+    "guarantee": null,
+    "reentry": false,
+    "prize": null,
+    "tags": [
+      "ディープ"
+    ],
+    "source": "semi",
+    "verified": false
+  },
+  {
     "id": "cc0706a",
     "venueId": "v22",
     "name": "深夜トナメ",
