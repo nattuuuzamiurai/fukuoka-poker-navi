@@ -2,24 +2,6 @@
   "version": 1,
   "writtenBy": "tools/monitor-instagram-apify.js",
   "entries": {
-    "ig-v18-2026-11-05-nostart-post": {
-      "id": "ig-v18-2026-11-05-nostart-post",
-      "venueId": "v18",
-      "name": "周年前夜祭トナメ",
-      "date": "2026-11-05",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "特別開催"
-      ],
-      "source": "semi",
-      "verified": false
-    },
     "ig-v18-2026-11-06-nostart-iris": {
       "id": "ig-v18-2026-11-06-nostart-iris",
       "venueId": "v18",
@@ -191,22 +173,6 @@
       "tags": [
         "特別開催"
       ],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v20-2026-11-05-nostart-c-entry-tourney": {
-      "id": "ig-v20-2026-11-05-nostart-c-entry-tourney",
-      "venueId": "v20",
-      "name": "C ENTRY TOURNEY",
-      "date": "2026-11-05",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
       "source": "semi",
       "verified": false
     },
@@ -438,22 +404,6 @@
       "tags": [
         "ディープ"
       ],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v35-2026-11-05-1915-cup": {
-      "id": "ig-v35-2026-11-05-1915-cup",
-      "venueId": "v35",
-      "name": "三ツ星CUP",
-      "date": "2026-11-05",
-      "start": "19:15",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": "late",
-      "prize": null,
-      "tags": [],
       "source": "semi",
       "verified": false
     },
