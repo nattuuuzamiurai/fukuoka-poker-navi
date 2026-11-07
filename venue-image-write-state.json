@@ -2,121 +2,30 @@
   "version": 1,
   "writtenBy": "tools/import-venue-image.js",
   "entries": {
-    "photo-v2-2026-10-02-1210-freeroll-w-stack": {
-      "id": "photo-v2-2026-10-02-1210-freeroll-w-stack",
+    "photo-v2-2026-11-08-1400-tag-match": {
+      "id": "photo-v2-2026-11-08-1400-tag-match",
       "venueId": "v2",
-      "name": "FREEROLL W STACK",
-      "date": "2026-10-02",
-      "start": "12:10",
-      "buyin": 0,
+      "name": "TAG MATCH",
+      "date": "2026-11-08",
+      "start": "14:00",
+      "buyin": 6000,
       "addon": null,
       "stack": null,
       "guarantee": null,
       "reentry": false,
       "prize": null,
       "tags": [
-        "フリーロール"
+        "タッグ"
       ],
       "source": "semi",
       "verified": false
     },
-    "photo-v2-2026-10-02-1830-free-roll-night": {
-      "id": "photo-v2-2026-10-02-1830-free-roll-night",
+    "photo-v2-2026-11-08-1700-fst": {
+      "id": "photo-v2-2026-11-08-1700-fst",
       "venueId": "v2",
-      "name": "FREE ROLL Night",
-      "date": "2026-10-02",
-      "start": "18:30",
-      "buyin": 0,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "フリーロール"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-02-2000-2k-plo-turbo": {
-      "id": "photo-v2-2026-10-02-2000-2k-plo-turbo",
-      "venueId": "v2",
-      "name": "2K PLO Turbo",
-      "date": "2026-10-02",
-      "start": "20:00",
-      "buyin": 2000,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "PLO",
-        "ターボ"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-03-1210-2k-holidaydeep": {
-      "id": "photo-v2-2026-10-03-1210-2k-holidaydeep",
-      "venueId": "v2",
-      "name": "2K HolidayDeep",
-      "date": "2026-10-03",
-      "start": "12:10",
-      "buyin": 2000,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-03-1500-jopt-ns-fst-nlh": {
-      "id": "photo-v2-2026-10-03-1500-jopt-ns-fst-nlh",
-      "venueId": "v2",
-      "name": "JOPT/NS/FST合同祝勝会 NLH",
-      "date": "2026-10-03",
-      "start": "15:00",
-      "buyin": 4000,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "JOPT",
-        "FST",
-        "バウンティ"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-04-1500-1k-w-stack": {
-      "id": "photo-v2-2026-10-04-1500-1k-w-stack",
-      "venueId": "v2",
-      "name": "1K W STACK",
-      "date": "2026-10-04",
-      "start": "15:00",
-      "buyin": 1000,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-04-1830-mix-2-7td-badugi": {
-      "id": "photo-v2-2026-10-04-1830-mix-2-7td-badugi",
-      "venueId": "v2",
-      "name": "MIX店舗交流戦選手選考 2-7TD&Badugi",
-      "date": "2026-10-04",
-      "start": "18:30",
+      "name": "FSTサテライト",
+      "date": "2026-11-08",
+      "start": "17:00",
       "buyin": 3000,
       "addon": null,
       "stack": null,
@@ -124,16 +33,17 @@
       "reentry": false,
       "prize": null,
       "tags": [
-        "ミックス"
+        "サテライト",
+        "FST"
       ],
       "source": "semi",
       "verified": false
     },
-    "photo-v2-2026-10-05-1210-freeroll-w-stack": {
-      "id": "photo-v2-2026-10-05-1210-freeroll-w-stack",
+    "photo-v2-2026-11-09-1210-freeroll-w-stack": {
+      "id": "photo-v2-2026-11-09-1210-freeroll-w-stack",
       "venueId": "v2",
       "name": "FREEROLL W STACK",
-      "date": "2026-10-05",
+      "date": "2026-11-09",
       "start": "12:10",
       "buyin": 0,
       "addon": null,
@@ -147,131 +57,11 @@
       "source": "semi",
       "verified": false
     },
-    "photo-v2-2026-10-05-1900-2k-hyper": {
-      "id": "photo-v2-2026-10-05-1900-2k-hyper",
+    "photo-v2-2026-11-09-1900-2k-hyper": {
+      "id": "photo-v2-2026-11-09-1900-2k-hyper",
       "venueId": "v2",
       "name": "2K Hyper",
-      "date": "2026-10-05",
-      "start": "19:00",
-      "buyin": 2000,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-06-1210-freeroll-w-stack": {
-      "id": "photo-v2-2026-10-06-1210-freeroll-w-stack",
-      "venueId": "v2",
-      "name": "FREEROLL W STACK",
-      "date": "2026-10-06",
-      "start": "12:10",
-      "buyin": 0,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "フリーロール"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-06-1830-mix-2-7td-badugi": {
-      "id": "photo-v2-2026-10-06-1830-mix-2-7td-badugi",
-      "venueId": "v2",
-      "name": "MIX店舗交流戦選手選考 2-7TD&Badugi",
-      "date": "2026-10-06",
-      "start": "18:30",
-      "buyin": 3000,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "ミックス"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-07-1210-freeroll-w-stack": {
-      "id": "photo-v2-2026-10-07-1210-freeroll-w-stack",
-      "venueId": "v2",
-      "name": "FREEROLL W STACK",
-      "date": "2026-10-07",
-      "start": "12:10",
-      "buyin": 0,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "フリーロール"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-07-1830-1k-w-stack": {
-      "id": "photo-v2-2026-10-07-1830-1k-w-stack",
-      "venueId": "v2",
-      "name": "1K W STACK",
-      "date": "2026-10-07",
-      "start": "18:30",
-      "buyin": 1000,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-08-1210-freeroll-w-stack": {
-      "id": "photo-v2-2026-10-08-1210-freeroll-w-stack",
-      "venueId": "v2",
-      "name": "FREEROLL W STACK",
-      "date": "2026-10-08",
-      "start": "12:10",
-      "buyin": 0,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "フリーロール"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-08-1830-1k-daily": {
-      "id": "photo-v2-2026-10-08-1830-1k-daily",
-      "venueId": "v2",
-      "name": "1K Daily",
-      "date": "2026-10-08",
-      "start": "18:30",
-      "buyin": 1000,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-08-1900-2k-nl2-7sd": {
-      "id": "photo-v2-2026-10-08-1900-2k-nl2-7sd",
-      "venueId": "v2",
-      "name": "2K NL2-7SD",
-      "date": "2026-10-08",
+      "date": "2026-11-09",
       "start": "19:00",
       "buyin": 2000,
       "addon": null,
@@ -280,192 +70,16 @@
       "reentry": false,
       "prize": null,
       "tags": [
-        "ミックス"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-09-1210-freeroll-w-stack": {
-      "id": "photo-v2-2026-10-09-1210-freeroll-w-stack",
-      "venueId": "v2",
-      "name": "FREEROLL W STACK",
-      "date": "2026-10-09",
-      "start": "12:10",
-      "buyin": 0,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "フリーロール"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-09-1830-free-roll-night": {
-      "id": "photo-v2-2026-10-09-1830-free-roll-night",
-      "venueId": "v2",
-      "name": "FREE ROLL Night",
-      "date": "2026-10-09",
-      "start": "18:30",
-      "buyin": 0,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "フリーロール"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-09-2000-2k-plo-turbo": {
-      "id": "photo-v2-2026-10-09-2000-2k-plo-turbo",
-      "venueId": "v2",
-      "name": "2K PLO Turbo",
-      "date": "2026-10-09",
-      "start": "20:00",
-      "buyin": 2000,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "PLO",
         "ターボ"
       ],
       "source": "semi",
       "verified": false
     },
-    "photo-v2-2026-10-10-1500-5k-mix-dealer-s-choise-doramaha": {
-      "id": "photo-v2-2026-10-10-1500-5k-mix-dealer-s-choise-doramaha",
-      "venueId": "v2",
-      "name": "5K MIX Dealer's Choise Doramaha",
-      "date": "2026-10-10",
-      "start": "15:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "ミックス"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-10-1700-spadie-1k-w-stack": {
-      "id": "photo-v2-2026-10-10-1700-spadie-1k-w-stack",
-      "venueId": "v2",
-      "name": "SPADIE大量放出 1K W STACK",
-      "date": "2026-10-10",
-      "start": "17:00",
-      "buyin": 1000,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-10-1900-3k-mix-triplestud": {
-      "id": "photo-v2-2026-10-10-1900-3k-mix-triplestud",
-      "venueId": "v2",
-      "name": "3K MIX TripleStud",
-      "date": "2026-10-10",
-      "start": "19:00",
-      "buyin": 3000,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "ミックス"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-11-1500-fst-8games": {
-      "id": "photo-v2-2026-10-11-1500-fst-8games",
-      "venueId": "v2",
-      "name": "FST祝勝 8GAMES",
-      "date": "2026-10-11",
-      "start": "15:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "FST",
-        "ミックス"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-11-1700-spadie-1k-w-stack": {
-      "id": "photo-v2-2026-10-11-1700-spadie-1k-w-stack",
-      "venueId": "v2",
-      "name": "SPADIE大量放出 1K W STACK",
-      "date": "2026-10-11",
-      "start": "17:00",
-      "buyin": 1000,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-12-1500-5k-split-mix": {
-      "id": "photo-v2-2026-10-12-1500-5k-split-mix",
-      "venueId": "v2",
-      "name": "5K Split MIX",
-      "date": "2026-10-12",
-      "start": "15:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "ミックス"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-12-1700-spadie-1k-w-stack": {
-      "id": "photo-v2-2026-10-12-1700-spadie-1k-w-stack",
-      "venueId": "v2",
-      "name": "SPADIE大量放出 1K W STACK",
-      "date": "2026-10-12",
-      "start": "17:00",
-      "buyin": 1000,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-13-1210-freeroll-w-stack": {
-      "id": "photo-v2-2026-10-13-1210-freeroll-w-stack",
+    "photo-v2-2026-11-10-1210-freeroll-w-stack": {
+      "id": "photo-v2-2026-11-10-1210-freeroll-w-stack",
       "venueId": "v2",
       "name": "FREEROLL W STACK",
-      "date": "2026-10-13",
+      "date": "2026-11-10",
       "start": "12:10",
       "buyin": 0,
       "addon": null,
@@ -479,11 +93,11 @@
       "source": "semi",
       "verified": false
     },
-    "photo-v2-2026-10-13-1900-3k-2-7td-badugi": {
-      "id": "photo-v2-2026-10-13-1900-3k-2-7td-badugi",
+    "photo-v2-2026-11-10-1900-3k-2-7td-badugi": {
+      "id": "photo-v2-2026-11-10-1900-3k-2-7td-badugi",
       "venueId": "v2",
       "name": "3K 2-7TD&Badugi",
-      "date": "2026-10-13",
+      "date": "2026-11-10",
       "start": "19:00",
       "buyin": 3000,
       "addon": null,
@@ -497,11 +111,11 @@
       "source": "semi",
       "verified": false
     },
-    "photo-v2-2026-10-14-1210-freeroll-w-stack": {
-      "id": "photo-v2-2026-10-14-1210-freeroll-w-stack",
+    "photo-v2-2026-11-11-1210-freeroll-w-stack": {
+      "id": "photo-v2-2026-11-11-1210-freeroll-w-stack",
       "venueId": "v2",
       "name": "FREEROLL W STACK",
-      "date": "2026-10-14",
+      "date": "2026-11-11",
       "start": "12:10",
       "buyin": 0,
       "addon": null,
@@ -515,11 +129,48 @@
       "source": "semi",
       "verified": false
     },
-    "photo-v2-2026-10-14-1830-1k-w-stack": {
-      "id": "photo-v2-2026-10-14-1830-1k-w-stack",
+    "photo-v2-2026-11-11-1830-fst": {
+      "id": "photo-v2-2026-11-11-1830-fst",
+      "venueId": "v2",
+      "name": "FSTサテライト",
+      "date": "2026-11-11",
+      "start": "18:30",
+      "buyin": 3000,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "サテライト",
+        "FST"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v2-2026-11-12-1210-freeroll-w-stack": {
+      "id": "photo-v2-2026-11-12-1210-freeroll-w-stack",
+      "venueId": "v2",
+      "name": "FREEROLL W STACK",
+      "date": "2026-11-12",
+      "start": "12:10",
+      "buyin": 0,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "フリーロール"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v2-2026-11-12-1830-1k-w-stack": {
+      "id": "photo-v2-2026-11-12-1830-1k-w-stack",
       "venueId": "v2",
       "name": "1K W STACK",
-      "date": "2026-10-14",
+      "date": "2026-11-12",
       "start": "18:30",
       "buyin": 1000,
       "addon": null,
@@ -531,11 +182,11 @@
       "source": "semi",
       "verified": false
     },
-    "photo-v2-2026-10-15-1210-freeroll-w-stack": {
-      "id": "photo-v2-2026-10-15-1210-freeroll-w-stack",
+    "photo-v2-2026-11-13-1210-freeroll-w-stack": {
+      "id": "photo-v2-2026-11-13-1210-freeroll-w-stack",
       "venueId": "v2",
       "name": "FREEROLL W STACK",
-      "date": "2026-10-15",
+      "date": "2026-11-13",
       "start": "12:10",
       "buyin": 0,
       "addon": null,
@@ -549,45 +200,11 @@
       "source": "semi",
       "verified": false
     },
-    "photo-v2-2026-10-15-1830-1k-daily": {
-      "id": "photo-v2-2026-10-15-1830-1k-daily",
-      "venueId": "v2",
-      "name": "1K Daily",
-      "date": "2026-10-15",
-      "start": "18:30",
-      "buyin": 1000,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-16-1210-freeroll-w-stack": {
-      "id": "photo-v2-2026-10-16-1210-freeroll-w-stack",
-      "venueId": "v2",
-      "name": "FREEROLL W STACK",
-      "date": "2026-10-16",
-      "start": "12:10",
-      "buyin": 0,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "フリーロール"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-16-1830-free-roll-night": {
-      "id": "photo-v2-2026-10-16-1830-free-roll-night",
+    "photo-v2-2026-11-13-1830-free-roll-night": {
+      "id": "photo-v2-2026-11-13-1830-free-roll-night",
       "venueId": "v2",
       "name": "FREE ROLL Night",
-      "date": "2026-10-16",
+      "date": "2026-11-13",
       "start": "18:30",
       "buyin": 0,
       "addon": null,
@@ -601,12 +218,49 @@
       "source": "semi",
       "verified": false
     },
-    "photo-v2-2026-10-16-2000-2k-plo-turbo": {
-      "id": "photo-v2-2026-10-16-2000-2k-plo-turbo",
+    "photo-v2-2026-11-15-1700-fst": {
+      "id": "photo-v2-2026-11-15-1700-fst",
       "venueId": "v2",
-      "name": "2K PLO Turbo",
-      "date": "2026-10-16",
-      "start": "20:00",
+      "name": "FSTサテライト",
+      "date": "2026-11-15",
+      "start": "17:00",
+      "buyin": 3000,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "サテライト",
+        "FST"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v2-2026-11-16-1210-freeroll-w-stack": {
+      "id": "photo-v2-2026-11-16-1210-freeroll-w-stack",
+      "venueId": "v2",
+      "name": "FREEROLL W STACK",
+      "date": "2026-11-16",
+      "start": "12:10",
+      "buyin": 0,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "フリーロール"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v2-2026-11-16-1900-2k-hyper": {
+      "id": "photo-v2-2026-11-16-1900-2k-hyper",
+      "venueId": "v2",
+      "name": "2K Hyper",
+      "date": "2026-11-16",
+      "start": "19:00",
       "buyin": 2000,
       "addon": null,
       "stack": null,
@@ -614,17 +268,161 @@
       "reentry": false,
       "prize": null,
       "tags": [
-        "PLO",
         "ターボ"
       ],
       "source": "semi",
       "verified": false
     },
-    "photo-v2-2026-10-17-1500-warrior": {
-      "id": "photo-v2-2026-10-17-1500-warrior",
+    "photo-v2-2026-11-17-1210-freeroll-w-stack": {
+      "id": "photo-v2-2026-11-17-1210-freeroll-w-stack",
+      "venueId": "v2",
+      "name": "FREEROLL W STACK",
+      "date": "2026-11-17",
+      "start": "12:10",
+      "buyin": 0,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "フリーロール"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v2-2026-11-17-1900-3k-2-7td-badugi": {
+      "id": "photo-v2-2026-11-17-1900-3k-2-7td-badugi",
+      "venueId": "v2",
+      "name": "3K 2-7TD&Badugi",
+      "date": "2026-11-17",
+      "start": "19:00",
+      "buyin": 3000,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "ミックス"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v2-2026-11-18-1210-freeroll-w-stack": {
+      "id": "photo-v2-2026-11-18-1210-freeroll-w-stack",
+      "venueId": "v2",
+      "name": "FREEROLL W STACK",
+      "date": "2026-11-18",
+      "start": "12:10",
+      "buyin": 0,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "フリーロール"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v2-2026-11-18-1830-fst": {
+      "id": "photo-v2-2026-11-18-1830-fst",
+      "venueId": "v2",
+      "name": "FSTサテライト",
+      "date": "2026-11-18",
+      "start": "18:30",
+      "buyin": 3000,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "サテライト",
+        "FST"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v2-2026-11-19-1210-freeroll-w-stack": {
+      "id": "photo-v2-2026-11-19-1210-freeroll-w-stack",
+      "venueId": "v2",
+      "name": "FREEROLL W STACK",
+      "date": "2026-11-19",
+      "start": "12:10",
+      "buyin": 0,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "フリーロール"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v2-2026-11-19-1830-2k-plo": {
+      "id": "photo-v2-2026-11-19-1830-2k-plo",
+      "venueId": "v2",
+      "name": "2K PLO",
+      "date": "2026-11-19",
+      "start": "18:30",
+      "buyin": 2000,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "PLO"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v2-2026-11-20-1210-freeroll-w-stack": {
+      "id": "photo-v2-2026-11-20-1210-freeroll-w-stack",
+      "venueId": "v2",
+      "name": "FREEROLL W STACK",
+      "date": "2026-11-20",
+      "start": "12:10",
+      "buyin": 0,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "フリーロール"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v2-2026-11-20-1830-free-roll-night": {
+      "id": "photo-v2-2026-11-20-1830-free-roll-night",
+      "venueId": "v2",
+      "name": "FREE ROLL Night",
+      "date": "2026-11-20",
+      "start": "18:30",
+      "buyin": 0,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "フリーロール"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v2-2026-11-21-1500-warrior": {
+      "id": "photo-v2-2026-11-21-1500-warrior",
       "venueId": "v2",
       "name": "WARRIOR",
-      "date": "2026-10-17",
+      "date": "2026-11-21",
       "start": "15:00",
       "buyin": 5000,
       "addon": null,
@@ -632,225 +430,19 @@
       "guarantee": 100000,
       "reentry": false,
       "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-18-1500-spadie-1k-w-stack": {
-      "id": "photo-v2-2026-10-18-1500-spadie-1k-w-stack",
-      "venueId": "v2",
-      "name": "SPADIE大量放出 1K W STACK",
-      "date": "2026-10-18",
-      "start": "15:00",
-      "buyin": 1000,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-18-1830-mix-2-7td-badugi": {
-      "id": "photo-v2-2026-10-18-1830-mix-2-7td-badugi",
-      "venueId": "v2",
-      "name": "MIX店舗交流戦選手選考 2-7TD&Badugi",
-      "date": "2026-10-18",
-      "start": "18:30",
-      "buyin": 3000,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
       "tags": [
-        "ミックス"
+        "特別開催"
       ],
       "source": "semi",
       "verified": false
     },
-    "photo-v2-2026-10-19-1210-freeroll-w-stack": {
-      "id": "photo-v2-2026-10-19-1210-freeroll-w-stack",
+    "photo-v2-2026-11-22-1400-plo-freeroll": {
+      "id": "photo-v2-2026-11-22-1400-plo-freeroll",
       "venueId": "v2",
-      "name": "FREEROLL W STACK",
-      "date": "2026-10-19",
-      "start": "12:10",
+      "name": "PLO FREEROLL",
+      "date": "2026-11-22",
+      "start": "14:00",
       "buyin": 0,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "フリーロール"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-19-1900-2k-hyper": {
-      "id": "photo-v2-2026-10-19-1900-2k-hyper",
-      "venueId": "v2",
-      "name": "2K Hyper",
-      "date": "2026-10-19",
-      "start": "19:00",
-      "buyin": 2000,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-20-1210-freeroll-w-stack": {
-      "id": "photo-v2-2026-10-20-1210-freeroll-w-stack",
-      "venueId": "v2",
-      "name": "FREEROLL W STACK",
-      "date": "2026-10-20",
-      "start": "12:10",
-      "buyin": 0,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "フリーロール"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-20-1830-mix-2-7td-badugi": {
-      "id": "photo-v2-2026-10-20-1830-mix-2-7td-badugi",
-      "venueId": "v2",
-      "name": "MIX店舗交流戦選手選考 2-7TD&Badugi",
-      "date": "2026-10-20",
-      "start": "18:30",
-      "buyin": 3000,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "ミックス"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-21-1210-freeroll-w-stack": {
-      "id": "photo-v2-2026-10-21-1210-freeroll-w-stack",
-      "venueId": "v2",
-      "name": "FREEROLL W STACK",
-      "date": "2026-10-21",
-      "start": "12:10",
-      "buyin": 0,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "フリーロール"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-21-1830-spadie-1k-w-stack": {
-      "id": "photo-v2-2026-10-21-1830-spadie-1k-w-stack",
-      "venueId": "v2",
-      "name": "SPADIE大量放出 1K W STACK",
-      "date": "2026-10-21",
-      "start": "18:30",
-      "buyin": 1000,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-22-1210-freeroll-w-stack": {
-      "id": "photo-v2-2026-10-22-1210-freeroll-w-stack",
-      "venueId": "v2",
-      "name": "FREEROLL W STACK",
-      "date": "2026-10-22",
-      "start": "12:10",
-      "buyin": 0,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "フリーロール"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-22-1830-spadie-1k-w-stack": {
-      "id": "photo-v2-2026-10-22-1830-spadie-1k-w-stack",
-      "venueId": "v2",
-      "name": "SPADIE大量放出 1K W STACK",
-      "date": "2026-10-22",
-      "start": "18:30",
-      "buyin": 1000,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-23-1210-freeroll-w-stack": {
-      "id": "photo-v2-2026-10-23-1210-freeroll-w-stack",
-      "venueId": "v2",
-      "name": "FREEROLL W STACK",
-      "date": "2026-10-23",
-      "start": "12:10",
-      "buyin": 0,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "フリーロール"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-23-1830-free-roll-night": {
-      "id": "photo-v2-2026-10-23-1830-free-roll-night",
-      "venueId": "v2",
-      "name": "FREE ROLL Night",
-      "date": "2026-10-23",
-      "start": "18:30",
-      "buyin": 0,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "フリーロール"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-23-2000-2k-plo-turbo": {
-      "id": "photo-v2-2026-10-23-2000-2k-plo-turbo",
-      "venueId": "v2",
-      "name": "2K PLO Turbo",
-      "date": "2026-10-23",
-      "start": "20:00",
-      "buyin": 2000,
       "addon": null,
       "stack": null,
       "guarantee": null,
@@ -858,66 +450,35 @@
       "prize": null,
       "tags": [
         "PLO",
-        "ターボ"
+        "フリーロール"
       ],
       "source": "semi",
       "verified": false
     },
-    "photo-v2-2026-10-24-1500-spadie-day1": {
-      "id": "photo-v2-2026-10-24-1500-spadie-day1",
+    "photo-v2-2026-11-22-1700-fst": {
+      "id": "photo-v2-2026-11-22-1700-fst",
       "venueId": "v2",
-      "name": "SPADIE店舗DAY1",
-      "date": "2026-10-24",
-      "start": "15:00",
-      "buyin": 1000,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-25-1400-mix": {
-      "id": "photo-v2-2026-10-25-1400-mix",
-      "venueId": "v2",
-      "name": "MIX店舗交流戦",
-      "date": "2026-10-25",
-      "start": "14:00",
-      "buyin": 10000,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "ミックス"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-25-1700-spadie-1k-w-stack": {
-      "id": "photo-v2-2026-10-25-1700-spadie-1k-w-stack",
-      "venueId": "v2",
-      "name": "SPADIE大量放出 1K W STACK",
-      "date": "2026-10-25",
+      "name": "FSTサテライト",
+      "date": "2026-11-22",
       "start": "17:00",
-      "buyin": 1000,
+      "buyin": 3000,
       "addon": null,
       "stack": null,
       "guarantee": null,
       "reentry": false,
       "prize": null,
-      "tags": [],
+      "tags": [
+        "サテライト",
+        "FST"
+      ],
       "source": "semi",
       "verified": false
     },
-    "photo-v2-2026-10-26-1210-freeroll-w-stack": {
-      "id": "photo-v2-2026-10-26-1210-freeroll-w-stack",
+    "photo-v2-2026-11-23-1210-freeroll-w-stack": {
+      "id": "photo-v2-2026-11-23-1210-freeroll-w-stack",
       "venueId": "v2",
       "name": "FREEROLL W STACK",
-      "date": "2026-10-26",
+      "date": "2026-11-23",
       "start": "12:10",
       "buyin": 0,
       "addon": null,
@@ -931,27 +492,30 @@
       "source": "semi",
       "verified": false
     },
-    "photo-v2-2026-10-26-1900-2k-hyper": {
-      "id": "photo-v2-2026-10-26-1900-2k-hyper",
+    "photo-v2-2026-11-23-1700-kk-teambattle-1-tag-match": {
+      "id": "photo-v2-2026-11-23-1700-kk-teambattle-1-tag-match",
       "venueId": "v2",
-      "name": "2K Hyper",
-      "date": "2026-10-26",
-      "start": "19:00",
-      "buyin": 2000,
+      "name": "KK TEAMBATTLE #1 TAG Match",
+      "date": "2026-11-23",
+      "start": "17:00",
+      "buyin": 4000,
       "addon": null,
       "stack": null,
       "guarantee": null,
       "reentry": false,
       "prize": null,
-      "tags": [],
+      "tags": [
+        "タッグ",
+        "リーグ"
+      ],
       "source": "semi",
       "verified": false
     },
-    "photo-v2-2026-10-27-1210-freeroll-w-stack": {
-      "id": "photo-v2-2026-10-27-1210-freeroll-w-stack",
+    "photo-v2-2026-11-24-1210-freeroll-w-stack": {
+      "id": "photo-v2-2026-11-24-1210-freeroll-w-stack",
       "venueId": "v2",
       "name": "FREEROLL W STACK",
-      "date": "2026-10-27",
+      "date": "2026-11-24",
       "start": "12:10",
       "buyin": 0,
       "addon": null,
@@ -965,11 +529,11 @@
       "source": "semi",
       "verified": false
     },
-    "photo-v2-2026-10-27-1900-3k-2-7td-badugi": {
-      "id": "photo-v2-2026-10-27-1900-3k-2-7td-badugi",
+    "photo-v2-2026-11-24-1900-3k-2-7td-badugi": {
+      "id": "photo-v2-2026-11-24-1900-3k-2-7td-badugi",
       "venueId": "v2",
       "name": "3K 2-7TD&Badugi",
-      "date": "2026-10-27",
+      "date": "2026-11-24",
       "start": "19:00",
       "buyin": 3000,
       "addon": null,
@@ -983,11 +547,11 @@
       "source": "semi",
       "verified": false
     },
-    "photo-v2-2026-10-28-1210-freeroll-w-stack": {
-      "id": "photo-v2-2026-10-28-1210-freeroll-w-stack",
+    "photo-v2-2026-11-25-1210-freeroll-w-stack": {
+      "id": "photo-v2-2026-11-25-1210-freeroll-w-stack",
       "venueId": "v2",
       "name": "FREEROLL W STACK",
-      "date": "2026-10-28",
+      "date": "2026-11-25",
       "start": "12:10",
       "buyin": 0,
       "addon": null,
@@ -1001,27 +565,30 @@
       "source": "semi",
       "verified": false
     },
-    "photo-v2-2026-10-28-1830-spadie-1k-w-stack": {
-      "id": "photo-v2-2026-10-28-1830-spadie-1k-w-stack",
+    "photo-v2-2026-11-25-1830-fst": {
+      "id": "photo-v2-2026-11-25-1830-fst",
       "venueId": "v2",
-      "name": "SPADIE大量放出 1K W STACK",
-      "date": "2026-10-28",
+      "name": "FSTサテライト",
+      "date": "2026-11-25",
       "start": "18:30",
-      "buyin": 1000,
+      "buyin": 3000,
       "addon": null,
       "stack": null,
       "guarantee": null,
       "reentry": false,
       "prize": null,
-      "tags": [],
+      "tags": [
+        "サテライト",
+        "FST"
+      ],
       "source": "semi",
       "verified": false
     },
-    "photo-v2-2026-10-29-1210-freeroll-w-stack": {
-      "id": "photo-v2-2026-10-29-1210-freeroll-w-stack",
+    "photo-v2-2026-11-26-1210-freeroll-w-stack": {
+      "id": "photo-v2-2026-11-26-1210-freeroll-w-stack",
       "venueId": "v2",
       "name": "FREEROLL W STACK",
-      "date": "2026-10-29",
+      "date": "2026-11-26",
       "start": "12:10",
       "buyin": 0,
       "addon": null,
@@ -1035,64 +602,12 @@
       "source": "semi",
       "verified": false
     },
-    "photo-v2-2026-10-29-1830-spadie-1k-w-stack": {
-      "id": "photo-v2-2026-10-29-1830-spadie-1k-w-stack",
+    "photo-v2-2026-11-26-1830-2k-plo": {
+      "id": "photo-v2-2026-11-26-1830-2k-plo",
       "venueId": "v2",
-      "name": "SPADIE大量放出 1K W STACK",
-      "date": "2026-10-29",
+      "name": "2K PLO",
+      "date": "2026-11-26",
       "start": "18:30",
-      "buyin": 1000,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-30-1210-freeroll-w-stack": {
-      "id": "photo-v2-2026-10-30-1210-freeroll-w-stack",
-      "venueId": "v2",
-      "name": "FREEROLL W STACK",
-      "date": "2026-10-30",
-      "start": "12:10",
-      "buyin": 0,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "フリーロール"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-30-1830-free-roll-night": {
-      "id": "photo-v2-2026-10-30-1830-free-roll-night",
-      "venueId": "v2",
-      "name": "FREE ROLL Night",
-      "date": "2026-10-30",
-      "start": "18:30",
-      "buyin": 0,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "フリーロール"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v2-2026-10-30-2000-2k-plo-turbo": {
-      "id": "photo-v2-2026-10-30-2000-2k-plo-turbo",
-      "venueId": "v2",
-      "name": "2K PLO Turbo",
-      "date": "2026-10-30",
-      "start": "20:00",
       "buyin": 2000,
       "addon": null,
       "stack": null,
@@ -1100,18 +615,53 @@
       "reentry": false,
       "prize": null,
       "tags": [
-        "PLO",
-        "ターボ"
+        "PLO"
       ],
       "source": "semi",
       "verified": false
     },
-    "photo-v2-2026-10-31-1500-spadie-day1": {
-      "id": "photo-v2-2026-10-31-1500-spadie-day1",
+    "photo-v2-2026-11-27-1210-freeroll-w-stack": {
+      "id": "photo-v2-2026-11-27-1210-freeroll-w-stack",
       "venueId": "v2",
-      "name": "SPADIE店舗DAY1",
-      "date": "2026-10-31",
-      "start": "15:00",
+      "name": "FREEROLL W STACK",
+      "date": "2026-11-27",
+      "start": "12:10",
+      "buyin": 0,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "フリーロール"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v2-2026-11-27-1830-free-roll-night": {
+      "id": "photo-v2-2026-11-27-1830-free-roll-night",
+      "venueId": "v2",
+      "name": "FREE ROLL Night",
+      "date": "2026-11-27",
+      "start": "18:30",
+      "buyin": 0,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "フリーロール"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v2-2026-11-28-1210-1k-w-stack": {
+      "id": "photo-v2-2026-11-28-1210-1k-w-stack",
+      "venueId": "v2",
+      "name": "1K W STACK",
+      "date": "2026-11-28",
+      "start": "12:10",
       "buyin": 1000,
       "addon": null,
       "stack": null,
@@ -1122,27 +672,520 @@
       "source": "semi",
       "verified": false
     },
-    "photo-v25-2026-10-02-1930-post": {
-      "id": "photo-v25-2026-10-02-1930-post",
-      "venueId": "v25",
-      "name": "フリーズアウト",
-      "date": "2026-10-02",
-      "start": "19:30",
-      "buyin": 35000,
+    "photo-v2-2026-11-28-1700-3k-2-7td-badugi": {
+      "id": "photo-v2-2026-11-28-1700-3k-2-7td-badugi",
+      "venueId": "v2",
+      "name": "3K 2-7TD&Badugi",
+      "date": "2026-11-28",
+      "start": "17:00",
+      "buyin": 3000,
       "addon": null,
       "stack": null,
       "guarantee": null,
-      "reentry": "late",
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "ミックス"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v2-2026-11-29-1400-2-7td-badugi-freeroll": {
+      "id": "photo-v2-2026-11-29-1400-2-7td-badugi-freeroll",
+      "venueId": "v2",
+      "name": "2-7TD&Badugi FREEROLL",
+      "date": "2026-11-29",
+      "start": "14:00",
+      "buyin": 0,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "ミックス",
+        "フリーロール"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v2-2026-11-29-1700-fst": {
+      "id": "photo-v2-2026-11-29-1700-fst",
+      "venueId": "v2",
+      "name": "FSTサテライト",
+      "date": "2026-11-29",
+      "start": "17:00",
+      "buyin": 3000,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "サテライト",
+        "FST"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v2-2026-11-30-1210-freeroll-w-stack": {
+      "id": "photo-v2-2026-11-30-1210-freeroll-w-stack",
+      "venueId": "v2",
+      "name": "FREEROLL W STACK",
+      "date": "2026-11-30",
+      "start": "12:10",
+      "buyin": 0,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "フリーロール"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v2-2026-11-30-1830-kk-teambattle-2-deep-stack": {
+      "id": "photo-v2-2026-11-30-1830-kk-teambattle-2-deep-stack",
+      "venueId": "v2",
+      "name": "KK TEAMBATTLE #2 Deep Stack",
+      "date": "2026-11-30",
+      "start": "18:30",
+      "buyin": 4000,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "ディープ",
+        "リーグ"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v21-2026-11-08-1700-spadie-day1": {
+      "id": "photo-v21-2026-11-08-1700-spadie-day1",
+      "venueId": "v21",
+      "name": "SPADIE 店舗Day1",
+      "date": "2026-11-08",
+      "start": "17:00",
+      "buyin": 5000,
+      "addon": null,
+      "stack": 50000,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "店舗DAY1"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v21-2026-11-09-1930-fst": {
+      "id": "photo-v21-2026-11-09-1930-fst",
+      "venueId": "v21",
+      "name": "FSTクオリファイ",
+      "date": "2026-11-09",
+      "start": "19:30",
+      "buyin": 3500,
+      "addon": 2000,
+      "stack": 30000,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "サテライト",
+        "FST"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v21-2026-11-10-1930-fst": {
+      "id": "photo-v21-2026-11-10-1930-fst",
+      "venueId": "v21",
+      "name": "FSTクオリファイ",
+      "date": "2026-11-10",
+      "start": "19:30",
+      "buyin": 3500,
+      "addon": 2000,
+      "stack": 30000,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "サテライト",
+        "FST"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v21-2026-11-11-1930-fst": {
+      "id": "photo-v21-2026-11-11-1930-fst",
+      "venueId": "v21",
+      "name": "FSTクオリファイ",
+      "date": "2026-11-11",
+      "start": "19:30",
+      "buyin": 3500,
+      "addon": 2000,
+      "stack": 30000,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "サテライト",
+        "FST"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v21-2026-11-12-1830-cup": {
+      "id": "photo-v21-2026-11-12-1830-cup",
+      "venueId": "v21",
+      "name": "ポルCUP",
+      "date": "2026-11-12",
+      "start": "18:30",
+      "buyin": null,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
       "prize": null,
       "tags": [],
       "source": "semi",
       "verified": false
     },
-    "photo-v25-2026-10-03-1930-gii-fst5-5": {
-      "id": "photo-v25-2026-10-03-1930-gii-fst5-5",
+    "photo-v21-2026-11-13-1930-freez4000": {
+      "id": "photo-v21-2026-11-13-1930-freez4000",
+      "venueId": "v21",
+      "name": "Freez4000",
+      "date": "2026-11-13",
+      "start": "19:30",
+      "buyin": 4000,
+      "addon": null,
+      "stack": 40000,
+      "guarantee": null,
+      "reentry": false,
+      "prize": "BARBATOS CUPチケット(1位2枚・2位1枚)",
+      "tags": [
+        "バウンティ"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v21-2026-11-14-1800-deep": {
+      "id": "photo-v21-2026-11-14-1800-deep",
+      "venueId": "v21",
+      "name": "DEEP",
+      "date": "2026-11-14",
+      "start": "18:00",
+      "buyin": 4000,
+      "addon": null,
+      "stack": 50000,
+      "guarantee": null,
+      "reentry": false,
+      "prize": "BARBATOS CUPチケット(1位2枚・2位1枚)",
+      "tags": [
+        "ディープ"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v21-2026-11-15-1800-post": {
+      "id": "photo-v21-2026-11-15-1800-post",
+      "venueId": "v21",
+      "name": "モンスタースタックトナメ",
+      "date": "2026-11-15",
+      "start": "18:00",
+      "buyin": 5000,
+      "addon": null,
+      "stack": 80000,
+      "guarantee": null,
+      "reentry": false,
+      "prize": "BARBATOS CUPチケット(1位2枚・2位1枚)",
+      "tags": [
+        "ディープ"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v21-2026-11-16-1930-fst": {
+      "id": "photo-v21-2026-11-16-1930-fst",
+      "venueId": "v21",
+      "name": "FSTクオリファイ",
+      "date": "2026-11-16",
+      "start": "19:30",
+      "buyin": 3500,
+      "addon": 2000,
+      "stack": 30000,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "サテライト",
+        "FST"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v21-2026-11-17-1930-fst": {
+      "id": "photo-v21-2026-11-17-1930-fst",
+      "venueId": "v21",
+      "name": "FSTクオリファイ",
+      "date": "2026-11-17",
+      "start": "19:30",
+      "buyin": 3500,
+      "addon": 2000,
+      "stack": 30000,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "サテライト",
+        "FST"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v21-2026-11-18-1930-fst": {
+      "id": "photo-v21-2026-11-18-1930-fst",
+      "venueId": "v21",
+      "name": "FSTクオリファイ",
+      "date": "2026-11-18",
+      "start": "19:30",
+      "buyin": 3500,
+      "addon": 2000,
+      "stack": 30000,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "サテライト",
+        "FST"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v21-2026-11-19-1930-2-7td-badugi": {
+      "id": "photo-v21-2026-11-19-1930-2-7td-badugi",
+      "venueId": "v21",
+      "name": "2-7TD & Badugi",
+      "date": "2026-11-19",
+      "start": "19:30",
+      "buyin": 3000,
+      "addon": null,
+      "stack": 30000,
+      "guarantee": null,
+      "reentry": false,
+      "prize": "BARBATOS CUPチケット(1位2枚・2位1枚)",
+      "tags": [
+        "ミックス"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v21-2026-11-20-1830-post": {
+      "id": "photo-v21-2026-11-20-1830-post",
+      "venueId": "v21",
+      "name": "笑点トナメ（飲み放題付）",
+      "date": "2026-11-20",
+      "start": "18:30",
+      "buyin": 4000,
+      "addon": null,
+      "stack": 25000,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "バウンティ"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v21-2026-11-21-1800-deep": {
+      "id": "photo-v21-2026-11-21-1800-deep",
+      "venueId": "v21",
+      "name": "DEEP",
+      "date": "2026-11-21",
+      "start": "18:00",
+      "buyin": 4000,
+      "addon": null,
+      "stack": 50000,
+      "guarantee": null,
+      "reentry": false,
+      "prize": "BARBATOS CUPチケット(1位2枚・2位1枚)",
+      "tags": [
+        "ディープ"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v21-2026-11-22-1900-6max": {
+      "id": "photo-v21-2026-11-22-1900-6max",
+      "venueId": "v21",
+      "name": "6MAXタッグトーナメント",
+      "date": "2026-11-22",
+      "start": "19:00",
+      "buyin": 6000,
+      "addon": null,
+      "stack": 50000,
+      "guarantee": null,
+      "reentry": false,
+      "prize": "BARBATOS CUPチケット(1位2枚・2位1枚)",
+      "tags": [
+        "タッグ"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v21-2026-11-23-1830-cup": {
+      "id": "photo-v21-2026-11-23-1830-cup",
+      "venueId": "v21",
+      "name": "ポルCUP",
+      "date": "2026-11-23",
+      "start": "18:30",
+      "buyin": null,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v21-2026-11-24-1930-fst": {
+      "id": "photo-v21-2026-11-24-1930-fst",
+      "venueId": "v21",
+      "name": "FSTクオリファイ",
+      "date": "2026-11-24",
+      "start": "19:30",
+      "buyin": 3500,
+      "addon": 2000,
+      "stack": 30000,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "サテライト",
+        "FST"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v21-2026-11-25-1930-post": {
+      "id": "photo-v21-2026-11-25-1930-post",
+      "venueId": "v21",
+      "name": "千円トーナメント",
+      "date": "2026-11-25",
+      "start": "19:30",
+      "buyin": 1000,
+      "addon": null,
+      "stack": 20000,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v21-2026-11-26-1930-plo": {
+      "id": "photo-v21-2026-11-26-1930-plo",
+      "venueId": "v21",
+      "name": "PLOトナメ",
+      "date": "2026-11-26",
+      "start": "19:30",
+      "buyin": 3000,
+      "addon": null,
+      "stack": 30000,
+      "guarantee": null,
+      "reentry": false,
+      "prize": "BARBATOS CUPチケット(1位2枚・2位1枚)",
+      "tags": [
+        "PLO"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v21-2026-11-27-1930-freez4000": {
+      "id": "photo-v21-2026-11-27-1930-freez4000",
+      "venueId": "v21",
+      "name": "Freez4000",
+      "date": "2026-11-27",
+      "start": "19:30",
+      "buyin": 4000,
+      "addon": null,
+      "stack": 40000,
+      "guarantee": null,
+      "reentry": false,
+      "prize": "BARBATOS CUPチケット(1位2枚・2位1枚)",
+      "tags": [
+        "バウンティ"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v21-2026-11-28-1800-deep": {
+      "id": "photo-v21-2026-11-28-1800-deep",
+      "venueId": "v21",
+      "name": "DEEP",
+      "date": "2026-11-28",
+      "start": "18:00",
+      "buyin": 4000,
+      "addon": null,
+      "stack": 50000,
+      "guarantee": null,
+      "reentry": false,
+      "prize": "BARBATOS CUPチケット(1位2枚・2位1枚)",
+      "tags": [
+        "ディープ"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v21-2026-11-29-1900-post": {
+      "id": "photo-v21-2026-11-29-1900-post",
+      "venueId": "v21",
+      "name": "ハイローラー",
+      "date": "2026-11-29",
+      "start": "19:00",
+      "buyin": 6000,
+      "addon": null,
+      "stack": 40000,
+      "guarantee": null,
+      "reentry": false,
+      "prize": "BARBATOS CUPチケット(1位2枚・2位1枚)",
+      "tags": [
+        "ハイローラー"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v21-2026-11-30-1930-fst": {
+      "id": "photo-v21-2026-11-30-1930-fst",
+      "venueId": "v21",
+      "name": "FSTクオリファイ",
+      "date": "2026-11-30",
+      "start": "19:30",
+      "buyin": 3500,
+      "addon": 2000,
+      "stack": 30000,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "サテライト",
+        "FST"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v25-2026-11-09-1930-post": {
+      "id": "photo-v25-2026-11-09-1930-post",
       "venueId": "v25",
-      "name": "GII FST5.5 メインスポンサードトーナメント",
-      "date": "2026-10-03",
+      "name": "選べるサクッとサテライト",
+      "date": "2026-11-09",
       "start": "19:30",
       "buyin": null,
       "addon": null,
@@ -1151,19 +1194,188 @@
       "reentry": false,
       "prize": null,
       "tags": [
-        "FST",
+        "サテライト"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v25-2026-11-10-1930-2000": {
+      "id": "photo-v25-2026-11-10-1930-2000",
+      "venueId": "v25",
+      "name": "トーナメント2000",
+      "date": "2026-11-10",
+      "start": "19:30",
+      "buyin": 2000,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v25-2026-11-11-1930-1": {
+      "id": "photo-v25-2026-11-11-1930-1",
+      "venueId": "v25",
+      "name": "ハンド警察 1枚見せて",
+      "date": "2026-11-11",
+      "start": "19:30",
+      "buyin": null,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v25-2026-11-12-1930-2000-day": {
+      "id": "photo-v25-2026-11-12-1930-2000-day",
+      "venueId": "v25",
+      "name": "トーナメント2000（女の子は特別サービスDay）",
+      "date": "2026-11-12",
+      "start": "19:30",
+      "buyin": 2000,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v25-2026-11-13-1930-giii": {
+      "id": "photo-v25-2026-11-13-1930-giii",
+      "venueId": "v25",
+      "name": "GIIIハイローラー練習トナメ",
+      "date": "2026-11-13",
+      "start": "19:30",
+      "buyin": null,
+      "addon": null,
+      "stack": 200000,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "ハイローラー",
         "特別開催"
       ],
       "source": "semi",
       "verified": false
     },
-    "photo-v25-2026-10-04-1630-sunday-2-000": {
-      "id": "photo-v25-2026-10-04-1630-sunday-2-000",
+    "photo-v25-2026-11-14-1930-post": {
+      "id": "photo-v25-2026-11-14-1930-post",
       "venueId": "v25",
-      "name": "Sunday 2,000 バウンティ",
-      "date": "2026-10-04",
+      "name": "選べるサクッとサテライト",
+      "date": "2026-11-14",
+      "start": "19:30",
+      "buyin": null,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "サテライト"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v25-2026-11-15-1630-post": {
+      "id": "photo-v25-2026-11-15-1630-post",
+      "venueId": "v25",
+      "name": "ゲームパック文化祭",
+      "date": "2026-11-15",
       "start": "16:30",
+      "buyin": null,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "特別開催"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v25-2026-11-16-1930-post": {
+      "id": "photo-v25-2026-11-16-1930-post",
+      "venueId": "v25",
+      "name": "ディープターボトーナメント",
+      "date": "2026-11-16",
+      "start": "19:30",
+      "buyin": null,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "ディープ",
+        "ターボ"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v25-2026-11-17-1930-2000": {
+      "id": "photo-v25-2026-11-17-1930-2000",
+      "venueId": "v25",
+      "name": "トーナメント2000",
+      "date": "2026-11-17",
+      "start": "19:30",
       "buyin": 2000,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v25-2026-11-18-1930-post": {
+      "id": "photo-v25-2026-11-18-1930-post",
+      "venueId": "v25",
+      "name": "シングルリエントリートーナメント",
+      "date": "2026-11-18",
+      "start": "19:30",
+      "buyin": null,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v25-2026-11-19-1930-2000-day": {
+      "id": "photo-v25-2026-11-19-1930-2000-day",
+      "venueId": "v25",
+      "name": "トーナメント2000（女の子は特別サービスDay）",
+      "date": "2026-11-19",
+      "start": "19:30",
+      "buyin": 2000,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v25-2026-11-20-1930-post": {
+      "id": "photo-v25-2026-11-20-1930-post",
+      "venueId": "v25",
+      "name": "ミステリーバウンティ",
+      "date": "2026-11-20",
+      "start": "19:30",
+      "buyin": null,
       "addon": null,
       "stack": null,
       "guarantee": null,
@@ -1175,27 +1387,11 @@
       "source": "semi",
       "verified": false
     },
-    "photo-v25-2026-10-05-1930-2000": {
-      "id": "photo-v25-2026-10-05-1930-2000",
+    "photo-v25-2026-11-21-1930-gi": {
+      "id": "photo-v25-2026-11-21-1930-gi",
       "venueId": "v25",
-      "name": "トーナメント2000",
-      "date": "2026-10-05",
-      "start": "19:30",
-      "buyin": 2000,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v25-2026-10-06-1930-72": {
-      "id": "photo-v25-2026-10-06-1930-72",
-      "venueId": "v25",
-      "name": "72ゲームパック争奪戦",
-      "date": "2026-10-06",
+      "name": "GI 大型大会練習トナメ",
+      "date": "2026-11-21",
       "start": "19:30",
       "buyin": null,
       "addon": null,
@@ -1209,13 +1405,100 @@
       "source": "semi",
       "verified": false
     },
-    "photo-v25-2026-10-07-1930-40-000": {
-      "id": "photo-v25-2026-10-07-1930-40-000",
+    "photo-v25-2026-11-22-1630-post": {
+      "id": "photo-v25-2026-11-22-1630-post",
       "venueId": "v25",
-      "name": "ディープスタック40,000",
-      "date": "2026-10-07",
+      "name": "選べるサクッとサテライト",
+      "date": "2026-11-22",
+      "start": "16:30",
+      "buyin": null,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "サテライト"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v25-2026-11-24-1930-post": {
+      "id": "photo-v25-2026-11-24-1930-post",
+      "venueId": "v25",
+      "name": "選べるサクッとサテライト",
+      "date": "2026-11-24",
       "start": "19:30",
-      "buyin": 40000,
+      "buyin": null,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "サテライト"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v25-2026-11-25-1930-2000": {
+      "id": "photo-v25-2026-11-25-1930-2000",
+      "venueId": "v25",
+      "name": "トーナメント2000",
+      "date": "2026-11-25",
+      "start": "19:30",
+      "buyin": 2000,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v25-2026-11-26-1930-2000-day": {
+      "id": "photo-v25-2026-11-26-1930-2000-day",
+      "venueId": "v25",
+      "name": "トーナメント2000（女の子は特別サービスDay）",
+      "date": "2026-11-26",
+      "start": "19:30",
+      "buyin": 2000,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v25-2026-11-27-1930-giii": {
+      "id": "photo-v25-2026-11-27-1930-giii",
+      "venueId": "v25",
+      "name": "GIIIタッグトーナメント",
+      "date": "2026-11-27",
+      "start": "19:30",
+      "buyin": null,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "タッグ",
+        "特別開催"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v25-2026-11-28-1930-post": {
+      "id": "photo-v25-2026-11-28-1930-post",
+      "venueId": "v25",
+      "name": "ディープトーナメント",
+      "date": "2026-11-28",
+      "start": "19:30",
+      "buyin": null,
       "addon": null,
       "stack": null,
       "guarantee": null,
@@ -1227,13 +1510,13 @@
       "source": "semi",
       "verified": false
     },
-    "photo-v25-2026-10-08-1930-2000-day": {
-      "id": "photo-v25-2026-10-08-1930-2000-day",
+    "photo-v25-2026-11-30-1930-post": {
+      "id": "photo-v25-2026-11-30-1930-post",
       "venueId": "v25",
-      "name": "トーナメント2000（女の子は特別サービスDay）",
-      "date": "2026-10-08",
+      "name": "フリーズアウト",
+      "date": "2026-11-30",
       "start": "19:30",
-      "buyin": 2000,
+      "buyin": null,
       "addon": null,
       "stack": null,
       "guarantee": null,
@@ -1243,12 +1526,347 @@
       "source": "semi",
       "verified": false
     },
-    "photo-v25-2026-10-09-1930-gii": {
-      "id": "photo-v25-2026-10-09-1930-gii",
-      "venueId": "v25",
-      "name": "GIIタッグトーナメント",
-      "date": "2026-10-09",
-      "start": "19:30",
+    "photo-v26-2026-11-08-1200-1-000": {
+      "id": "photo-v26-2026-11-08-1200-1-000",
+      "venueId": "v26",
+      "name": "¥1,000トナメ",
+      "date": "2026-11-08",
+      "start": "12:00",
+      "buyin": 1000,
+      "addon": 1000,
+      "stack": null,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v26-2026-11-08-1900-fst": {
+      "id": "photo-v26-2026-11-08-1900-fst",
+      "venueId": "v26",
+      "name": "FSTサテライト",
+      "date": "2026-11-08",
+      "start": "19:00",
+      "buyin": 3000,
+      "addon": 3000,
+      "stack": null,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "サテライト",
+        "FST"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v34-2026-11-08-fst": {
+      "id": "photo-v34-2026-11-08-fst",
+      "venueId": "v34",
+      "name": "FSTサテライト",
+      "date": "2026-11-08",
+      "start": "",
+      "buyin": null,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "サテライト",
+        "FST"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v34-2026-11-09-2k": {
+      "id": "photo-v34-2026-11-09-2k",
+      "venueId": "v34",
+      "name": "チップエントリー(2K)トーナメント",
+      "date": "2026-11-09",
+      "start": "",
+      "buyin": null,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v34-2026-11-10-post": {
+      "id": "photo-v34-2026-11-10-post",
+      "venueId": "v34",
+      "name": "フリロ",
+      "date": "2026-11-10",
+      "start": "",
+      "buyin": 0,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "フリーロール"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v34-2026-11-12-post": {
+      "id": "photo-v34-2026-11-12-post",
+      "venueId": "v34",
+      "name": "ディープフリロ",
+      "date": "2026-11-12",
+      "start": "",
+      "buyin": 0,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "フリーロール",
+        "ディープ"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v34-2026-11-13-3k": {
+      "id": "photo-v34-2026-11-13-3k",
+      "venueId": "v34",
+      "name": "チップエントリー(3K)トーナメント(華金)",
+      "date": "2026-11-13",
+      "start": "",
+      "buyin": null,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v34-2026-11-14-post": {
+      "id": "photo-v34-2026-11-14-post",
+      "venueId": "v34",
+      "name": "ディープ",
+      "date": "2026-11-14",
+      "start": "",
+      "buyin": null,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "ディープ"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v34-2026-11-15-fst": {
+      "id": "photo-v34-2026-11-15-fst",
+      "venueId": "v34",
+      "name": "FSTサテライト",
+      "date": "2026-11-15",
+      "start": "",
+      "buyin": null,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "サテライト",
+        "FST"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v34-2026-11-16-2k": {
+      "id": "photo-v34-2026-11-16-2k",
+      "venueId": "v34",
+      "name": "チップエントリー(2K)トーナメント",
+      "date": "2026-11-16",
+      "start": "",
+      "buyin": null,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v34-2026-11-17-post": {
+      "id": "photo-v34-2026-11-17-post",
+      "venueId": "v34",
+      "name": "フリロ",
+      "date": "2026-11-17",
+      "start": "",
+      "buyin": 0,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "フリーロール"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v34-2026-11-19-post": {
+      "id": "photo-v34-2026-11-19-post",
+      "venueId": "v34",
+      "name": "ディープフリロ",
+      "date": "2026-11-19",
+      "start": "",
+      "buyin": 0,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "フリーロール",
+        "ディープ"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v34-2026-11-20-3k": {
+      "id": "photo-v34-2026-11-20-3k",
+      "venueId": "v34",
+      "name": "チップエントリー(3K)トーナメント(華金)",
+      "date": "2026-11-20",
+      "start": "",
+      "buyin": null,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v34-2026-11-21-post": {
+      "id": "photo-v34-2026-11-21-post",
+      "venueId": "v34",
+      "name": "ディープ",
+      "date": "2026-11-21",
+      "start": "",
+      "buyin": null,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "ディープ"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v34-2026-11-22-fst": {
+      "id": "photo-v34-2026-11-22-fst",
+      "venueId": "v34",
+      "name": "FSTサテライト",
+      "date": "2026-11-22",
+      "start": "",
+      "buyin": null,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "サテライト",
+        "FST"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v34-2026-11-23-2k": {
+      "id": "photo-v34-2026-11-23-2k",
+      "venueId": "v34",
+      "name": "チップエントリー(2K)トーナメント",
+      "date": "2026-11-23",
+      "start": "",
+      "buyin": null,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v34-2026-11-24-post": {
+      "id": "photo-v34-2026-11-24-post",
+      "venueId": "v34",
+      "name": "フリロ",
+      "date": "2026-11-24",
+      "start": "",
+      "buyin": 0,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "フリーロール"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v34-2026-11-26-post": {
+      "id": "photo-v34-2026-11-26-post",
+      "venueId": "v34",
+      "name": "ディープフリロ",
+      "date": "2026-11-26",
+      "start": "",
+      "buyin": 0,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [
+        "フリーロール",
+        "ディープ"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v34-2026-11-27-3k": {
+      "id": "photo-v34-2026-11-27-3k",
+      "venueId": "v34",
+      "name": "チップエントリー(3K)トーナメント(華金)",
+      "date": "2026-11-27",
+      "start": "",
+      "buyin": null,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v34-2026-11-28-post": {
+      "id": "photo-v34-2026-11-28-post",
+      "venueId": "v34",
+      "name": "しゅん、ゆづき、あっきーバースデートナメ",
+      "date": "2026-11-28",
+      "start": "",
       "buyin": null,
       "addon": null,
       "stack": null,
@@ -1261,100 +1879,385 @@
       "source": "semi",
       "verified": false
     },
-    "photo-v33-2026-10-03-1230-free-roll": {
-      "id": "photo-v33-2026-10-03-1230-free-roll",
-      "venueId": "v33",
-      "name": "FREE ROLL",
-      "date": "2026-10-03",
-      "start": "12:30",
-      "buyin": 0,
-      "addon": 1000,
+    "photo-v34-2026-11-29-fst": {
+      "id": "photo-v34-2026-11-29-fst",
+      "venueId": "v34",
+      "name": "FSTサテライト",
+      "date": "2026-11-29",
+      "start": "",
+      "buyin": null,
+      "addon": null,
       "stack": null,
       "guarantee": null,
-      "reentry": true,
+      "reentry": false,
       "prize": null,
+      "tags": [
+        "サテライト",
+        "FST"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v34-2026-11-30-2k": {
+      "id": "photo-v34-2026-11-30-2k",
+      "venueId": "v34",
+      "name": "チップエントリー(2K)トーナメント",
+      "date": "2026-11-30",
+      "start": "",
+      "buyin": null,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v42-2026-11-08-1300-post": {
+      "id": "photo-v42-2026-11-08-1300-post",
+      "venueId": "v42",
+      "name": "プレミアリング王者決定戦",
+      "date": "2026-11-08",
+      "start": "13:00",
+      "buyin": null,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v42-2026-11-08-1730-deep-stack": {
+      "id": "photo-v42-2026-11-08-1730-deep-stack",
+      "venueId": "v42",
+      "name": "Deep stack",
+      "date": "2026-11-08",
+      "start": "17:30",
+      "buyin": null,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": "1位FSTチケット",
+      "tags": [
+        "ディープ"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v42-2026-11-09-1900-ko-bounty": {
+      "id": "photo-v42-2026-11-09-1900-ko-bounty",
+      "venueId": "v42",
+      "name": "KO BOUNTY フリーロール",
+      "date": "2026-11-09",
+      "start": "19:00",
+      "buyin": 0,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": "1位FSTチケット",
+      "tags": [
+        "フリーロール",
+        "バウンティ"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v42-2026-11-10-1800-heads-up": {
+      "id": "photo-v42-2026-11-10-1800-heads-up",
+      "venueId": "v42",
+      "name": "Heads upトーナメント フリーロール",
+      "date": "2026-11-10",
+      "start": "18:00",
+      "buyin": 0,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": "1位FSTチケット",
       "tags": [
         "フリーロール"
       ],
       "source": "semi",
       "verified": false
     },
-    "photo-v33-2026-10-03-1600-k-o": {
-      "id": "photo-v33-2026-10-03-1600-k-o",
-      "venueId": "v33",
-      "name": "K.O.バウンティ",
-      "date": "2026-10-03",
-      "start": "16:00",
-      "buyin": 2000,
+    "photo-v42-2026-11-11-1900-bounty": {
+      "id": "photo-v42-2026-11-11-1900-bounty",
+      "venueId": "v42",
+      "name": "ミステリーBOUNTY フリーロール",
+      "date": "2026-11-11",
+      "start": "19:00",
+      "buyin": 0,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": "1位FSTチケット",
+      "tags": [
+        "フリーロール",
+        "バウンティ"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v42-2026-11-12-1900-thursday": {
+      "id": "photo-v42-2026-11-12-1900-thursday",
+      "venueId": "v42",
+      "name": "Thursday フリーロール",
+      "date": "2026-11-12",
+      "start": "19:00",
+      "buyin": 0,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": "1位FSTチケット",
+      "tags": [
+        "フリーロール"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v42-2026-11-13-1900-bounty": {
+      "id": "photo-v42-2026-11-13-1900-bounty",
+      "venueId": "v42",
+      "name": "ミステリーBOUNTY フリーロール",
+      "date": "2026-11-13",
+      "start": "19:00",
+      "buyin": 0,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": "1位FSTチケット",
+      "tags": [
+        "フリーロール",
+        "バウンティ"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v42-2026-11-14-1300-post": {
+      "id": "photo-v42-2026-11-14-1300-post",
+      "venueId": "v42",
+      "name": "プレミアリング王者決定戦",
+      "date": "2026-11-14",
+      "start": "13:00",
+      "buyin": null,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v42-2026-11-14-1730-deep-stack": {
+      "id": "photo-v42-2026-11-14-1730-deep-stack",
+      "venueId": "v42",
+      "name": "Deep stack",
+      "date": "2026-11-14",
+      "start": "17:30",
+      "buyin": null,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": "1位FSTチケット",
+      "tags": [
+        "ディープ"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v42-2026-11-15-1300-post": {
+      "id": "photo-v42-2026-11-15-1300-post",
+      "venueId": "v42",
+      "name": "プレミアリング王者決定戦",
+      "date": "2026-11-15",
+      "start": "13:00",
+      "buyin": null,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v42-2026-11-15-1730-deep-stack": {
+      "id": "photo-v42-2026-11-15-1730-deep-stack",
+      "venueId": "v42",
+      "name": "Deep stack",
+      "date": "2026-11-15",
+      "start": "17:30",
+      "buyin": null,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": "1位FSTチケット",
+      "tags": [
+        "ディープ"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v42-2026-11-16-1900-ko-bounty": {
+      "id": "photo-v42-2026-11-16-1900-ko-bounty",
+      "venueId": "v42",
+      "name": "KO BOUNTY フリーロール",
+      "date": "2026-11-16",
+      "start": "19:00",
+      "buyin": 0,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": "1位FSTチケット",
+      "tags": [
+        "フリーロール",
+        "バウンティ"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v42-2026-11-17-1800-heads-up": {
+      "id": "photo-v42-2026-11-17-1800-heads-up",
+      "venueId": "v42",
+      "name": "Heads upトーナメント フリーロール",
+      "date": "2026-11-17",
+      "start": "18:00",
+      "buyin": 0,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": "1位FSTチケット",
+      "tags": [
+        "フリーロール"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v42-2026-11-18-1900-bounty": {
+      "id": "photo-v42-2026-11-18-1900-bounty",
+      "venueId": "v42",
+      "name": "ミステリーBOUNTY フリーロール",
+      "date": "2026-11-18",
+      "start": "19:00",
+      "buyin": 0,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": "1位FSTチケット",
+      "tags": [
+        "フリーロール",
+        "バウンティ"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v42-2026-11-19-1900-thursday": {
+      "id": "photo-v42-2026-11-19-1900-thursday",
+      "venueId": "v42",
+      "name": "Thursday フリーロール",
+      "date": "2026-11-19",
+      "start": "19:00",
+      "buyin": 0,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": "1位FSTチケット",
+      "tags": [
+        "フリーロール"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v42-2026-11-20-1900-bounty": {
+      "id": "photo-v42-2026-11-20-1900-bounty",
+      "venueId": "v42",
+      "name": "ミステリーBOUNTY フリーロール",
+      "date": "2026-11-20",
+      "start": "19:00",
+      "buyin": 0,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": "1位FSTチケット",
+      "tags": [
+        "フリーロール",
+        "バウンティ"
+      ],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v42-2026-11-21-1300-post": {
+      "id": "photo-v42-2026-11-21-1300-post",
+      "venueId": "v42",
+      "name": "プレミアリング王者決定戦",
+      "date": "2026-11-21",
+      "start": "13:00",
+      "buyin": null,
+      "addon": null,
+      "stack": null,
+      "guarantee": null,
+      "reentry": false,
+      "prize": null,
+      "tags": [],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v42-2026-11-21-1800-saturday": {
+      "id": "photo-v42-2026-11-21-1800-saturday",
+      "venueId": "v42",
+      "name": "Saturdayトーナメント",
+      "date": "2026-11-21",
+      "start": "18:00",
+      "buyin": null,
+      "addon": null,
+      "stack": null,
+      "guarantee": 150000,
+      "reentry": false,
+      "prize": null,
+      "tags": [],
+      "source": "semi",
+      "verified": false
+    },
+    "photo-v9-2026-11-10-1900-daily-tournament": {
+      "id": "photo-v9-2026-11-10-1900-daily-tournament",
+      "venueId": "v9",
+      "name": "DAILY TOURNAMENT",
+      "date": "2026-11-10",
+      "start": "19:00",
+      "buyin": 3000,
       "addon": 2000,
       "stack": null,
       "guarantee": null,
       "reentry": true,
       "prize": null,
-      "tags": [
-        "バウンティ"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v33-2026-10-04-1230-post": {
-      "id": "photo-v33-2026-10-04-1230-post",
-      "venueId": "v33",
-      "name": "ディープロング",
-      "date": "2026-10-04",
-      "start": "12:30",
-      "buyin": 5000,
-      "addon": 5000,
-      "stack": null,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v33-2026-10-06-1230-freeze-out": {
-      "id": "photo-v33-2026-10-06-1230-freeze-out",
-      "venueId": "v33",
-      "name": "FREEZE OUT",
-      "date": "2026-10-06",
-      "start": "12:30",
-      "buyin": 5000,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
       "tags": [],
       "source": "semi",
       "verified": false
     },
-    "photo-v33-2026-10-06-1900-freeze-out": {
-      "id": "photo-v33-2026-10-06-1900-freeze-out",
-      "venueId": "v33",
-      "name": "FREEZE OUT",
-      "date": "2026-10-06",
+    "photo-v9-2026-11-12-1900-daily-tournament": {
+      "id": "photo-v9-2026-11-12-1900-daily-tournament",
+      "venueId": "v9",
+      "name": "DAILY TOURNAMENT",
+      "date": "2026-11-12",
       "start": "19:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v33-2026-10-08-1800-9max-sit-go": {
-      "id": "photo-v33-2026-10-08-1800-9max-sit-go",
-      "venueId": "v33",
-      "name": "9MAX Sit&GO",
-      "date": "2026-10-08",
-      "start": "18:00",
-      "buyin": 10000,
-      "addon": 10000,
+      "buyin": 3000,
+      "addon": 2000,
       "stack": null,
       "guarantee": null,
       "reentry": true,
@@ -1363,32 +2266,14 @@
       "source": "semi",
       "verified": false
     },
-    "photo-v33-2026-10-10-1230-free-roll": {
-      "id": "photo-v33-2026-10-10-1230-free-roll",
-      "venueId": "v33",
-      "name": "FREE ROLL",
-      "date": "2026-10-10",
-      "start": "12:30",
-      "buyin": 0,
-      "addon": 1000,
-      "stack": null,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "フリーロール"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v33-2026-10-11-1230-sky-high-roller": {
-      "id": "photo-v33-2026-10-11-1230-sky-high-roller",
-      "venueId": "v33",
-      "name": "SKY HIGH ROLLER",
-      "date": "2026-10-11",
-      "start": "12:30",
-      "buyin": 10000,
-      "addon": 10000,
+    "photo-v9-2026-11-17-1900-daily-tournament": {
+      "id": "photo-v9-2026-11-17-1900-daily-tournament",
+      "venueId": "v9",
+      "name": "DAILY TOURNAMENT",
+      "date": "2026-11-17",
+      "start": "19:00",
+      "buyin": 3000,
+      "addon": 2000,
       "stack": null,
       "guarantee": null,
       "reentry": true,
@@ -1397,32 +2282,14 @@
       "source": "semi",
       "verified": false
     },
-    "photo-v42-2026-10-02-1900-1-000pt-ko-bounty": {
-      "id": "photo-v42-2026-10-02-1900-1-000pt-ko-bounty",
-      "venueId": "v42",
-      "name": "1,000pt KO BOUNTY",
-      "date": "2026-10-02",
+    "photo-v9-2026-11-19-1900-daily-tournament": {
+      "id": "photo-v9-2026-11-19-1900-daily-tournament",
+      "venueId": "v9",
+      "name": "DAILY TOURNAMENT",
+      "date": "2026-11-19",
       "start": "19:00",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": 30000,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "バウンティ"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v42-2026-10-03-1300-post": {
-      "id": "photo-v42-2026-10-03-1300-post",
-      "venueId": "v42",
-      "name": "プレミアリング王者決定戦",
-      "date": "2026-10-03",
-      "start": "13:00",
-      "buyin": null,
-      "addon": null,
+      "buyin": 3000,
+      "addon": 2000,
       "stack": null,
       "guarantee": null,
       "reentry": true,
@@ -1431,30 +2298,14 @@
       "source": "semi",
       "verified": false
     },
-    "photo-v42-2026-10-03-1800-saturday": {
-      "id": "photo-v42-2026-10-03-1800-saturday",
-      "venueId": "v42",
-      "name": "Saturdayトーナメント",
-      "date": "2026-10-03",
-      "start": "18:00",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": 150000,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v42-2026-10-04-1300-post": {
-      "id": "photo-v42-2026-10-04-1300-post",
-      "venueId": "v42",
-      "name": "プレミアリング王者決定戦",
-      "date": "2026-10-04",
-      "start": "13:00",
-      "buyin": null,
-      "addon": null,
+    "photo-v9-2026-11-24-1900-daily-tournament": {
+      "id": "photo-v9-2026-11-24-1900-daily-tournament",
+      "venueId": "v9",
+      "name": "DAILY TOURNAMENT",
+      "date": "2026-11-24",
+      "start": "19:00",
+      "buyin": 3000,
+      "addon": 2000,
       "stack": null,
       "guarantee": null,
       "reentry": true,
@@ -1463,355 +2314,19 @@
       "source": "semi",
       "verified": false
     },
-    "photo-v42-2026-10-04-1900-post": {
-      "id": "photo-v42-2026-10-04-1900-post",
-      "venueId": "v42",
-      "name": "ナムラクレア祝勝トーナメント",
-      "date": "2026-10-04",
+    "photo-v9-2026-11-26-1900-daily-tournament": {
+      "id": "photo-v9-2026-11-26-1900-daily-tournament",
+      "venueId": "v9",
+      "name": "DAILY TOURNAMENT",
+      "date": "2026-11-26",
       "start": "19:00",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": 30000,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "特別開催"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v42-2026-10-05-1900-win-the-button": {
-      "id": "photo-v42-2026-10-05-1900-win-the-button",
-      "venueId": "v42",
-      "name": "Win the Button フリーロール",
-      "date": "2026-10-05",
-      "start": "19:00",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": 30000,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "フリーロール"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v42-2026-10-06-1900-ko-bounty": {
-      "id": "photo-v42-2026-10-06-1900-ko-bounty",
-      "venueId": "v42",
-      "name": "KO BOUNTY フリーロール",
-      "date": "2026-10-06",
-      "start": "19:00",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": 30000,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "フリーロール",
-        "バウンティ"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v42-2026-10-07-1900-plo": {
-      "id": "photo-v42-2026-10-07-1900-plo",
-      "venueId": "v42",
-      "name": "PLO フリーロール",
-      "date": "2026-10-07",
-      "start": "19:00",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": 30000,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "フリーロール",
-        "PLO"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v42-2026-10-08-1900-ko-bounty": {
-      "id": "photo-v42-2026-10-08-1900-ko-bounty",
-      "venueId": "v42",
-      "name": "KO BOUNTY フリーロール",
-      "date": "2026-10-08",
-      "start": "19:00",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": 30000,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "フリーロール",
-        "バウンティ"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v42-2026-10-09-1900-1-000pt-ko-bounty": {
-      "id": "photo-v42-2026-10-09-1900-1-000pt-ko-bounty",
-      "venueId": "v42",
-      "name": "1,000pt KO BOUNTY",
-      "date": "2026-10-09",
-      "start": "19:00",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": 30000,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "バウンティ"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v42-2026-10-10-1300-post": {
-      "id": "photo-v42-2026-10-10-1300-post",
-      "venueId": "v42",
-      "name": "プレミアリング王者決定戦",
-      "date": "2026-10-10",
-      "start": "13:00",
-      "buyin": null,
-      "addon": null,
+      "buyin": 3000,
+      "addon": 2000,
       "stack": null,
       "guarantee": null,
       "reentry": true,
       "prize": null,
       "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v42-2026-10-10-1800-saturday": {
-      "id": "photo-v42-2026-10-10-1800-saturday",
-      "venueId": "v42",
-      "name": "Saturdayトーナメント",
-      "date": "2026-10-10",
-      "start": "18:00",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": 150000,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v42-2026-10-11-1300-post": {
-      "id": "photo-v42-2026-10-11-1300-post",
-      "venueId": "v42",
-      "name": "プレミアリング王者決定戦",
-      "date": "2026-10-11",
-      "start": "13:00",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v42-2026-10-11-1700-sh1n-birthday": {
-      "id": "photo-v42-2026-10-11-1700-sh1n-birthday",
-      "venueId": "v42",
-      "name": "Sh1n様 Birthdayトーナメント",
-      "date": "2026-10-11",
-      "start": "17:00",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": 30000,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "特別開催"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v42-2026-10-12-1900-post": {
-      "id": "photo-v42-2026-10-12-1900-post",
-      "venueId": "v42",
-      "name": "プレミアリング王者決定戦",
-      "date": "2026-10-12",
-      "start": "19:00",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v42-2026-10-12-1900-win-the-button": {
-      "id": "photo-v42-2026-10-12-1900-win-the-button",
-      "venueId": "v42",
-      "name": "Win the Button フリーロール",
-      "date": "2026-10-12",
-      "start": "19:00",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": 30000,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "フリーロール"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v42-2026-10-13-1900-ko-bounty": {
-      "id": "photo-v42-2026-10-13-1900-ko-bounty",
-      "venueId": "v42",
-      "name": "KO BOUNTY フリーロール",
-      "date": "2026-10-13",
-      "start": "19:00",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": 30000,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "フリーロール",
-        "バウンティ"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v42-2026-10-14-1900-plo": {
-      "id": "photo-v42-2026-10-14-1900-plo",
-      "venueId": "v42",
-      "name": "PLO フリーロール",
-      "date": "2026-10-14",
-      "start": "19:00",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": 30000,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "フリーロール",
-        "PLO"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v42-2026-10-15-1900-ko-bounty": {
-      "id": "photo-v42-2026-10-15-1900-ko-bounty",
-      "venueId": "v42",
-      "name": "KO BOUNTY フリーロール",
-      "date": "2026-10-15",
-      "start": "19:00",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": 30000,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "フリーロール",
-        "バウンティ"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v42-2026-10-16-1900-1-000pt-ko-bounty": {
-      "id": "photo-v42-2026-10-16-1900-1-000pt-ko-bounty",
-      "venueId": "v42",
-      "name": "1,000pt KO BOUNTY",
-      "date": "2026-10-16",
-      "start": "19:00",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": 30000,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "バウンティ"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v42-2026-10-17-1300-post": {
-      "id": "photo-v42-2026-10-17-1300-post",
-      "venueId": "v42",
-      "name": "プレミアリング王者決定戦",
-      "date": "2026-10-17",
-      "start": "13:00",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v42-2026-10-17-1800-saturday": {
-      "id": "photo-v42-2026-10-17-1800-saturday",
-      "venueId": "v42",
-      "name": "Saturdayトーナメント",
-      "date": "2026-10-17",
-      "start": "18:00",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": 150000,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v42-2026-10-18-1300-post": {
-      "id": "photo-v42-2026-10-18-1300-post",
-      "venueId": "v42",
-      "name": "プレミアリング王者決定戦",
-      "date": "2026-10-18",
-      "start": "13:00",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "photo-v42-2026-10-18-1800-deep-stack": {
-      "id": "photo-v42-2026-10-18-1800-deep-stack",
-      "venueId": "v42",
-      "name": "Deep stack",
-      "date": "2026-10-18",
-      "start": "18:00",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": 30000,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
       "source": "semi",
       "verified": false
     }
