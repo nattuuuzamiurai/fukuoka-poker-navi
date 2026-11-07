@@ -180,22 +180,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M5VG1YN8V8PE2EVAFMZG4V22": {
-      "id": "wl-01M5VG1YN8V8PE2EVAFMZG4V22",
-      "venueId": "v3",
-      "name": "VS m NAYU",
-      "date": "2026-11-06",
-      "start": "17:30",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M5VG483S79C0004BYH5E8QC1": {
       "id": "wl-01M5VG483S79C0004BYH5E8QC1",
       "venueId": "v3",
@@ -225,24 +209,6 @@
       "reentry": true,
       "prize": null,
       "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M5VGVG5YFWX2RXZH01B9D7D0": {
-      "id": "wl-01M5VGVG5YFWX2RXZH01B9D7D0",
-      "venueId": "v3",
-      "name": "ｍ Hyper Deep Turbo",
-      "date": "2026-11-06",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": null,
-      "stack": 100000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
       "source": "auto",
       "verified": false
     },
@@ -1437,24 +1403,6 @@
       "venueId": "v27",
       "name": "ヘッズアップ〜DOJO破り〜",
       "date": "2026-11-08",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M6AMBVWA21FT0QC4RV9NH8Q0": {
-      "id": "wl-01M6AMBVWA21FT0QC4RV9NH8Q0",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-11-06",
       "start": "12:00",
       "buyin": 5000,
       "addon": null,
