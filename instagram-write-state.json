@@ -2,24 +2,6 @@
   "version": 1,
   "writtenBy": "tools/monitor-instagram-apify.js",
   "entries": {
-    "ig-v18-2026-11-07-nostart-iris": {
-      "id": "ig-v18-2026-11-07-nostart-iris",
-      "venueId": "v18",
-      "name": "IRIS周年",
-      "date": "2026-11-07",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "特別開催"
-      ],
-      "source": "semi",
-      "verified": false
-    },
     "ig-v18-2026-11-10-nostart-1k": {
       "id": "ig-v18-2026-11-10-nostart-1k",
       "venueId": "v18",
@@ -154,24 +136,6 @@
       "prize": null,
       "tags": [
         "特別開催"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v20-2026-11-07-nostart-deep-stack": {
-      "id": "ig-v20-2026-11-07-nostart-deep-stack",
-      "venueId": "v20",
-      "name": "DEEP STACK",
-      "date": "2026-11-07",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "ディープ"
       ],
       "source": "semi",
       "verified": false
@@ -385,24 +349,6 @@
       "prize": null,
       "tags": [
         "ディープ"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v35-2026-11-07-1815-tournament": {
-      "id": "ig-v35-2026-11-07-1815-tournament",
-      "venueId": "v35",
-      "name": "初心者無料TOURNAMENT",
-      "date": "2026-11-07",
-      "start": "18:15",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": "late",
-      "prize": null,
-      "tags": [
-        "フリーロール"
       ],
       "source": "semi",
       "verified": false
