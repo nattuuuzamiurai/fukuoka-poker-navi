@@ -34715,7 +34715,7 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
-    "id": "wl-01M5VJHY27D6M5Y7G0AEJH73PN",
+    "id": "wl-01M6T46RX5QJWM5Y7Q124M53PT",
     "venueId": "v3",
     "name": "m Monster Stack ✨NEW✨",
     "date": "2026-11-14",
@@ -34989,7 +34989,7 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
-    "id": "wl-01M5VJHY276VYEJA30RWCT7760",
+    "id": "wl-01M6T46RXHNVFPM0P5WHMZW533",
     "venueId": "v3",
     "name": "m Monster Stack ✨NEW✨",
     "date": "2026-11-21",
@@ -35281,7 +35281,7 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
-    "id": "wl-01M5VJHY2782PEFWP6KTQ3T8FF",
+    "id": "wl-01M6T46RXH1P64KEHH6QQBEYBB",
     "venueId": "v3",
     "name": "m Monster Stack ✨NEW✨",
     "date": "2026-11-28",
@@ -35555,7 +35555,7 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
-    "id": "wl-01M5VJHY2742BJ250BZN544AC4",
+    "id": "wl-01M6T46RXH47WXVVDWN3Y9JG77",
     "venueId": "v3",
     "name": "m Monster Stack ✨NEW✨",
     "date": "2026-12-05",
@@ -35605,6 +35605,22 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01M6T04PCXXBRSTNT72R01BT8F",
+    "venueId": "v3",
+    "name": "【4K飲み放題！】ｍ Booze up ✨NEW✨",
+    "date": "2026-12-09",
+    "start": "18:00",
+    "buyin": 4000,
+    "addon": 1500,
+    "stack": 40000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "wl-01M61FRBFAM801JE2SBFDQ96XX",
     "venueId": "v3",
     "name": "m LIVE LEAGUE season1",
@@ -35621,7 +35637,7 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
-    "id": "wl-01M639KFKQ6AKR596J10PDE7NG",
+    "id": "wl-01M6T46RXHAT5G8D14VB2V28RB",
     "venueId": "v3",
     "name": "m Monster Stack ✨NEW✨",
     "date": "2026-12-12",
@@ -35655,6 +35671,22 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01M6T054YGQDAWRP0XYF2DH8S4",
+    "venueId": "v3",
+    "name": "【4K飲み放題！】ｍ Booze up ✨NEW✨",
+    "date": "2026-12-16",
+    "start": "18:00",
+    "buyin": 4000,
+    "addon": 1500,
+    "stack": 40000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "wl-01M61FRBFAVNF8B9QEXGAKX7A6",
     "venueId": "v3",
     "name": "m LIVE LEAGUE season1",
@@ -35667,24 +35699,6 @@ const TOURNAMENTS = [
     "reentry": true,
     "prize": null,
     "tags": [],
-    "source": "auto",
-    "verified": false
-  },
-  {
-    "id": "wl-01M639KFMNHN9ZAKV28ABGZN4Z",
-    "venueId": "v3",
-    "name": "m Monster Stack ✨NEW✨",
-    "date": "2026-12-19",
-    "start": "13:10",
-    "buyin": 4000,
-    "addon": null,
-    "stack": 60000,
-    "guarantee": null,
-    "reentry": true,
-    "prize": null,
-    "tags": [
-      "ディープ"
-    ],
     "source": "auto",
     "verified": false
   },
@@ -35717,60 +35731,6 @@ const TOURNAMENTS = [
     "reentry": true,
     "prize": null,
     "tags": [],
-    "source": "auto",
-    "verified": false
-  },
-  {
-    "id": "wl-01M639KFMNQQZQZFDY65H5VZJE",
-    "venueId": "v3",
-    "name": "m Monster Stack ✨NEW✨",
-    "date": "2026-12-26",
-    "start": "13:10",
-    "buyin": 4000,
-    "addon": null,
-    "stack": 60000,
-    "guarantee": null,
-    "reentry": true,
-    "prize": null,
-    "tags": [
-      "ディープ"
-    ],
-    "source": "auto",
-    "verified": false
-  },
-  {
-    "id": "wl-01M639KFMNMXPZDE16ZX25KC3G",
-    "venueId": "v3",
-    "name": "m Monster Stack ✨NEW✨",
-    "date": "2027-01-02",
-    "start": "13:10",
-    "buyin": 4000,
-    "addon": null,
-    "stack": 60000,
-    "guarantee": null,
-    "reentry": true,
-    "prize": null,
-    "tags": [
-      "ディープ"
-    ],
-    "source": "auto",
-    "verified": false
-  },
-  {
-    "id": "wl-01M639KFMN1PWWMN5ZXHPVBYTZ",
-    "venueId": "v3",
-    "name": "m Monster Stack ✨NEW✨",
-    "date": "2027-01-09",
-    "start": "13:10",
-    "buyin": 4000,
-    "addon": null,
-    "stack": 60000,
-    "guarantee": null,
-    "reentry": true,
-    "prize": null,
-    "tags": [
-      "ディープ"
-    ],
     "source": "auto",
     "verified": false
   },

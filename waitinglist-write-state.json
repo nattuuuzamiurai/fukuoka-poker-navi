@@ -18,24 +18,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M4J8Y0DH782136RV8DF78EMA": {
-      "id": "wl-01M4J8Y0DH782136RV8DF78EMA",
-      "venueId": "v19",
-      "name": "3000 Deep Stack",
-      "date": "2026-11-07",
-      "start": "16:10",
-      "buyin": 3000,
-      "addon": 2000,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M4Q1AE7SD1K5MMG790B5ZPED": {
       "id": "wl-01M4Q1AE7SD1K5MMG790B5ZPED",
       "venueId": "v3",
@@ -212,24 +194,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M5VGX7J1G31RWC7GB8ZY3QK9": {
-      "id": "wl-01M5VGX7J1G31RWC7GB8ZY3QK9",
-      "venueId": "v3",
-      "name": "m DICE Poker Turbo",
-      "date": "2026-11-07",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": 1000,
-      "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M5VGXZPETPTZEGPW9RCQ63CG": {
       "id": "wl-01M5VGXZPETPTZEGPW9RCQ63CG",
       "venueId": "v3",
@@ -245,22 +209,6 @@
       "tags": [
         "ターボ"
       ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M5VH03F76PSHDAR5VACAG03V": {
-      "id": "wl-01M5VH03F76PSHDAR5VACAG03V",
-      "venueId": "v3",
-      "name": "m VAULT",
-      "date": "2026-11-07",
-      "start": "17:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
       "source": "auto",
       "verified": false
     },
@@ -380,96 +328,6 @@
       "prize": null,
       "tags": [
         "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M5VJHY1EXVZ27XYPY2GSE5C9": {
-      "id": "wl-01M5VJHY1EXVZ27XYPY2GSE5C9",
-      "venueId": "v3",
-      "name": "m Monster Stack ✨NEW✨",
-      "date": "2026-11-07",
-      "start": "13:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 60000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M5VJHY2742BJ250BZN544AC4": {
-      "id": "wl-01M5VJHY2742BJ250BZN544AC4",
-      "venueId": "v3",
-      "name": "m Monster Stack ✨NEW✨",
-      "date": "2026-12-05",
-      "start": "13:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 60000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M5VJHY276VYEJA30RWCT7760": {
-      "id": "wl-01M5VJHY276VYEJA30RWCT7760",
-      "venueId": "v3",
-      "name": "m Monster Stack ✨NEW✨",
-      "date": "2026-11-21",
-      "start": "13:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 60000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M5VJHY2782PEFWP6KTQ3T8FF": {
-      "id": "wl-01M5VJHY2782PEFWP6KTQ3T8FF",
-      "venueId": "v3",
-      "name": "m Monster Stack ✨NEW✨",
-      "date": "2026-11-28",
-      "start": "13:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 60000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M5VJHY27D6M5Y7G0AEJH73PN": {
-      "id": "wl-01M5VJHY27D6M5Y7G0AEJH73PN",
-      "venueId": "v3",
-      "name": "m Monster Stack ✨NEW✨",
-      "date": "2026-11-14",
-      "start": "13:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 60000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ディープ"
       ],
       "source": "auto",
       "verified": false
@@ -1274,96 +1132,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M639KFKQ6AKR596J10PDE7NG": {
-      "id": "wl-01M639KFKQ6AKR596J10PDE7NG",
-      "venueId": "v3",
-      "name": "m Monster Stack ✨NEW✨",
-      "date": "2026-12-12",
-      "start": "13:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 60000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M639KFMN1PWWMN5ZXHPVBYTZ": {
-      "id": "wl-01M639KFMN1PWWMN5ZXHPVBYTZ",
-      "venueId": "v3",
-      "name": "m Monster Stack ✨NEW✨",
-      "date": "2027-01-09",
-      "start": "13:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 60000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M639KFMNHN9ZAKV28ABGZN4Z": {
-      "id": "wl-01M639KFMNHN9ZAKV28ABGZN4Z",
-      "venueId": "v3",
-      "name": "m Monster Stack ✨NEW✨",
-      "date": "2026-12-19",
-      "start": "13:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 60000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M639KFMNMXPZDE16ZX25KC3G": {
-      "id": "wl-01M639KFMNMXPZDE16ZX25KC3G",
-      "venueId": "v3",
-      "name": "m Monster Stack ✨NEW✨",
-      "date": "2027-01-02",
-      "start": "13:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 60000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M639KFMNQQZQZFDY65H5VZJE": {
-      "id": "wl-01M639KFMNQQZQZFDY65H5VZJE",
-      "venueId": "v3",
-      "name": "m Monster Stack ✨NEW✨",
-      "date": "2026-12-26",
-      "start": "13:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 60000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M639Q77MVB9ASA471EJ4MVGM": {
       "id": "wl-01M639Q77MVB9ASA471EJ4MVGM",
       "venueId": "v3",
@@ -1776,24 +1544,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M6AMBVWAV1B0GVCFFZ045YGZ": {
-      "id": "wl-01M6AMBVWAV1B0GVCFFZ045YGZ",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-11-07",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M6AMBVWAWYFHSH5Q5PH55YSA": {
       "id": "wl-01M6AMBVWAWYFHSH5Q5PH55YSA",
       "venueId": "v27",
@@ -2106,24 +1856,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M6ASMRBF71V7WVSAHAJV6TM7": {
-      "id": "wl-01M6ASMRBF71V7WVSAHAJV6TM7",
-      "venueId": "v27",
-      "name": "DOJO LEAGUE 第11節 ダブルリエントリーターボ",
-      "date": "2026-11-07",
-      "start": "14:00",
-      "buyin": 3000,
-      "addon": null,
-      "stack": 30000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M6ASPPMPP27BTYVVD76KP7MM": {
       "id": "wl-01M6ASPPMPP27BTYVVD76KP7MM",
       "venueId": "v27",
@@ -2264,6 +1996,128 @@
       "prize": null,
       "tags": [
         "ターボ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M6T04PCXXBRSTNT72R01BT8F": {
+      "id": "wl-01M6T04PCXXBRSTNT72R01BT8F",
+      "venueId": "v3",
+      "name": "【4K飲み放題！】ｍ Booze up ✨NEW✨",
+      "date": "2026-12-09",
+      "start": "18:00",
+      "buyin": 4000,
+      "addon": 1500,
+      "stack": 40000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M6T054YGQDAWRP0XYF2DH8S4": {
+      "id": "wl-01M6T054YGQDAWRP0XYF2DH8S4",
+      "venueId": "v3",
+      "name": "【4K飲み放題！】ｍ Booze up ✨NEW✨",
+      "date": "2026-12-16",
+      "start": "18:00",
+      "buyin": 4000,
+      "addon": 1500,
+      "stack": 40000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M6T46RX5QJWM5Y7Q124M53PT": {
+      "id": "wl-01M6T46RX5QJWM5Y7Q124M53PT",
+      "venueId": "v3",
+      "name": "m Monster Stack ✨NEW✨",
+      "date": "2026-11-14",
+      "start": "13:10",
+      "buyin": 4000,
+      "addon": null,
+      "stack": 60000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ディープ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M6T46RXH1P64KEHH6QQBEYBB": {
+      "id": "wl-01M6T46RXH1P64KEHH6QQBEYBB",
+      "venueId": "v3",
+      "name": "m Monster Stack ✨NEW✨",
+      "date": "2026-11-28",
+      "start": "13:10",
+      "buyin": 4000,
+      "addon": null,
+      "stack": 60000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ディープ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M6T46RXH47WXVVDWN3Y9JG77": {
+      "id": "wl-01M6T46RXH47WXVVDWN3Y9JG77",
+      "venueId": "v3",
+      "name": "m Monster Stack ✨NEW✨",
+      "date": "2026-12-05",
+      "start": "13:10",
+      "buyin": 4000,
+      "addon": null,
+      "stack": 60000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ディープ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M6T46RXHAT5G8D14VB2V28RB": {
+      "id": "wl-01M6T46RXHAT5G8D14VB2V28RB",
+      "venueId": "v3",
+      "name": "m Monster Stack ✨NEW✨",
+      "date": "2026-12-12",
+      "start": "13:10",
+      "buyin": 4000,
+      "addon": null,
+      "stack": 60000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ディープ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M6T46RXHNVFPM0P5WHMZW533": {
+      "id": "wl-01M6T46RXHNVFPM0P5WHMZW533",
+      "venueId": "v3",
+      "name": "m Monster Stack ✨NEW✨",
+      "date": "2026-11-21",
+      "start": "13:10",
+      "buyin": 4000,
+      "addon": null,
+      "stack": 60000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ディープ"
       ],
       "source": "auto",
       "verified": false
