@@ -102,6 +102,10 @@ const BIG_EVENTS = [
   },
   {
     id: 'fst',
+    // FSTシリーズ(同じFSTチケットで参加できる大会群)の目印。店舗/エリアページの「現在FSTサテライト
+    // 開催中」告知は、series:'fst' のうち会期が終わっていない最も早い大会を対象にする(currentFstEvent())。
+    series: 'fst',
+    shortLabel: 'FST 5.0',
     // ナンバリング「5.0」は主催者公式X(@fst_202408)の2026-07-21の告知で確認済み。
     //   https://x.com/fst_202408/status/2079519350244225267
     //     「【FST5.0ディーラー大募集】…【大会概要】📍ホテルニューオータニ博多 🗓️2026年9月19日-9月23日」
@@ -201,6 +205,47 @@ const BIG_EVENTS = [
     // サテライト開催店舗の情報は2026-09-08時点で無いため satelliteVenueIds は設けない
     // (申し送り事項5)。data.jsにSPADIE関連のサテライト大会が登録されたら、FST/JOPTと同じ
     // ワンライナー(正規表現をSPADIEに読み替え)で機械走査して追加すること。
+  },
+  {
+    id: 'fstkq',
+    // ---- FST in KITAKYUSHU 2027(2026-11-09追加) ----
+    // 会期: 2027-01-22(金)〜01-24(日)。主催者公式X(@fst_202408)の表示名が
+    //   「FUKUOKA SUPER TOURNAMENT 1/22-24」になっている(2026-11-09 検索結果で確認。
+    //   https://x.com/fst_202408 。当環境からX本体は取得できないため本文は未読)。
+    // 大会名「FST in KITAKYUSHU」・会場(アートホテル小倉 ニュータガワ)・
+    //   「店舗サテライトは2026年10月12日から順次開始」「獲得したFSTチケットは北九州大会と
+    //   2027年3月のFST6.0で共通」は、公式Xの告知(https://x.com/fst_202408/status/2109222601646354842)を
+    //   引用した二次情報で確認した:
+    //     https://light-three.com/pokerevent-3-month/ ・ https://light-three.com/pokerevent/
+    //   ★公式投稿の本文は当環境から直接読めていない。ページ側は「主催者告知を紹介する媒体による」
+    //     と明記してある。公式の告知画像を確認できたら、このコメントを一次情報の確認に更新すること。
+    // 会場住所(福岡県北九州市小倉北区古船場町3-46)はじゃらんのホテル情報(https://www.jalan.net/yad344686)、
+    //   アクセス(JR小倉駅 徒歩約8分)はJNTO会場情報(https://mice.jnto.go.jp/organizer-support/search/venue-detail/1107.html)。
+    // メインイベントの参加費・プライズ・スケジュールは未発表(2026-11-09時点)。
+    series: 'fst',
+    shortLabel: 'FST in KITAKYUSHU',
+    label: 'FST in KITAKYUSHU 2027',
+    days: ['2027-01-22', '2027-01-23', '2027-01-24'],
+    featureUrl: '/events/fst-kitakyushu-2027/',
+    // SPADIEと同じく、トップ内の専用ページ(#hash)は持たず静的ページへ直接リンクする。
+    href: '/events/fst-kitakyushu-2027/',
+    banner: 'img/fst-kitakyushu/fst-kitakyushu-banner.svg',
+    bannerAlt: 'FST in KITAKYUSHU FUKUOKA SUPER TOURNAMENT 1.22-1.24 アートホテル小倉ニュータガワ',
+    bannerDesc: '北九州・小倉／3日間開催',
+    // この日より前のサテライト記録はFST 5.0向けとして数えない(venueHasCurrentFstSatellite の since)。
+    satelliteFrom: '2026-10-12',
+    // 同シリーズのため配色クラスはFST 5.0と共用(バナー画像側でアクセント色を変えてある)。
+    bannerClass: 'ev-fst',
+    // ---- サテライト開催店舗(2026-11-09集計) ----
+    // FST 5.0 と同じワンライナー(上の fst エントリのコメント)を、2026-10-12(店舗サテライト開始日)
+    // 以降の TOURNAMENTS に絞って実行した結果。店舗DAY1(本戦フライト)は含めない。
+    //   node -e "const D=require('./data.js');const sat=/サテライト|satellite/i,fst=/FST/i;
+    //     const hit=t=>(sat.test(t.name||'')||(t.tags||[]).some(x=>sat.test(x)))&&
+    //       (fst.test(t.name||'')||(t.tags||[]).some(x=>fst.test(x)))&&!(t.tags||[]).includes('店舗DAY1');
+    //     console.log([...new Set(D.TOURNAMENTS.filter(t=>hit(t)&&t.date>='2026-10-12').map(t=>t.venueId))].sort())"
+    // 月次で data.js を更新したら再集計すること(大会ページの「今後のサテライト日程」表は
+    // 閲覧時に data.js から自動で作り直すので、こちらの手当ては不要)。
+    satelliteVenueIds: ['v2', 'v19', 'v20', 'v21', 'v26', 'v34', 'v40']
   }
 ];
 
@@ -379,6 +424,15 @@ function bigEventListForIndex(today, maxArchived) {
   return keptEnded.concat(live).map(e => ({ event: e, archived: isEventArchived(e.days, t) }));
 }
 
+// FSTシリーズ(series:'fst')のうち、会期が終わっていない最も早い大会。無ければ null。
+// 店舗/エリアページの「現在FSTサテライト開催中」告知がどの大会を案内するかの決定はここに一本化する
+// (FST 5.0 終了後に告知が消えたまま次の大会へ切り替わらなかったため・2026-11-09)。
+function currentFstEvent(today, events) {
+  const t = today || localTodayGlobal();
+  return (events || BIG_EVENTS)
+    .filter(e => e.series === 'fst' && eventLastDay(e.days) && !isEventArchived(e.days, t))
+    .sort((a, b) => eventFirstDay(a.days).localeCompare(eventFirstDay(b.days)))[0] || null;
+}
 function bigEventById(id) {
   return BIG_EVENTS.find(e => e.id === id) || null;
 }
@@ -466,7 +520,7 @@ if (typeof module !== 'undefined') {
     SHOW_CUTOFF_HOUR, showCutoffInstant, isBeforeShowCutoff, resolveNowAndToday,
     isEventArchived, isEventOngoing,
     bigEventWindows, visibleBigEvents, footerBigEvent,
-    bigEventListForIndex, bigEventById, bigEventDays,
+    bigEventListForIndex, bigEventById, bigEventDays, currentFstEvent,
     escHtmlBanner, bannerImgSrc, bigEventBannerHtml
   };
 }

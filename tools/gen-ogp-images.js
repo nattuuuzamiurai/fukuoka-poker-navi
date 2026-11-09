@@ -41,6 +41,7 @@
  *   - img/fst/fst-og.jpg
  *   - img/nippon-series/nippon-series-og.jpg
  *   - img/spadie/spadie-og.jpg           … 2026-09-08追加(SPADIE FUKUOKA 1st)
+ *   - img/fst-kitakyushu/fst-kitakyushu-og.jpg … 2026-11-09追加(FST in KITAKYUSHU 2027)
  *
  * 使い方:
  *   node tools/gen-ogp-images.js <リポジトリのパス>
@@ -262,6 +263,17 @@ function buildSpadie() {
   });
 }
 
+// ---- 7. FST in KITAKYUSHU 2027ページ用OGP(2026-11-09追加) ----
+function buildFstKitakyushu() {
+  return buildEventOgp({
+    bgFrom: '#070c22', bgTo: '#1a2455',
+    imageDataUri: dataUri('img/fst-kitakyushu/fst-kitakyushu-banner.svg'), imageAlt: 'FST in KITAKYUSHU',
+    title1: 'FST in KITAKYUSHU 2027',
+    lines: ['2027.1.22 - 1.24　アートホテル小倉 ニュータガワ'],
+    badge: '開催概要とFSTサテライト日程'
+  });
+}
+
 // ---- 書き出し ----
 const TARGETS = [
   { rel: 'img/ogp/common-og.jpg', html: buildCommon() },
@@ -269,8 +281,12 @@ const TARGETS = [
   { rel: 'img/jopt/jopt-og.jpg', html: buildJopt() },
   { rel: 'img/nippon-series/nippon-series-og.jpg', html: buildNippon() },
   { rel: 'img/fst/fst-og.jpg', html: buildFst() },
-  { rel: 'img/spadie/spadie-og.jpg', html: buildSpadie() }
+  { rel: 'img/spadie/spadie-og.jpg', html: buildSpadie() },
+  { rel: 'img/fst-kitakyushu/fst-kitakyushu-og.jpg', html: buildFstKitakyushu() }
 ];
+// `--only=<rel>` で1枚だけ作り直せる(既存画像を実行環境のフォント差で書き換えないため・2026-11-09)。
+const ONLY = (process.argv.find(a => a.startsWith('--only=')) || '').slice(7);
+if (ONLY) TARGETS.splice(0, TARGETS.length, ...TARGETS.filter(t => t.rel === ONLY));
 
 (async () => {
   const browser = await chromium.launch();

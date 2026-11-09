@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  FST in KITAKYUSHU 2027 バナー
+  当サイト(ふくおかポーカーナビ)が作成したバナーです。公式素材ではありません。
+  ロゴ・大会名等の権利は主催者(FUKUOKA SUPER TOURNAMENT)に帰属します。
+  会期(2027年1月22日〜24日)・会場(アートホテル小倉 ニュータガワ)の出典は
+  big-events.js の fstkq エントリのコメントを参照。
+  公式のバナー画像が入手できたら、このファイルを差し替えるか
+  big-events.js の fstkq エントリの banner を新しいパスに変更してください(参照はそこ1箇所)。
+  寸法は既存の大型イベントバナーに合わせています(1024x412)。配色は同シリーズのFST 5.0(img/fst/)を
+  踏襲しつつ、アクセントを金色にして別大会と見分けられるようにしてあります。
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 412" width="1024" height="412"
+     role="img" aria-label="FST in KITAKYUSHU FUKUOKA SUPER TOURNAMENT 2027年1月22日から24日 アートホテル小倉ニュータガワ">
+  <defs>
+    <linearGradient id="fkBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#05081c"/>
+      <stop offset="0.52" stop-color="#131c48"/>
+      <stop offset="1" stop-color="#05081c"/>
+    </linearGradient>
+    <radialGradient id="fkGlowA" cx="0.86" cy="0.12" r="0.75">
+      <stop offset="0" stop-color="#f2b33d" stop-opacity="0.36"/>
+      <stop offset="1" stop-color="#f2b33d" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="fkGlowB" cx="0.08" cy="0.95" r="0.8">
+      <stop offset="0" stop-color="#e0304a" stop-opacity="0.30"/>
+      <stop offset="1" stop-color="#e0304a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="fkPill" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#d98e1c"/>
+      <stop offset="1" stop-color="#f6c75a"/>
+    </linearGradient>
+    <linearGradient id="fkEdge" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f6c75a"/>
+      <stop offset="1" stop-color="#d98e1c"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="412" fill="url(#fkBg)"/>
+  <rect width="1024" height="412" fill="url(#fkGlowA)"/>
+  <rect width="1024" height="412" fill="url(#fkGlowB)"/>
+  <!-- 左: エンブレム -->
+  <g>
+    <path d="M168 84 L262 180 L168 276 L74 180 Z" fill="none" stroke="url(#fkEdge)" stroke-width="4"/>
+    <path d="M168 106 L242 180 L168 254 L94 180 Z" fill="#ffffff" fill-opacity="0.05"/>
+    <text x="168" y="202" text-anchor="middle" font-family="'Hiragino Sans','Yu Gothic UI','Noto Sans CJK JP',system-ui,sans-serif"
+          font-size="58" font-weight="800" letter-spacing="4" fill="#ffffff">FST</text>
+    <text x="168" y="308" text-anchor="middle" font-family="'Hiragino Sans','Yu Gothic UI','Noto Sans CJK JP',system-ui,sans-serif"
+          font-size="16" font-weight="700" letter-spacing="3.4" fill="#f6c75a">FUKUOKA SUPER</text>
+    <text x="168" y="330" text-anchor="middle" font-family="'Hiragino Sans','Yu Gothic UI','Noto Sans CJK JP',system-ui,sans-serif"
+          font-size="16" font-weight="700" letter-spacing="3.4" fill="#f6c75a">TOURNAMENT</text>
+    <rect x="74" y="348" width="188" height="36" rx="18" fill="url(#fkPill)"/>
+    <text x="168" y="373" text-anchor="middle" font-family="'Hiragino Sans','Yu Gothic UI','Noto Sans CJK JP',system-ui,sans-serif"
+          font-size="20" font-weight="800" letter-spacing="1.5" fill="#1a1204">KITAKYUSHU</text>
+  </g>
+  <!-- 右: 大会名・会期・会場 -->
+  <g>
+    <text x="306" y="122" font-family="'Hiragino Sans','Yu Gothic UI','Noto Sans CJK JP',system-ui,sans-serif"
+          font-size="26" font-weight="800" letter-spacing="3.6" fill="#f6c75a">FST in KITAKYUSHU 2027</text>
+    <text x="306" y="228" font-family="'Hiragino Sans','Yu Gothic UI','Noto Sans CJK JP',system-ui,sans-serif"
+          font-size="94" font-weight="800" letter-spacing="1" fill="#ffffff">1.22</text>
+    <rect x="574" y="196" width="46" height="9" fill="#f6c75a"/>
+    <text x="646" y="228" font-family="'Hiragino Sans','Yu Gothic UI','Noto Sans CJK JP',system-ui,sans-serif"
+          font-size="94" font-weight="800" letter-spacing="1" fill="#ffffff">1.24</text>
+    <text x="306" y="276" font-family="'Hiragino Sans','Yu Gothic UI','Noto Sans CJK JP',system-ui,sans-serif"
+          font-size="26" font-weight="700" fill="#c6cff2">北九州・小倉　／　アートホテル小倉 ニュータガワ</text>
+    <rect x="306" y="298" width="432" height="46" rx="23" fill="url(#fkPill)"/>
+    <text x="522" y="329" text-anchor="middle" font-family="'Hiragino Sans','Yu Gothic UI','Noto Sans CJK JP',system-ui,sans-serif"
+          font-size="24" font-weight="800" letter-spacing="1" fill="#1a1204">店舗サテライトでチケット獲得</text>
+  </g>
+</svg>

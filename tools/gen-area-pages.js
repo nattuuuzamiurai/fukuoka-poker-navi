@@ -74,7 +74,9 @@ const FOOTER_AREA_LINKS = footerAreaLinksHtml(VENUES, AREAS);
 // サイト全体のバナー。全エリアページで内容は共通なので1回だけ組み立てる。
 const SITE_BANNER_SECTION = siteBannerSection(SITE_BANNER);
 // FST 5.0 サテライトを現在開催中の店舗があるかの判定に使うレジストリ。
-const FST_REG = BIG.bigEventById('fst');
+// 2026-11-09: 固定の 'fst'(FST 5.0)ではなく、FSTシリーズのうち会期が終わっていない最も早い大会を対象にする
+// (big-events.js の currentFstEvent()。FST 5.0 終了後も次のFSTのサテライト告知が出るように)。
+const FST_REG = BIG.currentFstEvent();
 // FST 5.0の会期最終日を過ぎたら、サテライトの「現在開催中」主張を止める(isEventArchivedで判定)。
 // 会期中かどうかは data.js の実データとは無関係(FST自体の既知の固定日程)なので、
 // 他の「今日に依存しない」生成ロジックとは別枠として扱ってよい。
@@ -334,8 +336,8 @@ ${others.map(a => `  <li><a href="/areas/${AREA_SLUGS[a]}/">${esc(a)}（${areaVe
   // 判定関数。2026-08-28に venue-schedule.js へ移設して共有)をエリア内の各店舗に対して都度行う。
   // 【FST専用】終了済み大会(WJPT/JOPT)は「現在開催中」という現在形の告知にはしない
   // (big-events.js の pastSatelliteVenueIds を使った店舗ページ側の過去形表示で別途対応)。
-  const fstAreaBlock = (fstSatelliteWindowOpen && venues.some(v => venueHasCurrentFstSatellite(TOURNAMENTS, RECURRING, v.id))) ? `
-<div class="vp-fst"><b>${esc(area)}エリアで現在FST 5.0のサテライトが開催されています。</b>FSTチケット（獲得すると本大会にエントリーできます）を賭けたトーナメントを開催している店舗があります。詳細は<a href="${esc(FST_REG.featureUrl)}">FST 5.0 大会ページ</a>をご確認ください。</div>` : '';
+  const fstAreaBlock = (fstSatelliteWindowOpen && venues.some(v => venueHasCurrentFstSatellite(TOURNAMENTS, RECURRING, v.id, FST_REG && FST_REG.satelliteFrom))) ? `
+<div class="vp-fst"><b>${esc(area)}エリアで現在${esc(FST_REG.shortLabel)}のサテライトが開催されています。</b>FSTチケット（獲得すると本大会にエントリーできます）を賭けたトーナメントを開催している店舗があります。詳細は<a href="${esc(FST_REG.featureUrl)}">${esc(FST_REG.shortLabel)} 大会ページ</a>をご確認ください。</div>` : '';
 
   // 日程表の見出しと但し書き。静的HTMLは再生成しない限り残るので、時間が経っても嘘にならない文にする
   // (gen-venue-pages.js の同じ箇所の原則にそろえてある)。

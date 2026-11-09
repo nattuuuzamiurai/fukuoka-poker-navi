@@ -368,7 +368,9 @@ function venuePricingHtml(v) {
 // (2026-08-28。エリアページ(gen-area-pages.js)にも同じ判定基準が必要になったため。
 // 判定基準そのものは変えていない。呼び出し方は venueHasCurrentFstSatellite(TOURNAMENTS,
 // RECURRING, venueId) の3引数になった)。
-const FST_REG = BIG.bigEventById('fst');
+// 2026-11-09: 固定の 'fst'(FST 5.0)ではなく、FSTシリーズのうち会期が終わっていない最も早い大会を対象にする
+// (big-events.js の currentFstEvent()。FST 5.0 終了後も次のFSTのサテライト告知が出るように)。
+const FST_REG = BIG.currentFstEvent();
 // FST 5.0の会期最終日を過ぎたら、サテライトの「現在開催中」主張を止める(isEventArchivedで判定)。
 const fstSatelliteWindowOpen = !!(FST_REG && !BIG.isEventArchived(FST_REG.days));
 
@@ -402,7 +404,7 @@ function shortStation(access) {
 // 店ごとの差別化バッジを1つだけ選ぶ。優先順位: サテライト開催中 > リング開催 > 最寄駅。
 // 該当材料が何も無い店では null を返し、呼び出し側は従来通りの文面にフォールバックする。
 function venueBadge(v) {
-  if (fstSatelliteWindowOpen && venueHasCurrentFstSatellite(TOURNAMENTS, RECURRING, v.id)) return { kind: 'fst', label: 'FSTサテライト開催中' };
+  if (fstSatelliteWindowOpen && venueHasCurrentFstSatellite(TOURNAMENTS, RECURRING, v.id, FST_REG && FST_REG.satelliteFrom)) return { kind: 'fst', label: 'FSTサテライト開催中' };
   if (v.ring === true) return { kind: 'ring', label: 'リングあり' };
   const station = shortStation(v.access);
   if (station) return { kind: 'station', label: station };
@@ -487,7 +489,7 @@ function buildVenue(v) {
   const descName = parenParts.length ? `${v.name}（${parenParts.join('／')}）` : v.name;
   // description冒頭に出す差別化の一文(サテライト開催中／リング開催のときだけ)。
   // stationバッジはdescNameのアクセス表記で既に分かるため、ここでは繰り返さない。
-  const descLead = badge && badge.kind === 'fst' ? 'FST 5.0のサテライト（チケット獲得トーナメント）を開催中の店舗です。'
+  const descLead = badge && badge.kind === 'fst' ? `${FST_REG.shortLabel}のサテライト（チケット獲得トーナメント）を開催中の店舗です。`
     : badge && badge.kind === 'ring' ? 'リングゲームも開催している店舗です。'
     : '';
   // altNames(店舗が自身のSNS等で使っている別表記)を .vp-sub 末尾に控えめに1回だけ添える
@@ -573,8 +575,8 @@ ${sameAreaShown.map(x => `  <a class="vp-card" href="/venues/${x.slug}/">
 
   // FST 5.0 サテライトを現在開催中の店舗への告知。判定は venueHasCurrentFstSatellite が
   // data.js の実データから都度行う(店舗一覧を手で足し引きしない)。大会ページが無ければ出さない。
-  const fstSatBlock = (fstSatelliteWindowOpen && venueHasCurrentFstSatellite(TOURNAMENTS, RECURRING, v.id)) ? `
-<div class="vp-fst"><b>現在FST 5.0のサテライトを開催中です。</b>FSTチケット（獲得すると本大会にエントリーできます）を賭けたトーナメントを開催しています。詳細は<a href="${esc(FST_REG.featureUrl)}">FST 5.0 大会ページ</a>をご確認ください。</div>` : '';
+  const fstSatBlock = (fstSatelliteWindowOpen && venueHasCurrentFstSatellite(TOURNAMENTS, RECURRING, v.id, FST_REG && FST_REG.satelliteFrom)) ? `
+<div class="vp-fst"><b>現在${esc(FST_REG.shortLabel)}のサテライトを開催中です。</b>FSTチケット（獲得すると本大会にエントリーできます）を賭けたトーナメントを開催しています。詳細は<a href="${esc(FST_REG.featureUrl)}">${esc(FST_REG.shortLabel)} 大会ページ</a>をご確認ください。</div>` : '';
 
   // 終了済み大会(WJPT/JOPT)のサテライト開催実績の告知(2026-08-28追加)。
   // FSTと違って会期が終わっているので「現在開催中」ではなく過去形。判定は big-events.js の

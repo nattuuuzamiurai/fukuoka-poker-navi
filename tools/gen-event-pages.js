@@ -874,6 +874,180 @@ ${faq.script}`;
   return pageHead({ title, desc, canonical, jsonld, image, extraCss: FAQ_CSS + ADCARD_CSS + BANNER_CSS, breadcrumb: pageBreadcrumb('spadie', canonical) }) + body + pageFoot('/events/spadie-fukuoka-1st/');
 }
 
+// ---- FST in KITAKYUSHU 2027 ページ(2026-11-09追加) ----
+// メインイベントの詳細は未発表のため、SPADIEページと同じく「判明している事実＋未発表の整理」の形。
+// このページの主目的は【店舗サテライトへの送客】: FSTチケットを獲得できる県内店舗の日程を一覧にし、
+// 各店舗ページへリンクする。出典は big-events.js の fstkq エントリのコメントを参照。
+const FSTKQ_X = 'https://x.com/fst_202408';
+const FSTKQ_AS_OF = '2026年11月9日';
+// 店舗サテライトの開始日(主催者告知を紹介する媒体による)。これより前の行はFST 5.0向けなので含めない。
+const FSTKQ_SAT_FROM = '2026-10-12';
+const { isFstSatelliteEntry } = require('./venue-schedule.js');
+const FST_TICKET_RE = /FST\s*(チケット|TICKET)/i;
+// 「FSTチケットを獲得できるトーナメント」の判定。ブラウザ側(下の描き直しスクリプト)にも同じ規則を
+// 文字列で埋め込むので、規則を変えるときは fstkqKindJs も合わせて直すこと。
+function fstkqKind(t) {
+  if ((t.tags || []).includes('店舗DAY1')) return null;
+  if (isFstSatelliteEntry(t)) return 'サテライト';
+  if (FST_TICKET_RE.test(t.name || '') || FST_TICKET_RE.test(t.prize || '')) return '賞品にFSTチケット';
+  return null;
+}
+const fstkqKindJs = `function(t){var tg=t.tags||[];if(tg.indexOf('店舗DAY1')>=0)return null;
+var sat=/サテライト|satellite/i,fst=/FST/i,tk=/FST\\s*(チケット|TICKET)/i,any=function(re){return re.test(t.name||'')||tg.some(function(x){return re.test(x);});};
+if(any(sat)&&any(fst))return 'サテライト';if(tk.test(t.name||'')||tk.test(t.prize||''))return '賞品にFSTチケット';return null;}`;
+function fstkqRows(from, until) {
+  return DATA.TOURNAMENTS
+    .filter(t => t.date >= from && t.date <= until && fstkqKind(t))
+    .sort((a, b) => (a.date + (a.start || '')).localeCompare(b.date + (b.start || '')));
+}
+function fstkqTableHtml(rows) {
+  const vmap = Object.fromEntries(DATA.VENUES.map(v => [v.id, v]));
+  const wd = ['日', '月', '火', '水', '木', '金', '土'];
+  if (!rows.length) return '<p class="lead">現在、掲載中のサテライト日程はありません。各店舗の公式情報・SNSをご確認ください。</p>';
+  return `<div class="sched-wrap"><table class="sched">
+  <thead><tr><th>日時</th><th>店舗</th><th>トーナメント</th></tr></thead>
+  <tbody>
+${rows.map(t => {
+    const v = vmap[t.venueId] || { name: '', slug: '' };
+    const [y, m, d] = t.date.split('-').map(Number);
+    const w = wd[new Date(y, m - 1, d).getDay()];
+    const fee = t.buyin == null ? '店舗SNSで確認' : t.buyin === 0 ? '無料' : '¥' + Number(t.buyin).toLocaleString('ja-JP');
+    return `    <tr><td class="no">${m}/${d}（${w}）<br>${esc(t.start || '時刻未定')}</td><td><a href="/venues/${esc(v.slug)}/">${esc(v.name)}</a></td><td>${esc(t.name)}<br><small>参加費: ${esc(fee)}${fstkqKind(t) === '賞品にFSTチケット' ? '／賞品にFSTチケット' : ''}</small></td></tr>`;
+  }).join('\n')}
+  </tbody>
+</table></div>`;
+}
+function fstkqFaqItems() {
+  const xLink = `<a href="${esc(FSTKQ_X)}" target="_blank" rel="noopener">公式X（@fst_202408）</a>`;
+  return [
+    {
+      q: 'FST in KITAKYUSHUはいつ・どこで開催されますか？',
+      aHtml: '2027年1月22日（金）〜24日（日）の3日間、北九州・小倉のアートホテル小倉 ニュータガワ（福岡県北九州市小倉北区古船場町3-46）で開催されると案内されています。',
+      aText: '2027年1月22日(金)〜24日(日)の3日間、北九州・小倉のアートホテル小倉 ニュータガワ(福岡県北九州市小倉北区古船場町3-46)で開催されると案内されています。'
+    },
+    {
+      q: 'FSTチケットはどうやって手に入れますか？',
+      aHtml: '県内のアミューズメントポーカー店で開催されるサテライト（チケット獲得トーナメント）で獲得できます。当サイトに掲載中のサテライト日程は本ページの「今後のFSTサテライト日程」にまとめています。必要枚数・参加費は店舗ごとに異なるため、各店舗の告知をご確認ください。',
+      aText: '県内のアミューズメントポーカー店で開催されるサテライト(チケット獲得トーナメント)で獲得できます。必要枚数・参加費は店舗ごとに異なるため、各店舗の告知をご確認ください。'
+    },
+    {
+      q: '獲得したチケットはFST6.0でも使えますか？',
+      aHtml: `主催者の告知を紹介する媒体によると、FSTチケットは北九州大会と2027年3月のFST6.0（ホテルニューオータニ博多）で共通して使えると案内されています。条件の詳細は${xLink}でご確認ください。`,
+      aText: '主催者の告知を紹介する媒体によると、FSTチケットは北九州大会と2027年3月のFST6.0(ホテルニューオータニ博多)で共通して使えると案内されています。条件の詳細は公式Xでご確認ください。'
+    },
+    {
+      q: 'メインイベントの参加費やプライズは？',
+      aHtml: `${FSTKQ_AS_OF}時点では未発表です。発表され次第、本ページを更新します。最新情報は${xLink}でご確認ください。`,
+      aText: `${FSTKQ_AS_OF}時点では未発表です。最新情報は公式Xでご確認ください。`
+    }
+  ];
+}
+function buildFstKitakyushu() {
+  const canonical = `${SITE}/events/fst-kitakyushu-2027/`;
+  const image = 'img/fst-kitakyushu/fst-kitakyushu-og.jpg';
+  const reg = BIG.bigEventById('fstkq');
+  const first = BIG.eventFirstDay(reg.days), last = BIG.eventLastDay(reg.days);
+  const rows = fstkqRows(FSTKQ_SAT_FROM, last);
+  const title = 'FST in KITAKYUSHU 2027（1/22〜24 アートホテル小倉）開催概要とFSTサテライト日程 | ふくおかポーカーナビ';
+  const desc = 'FST（FUKUOKA SUPER TOURNAMENT）の北九州大会「FST in KITAKYUSHU」（2027年1月22日〜24日・アートホテル小倉 ニュータガワ）の開催概要と、'
+    + 'FSTチケットを獲得できる福岡県内の店舗サテライト日程をまとめて掲載します。';
+  // organizer・offers は出さない(主催者名の正式表記・参加費が未確認/未発表のため)。
+  const jsonld = {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    "name": "FST in KITAKYUSHU 2027 (FUKUOKA SUPER TOURNAMENT)",
+    "image": abs(image),
+    "startDate": first,
+    "endDate": last,
+    "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+    "eventStatus": "https://schema.org/EventScheduled",
+    "location": {
+      "@type": "Place",
+      "name": "アートホテル小倉 ニュータガワ",
+      "address": { "@type": "PostalAddress", "streetAddress": "古船場町3-46", "addressRegion": "福岡県", "addressLocality": "北九州市小倉北区", "addressCountry": "JP" }
+    },
+    "description": desc,
+    "url": canonical,
+    "isAccessibleForFree": false
+  };
+  const faq = faqBlock(fstkqFaqItems(), { headingId: 'fstkq-faq' });
+  const vlist = DATA.VENUES.map(v => [v.id, { n: v.name, s: v.slug }]);
+  const body = `
+${SITE_BANNER_SECTION.html}<h1>FST in KITAKYUSHU 2027（1月22日〜24日・アートホテル小倉）開催概要とサテライト日程</h1>
+<p class="lead">会期: 2027年1月22日（金）〜24日（日）／会場: アートホテル小倉 ニュータガワ（北九州市小倉北区）</p>
+<img class="evt-banner" src="/${esc(reg.banner)}" width="1024" height="412" alt="${esc(reg.bannerAlt)}">
+<div class="evt-meta">
+  <b>大会名</b>　FST in KITAKYUSHU（FUKUOKA SUPER TOURNAMENT 北九州大会）<br>
+  <b>会期</b>　2027年1月22日（金）〜24日（日）の3日間<br>
+  <b>会場</b>　アートホテル小倉 ニュータガワ<br>
+  <b>住所</b>　福岡県北九州市小倉北区古船場町3-46<br>
+  <b>アクセス</b>　JR小倉駅から徒歩約8分／北九州モノレール 旦過駅から徒歩約2分<br>
+  <b>参加方法</b>　店舗サテライトでFSTチケットを獲得（2026年10月12日から順次開催と案内）
+</div>
+<div class="tba"><b>${FSTKQ_AS_OF}時点で、メインイベントの参加費・プライズ・タイムスケジュールは未発表です。</b>判明次第、当ページを更新します。最新情報は<a href="${esc(FSTKQ_X)}" target="_blank" rel="noopener">公式X（@fst_202408）</a>でご確認ください。</div>
+<h2 class="day" id="satellites">今後のFSTサテライト日程</h2>
+<p class="lead">FSTチケットを獲得できる、福岡県内の店舗のトーナメントです（当サイト掲載データから自動集計）。店名から各店舗の料金・アクセス・全日程を確認できます。参加費・必要枚数・賞品の条件は店舗ごとに異なるため、参加前に店舗の告知をご確認ください。</p>
+<p class="lead" id="fstkq-sched-note" style="margin-top:-6px"><small>${fmtDate(FSTKQ_SAT_FROM).m}/${fmtDate(FSTKQ_SAT_FROM).d}以降の掲載データ（${rows.length}件）を表示しています。JavaScriptが有効な環境では、読み込み時に最新の掲載データから<b>今日以降</b>の日程に差し替わります。</small></p>
+<div id="fstkq-sched">${fstkqTableHtml(rows)}</div>
+${satelliteVenuesBlock(reg.satelliteVenueIds, {
+    heading: 'FSTサテライト開催店舗',
+    lead: n => `下記の店舗では、FSTチケットを獲得できるサテライトが開催されています（当サイト掲載データより集計・${n}店舗）。最新の開催状況は各店舗のページ・公式情報・SNSでご確認ください。`
+  })}
+<h2 class="day">FSTチケットはFST6.0と共通</h2>
+<p class="lead">主催者の告知を紹介する媒体によると、店舗サテライトで獲得したFSTチケットは、この北九州大会と、2027年3月19日（金）〜22日（月・振休）にホテルニューオータニ博多で開催予定のFST6.0の両方で使えると案内されています。両大会では、FSTチケットでのみ参加できるトーナメントも予定されているとのことです。前回大会の様子は<a href="/events/fst-2026-fukuoka/">FST 5.0（2026年9月・ホテルニューオータニ博多）</a>のページをご覧ください。</p>
+<h2 class="day">現時点で発表されている情報／発表されていない情報</h2>
+<div class="sched-wrap"><table class="sched">
+  <tbody>
+    <tr><th>会期</th><td>2027年1月22日（金）〜24日（日）</td></tr>
+    <tr><th>会場</th><td>アートホテル小倉 ニュータガワ（北九州市小倉北区古船場町3-46）</td></tr>
+    <tr><th>店舗サテライト</th><td>2026年10月12日から順次開催（県内各店）</td></tr>
+    <tr><th>FSTチケット</th><td>北九州大会・FST6.0（2027年3月）で共通</td></tr>
+    <tr><th>メインイベントの参加費</th><td>未発表</td></tr>
+    <tr><th>プライズ</th><td>未発表</td></tr>
+    <tr><th>タイムスケジュール</th><td>未発表</td></tr>
+  </tbody>
+</table></div>
+${faq.html}
+${venueScheduleBlock()}
+${adCard()}
+<div class="disclaimer">当サイトはFST（FUKUOKA SUPER TOURNAMENT）の主催者・公式媒体ではありません。公開情報をもとに当サイトが独自に集約した<b>非公式のまとめ</b>です。大会名・会場・チケットの扱いは主催者の告知を紹介する媒体の情報にもとづきます。掲載しているバナーは当サイトが作成したもので、ロゴ・大会名等の権利は主催者に帰属します。掲載内容は<b>${FSTKQ_AS_OF}時点</b>の情報で、当サイトによる転記の誤りが含まれる可能性があります。サテライト日程は各店舗の告知を当サイトが転記したものです。参加前に必ず<a href="${esc(FSTKQ_X)}" target="_blank" rel="noopener">公式X（@fst_202408）</a>・各店舗の公式情報をご確認ください。<br>${POSITIONING}</div>
+
+<div class="links">
+  ▶ <a href="${esc(FSTKQ_X)}" target="_blank" rel="noopener">FST 公式X（@fst_202408）</a><br>
+  ▶ <a href="/">福岡の他のポーカートーナメント日程を見る</a>
+</div>
+${faq.script}`;
+  // 閲覧時の描き直し(店舗ページと同じ考え方): /data.js を読み直して今日以降のサテライトだけにする。
+  const scripts = `<script src="/data.js"></script>
+<script>
+(function(){
+  if (typeof TOURNAMENTS === 'undefined') return;
+  var el = document.getElementById('fstkq-sched'); if (!el) return;
+  var kind = ${fstkqKindJs};
+  var V = {}; ${JSON.stringify(vlist)}.forEach(function(p){ V[p[0]] = p[1]; });
+  var pad = function(x){ return String(x).padStart(2, '0'); };
+  var n = new Date(), today = n.getFullYear() + '-' + pad(n.getMonth() + 1) + '-' + pad(n.getDate());
+  var until = ${JSON.stringify(last)};
+  var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
+  var rows = TOURNAMENTS.filter(function(t){ return t.date >= today && t.date <= until && kind(t); })
+    .sort(function(a, b){ return (a.date + (a.start || '')).localeCompare(b.date + (b.start || '')); });
+  var wd = ['日','月','火','水','木','金','土'];
+  if (!rows.length) { el.innerHTML = '<p class="lead">現在、掲載中のサテライト日程はありません。各店舗の公式情報・SNSをご確認ください。</p>'; }
+  else el.innerHTML = '<div class="sched-wrap"><table class="sched"><thead><tr><th>日時</th><th>店舗</th><th>トーナメント</th></tr></thead><tbody>'
+    + rows.map(function(t){
+        var v = V[t.venueId] || {n:'', s:''}; var p = t.date.split('-').map(Number);
+        var w = wd[new Date(p[0], p[1] - 1, p[2]).getDay()];
+        var fee = t.buyin == null ? '店舗SNSで確認' : t.buyin === 0 ? '無料' : '¥' + Number(t.buyin).toLocaleString('ja-JP');
+        return '<tr><td class="no">' + p[1] + '/' + p[2] + '（' + w + '）<br>' + esc(t.start || '時刻未定') + '</td><td><a href="/venues/' + esc(v.s) + '/">' + esc(v.n) + '</a></td><td>' + esc(t.name) + '<br><small>参加費: ' + esc(fee) + (kind(t) === '賞品にFSTチケット' ? '／賞品にFSTチケット' : '') + '</small></td></tr>';
+      }).join('') + '</tbody></table></div>';
+  var note = document.getElementById('fstkq-sched-note'); if (note) note.innerHTML = '<small>今日以降の掲載データ（' + rows.length + '件）を表示しています。</small>';
+})();
+</script>
+${SITE_BANNER_SECTION.scripts}`;
+  return pageHead({ title, desc, canonical, jsonld, image, extraCss: FAQ_CSS + ADCARD_CSS + BANNER_CSS, breadcrumb: pageBreadcrumb('fstkq', canonical) })
+    + body + shell.pageFoot(BIG, '/events/fst-kitakyushu-2027/', scripts, FOOTER_AREA_LINKS);
+}
+
 // ---- 書き出し / 検査 ----
 // 出力はいったん全部メモリ上で組み立ててから、まとめて書く(--check のときは書かずに突き合わせる)。
 // --check は「big-events.js を直したのに再生成を忘れた」「生成物を手で書き換えた」を検出するためのもの。
@@ -883,6 +1057,7 @@ const files = {
   'events/nippon-series-2026-fukuoka/index.html': buildNippon(),
   'events/fst-2026-fukuoka/index.html': buildFst(),
   'events/spadie-fukuoka-1st/index.html': buildSpadie(),
+  'events/fst-kitakyushu-2027/index.html': buildFstKitakyushu(),
   'index.html': buildIndexHtml(),     // 恒久リンク行(#evtLinks)だけを差し替えたもの
   // sitemap.xml の中身は tools/gen-sitemap.js が決める(このスクリプトは組み立てない)。
   // イベントページと店舗ページの両方のURLが必要なので、片方の生成スクリプトが自前で

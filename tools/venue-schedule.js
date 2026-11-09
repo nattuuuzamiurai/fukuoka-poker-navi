@@ -297,9 +297,12 @@ const FST_NAME_RE = /FST/i;
 const isFstSatelliteEntry = t => (FST_SAT_RE.test(t.name || '') || (t.tags || []).some(x => FST_SAT_RE.test(x)))
   && (FST_NAME_RE.test(t.name || '') || (t.tags || []).some(x => FST_NAME_RE.test(x)));
 const FST_SAT_RECENT_DAYS = 30;
-function venueHasCurrentFstSatellite(TOURNAMENTS, RECURRING, venueId) {
+// since(任意・YYYY-MM-DD): これより前の行は数えない。FSTは大会ごとにサテライト期間があり、
+//   前の大会(FST 5.0)向けのサテライトしか記録が無い店を、次の大会のサテライト開催中と
+//   誤表示しないため(2026-11-09追加。big-events.js の satelliteFrom を渡す)。
+function venueHasCurrentFstSatellite(TOURNAMENTS, RECURRING, venueId, since) {
   if (RECURRING.some(r => r.venueId === venueId && isFstSatelliteEntry(r))) return true;
-  const rows = TOURNAMENTS.filter(t => t.venueId === venueId);
+  const rows = TOURNAMENTS.filter(t => t.venueId === venueId && (!since || t.date >= since));
   if (!rows.length) return false;
   const latest = rows.reduce((m, t) => (t.date > m ? t.date : m), rows[0].date);
   return rows.some(t => isFstSatelliteEntry(t)
