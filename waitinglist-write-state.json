@@ -178,56 +178,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M5VGBJVCZK1N3J19XDGZBF4Y": {
-      "id": "wl-01M5VGBJVCZK1N3J19XDGZBF4Y",
-      "venueId": "v3",
-      "name": "m PAIR MATCH",
-      "date": "2026-11-08",
-      "start": "13:10",
-      "buyin": 6000,
-      "addon": null,
-      "stack": 60000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M5VGXZPETPTZEGPW9RCQ63CG": {
-      "id": "wl-01M5VGXZPETPTZEGPW9RCQ63CG",
-      "venueId": "v3",
-      "name": "ｍ Hyper Deep Turbo",
-      "date": "2026-11-08",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": null,
-      "stack": 100000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M5VH59DEANKPSR5NF0CYDXPA": {
-      "id": "wl-01M5VH59DEANKPSR5NF0CYDXPA",
-      "venueId": "v3",
-      "name": "m LIVE LEAGUE season1",
-      "date": "2026-11-08",
-      "start": "18:00",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M5VHA2CDP1F4JHK80TZQEKXR": {
       "id": "wl-01M5VHA2CDP1F4JHK80TZQEKXR",
       "venueId": "v3",
@@ -1166,24 +1116,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M6AMBVWA1NPDVFVZBMM0GQEW": {
-      "id": "wl-01M6AMBVWA1NPDVFVZBMM0GQEW",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-11-08",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M6AMBVWA251GXV25TWHPDV6K": {
       "id": "wl-01M6AMBVWA251GXV25TWHPDV6K",
       "venueId": "v27",
@@ -1609,24 +1541,6 @@
       "stack": 15000,
       "guarantee": null,
       "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M6AMJRV81C58TVJMBS61001K": {
-      "id": "wl-01M6AMJRV81C58TVJMBS61001K",
-      "venueId": "v27",
-      "name": "DOJO FREEZOUT",
-      "date": "2026-11-08",
-      "start": "13:00",
-      "buyin": 4000,
-      "addon": 0,
-      "stack": 80000,
-      "guarantee": null,
-      "reentry": false,
       "prize": null,
       "tags": [
         "ターボ"
@@ -2118,6 +2032,78 @@
       "prize": null,
       "tags": [
         "ディープ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M6WZ0VSM3DRKKRPN6GP4BE0M": {
+      "id": "wl-01M6WZ0VSM3DRKKRPN6GP4BE0M",
+      "venueId": "v19",
+      "name": "2000 Turbo",
+      "date": "2026-11-15",
+      "start": "16:10",
+      "buyin": 2000,
+      "addon": 1000,
+      "stack": 30000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ターボ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M6WZ0VSM4FGPYH6VKNKQMD6Z": {
+      "id": "wl-01M6WZ0VSM4FGPYH6VKNKQMD6Z",
+      "venueId": "v19",
+      "name": "2000 Turbo",
+      "date": "2026-11-29",
+      "start": "16:10",
+      "buyin": 2000,
+      "addon": 1000,
+      "stack": 30000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ターボ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M6WZ0VSM4TGWSTNSPG42AXQ8": {
+      "id": "wl-01M6WZ0VSM4TGWSTNSPG42AXQ8",
+      "venueId": "v19",
+      "name": "2000 Turbo",
+      "date": "2026-11-22",
+      "start": "16:10",
+      "buyin": 2000,
+      "addon": 1000,
+      "stack": 30000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ターボ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M6WZ0VSMYWED7Q5RRJE48F34": {
+      "id": "wl-01M6WZ0VSMYWED7Q5RRJE48F34",
+      "venueId": "v19",
+      "name": "2000 Turbo",
+      "date": "2026-12-06",
+      "start": "16:10",
+      "buyin": 2000,
+      "addon": 1000,
+      "stack": 30000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ターボ"
       ],
       "source": "auto",
       "verified": false

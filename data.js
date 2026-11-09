@@ -36707,6 +36707,24 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01M6WZ0VSM3DRKKRPN6GP4BE0M",
+    "venueId": "v19",
+    "name": "2000 Turbo",
+    "date": "2026-11-15",
+    "start": "16:10",
+    "buyin": 2000,
+    "addon": 1000,
+    "stack": 30000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "wl-01M5C7TPH6Z9PM4JKXS0222KFE",
     "venueId": "v19",
     "name": "FST Satellite",
@@ -36735,6 +36753,60 @@ const TOURNAMENTS = [
     "reentry": false,
     "prize": null,
     "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M6WZ0VSM4TGWSTNSPG42AXQ8",
+    "venueId": "v19",
+    "name": "2000 Turbo",
+    "date": "2026-11-22",
+    "start": "16:10",
+    "buyin": 2000,
+    "addon": 1000,
+    "stack": 30000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M6WZ0VSM4FGPYH6VKNKQMD6Z",
+    "venueId": "v19",
+    "name": "2000 Turbo",
+    "date": "2026-11-29",
+    "start": "16:10",
+    "buyin": 2000,
+    "addon": 1000,
+    "stack": 30000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M6WZ0VSMYWED7Q5RRJE48F34",
+    "venueId": "v19",
+    "name": "2000 Turbo",
+    "date": "2026-12-06",
+    "start": "16:10",
+    "buyin": 2000,
+    "addon": 1000,
+    "stack": 30000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
     "source": "auto",
     "verified": false
   },
