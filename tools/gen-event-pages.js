@@ -912,7 +912,7 @@ ${rows.map(t => {
     const [y, m, d] = t.date.split('-').map(Number);
     const w = wd[new Date(y, m - 1, d).getDay()];
     const fee = t.buyin == null ? '店舗SNSで確認' : t.buyin === 0 ? '無料' : '¥' + Number(t.buyin).toLocaleString('ja-JP');
-    return `    <tr><td class="no">${m}/${d}（${w}）<br>${esc(t.start || '時刻未定')}</td><td><a href="/venues/${esc(v.slug)}/">${esc(v.name)}</a></td><td>${esc(t.name)}<br><small>参加費: ${esc(fee)}${fstkqKind(t) === '賞品にFSTチケット' ? '／賞品にFSTチケット' : ''}</small></td></tr>`;
+    return `    <tr><td class="no">${m}/${d}（${w}）<br>${t.start ? esc(t.start) : '<small>詳細は店舗SNSにて</small>'}</td><td><a href="/venues/${esc(v.slug)}/">${esc(v.name)}</a></td><td>${esc(t.name)}<br><small>参加費: ${esc(fee)}${fstkqKind(t) === '賞品にFSTチケット' ? '／賞品にFSTチケット' : ''}</small></td></tr>`;
   }).join('\n')}
   </tbody>
 </table></div>`;
@@ -1038,7 +1038,7 @@ ${faq.script}`;
         var v = V[t.venueId] || {n:'', s:''}; var p = t.date.split('-').map(Number);
         var w = wd[new Date(p[0], p[1] - 1, p[2]).getDay()];
         var fee = t.buyin == null ? '店舗SNSで確認' : t.buyin === 0 ? '無料' : '¥' + Number(t.buyin).toLocaleString('ja-JP');
-        return '<tr><td class="no">' + p[1] + '/' + p[2] + '（' + w + '）<br>' + esc(t.start || '時刻未定') + '</td><td><a href="/venues/' + esc(v.s) + '/">' + esc(v.n) + '</a></td><td>' + esc(t.name) + '<br><small>参加費: ' + esc(fee) + (kind(t) === '賞品にFSTチケット' ? '／賞品にFSTチケット' : '') + '</small></td></tr>';
+        return '<tr><td class="no">' + p[1] + '/' + p[2] + '（' + w + '）<br>' + (t.start ? esc(t.start) : '<small>詳細は店舗SNSにて</small>') + '</td><td><a href="/venues/' + esc(v.s) + '/">' + esc(v.n) + '</a></td><td>' + esc(t.name) + '<br><small>参加費: ' + esc(fee) + (kind(t) === '賞品にFSTチケット' ? '／賞品にFSTチケット' : '') + '</small></td></tr>';
       }).join('') + '</tbody></table></div>';
   var note = document.getElementById('fstkq-sched-note'); if (note) note.innerHTML = '<small>今日以降の掲載データ（' + rows.length + '件）を表示しています。</small>';
 })();

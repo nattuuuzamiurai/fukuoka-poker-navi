@@ -160,6 +160,8 @@
   table.sched th{background:#eef3f1;color:var(--txt);font-weight:800;font-size:.92em;white-space:nowrap}
   table.sched td.no{color:var(--txt);font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums;font-family:"IBM Plex Mono",monospace}
   table.sched td.start{white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:600;font-family:"IBM Plex Mono",monospace}
+  /* 開始時刻が分からない行(2026-11-09〜): 時刻欄に「詳細は店舗SNSにて」を小さく折り返して出す。 */
+  table.sched small.vp-tbd{display:block;white-space:normal;min-width:5.5em;font-family:inherit;font-weight:600;font-size:.82em;line-height:1.35;color:var(--mut)}
   table.sched td.buyin{white-space:nowrap}
   table.sched tr:last-child td{border-bottom:none}
   table.sched .gtd{display:inline-block;background:#fbf1d8;border:1px solid #ecd9a6;color:#7a5711;font-size:.85em;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:5px}
@@ -675,7 +677,7 @@ function vpScheduleHtml(rows){
       if (tg.length) extra += '　<span class="vp-tags">' + tg.map(vpEsc).join('・') + '</span>';
       /* 抽出確度が低いものは黙って混ぜず、その旨を出す(READMEの編集方針)。 */
       if (t.lowConfidence) extra += '　<span class="vp-warn">⚠ 要確認</span>';
-      trs.push('<tr><td class="start">' + vpEsc(t.start || '—') + '</td>'
+      trs.push('<tr><td class="start">' + (t.start ? vpEsc(t.start) : '<small class="vp-tbd">詳細は店舗SNSにて</small>') + '</td>'
         + '<td>' + vpEsc(t.name) + extra + '</td>'
         + '<td class="buyin">' + vpEsc(vpBuyin(t)) + '</td>'
         + '<td class="buyin">' + (t.stack ? vpNum(t.stack) + '点' : '—') + '</td></tr>');

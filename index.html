@@ -767,6 +767,9 @@
   .tc-time{text-align:left;flex-shrink:0}
   .tc-time b{display:block;font-family:"IBM Plex Mono",monospace;font-size:22px;font-weight:600;line-height:1.1;letter-spacing:-.02em;color:var(--txt);font-variant-numeric:tabular-nums}
   .tc-time span{display:block;font-size:10px;letter-spacing:.16em;color:var(--mut);font-weight:700;margin-top:3px}
+  /* 開始時刻が分からない行(2026-11-09〜): 時刻は空白にし、「詳細は店舗SNSにて」を出す(以前は「不明」)。 */
+  .tc-time b:empty{display:none}
+  .tc-time span.tbd{letter-spacing:0;line-height:1.35;max-width:5.2em;margin-top:2px}
   .tc-main{min-width:0}
   .tc-name{font-family:var(--f-display);font-weight:700;font-size:18px;line-height:1.4;letter-spacing:-.005em;color:var(--txt);overflow-wrap:anywhere}
   .tc-name::before{content:"♠";color:var(--gold);font-size:.78em;margin-right:7px;vertical-align:.12em}
@@ -1582,7 +1585,7 @@
     const thumbHtml = hideVenue ? '' : venueThumbHtml(v, 'tc-thumb');
     return `<div class="tcard${v.featured?' feat':''}${started?' started':''}">
       <div class="tc-top">
-        <div class="tc-time"><b>${escHtml(t.start||'不明')}</b><span>${started?'開始済み':'START'}</span></div>
+        <div class="tc-time">${t.start?`<b>${escHtml(t.start)}</b><span>${started?'開始済み':'START'}</span>`:`<b></b><span class="tbd">${started?'開始済み':'詳細は店舗SNSにて'}</span>`}</div>
         <div class="tc-main">
           <div class="tc-name">${escHtml(t.name)}</div>
           ${venueHtml}

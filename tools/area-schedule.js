@@ -195,7 +195,7 @@ function apScheduleHtml(rows){
       var tg = t.tags || [];
       if (tg.length) extra += '　<span class="vp-tags">' + tg.map(vpEsc).join('・') + '</span>';
       if (t.lowConfidence) extra += '　<span class="vp-warn">⚠ 要確認</span>';
-      trs.push('<tr><td class="start">' + vpEsc(t.start || '—') + '</td>'
+      trs.push('<tr><td class="start">' + (t.start ? vpEsc(t.start) : '<small class="vp-tbd">詳細は店舗SNSにて</small>') + '</td>'
         + '<td class="ap-venue"><a href="/venues/' + vpEsc(t.venueSlug) + '/">' + vpEsc(t.venueName) + '</a></td>'
         + '<td>' + vpEsc(t.name) + extra + '</td>'
         + '<td class="buyin">' + vpEsc(vpBuyin(t)) + '</td></tr>');

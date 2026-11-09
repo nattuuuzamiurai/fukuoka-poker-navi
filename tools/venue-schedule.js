@@ -133,7 +133,7 @@ function vpScheduleHtml(rows){
       if (tg.length) extra += '　<span class="vp-tags">' + tg.map(vpEsc).join('・') + '</span>';
       /* 抽出確度が低いものは黙って混ぜず、その旨を出す(READMEの編集方針)。 */
       if (t.lowConfidence) extra += '　<span class="vp-warn">⚠ 要確認</span>';
-      trs.push('<tr><td class="start">' + vpEsc(t.start || '—') + '</td>'
+      trs.push('<tr><td class="start">' + (t.start ? vpEsc(t.start) : '<small class="vp-tbd">詳細は店舗SNSにて</small>') + '</td>'
         + '<td>' + vpEsc(t.name) + extra + '</td>'
         + '<td class="buyin">' + vpEsc(vpBuyin(t)) + '</td>'
         + '<td class="buyin">' + (t.stack ? vpNum(t.stack) + '点' : '—') + '</td></tr>');
