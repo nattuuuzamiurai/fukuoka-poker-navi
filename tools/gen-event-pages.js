@@ -11,9 +11,7 @@
  *   - WJPT:          index.html 内の const WJPT = {...} を抽出
  *   - NIPPON SERIES: nippon-series-data.js
  *   - FST:           index.html 内の const FST = {...} を抽出
- *   - SPADIE:        big-events.js の spadie エントリのみ(個別データファイル・index.html内の
- *                    constは持たない。2026-09-08時点でbuyin・大会形式・スケジュールが
- *                    すべて未発表のため。buildSpadie() 冒頭のコメント参照)
+ *   - SPADIE:        spadie-data.js (2026-11-12、公式Players Guideで全トーナメントが判明したため追加)
  *
  * 生成物:
  *   - events/jopt-2026-fukuoka-01/index.html
@@ -751,45 +749,134 @@ ${faq.script}`;
 }
 
 // ---- SPADIE FUKUOKA 1st ページ ----
-// 大会名・開催開始日(2026-11-12)・会場(UNITEDLAB)は一次情報(PR TIMES・2026-09-07)で確認済み。
-// 終了日・主催者は一次情報で確認できていないため、JSON-LDの endDate/organizer を出力せず、
-// 本文・FAQも「〜と紹介されています」「〜と位置づけています」等の伝聞・引用形式で統一する
-// (コンテンツ制作 spadie-fukuoka-1st-content-brief.md の方針をそのまま踏襲。詳しい出典は
-// big-events.js の spadie エントリのコメントを参照)。
-// ★index.html に const SPADIE は持たない(FST/WJPTと違い、buyin・大会形式・スケジュールが
-//   すべて未発表で、大量データをインタラクティブに切り替えるSPA専用ページを作る材料が無いため。
-//   会期・バナー等は big-events.js のレジストリ(BIG.bigEventById('spadie'))からそのまま取る)。
-const SPADIE_X = 'https://x.com/SPADIE_FUKUOKA';
-// 情報取得基準日。disclaimer・tba・FAQの全箇所からここを参照し、値を1箇所にまとめる
-// (README「数値を手打ちしない」原則。公式発表が増えて内容を更新するときはここも当日の日付に直すこと)。
-const SPADIE_AS_OF = '2026年9月8日';
+// 2026-11-12(開催初日)に公式Players Guide(Webアプリ)で全トーナメントが判明したため、
+// WJPT/JOPTと同じく【日程ごとに各トーナメントの詳細】(開始・締切・参加費・スタック・プライズ・
+// ストラクチャー)を載せる形に作り替えた。値は spadie-data.js(出典・転記方針はファイル冒頭)からそのまま取る。
+// ★大型大会の恒久ルール(README「大型大会ページの書き方」): 日程が出ていれば日別に全トーナメントの詳細を、
+//   出ていなければ「未発表」であることを日別に明記する。
+const SPADIE = require(path.join(REPO, 'spadie-data.js'));
+const SPADIE_X = SPADIE.x;
+// 情報取得基準日。disclaimer・tba・FAQの全箇所からここを参照する(公式の更新を反映したら当日の日付に直すこと)。
+const SPADIE_AS_OF = SPADIE.asOf;
+// 公式シートの仮レート(円/$)で円換算した目安。シートの注記どおり確定額ではないので「約」「仮レート換算」を必ず付ける。
+function spadieYen(usd) {
+  const n = Number(String(usd).replace(/[$,]/g, ''));
+  if (!isFinite(n)) return '';
+  const man = Math.round(n * SPADIE.fxTemp / 10000);
+  return `約${man.toLocaleString('ja-JP')}万円`;
+}
+// 「この Lv から何分」の並び → 「20分」「Lv.1〜10は20分、Lv.11以降は15分」
+function spadieMinutesText(st) {
+  const ms = st.minutes;
+  if (ms.length === 1) return `${ms[0][1]}分`;
+  return ms.map(([from, min], i) => {
+    const next = ms[i + 1];
+    return next ? `Lv.${from}〜${next[0] - 1}は${min}分` : `Lv.${from}以降は${min}分`;
+  }).join('、');
+}
+function spadieMinutesAt(st, lv) {
+  let min = st.minutes[0][1];
+  st.minutes.forEach(([from, m]) => { if (lv >= from) min = m; });
+  return min;
+}
+function spadieStructureTable(st) {
+  const ladder = SPADIE.ladders[st.ladder];
+  const rows = ladder.map((b, i) => {
+    const lv = st.firstLevel + i;
+    const [sb, bb] = b.split('-');
+    const brk = st.breaksAfter.includes(lv) ? '<br><small>この後ブレイク</small>' : '';
+    return `      <tr><td class="no">${lv}</td><td class="start">${esc(sb)} - ${esc(bb)}</td>${st.ante ? `<td class="start">${esc(bb)}</td>` : ''}<td>${spadieMinutesAt(st, lv)}分${brk}</td></tr>`;
+  }).join('\n');
+  return `<div class="sched-wrap"><table class="sched">
+    <thead><tr><th>Lv</th><th>ブラインド</th>${st.ante ? '<th>BBアンティ</th>' : ''}<th>時間</th></tr></thead>
+    <tbody>
+${rows}
+    </tbody>
+  </table></div>`;
+}
+const spadieTitle = t => `#${t.no} ${t.name}${t.flight ? ` ${t.flight}` : ''}`;
+const spadieAnchor = t => `t${t.no.toLowerCase()}${t.flight ? '-' + t.flight.toLowerCase().replace(/[^a-z0-9]+/g, '') : ''}`;
+function spadieCard(t) {
+  const st = t.structure;
+  const ladder = SPADIE.ladders[st.ladder];
+  const lastLv = st.firstLevel + ladder.length - 1;
+  const p = t.prize || {};
+  const prizeHtml = p.seat
+    ? `${esc(p.seat)}<br><small>通過枠: ${esc(p.itm)}</small>`
+    : `Prize Total ${esc(p.total)}<small>（${spadieYen(p.total)}・仮レート${SPADIE.fxTemp}円/$換算）</small>${p.gtd ? `<br><small>${esc(p.gtd)}</small>` : ''}<br><small>入賞: ${esc(p.itm)}まで</small>`;
+  const extra = (p.extra || []).map(x => `<tr><th>賞品</th><td>${esc(x)}</td></tr>`).join('\n');
+  const reg = [t.regOpen ? `受付開始 ${esc(t.regOpen)}` : '', t.regClose ? `締切 ${esc(t.regClose)}${t.closeLv ? `（Lv.${t.closeLv}終了時）` : ''}` : ''].filter(Boolean).join('／') || '—';
+  const brk = st.breaksAfter.length ? `Lv.${st.breaksAfter.join('・')}の後` : 'シート上の記載なし';
+  const guides = t.guide.map((g, i) => `<a href="${esc(SPADIE.guideImgBase + g + '.webp')}" target="_blank" rel="noopener">公式シート${t.guide.length > 1 ? (i + 1) : ''}</a>`).join('・');
+  return `<h3 class="sp-t" id="${spadieAnchor(t)}">${esc(spadieTitle(t))}</h3>
+<div class="sched-wrap"><table class="sched">
+  <tbody>
+    <tr><th>開始</th><td class="start">${esc(t.start)}</td></tr>
+    <tr><th>受付</th><td>${reg}</td></tr>
+    <tr><th>終了予定</th><td>${esc(t.end || '—')}</td></tr>
+    <tr><th>参加費</th><td>${esc(t.entry)}</td></tr>
+    <tr><th>スタック</th><td>${esc(t.stack)}</td></tr>
+    <tr><th>プライズ</th><td class="fst-prize">${prizeHtml}</td></tr>
+${extra ? extra + '\n' : ''}    <tr><th>ストラクチャー</th><td>Lv.${st.firstLevel}〜${lastLv}（${ladder.length}レベル）／${spadieMinutesText(st)}／${st.ante ? 'BBアンティあり' : 'アンティなし'}<br><small>ブレイク: ${brk}</small></td></tr>
+${t.notes && t.notes.length ? `    <tr><th>備考</th><td>${t.notes.map(esc).join('<br>')}</td></tr>\n` : ''}    <tr><th>出典</th><td>${guides}</td></tr>
+  </tbody>
+</table></div>
+<details class="sp-st"><summary>ストラクチャー全${ladder.length}レベルを見る</summary>
+${spadieStructureTable(st)}
+</details>`;
+}
+function spadieDaySections() {
+  const byDay = {};
+  SPADIE.tournaments.forEach(t => { (byDay[t.day] = byDay[t.day] || []).push(t); });
+  return SPADIE.days.map(day => {
+    const f = fmtDate(day);
+    const list = byDay[day] || [];
+    const sum = list.map(t => `      <tr><td class="no"><a href="#${spadieAnchor(t)}">#${esc(t.no)}</a></td><td class="start">${esc(t.start)}</td><td>${esc(t.name)}${t.flight ? `<br><small>${esc(t.flight)}</small>` : ''}</td><td class="buyin">${esc(t.entry)}</td><td class="buyin">${esc(t.stack)}</td></tr>`).join('\n');
+    return `<h2 class="day" id="day-${day}">${f.m}月${f.d}日（${f.wd}）のトーナメント（${list.length}件）</h2>
+<div class="sched-wrap"><table class="sched">
+  <thead><tr><th>No.</th><th>開始</th><th>トーナメント</th><th>参加費</th><th>スタック</th></tr></thead>
+  <tbody>
+${sum}
+  </tbody>
+</table></div>
+${list.map(spadieCard).join('\n')}`;
+  }).join('\n');
+}
+const SPADIE_CSS = `
+  h3.sp-t{font-size:1em;margin:20px 0 6px;color:var(--txt);scroll-margin-top:70px}
+  details.sp-st{margin:4px 0 10px}
+  details.sp-st summary{cursor:pointer;font-size:.86em;font-weight:700;color:var(--gold-ink);padding:6px 0}
+  .sp-daynav{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 14px;padding:0;list-style:none}
+  .sp-daynav a{display:inline-block;padding:5px 10px;border:1px solid var(--bor);border-radius:16px;font-size:.86em;font-weight:700;text-decoration:none;background:var(--sur)}
+`;
 function spadieFaqItems() {
   const xLink = `<a href="${esc(SPADIE_X)}" target="_blank" rel="noopener">公式X（@SPADIE_FUKUOKA）</a>`;
+  const n = SPADIE.tournaments.filter(t => !t.flight || t.flight === 'Day 1A').length;
   return [
     {
-      q: 'SPADIE FUKUOKA 1stとはどんな大会ですか？',
-      aHtml: `SPADIEは、一般社団法人日本ポーカー連盟が主催すると案内されているアミューズメントポーカーの大型トーナメントシリーズです。これまで東京で開催され、2026年6月には大阪にも拡大（SPADIE OSAKA）、そして今回、福岡・大名のUNITEDLABで「SPADIE FUKUOKA 1st」として開催されると発表されました。主催者・関連媒体は本大会を「SPADIEシリーズ初の九州開催」と位置づけています。大会形式やエントリー方法などの詳細は、${SPADIE_AS_OF}時点ではまだ公式に発表されていません。`,
-      aText: `SPADIEは、一般社団法人日本ポーカー連盟が主催すると案内されているアミューズメントポーカーの大型トーナメントシリーズです。これまで東京で開催され、2026年6月には大阪にも拡大(SPADIE OSAKA)、そして今回、福岡・大名のUNITEDLABで「SPADIE FUKUOKA 1st」として開催されると発表されました。主催者・関連媒体は本大会を「SPADIEシリーズ初の九州開催」と位置づけています。大会形式やエントリー方法などの詳細は、${SPADIE_AS_OF}時点ではまだ公式に発表されていません。`
+      q: 'SPADIE FUKUOKA 1stはいつ・どこで開催されますか？',
+      aHtml: `2026年11月12日（木）〜15日（日）の4日間、福岡市中央区大名のUNITEDLAB（〒810-0041 福岡県福岡市中央区大名1-3-36）で開催されます（公式Players Guideより）。`,
+      aText: '2026年11月12日(木)〜15日(日)の4日間、福岡市中央区大名のUNITEDLAB(〒810-0041 福岡県福岡市中央区大名1-3-36)で開催されます(公式Players Guideより)。'
     },
     {
-      q: '開催期間・会場はどこですか？',
-      aHtml: `開催開始日は2026年11月12日（木）、会場は福岡市中央区大名のUNITEDLAB（ユナイテッドラボ）です（住所: 〒810-0041 福岡県福岡市中央区大名1-3-36）。開催終了日について、当サイトが確認できた主催者の一次発表には記載がなく、一部媒体は「11月15日（日）まで」と報じています。確定情報は${xLink}でご確認ください。`,
-      aText: '開催開始日は2026年11月12日(木)、会場は福岡市中央区大名のUNITEDLAB(ユナイテッドラボ)です(住所: 〒810-0041 福岡県福岡市中央区大名1-3-36)。開催終了日について、当サイトが確認できた主催者の一次発表には記載がなく、一部媒体は「11月15日(日)まで」と報じています。確定情報は公式X(@SPADIE_FUKUOKA)でご確認ください。'
+      q: 'どんなトーナメントがありますか？',
+      aHtml: `メインイベント（#01 NLH Main Event）を含む全${n}イベントが予定されています。参加費は¥5,000〜¥150,000で、NLHのほかPLO、FL 2-7 Triple Draw & Badugi、2人1組のタッグ戦、3人1組のチーム戦、レディース戦、サテライトもあります。日程ごとの詳細は本ページ上部の日別一覧をご覧ください。`,
+      aText: `メインイベント(#01 NLH Main Event)を含む全${n}イベントが予定されています。参加費は5,000円〜150,000円で、NLHのほかPLO、FL 2-7 Triple Draw & Badugi、タッグ戦、チーム戦、レディース戦、サテライトもあります。`
     },
     {
-      q: 'buyin（参加費）や大会形式（NLH/PLOなど）は発表されていますか？',
-      aHtml: `${SPADIE_AS_OF}時点では未発表です。参加方法などをまとめた「Players Guide」は後日公開予定と案内されています。判明次第、当ページを更新します。最新情報は${xLink}をご確認ください。`,
-      aText: `${SPADIE_AS_OF}時点では未発表です。参加方法などをまとめた「Players Guide」は後日公開予定と案内されています。判明次第、当ページを更新します。最新情報は公式X(@SPADIE_FUKUOKA)をご確認ください。`
+      q: 'メインイベントの参加方法・プライズは？',
+      aHtml: `参加費は「SPADIEチケット2枚＋¥5,000」です。Day 1はA（11/12 18:00）・B（11/13 13:00）・C（11/14 11:00）・D Turbo（11/14 17:00）の4フライトで、Day 2は11/15 11:00再開です。プライズは公式トーナメントリストで「1000万GTD」（公式シートではPrize Total $61,278.21・仮レート163.19円/$）と案内され、80位までが入賞です。プライズは賞金ではなく選手契約（委託料）として扱われます。`,
+      aText: '参加費は「SPADIEチケット2枚＋5,000円」です。Day 1は4フライト(A:11/12 18:00、B:11/13 13:00、C:11/14 11:00、D Turbo:11/14 17:00)、Day 2は11/15 11:00再開です。プライズは1000万円保証(Prize Total $61,278.21・仮レート163.19円/$)で80位までが入賞。プライズは賞金ではなく選手契約(委託料)として扱われます。'
     },
     {
-      q: 'チケット・参加方法は決まっていますか？',
-      aHtml: `${SPADIE_AS_OF}時点では未発表です。SPADIEシリーズは大阪開催などにおいて、加盟店舗でのサテライト（予選）やオンライン企画を通じてチケット（Voucher）を獲得できる仕組みが案内されてきましたが、SPADIE FUKUOKA 1stにおける具体的なサテライト開催店舗・参加方法は、当サイトでは現時点で確認できていません。福岡県内の店舗でサテライトが告知され次第、<a href="/">当サイトのトーナメント日程</a>にも反映します。`,
-      aText: `${SPADIE_AS_OF}時点では未発表です。SPADIEシリーズは大阪開催などにおいて、加盟店舗でのサテライト(予選)やオンライン企画を通じてチケット(Voucher)を獲得できる仕組みが案内されてきましたが、SPADIE FUKUOKA 1stにおける具体的なサテライト開催店舗・参加方法は、当サイトでは現時点で確認できていません。福岡県内の店舗でサテライトが告知され次第、当サイトのトーナメント日程にも反映します。`
+      q: 'ドリンク代はかかりますか？',
+      aHtml: 'ほとんどのトーナメントでファーストエントリー時に別途ドリンク代1,000円がかかります（タッグ戦はエントリーごとに2,000円、チーム戦は3,000円、Supernovaはドリンク飲み放題でドリンク代の記載なし）。各トーナメントの「備考」欄に公式シートの記載をまとめています。',
+      aText: 'ほとんどのトーナメントでファーストエントリー時に別途ドリンク代1,000円がかかります(タッグ戦はエントリーごとに2,000円、チーム戦は3,000円)。'
     },
     {
       q: '初めてアミューズメントポーカー大会に参加します。当日の流れや注意点は？',
-      aHtml: `一般的にアミューズメントポーカー店・大会は、現金を賭けるのではなく、エントリー時に受け取るチップ（店舗内でのみ有効なポイント）を使ってプレイし、そのチップを現金に換金することはできない仕組みで運営されています。これは風営法の規制を踏まえた、多くのアミューズメントポーカー店に共通する運営形態です。身分証の提示や年齢確認の要否、当日の受付手順などは店舗・大会により異なるため、初参加の場合は事前に${xLink}等の公式情報で最新のルールをご確認ください。`,
-      aText: '一般的にアミューズメントポーカー店・大会は、現金を賭けるのではなく、エントリー時に受け取るチップ(店舗内でのみ有効なポイント)を使ってプレイし、そのチップを現金に換金することはできない仕組みで運営されています。これは風営法の規制を踏まえた、多くのアミューズメントポーカー店に共通する運営形態です。身分証の提示や年齢確認の要否、当日の受付手順などは店舗・大会により異なるため、初参加の場合は事前に公式X(@SPADIE_FUKUOKA)等の公式情報で最新のルールをご確認ください。'
+      aHtml: `一般的にアミューズメントポーカー店・大会は、現金を賭けるのではなく、エントリー時に受け取るチップ（店舗内でのみ有効なポイント）を使ってプレイし、そのチップを現金に換金することはできない仕組みで運営されています。身分証の提示や年齢確認の要否、当日の受付手順などは大会により異なるため、初参加の場合は事前に${xLink}や<a href="${esc(SPADIE.guideUrl)}" target="_blank" rel="noopener">公式Players Guide</a>で最新のルールをご確認ください。`,
+      aText: '一般的にアミューズメントポーカー店・大会は、現金を賭けるのではなく、エントリー時に受け取るチップ(店舗内でのみ有効なポイント)を使ってプレイし、そのチップを現金に換金することはできない仕組みで運営されています。初参加の場合は事前に公式X(@SPADIE_FUKUOKA)や公式Players Guideで最新のルールをご確認ください。'
     }
   ];
 }
@@ -799,22 +886,26 @@ function buildSpadie() {
   // OGP専用画像(1200x630)。本文中のバナー(SVG、1024x412)とは別物(他イベントと同じ作法)。
   const image = 'img/spadie/spadie-og.jpg';
   const reg = BIG.bigEventById('spadie');
-  // ★固有語(「SPADIE FUKUOKA」「SPADIE FUKUOKA 1st」)を先頭・中心に据え、一般語(「福岡 ポーカー
-  //   トーナメント」等)を単独で強く打ち出さない(運営指摘・FSTページが一般語検索でトップページと
-  //   競合した問題を踏まえた方針。コンテンツブリーフ1-1のとおり)。終了日は一次情報未確認のため
-  //   タイトルには入れない(「11/12〜」のみ。確定後に「11/12〜15」等へ更新すること)。
-  const title = 'SPADIE FUKUOKA 1st 開催概要（11/12〜 福岡・大名 UNITEDLAB）| ふくおかポーカーナビ';
-  const desc = 'SPADIEシリーズ初の九州開催と位置づけられている「SPADIE FUKUOKA 1st」の開催概要まとめ。'
-    + '会場は福岡・大名のUNITEDLAB、開催開始は2026年11月12日（木）。現時点で判明している情報と、'
-    + 'buyin・大会形式・参加方法など未発表の事項を整理して掲載します。';
-  // ★endDate・organizerは出さない(一次情報未確認。理由はファイル冒頭のコメント・big-events.jsの
-  //   spadieエントリのコメントを参照)。offersも出さない(buyin自体が未発表のため)。
+  const first = BIG.eventFirstDay(SPADIE.days), last = BIG.eventLastDay(SPADIE.days);
+  const nEvents = SPADIE.tournaments.filter(t => !t.flight || t.flight === 'Day 1A').length;
+  // ★固有語(「SPADIE FUKUOKA 1st」)を先頭に据え、一般語(「福岡 ポーカー トーナメント」)を単独で
+  //   強く打ち出さない方針は従来どおり(FSTページが一般語検索でトップと競合した問題を踏まえたもの)。
+  const title = 'SPADIE FUKUOKA 1st 全日程・タイムスケジュール（11/12〜15 福岡・大名 UNITEDLAB）| ふくおかポーカーナビ';
+  const desc = `SPADIE FUKUOKA 1st（2026年11月12日〜15日・福岡・大名 UNITEDLAB）の全${nEvents}イベントを日程ごとに掲載。`
+    + '各トーナメントの開始時刻・受付締切・参加費・スタック・プライズ・ストラクチャーを公式Players Guideからまとめています。';
+  // 現金だけで入れるトーナメントを Offer にする(メインイベント=チケット制などは落ちる)。
+  const seen = new Set();
+  const offers = SPADIE.tournaments
+    .filter(t => !t.flight && !seen.has(t.no) && seen.add(t.no))
+    .map(t => cashOffer(spadieTitle(t), t.entry.replace(/（.*?）/g, ''), SPADIE.scheduleUrl))
+    .filter(Boolean);
   const jsonld = {
     "@context": "https://schema.org",
     "@type": "Event",
     "name": "SPADIE FUKUOKA 1st",
     "image": abs(image),
-    "startDate": "2026-11-12",
+    "startDate": first,
+    "endDate": last,
     "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
     "eventStatus": "https://schema.org/EventScheduled",
     "location": {
@@ -822,56 +913,57 @@ function buildSpadie() {
       "name": "UNITEDLAB",
       "address": { "@type": "PostalAddress", "streetAddress": "大名1-3-36", "addressRegion": "福岡県", "addressLocality": "福岡市中央区", "postalCode": "810-0041", "addressCountry": "JP" }
     },
+    "offers": offers,
     "description": desc,
     "url": canonical,
     "isAccessibleForFree": false
   };
   const faq = faqBlock(spadieFaqItems(), { headingId: 'spadie-faq' });
+  const dayNav = SPADIE.days.map(d => { const f = fmtDate(d); return `<li><a href="#day-${d}">${f.m}/${f.d}（${f.wd}）</a></li>`; }).join('');
   const body = `
-${SITE_BANNER_SECTION.html}<h1>SPADIE FUKUOKA 1st（2026年11月12日〜・UNITEDLAB）開催概要</h1>
-<p class="lead">開催開始: 2026年11月12日（木）／会場: UNITEDLAB（福岡市中央区大名）</p>
+${SITE_BANNER_SECTION.html}<h1>SPADIE FUKUOKA 1st 全日程（2026年11月12日〜15日・UNITEDLAB）</h1>
+<p class="lead">会期: 2026年11月12日（木）〜15日（日）／会場: UNITEDLAB（福岡市中央区大名）／全${nEvents}イベント</p>
 <img class="evt-banner" src="/${esc(reg.banner)}" width="1024" height="412" alt="${esc(reg.bannerAlt)}">
 <div class="evt-meta">
   <b>大会名</b>　SPADIE FUKUOKA 1st<br>
-  <b>開催開始</b>　2026年11月12日（木）〜（終了日は公式発表待ち。下記「終了日について」参照）<br>
+  <b>会期</b>　2026年11月12日（木）・13日（金）・14日（土）・15日（日）の4日間<br>
   <b>会場</b>　UNITEDLAB（ユナイテッドラボ）<br>
   <b>住所</b>　〒810-0041 福岡県福岡市中央区大名1-3-36<br>
   <b>アクセス</b>　地下鉄空港線 天神駅から徒歩約10分／西鉄福岡（天神）駅から徒歩約11分<br>
-  <b>位置づけ</b>　SPADIEシリーズ初の九州開催（主催者・関連媒体の紹介による）
+  <b>メインイベント</b>　<span class="prize">1,000万円保証</span>（参加費: SPADIEチケット2枚＋¥5,000）
 </div>
-<div class="tba"><b>${SPADIE_AS_OF}時点で、SPADIE FUKUOKA 1stは開催と会場・開催開始日が発表された段階です。</b>buyin（参加費）・大会形式（NLH/PLOなど）・詳細スケジュール・チケット/参加方法は、現時点では公式から発表されていません（Players Guideは後日公開予定とされています）。判明次第、当ページを更新します。最新情報は<a href="${esc(SPADIE_X)}" target="_blank" rel="noopener">公式X（@SPADIE_FUKUOKA）</a>でご確認ください。</div>
-<h2 class="day">開催概要</h2>
-<p class="lead">開催開始日は2026年11月12日（木）、会場は福岡市中央区大名のUNITEDLAB（〒810-0041 福岡県福岡市中央区大名1-3-36）です。アクセスは地下鉄空港線 天神駅から徒歩約10分、赤坂駅から徒歩約9分、西鉄福岡（天神）駅から徒歩約11分です。</p>
-<p class="lead" style="margin-top:-6px">${SPADIE_AS_OF}時点で、当サイトが確認できた一次情報（主催者プレスリリース）には開催開始日（11月12日）のみが明記されており、終了日の記載はありません。一部媒体では「11月12日（木）〜15日（日）」の4日間と報じられていますが、当サイトでは主催者公式（X: @SPADIE_FUKUOKA）による終了日の明記を確認でき次第、本ページに反映します。</p>
+<div class="tba"><b>${SPADIE_AS_OF}時点の公式Players Guideにもとづき、全${nEvents}イベントの詳細を日程ごとに掲載しています。</b>各トーナメントの開始・受付締切・終了予定・参加費・スタック・プライズ・ストラクチャー（全レベル）を確認できます。プライズは公式表記の米ドルで、円の目安は公式シートの仮レート（${SPADIE.fxTemp}円/$）で当サイトが換算したものです（確定額は実施日3日前に発表される固定レートで再計算されます）。深夜開始の大会は、その夜が始まる日の枠に「翌0:00」のように載せています。</div>
+<ul class="sp-daynav">${dayNav}</ul>
+${spadieDaySections()}
+<p class="lead" style="margin-top:14px">※ #34 NLH Employees（11/15 19:00）は本大会の勤務者限定のため掲載していません。プライズは賞金ではなく、対象ポーカートーナメントへの参加補助が受けられる任意の選手契約（委託料）です。ルールはJOPT Official Ruleが採用されています。</p>
 <h2 class="day">SPADIEシリーズとは</h2>
-<p class="lead">SPADIEは、一般社団法人日本ポーカー連盟が主催すると案内されているアミューズメントポーカーの大型トーナメントシリーズです。「SPADIE POKER LEAGUE」（予選）と「SPADIE FINAL」（決勝）の二部構成で運営されていると案内されています。これまで東京で開催されてきましたが、2026年6月に大阪へ拡大（SPADIE OSAKA）、同年9月にSPADIE OSAKA 2ndが開催され、今回2026年11月に福岡・大名のUNITEDLABで「SPADIE FUKUOKA 1st」として開催されると発表されました。</p>
-<h2 class="day">「九州初開催」としての位置づけ</h2>
-<p class="lead">主催者・関連媒体はSPADIE FUKUOKA 1stを「SPADIEシリーズ初の九州開催」と位置づけています。会場のUNITEDLABでは、2026年7月30日〜8月2日に<a href="/events/jopt-2026-fukuoka-01/">JOPT 2026 Fukuoka #01</a>（Main Event ${esc(JOPT_RESULT.totalEntries)}エントリー）が開催されるなど、大型大会の会場としての実績があります。</p>
-<h2 class="day">現時点で発表されている情報／発表されていない情報</h2>
-<p class="lead">${SPADIE_AS_OF}時点で当サイトが確認できている情報を整理すると次のとおりです。</p>
-<div class="sched-wrap"><table class="sched">
-  <tbody>
-    <tr><th>大会名</th><td>SPADIE FUKUOKA 1st（確定）</td></tr>
-    <tr><th>開催開始日</th><td>2026年11月12日（木）（確定）</td></tr>
-    <tr><th>開催終了日</th><td>公式未発表（一部媒体は11月15日〈日〉までと報道）</td></tr>
-    <tr><th>会場</th><td>UNITEDLAB（福岡市中央区大名1-3-36）（確定）</td></tr>
-    <tr><th>buyin（参加費）</th><td>未発表</td></tr>
-    <tr><th>大会形式（NLH/PLOなど）</th><td>未発表</td></tr>
-    <tr><th>詳細スケジュール</th><td>未発表</td></tr>
-    <tr><th>チケット・参加方法</th><td>未発表</td></tr>
-  </tbody>
-</table></div>
+<p class="lead">SPADIEは、一般社団法人日本ポーカー連盟が主催すると案内されているアミューズメントポーカーの大型トーナメントシリーズです。これまで東京で開催され、2026年6月に大阪へ拡大（SPADIE OSAKA）、そして今回2026年11月に福岡・大名のUNITEDLABで「SPADIE FUKUOKA 1st」として開催されます。主催者・関連媒体は本大会を「SPADIEシリーズ初の九州開催」と位置づけています。会場のUNITEDLABでは、2026年7月30日〜8月2日に<a href="/events/jopt-2026-fukuoka-01/">JOPT 2026 Fukuoka #01</a>（Main Event ${esc(JOPT_RESULT.totalEntries)}エントリー）も開催されました。</p>
 ${faq.html}
 ${venueScheduleBlock()}
 ${adCard()}
-<div class="disclaimer">当サイトはSPADIE FUKUOKA 1stの主催者・公式媒体ではありません。公開情報をもとに当サイトが独自に集約した<b>非公式のまとめ</b>です。掲載しているバナーは当サイトが作成したもので、ロゴ・大会名等の権利は主催者に帰属します。掲載内容は<b>${SPADIE_AS_OF}時点</b>の公開情報にもとづきますが、当サイトによる転記の誤りが含まれる可能性があります。発表済みの内容も変更される場合があります。参加前に必ず<a href="${esc(SPADIE_X)}" target="_blank" rel="noopener">公式X（@SPADIE_FUKUOKA）</a>等の公式情報をご確認ください。<br>${POSITIONING}</div>
+<div class="disclaimer">当サイトはSPADIE FUKUOKA 1stの主催者・公式媒体ではありません。公開情報をもとに当サイトが独自に集約した<b>非公式のまとめ</b>です。掲載しているバナーは当サイトが作成したもので、ロゴ・大会名等の権利は主催者に帰属します。掲載内容は<b>${SPADIE_AS_OF}時点</b>の公式Players Guide（画像で公開されているシートを当サイトが転記）にもとづきますが、転記の誤りが含まれる可能性があります。発表済みの内容も変更される場合があります。参加前に必ず<a href="${esc(SPADIE.guideUrl)}" target="_blank" rel="noopener">公式Players Guide</a>・<a href="${esc(SPADIE_X)}" target="_blank" rel="noopener">公式X（@SPADIE_FUKUOKA）</a>をご確認ください。<br>${POSITIONING}</div>
 
 <div class="links">
-  ▶ <a href="${esc(SPADIE_X)}" target="_blank" rel="noopener">公式X（@SPADIE_FUKUOKA）</a><br>
+  ▶ <a href="${esc(SPADIE.scheduleUrl)}" target="_blank" rel="noopener">公式トーナメントリスト</a>　／　<a href="${esc(SPADIE_X)}" target="_blank" rel="noopener">公式X（@SPADIE_FUKUOKA）</a><br>
   ▶ <a href="/">福岡の他のポーカートーナメント日程を見る</a>
 </div>
 ${faq.script}`;
-  return pageHead({ title, desc, canonical, jsonld, image, extraCss: FAQ_CSS + ADCARD_CSS + BANNER_CSS, breadcrumb: pageBreadcrumb('spadie', canonical) }) + body + pageFoot('/events/spadie-fukuoka-1st/');
+  return pageHead({ title, desc, canonical, jsonld, image, extraCss: FAQ_CSS + ADCARD_CSS + BANNER_CSS + SPADIE_CSS, breadcrumb: pageBreadcrumb('spadie', canonical) }) + body + pageFoot('/events/spadie-fukuoka-1st/');
+}
+
+// ---- 大型大会: 日程(トーナメント別スケジュール)が未発表の日の書き方(2026-11-12・運営の恒久ルール) ----
+// 大型大会ページは「日程ごとに各トーナメントの詳細」を載せる(SPADIE/JOPT/WJPTの形)。まだ発表されていない
+// 大会でも日別の見出しは立て、その日のトーナメントが【未発表であること】を明記する(README「大型大会ページの
+// 書き方」)。発表されたら、その大会の xxx-data.js を作って SPADIE と同じ日別カード表示に置き換える。
+function tbdDaySections(days, asOf, officialLinkHtml) {
+  return `<h2 class="day">日程ごとのトーナメント</h2>
+<p class="lead">${esc(asOf)}時点で、各日のトーナメント（イベント名・開始時刻・参加費・プライズ・ストラクチャー）は公式から発表されていません。発表され次第、日程ごとに各トーナメントの詳細を掲載します。</p>
+<div class="sched-wrap"><table class="sched">
+  <thead><tr><th>日程</th><th>トーナメント</th></tr></thead>
+  <tbody>
+${days.map(d => { const f = fmtDate(d); return `    <tr><td class="no">${f.m}/${f.d}（${f.wd}）</td><td>未発表<br><small>開始時刻・参加費・プライズ・ストラクチャーとも未発表。最新情報は${officialLinkHtml}でご確認ください。</small></td></tr>`; }).join('\n')}
+  </tbody>
+</table></div>`;
 }
 
 // ---- FST in KITAKYUSHU 2027 ページ(2026-11-09追加) ----
@@ -985,6 +1077,7 @@ ${SITE_BANNER_SECTION.html}<h1>FST in KITAKYUSHU 2027（1月22日〜24日・ア�
   <b>参加方法</b>　店舗サテライトでFSTチケットを獲得（2026年10月12日から順次開催と案内）
 </div>
 <div class="tba"><b>${FSTKQ_AS_OF}時点で、メインイベントの参加費・プライズ・タイムスケジュールは未発表です。</b>判明次第、当ページを更新します。最新情報は<a href="${esc(FSTKQ_X)}" target="_blank" rel="noopener">公式X（@fst_202408）</a>でご確認ください。</div>
+${tbdDaySections(reg.days, FSTKQ_AS_OF, `<a href="${esc(FSTKQ_X)}" target="_blank" rel="noopener">公式X（@fst_202408）</a>`)}
 <h2 class="day" id="satellites">今後のFSTサテライト日程</h2>
 <p class="lead">FSTチケットを獲得できる、福岡県内の店舗のトーナメントです（当サイト掲載データから自動集計）。店名から各店舗の料金・アクセス・全日程を確認できます。参加費・必要枚数・賞品の条件は店舗ごとに異なるため、参加前に店舗の告知をご確認ください。</p>
 <p class="lead" id="fstkq-sched-note" style="margin-top:-6px"><small>${fmtDate(FSTKQ_SAT_FROM).m}/${fmtDate(FSTKQ_SAT_FROM).d}以降の掲載データ（${rows.length}件）を表示しています。JavaScriptが有効な環境では、読み込み時に最新の掲載データから<b>今日以降</b>の日程に差し替わります。</small></p>

@@ -103,7 +103,8 @@ const PARTNERS = { freq: 'monthly', pri: '0.3' };
 const EVENT_DATA_FILES = {
   jopt: ['jopt-data.js'],
   nippon: ['nippon-series-data.js'],
-  fst: ['fst-schedule-data.js']
+  fst: ['fst-schedule-data.js'],
+  spadie: ['spadie-data.js']
 };
 
 /**
