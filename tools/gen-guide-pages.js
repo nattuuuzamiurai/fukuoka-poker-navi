@@ -487,7 +487,7 @@ const FAQ_ITEMS = [
 //     WebPage の JSON-LD(name/description)も下で同じ文言に揃える
 //     (表示テキストと構造化データの文言がズレると、検索結果と実際のページ内容が
 //     食い違って見える事故になるため)。
-const TITLE = '福岡のポーカー店ガイド｜トーナメント・リングゲーム目的別に紹介 | ふくおかポーカーナビ';
+const TITLE = '福岡のポーカー店の選び方・初心者ガイド｜目的別に紹介 | ふくおかポーカーナビ';
 
 function buildGuidePage() {
   const listedCount = VENUES.filter(v => !v.preopen && !v.closed).length;
