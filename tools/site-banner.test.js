@@ -239,3 +239,21 @@ test('統合: 対象外ページ(guide/partners/・guide/webcoin-regulation/)に
   assert.ok(!partnersHtml.includes('id="siteBanner"'), 'guide/partners/にバナーが出てしまっています');
   assert.ok(!webcoinHtml.includes('id="siteBanner"'), 'guide/webcoin-regulation/にバナーが出てしまっています');
 });
+
+// ブラウザと同じ読み込み方(module/require なし・<script>を同じグローバルで順に実行)でも
+// 開催中の大型大会が先頭になること。2026-11-12、Node側だけ正しくトップページ(ブラウザ描画)は
+// 旧い並びのままだった不具合(big-events.js の const 関数が window に載らない)の再発防止。
+test('visibleSiteBanners(): ブラウザ読み込み(script連結)でも開催中の大型大会が先頭', () => {
+  const fs = require('fs');
+  const pathm = require('path');
+  const vm = require('vm');
+  const root = pathm.join(__dirname, '..');
+  const src = ['big-events.js', 'promo-banners.js', 'listing-banner.js', 'site-banner.js']
+    .map(f => fs.readFileSync(pathm.join(root, f), 'utf8')).join('\n;\n')
+    + '\n;__out = visibleSiteBanners("2026-11-12").map(function(e){return e.id;});';
+  const ctx = { console, Date, window: {}, document: undefined, matchMedia: undefined };
+  ctx.window = ctx;
+  vm.createContext(ctx);
+  vm.runInContext(src, ctx);
+  assert.equal(ctx.__out[0], 'spadie', ctx.__out.join(','));
+});

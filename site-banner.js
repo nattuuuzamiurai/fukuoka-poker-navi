@@ -81,9 +81,14 @@ function _sbEscBanner(s) {
 //   開催中 大型大会 → 単発/常設プロモ → それ以外の大型大会(まもなく・終了) → 掲載店舗募集
 //   開催中の判定は big-events.js の isEventOngoing()(会期の初日〜最終日。最終日翌日の猶予は「終了」)に委ねる。
 //   開催中の大会が無い日は従来どおり プロモ → 大型大会 → 掲載店舗募集。
+// ★ブラウザでは big-events.js の isEventOngoing / resolveNowAndToday が `const`(アロー関数)で
+//   宣言されているため window に載らない(_sbGlobalFn では取れない)。<script>どうしで共有される
+//   字句スコープの識別子を typeof ガード付きで直接参照する(2026-11-12、トップだけ並びが変わらない不具合の修正)。
 function _sbIsOngoing(ev, today) {
-  const ongoing = _SB_BE ? _SB_BE.isEventOngoing : _sbGlobalFn('isEventOngoing');
-  const resolve = _SB_BE ? _SB_BE.resolveNowAndToday : _sbGlobalFn('resolveNowAndToday');
+  const ongoing = _SB_BE ? _SB_BE.isEventOngoing
+    : (typeof isEventOngoing === 'function' ? isEventOngoing : _sbGlobalFn('isEventOngoing'));
+  const resolve = _SB_BE ? _SB_BE.resolveNowAndToday
+    : (typeof resolveNowAndToday === 'function' ? resolveNowAndToday : _sbGlobalFn('resolveNowAndToday'));
   if (!ongoing || !resolve || !ev || !ev.days) return false;
   return !!ongoing(ev.days, resolve(today).todayStr);
 }
