@@ -461,6 +461,7 @@ ${JSON.stringify(breadcrumbJsonLd(breadcrumb), null, 2)}
     gtag('config', 'G-L7091YHTFH');
   }
 </script>
+<script defer src="/track.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(desc)}">
@@ -610,7 +611,7 @@ function adCard(opts) {
   const desc = opts.desc || 'ポーカートナメ成績表なら buyin・順位・収支をすぐ記録。無料アプリはこちら';
   const style = opts.style ? ` style="${esc(opts.style)}"` : '';
   return `
-<a class="adCard"${style} href="${ptlLink('content_card')}" target="_blank" rel="noopener">
+<a class="adCard"${style} href="${ptlLink(opts.medium || 'content_card')}" target="_blank" rel="noopener">
   <img src="/img/ptl-bulldog.webp" alt="" loading="lazy" width="56" height="56">
   <div class="ac-body">
     <div class="ac-title">${esc(title)}</div>

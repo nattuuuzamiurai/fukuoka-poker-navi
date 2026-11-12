@@ -947,6 +947,7 @@ function buildSpadie() {
   const body = `
 ${SITE_BANNER_SECTION.html}<h1>SPADIE FUKUOKA 1st 全日程（2026年11月12日〜15日・UNITEDLAB）</h1>
 <p class="lead">会期: 2026年11月12日（木）〜15日（日）／会場: UNITEDLAB（福岡市中央区大名）／全${nEvents}イベント</p>
+${adCard({ title: 'SPADIEの戦績、記録に残しませんか？', medium: 'content_card_top', style: 'margin:0 0 14px' })}
 <img class="evt-banner" src="/${esc(reg.banner)}" width="1024" height="412" alt="${esc(reg.bannerAlt)}">
 <div class="evt-meta">
   <b>大会名</b>　SPADIE FUKUOKA 1st<br>
