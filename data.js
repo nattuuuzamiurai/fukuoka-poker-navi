@@ -37011,6 +37011,22 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01M74X7HE5NZT30VHN08KSDVAY",
+    "venueId": "v19",
+    "name": "FST Satellite",
+    "date": "2026-11-18",
+    "start": "18:30",
+    "buyin": 3000,
+    "addon": 1000,
+    "stack": 30000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "wl-01M5C7W2WHRRN7BRDA5PERXY2D",
     "venueId": "v19",
     "name": "FREEZE OUT TOURNAMENT",
@@ -37045,6 +37061,22 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01M74X7HE5V3RDYKD9KCVBGY41",
+    "venueId": "v19",
+    "name": "FST Satellite",
+    "date": "2026-11-25",
+    "start": "18:30",
+    "buyin": 3000,
+    "addon": 1000,
+    "stack": 30000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "wl-01M6WZ0VSM4FGPYH6VKNKQMD6Z",
     "venueId": "v19",
     "name": "2000 Turbo",
@@ -37063,6 +37095,22 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01M74X7HE564VNYZQ9CQQQDS5M",
+    "venueId": "v19",
+    "name": "FST Satellite",
+    "date": "2026-12-02",
+    "start": "18:30",
+    "buyin": 3000,
+    "addon": 1000,
+    "stack": 30000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "wl-01M6WZ0VSMYWED7Q5RRJE48F34",
     "venueId": "v19",
     "name": "2000 Turbo",
@@ -37077,6 +37125,22 @@ const TOURNAMENTS = [
     "tags": [
       "ターボ"
     ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M74X7HE50H4E0T7V2320N9P3",
+    "venueId": "v19",
+    "name": "FST Satellite",
+    "date": "2026-12-09",
+    "start": "18:30",
+    "buyin": 3000,
+    "addon": 1000,
+    "stack": 30000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
     "source": "auto",
     "verified": false
   },

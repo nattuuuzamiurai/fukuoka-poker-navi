@@ -50,22 +50,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M4Q1AE7SW910RWRWR6XRVRDM": {
-      "id": "wl-01M4Q1AE7SW910RWRWR6XRVRDM",
-      "venueId": "v3",
-      "name": "【4K飲み放題！】ｍ Booze up ✨NEW✨",
-      "date": "2026-11-11",
-      "start": "18:00",
-      "buyin": 4000,
-      "addon": 1500,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M5C7TPH6Z9PM4JKXS0222KFE": {
       "id": "wl-01M5C7TPH6Z9PM4JKXS0222KFE",
       "venueId": "v19",
@@ -1124,24 +1108,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M6AMBVWABGXA2MV54F54ZQ4C": {
-      "id": "wl-01M6AMBVWABGXA2MV54F54ZQ4C",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-11-11",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M6AMBVWAC8XH7MT1JPA44A79": {
       "id": "wl-01M6AMBVWAC8XH7MT1JPA44A79",
       "venueId": "v27",
@@ -1602,24 +1568,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M6ASPPMPP27BTYVVD76KP7MM": {
-      "id": "wl-01M6ASPPMPP27BTYVVD76KP7MM",
-      "venueId": "v27",
-      "name": "DOJO LEAGUE 第12節 ASSASSIN",
-      "date": "2026-11-11",
-      "start": "19:00",
-      "buyin": 3000,
-      "addon": null,
-      "stack": 30000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M6ASW539HZ8YGJ75GS7RH3CZ": {
       "id": "wl-01M6ASW539HZ8YGJ75GS7RH3CZ",
       "venueId": "v27",
@@ -1724,24 +1672,6 @@
       "prize": null,
       "tags": [
         "PLO"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M6EG3DZYQ8V8S3RC2DA8NSJG": {
-      "id": "wl-01M6EG3DZYQ8V8S3RC2DA8NSJG",
-      "venueId": "v3",
-      "name": "m Bounty Turbo",
-      "date": "2026-11-11",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": 1000,
-      "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
       ],
       "source": "auto",
       "verified": false
@@ -1937,6 +1867,70 @@
       "tags": [
         "ターボ"
       ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M74X7HE50H4E0T7V2320N9P3": {
+      "id": "wl-01M74X7HE50H4E0T7V2320N9P3",
+      "venueId": "v19",
+      "name": "FST Satellite",
+      "date": "2026-12-09",
+      "start": "18:30",
+      "buyin": 3000,
+      "addon": 1000,
+      "stack": 30000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M74X7HE564VNYZQ9CQQQDS5M": {
+      "id": "wl-01M74X7HE564VNYZQ9CQQQDS5M",
+      "venueId": "v19",
+      "name": "FST Satellite",
+      "date": "2026-12-02",
+      "start": "18:30",
+      "buyin": 3000,
+      "addon": 1000,
+      "stack": 30000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M74X7HE5NZT30VHN08KSDVAY": {
+      "id": "wl-01M74X7HE5NZT30VHN08KSDVAY",
+      "venueId": "v19",
+      "name": "FST Satellite",
+      "date": "2026-11-18",
+      "start": "18:30",
+      "buyin": 3000,
+      "addon": 1000,
+      "stack": 30000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M74X7HE5V3RDYKD9KCVBGY41": {
+      "id": "wl-01M74X7HE5V3RDYKD9KCVBGY41",
+      "venueId": "v19",
+      "name": "FST Satellite",
+      "date": "2026-11-25",
+      "start": "18:30",
+      "buyin": 3000,
+      "addon": 1000,
+      "stack": 30000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [],
       "source": "auto",
       "verified": false
     }
