@@ -16,9 +16,9 @@
  *   - promo-banners.js  の visiblePromoBanners()  … 単発プロモ・常設(evergreen)PR掲載
  *   - big-events.js     の visibleBigEvents()     … 大型大会(WJPT/JOPT/FST 等)
  *   - listing-banner.js の visibleListingBanner()  … 掲載店舗募集の常設バナー
- *   連結順(promos → 大型大会 → 掲載店舗募集)は index.html の renderBigEventBanner() が
- *   もともと使っていた順序と同じにしてある(単発プロモ・常設PRは常に大型大会より先頭、
- *   掲載店舗募集は常に最後尾)。
+ *   連結順は「開催中の大型大会 → 単発プロモ・常設PR → それ以外の大型大会 → 掲載店舗募集」
+ *   (2026-11-12 運営判断。それまでは単発プロモ・常設PRが常に大型大会より先頭だった)。
+ *   掲載店舗募集は常に最後尾。
  *
  * ■ 「どう描画するか」も1箇所に集約する
  *   0件 → 空 / 1件 → バナー1枚 / 2件以上 → 横スライド(カルーセル、ドット・矢印つき)。
@@ -76,9 +76,24 @@ function _sbEscBanner(s) {
 // サイト全体で「いま出すべきバナー」の全件(0件〜複数件)。index.html・静的ページ・
 // SPAの店舗詳細ビューのすべてがこの1本だけを呼ぶ(集合の定義をここ以外に複製しない)。
 // today は big-events.js/promo-banners.js の resolveNowAndToday と同じ形式('YYYY-MM-DD'/Date/省略)。
+// 【並び順】(2026-11-12 運営判断で変更)
+//   大型大会の【開催中】は店舗バナー(単発プロモ・常設PR)より先頭に出す。
+//   開催中 大型大会 → 単発/常設プロモ → それ以外の大型大会(まもなく・終了) → 掲載店舗募集
+//   開催中の判定は big-events.js の isEventOngoing()(会期の初日〜最終日。最終日翌日の猶予は「終了」)に委ねる。
+//   開催中の大会が無い日は従来どおり プロモ → 大型大会 → 掲載店舗募集。
+function _sbIsOngoing(ev, today) {
+  const ongoing = _SB_BE ? _SB_BE.isEventOngoing : _sbGlobalFn('isEventOngoing');
+  const resolve = _SB_BE ? _SB_BE.resolveNowAndToday : _sbGlobalFn('resolveNowAndToday');
+  if (!ongoing || !resolve || !ev || !ev.days) return false;
+  return !!ongoing(ev.days, resolve(today).todayStr);
+}
 function visibleSiteBanners(today) {
-  return _sbVisiblePromoBanners(today)
-    .concat(_sbVisibleBigEvents(today))
+  const bigs = _sbVisibleBigEvents(today);
+  const live = bigs.filter(e => _sbIsOngoing(e, today));
+  const rest = bigs.filter(e => !_sbIsOngoing(e, today));
+  return live
+    .concat(_sbVisiblePromoBanners(today))
+    .concat(rest)
     .concat(_sbVisibleListingBanner());
 }
 

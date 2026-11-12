@@ -128,6 +128,35 @@
     { no: '33', day: '2026-11-15', name: 'NLH Finale', start: '17:00', regOpen: '16:30', regClose: '19:10', closeLv: 8, end: '21:30', entry: '¥5,000', stack: '20,000', prize: { total: '$1,128.07', itm: '7位' }, structure: S('mid', [[1, 15], [9, 10]], [8]), notes: [DRINK], guide: ['pg-36'] }
   ];
 
+  // ---- トーナメント個別ページのURL(/events/spadie-fukuoka-1st/<slug>/) ----
+  // ★一度公開したslugは変更しない(URLが変わると被リンク・検索評価を失う。VENUESのslugと同じ原則)。
+  //   Main Event は全フライト(Day 1A〜1D・Day 2)を1ページにまとめる。
+  const SLUGS = {
+    '01': '01-nlh-main-event', '02': '02-nlh-emotional-heart', '03': '03-nlh-team-battle-3on3',
+    '04': '04-nlh-elite-500', '05': '05-nlh-night-parade-chillers', '06': '06-nlh-midnight',
+    '07': '07-nlh-final-turbo-1', '08': '08-nlh-casualstack', '09': '09-nlh-water-rush',
+    'S01': 's01-satellite-to-crazy-diamond', '10': '10-nlh-crazy-diamond', '11': '11-nlh-noctis',
+    '12': '12-nlh-melty-twins-tag-team', '13': '13-plo-deep', '14': '14-nlh-night-parade-wisp',
+    '15': '15-nlh-candy-twins-tag-team-turbo', '16': '16-nlh-midnight', '17': '17-nlh-final-turbo-2',
+    '18': '18-nlh-megastack', '19': '19-fl-27td-badugi', 'S02': 's02-satellite-to-supernova',
+    '20': '20-nlh-sugar-rush', '21': '21-nlh-supernova', '22': '22-nlh-lucky-clover-mystery-bounty',
+    '23': '23-plo-monster', '24': '24-nlh-elite-700', '25': '25-nlh-night-parade', '26': '26-nlh-midnight',
+    '27': '27-nlh-final-turbo-3', '28': '28-nlh-noble-spade', '29': '29-fl-27td-badugi',
+    '30': '30-nlh-elite-1000', '31': '31-nlh-princess-ladies', '32': '32-nlh-last-parade', '33': '33-nlh-finale'
+  };
+  const BASE_PATH = '/events/spadie-fukuoka-1st/';
+  // 個別ページの単位(=イベント番号ごと)。並びは最初のフライトが始まる順(公式トーナメントリストの並び)。
+  const events = [];
+  tournaments.forEach(t => {
+    let e = events.find(x => x.no === t.no);
+    if (!e) {
+      if (!SLUGS[t.no]) throw new Error('spadie-data.js: #' + t.no + ' の slug がありません');
+      e = { no: t.no, name: t.name, slug: SLUGS[t.no], path: BASE_PATH + SLUGS[t.no] + '/', flights: [] };
+      events.push(e);
+    }
+    e.flights.push(t);
+  });
+
   const SPADIE = {
     id: 'spadie',
     name: 'SPADIE FUKUOKA 1st',
@@ -141,7 +170,9 @@
     x: 'https://x.com/SPADIE_FUKUOKA',
     fxTemp: 163.19,   // 公式シートの「仮レート 163.19円/$」
     ladders: LADDERS,
-    tournaments
+    basePath: BASE_PATH,
+    tournaments,
+    events
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = SPADIE;

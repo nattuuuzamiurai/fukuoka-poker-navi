@@ -795,60 +795,77 @@ ${rows}
   </table></div>`;
 }
 const spadieTitle = t => `#${t.no} ${t.name}${t.flight ? ` ${t.flight}` : ''}`;
-const spadieAnchor = t => `t${t.no.toLowerCase()}${t.flight ? '-' + t.flight.toLowerCase().replace(/[^a-z0-9]+/g, '') : ''}`;
-function spadieCard(t) {
-  const st = t.structure;
+const spadieEventOf = t => SPADIE.events.find(e => e.no === t.no);
+// 「翌02:00」のような表記を、実際の日付(その夜が始まる日の翌日)つきの文に直す。
+function spadieWhen(t) {
+  const f = fmtDate(t.day);
+  const base = `${f.m}月${f.d}日（${f.wd}）`;
+  if (!/^翌/.test(t.start)) return `${base}${t.start}`;
+  const [y, mo, d] = t.day.split('-').map(Number);
+  const nx = new Date(Date.UTC(y, mo - 1, d + 1));
+  return `${base}の深夜 ${t.start}（${nx.getUTCMonth() + 1}/${nx.getUTCDate()} ${t.start.replace('翌', '')}）`;
+}
+// JSON-LD用の開始日時(+09:00)
+function spadieStartIso(t) {
+  const [y, mo, d] = t.day.split('-').map(Number);
+  const late = /^翌/.test(t.start);
+  const dt = new Date(Date.UTC(y, mo - 1, d + (late ? 1 : 0)));
+  const ds = `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, '0')}-${String(dt.getUTCDate()).padStart(2, '0')}`;
+  return `${ds}T${t.start.replace('翌', '')}:00+09:00`;
+}
+function spadiePrizeHtml(p) {
+  return p.seat
+    ? `${esc(p.seat)}<br><small>通過枠: ${esc(p.itm)}</small>`
+    : `Prize Total ${esc(p.total)}<br><small>${spadieYen(p.total)}（仮レート${SPADIE.fxTemp}円/$で当サイト換算）</small>${p.gtd ? `<br><small>${esc(p.gtd)}</small>` : ''}<br><small>入賞: ${esc(p.itm)}まで</small>`;
+}
+function spadieRegText(t) {
+  return [t.regOpen ? `受付開始 ${esc(t.regOpen)}` : '', t.regClose ? `締切 ${esc(t.regClose)}${t.closeLv ? `（Lv.${t.closeLv}終了時）` : ''}` : ''].filter(Boolean).join('<br>') || '—';
+}
+function spadieStructSummary(st) {
   const ladder = SPADIE.ladders[st.ladder];
   const lastLv = st.firstLevel + ladder.length - 1;
-  const p = t.prize || {};
-  const prizeHtml = p.seat
-    ? `${esc(p.seat)}<br><small>通過枠: ${esc(p.itm)}</small>`
-    : `Prize Total ${esc(p.total)}<small>（${spadieYen(p.total)}・仮レート${SPADIE.fxTemp}円/$換算）</small>${p.gtd ? `<br><small>${esc(p.gtd)}</small>` : ''}<br><small>入賞: ${esc(p.itm)}まで</small>`;
-  const extra = (p.extra || []).map(x => `<tr><th>賞品</th><td>${esc(x)}</td></tr>`).join('\n');
-  const reg = [t.regOpen ? `受付開始 ${esc(t.regOpen)}` : '', t.regClose ? `締切 ${esc(t.regClose)}${t.closeLv ? `（Lv.${t.closeLv}終了時）` : ''}` : ''].filter(Boolean).join('／') || '—';
   const brk = st.breaksAfter.length ? `Lv.${st.breaksAfter.join('・')}の後` : 'シート上の記載なし';
-  const guides = t.guide.map((g, i) => `<a href="${esc(SPADIE.guideImgBase + g + '.webp')}" target="_blank" rel="noopener">公式シート${t.guide.length > 1 ? (i + 1) : ''}</a>`).join('・');
-  return `<h3 class="sp-t" id="${spadieAnchor(t)}">${esc(spadieTitle(t))}</h3>
-<div class="sched-wrap"><table class="sched">
-  <tbody>
-    <tr><th>開始</th><td class="start">${esc(t.start)}</td></tr>
-    <tr><th>受付</th><td>${reg}</td></tr>
-    <tr><th>終了予定</th><td>${esc(t.end || '—')}</td></tr>
-    <tr><th>参加費</th><td>${esc(t.entry)}</td></tr>
-    <tr><th>スタック</th><td>${esc(t.stack)}</td></tr>
-    <tr><th>プライズ</th><td class="fst-prize">${prizeHtml}</td></tr>
-${extra ? extra + '\n' : ''}    <tr><th>ストラクチャー</th><td>Lv.${st.firstLevel}〜${lastLv}（${ladder.length}レベル）／${spadieMinutesText(st)}／${st.ante ? 'BBアンティあり' : 'アンティなし'}<br><small>ブレイク: ${brk}</small></td></tr>
-${t.notes && t.notes.length ? `    <tr><th>備考</th><td>${t.notes.map(esc).join('<br>')}</td></tr>\n` : ''}    <tr><th>出典</th><td>${guides}</td></tr>
-  </tbody>
-</table></div>
-<details class="sp-st"><summary>ストラクチャー全${ladder.length}レベルを見る</summary>
-${spadieStructureTable(st)}
-</details>`;
+  return `Lv.${st.firstLevel}〜${lastLv}（${ladder.length}レベル）／${spadieMinutesText(st)}／${st.ante ? 'BBアンティあり' : 'アンティなし'}<br><small>ブレイク: ${brk}</small>`;
 }
+const SPADIE_CSS = `
+  .sp-daynav{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 14px;padding:0;list-style:none}
+  .sp-daynav a{display:inline-block;padding:6px 12px;border:1px solid var(--bor);border-radius:16px;font-size:.88em;font-weight:700;text-decoration:none;background:var(--sur)}
+  h2.day{scroll-margin-top:70px}
+  ul.sp-list{list-style:none;padding:0;margin:0 0 8px;border:1px solid var(--bor);border-radius:var(--r);overflow:hidden;background:var(--sur);box-shadow:var(--sha)}
+  ul.sp-list li+li{border-top:1px solid var(--bor)}
+  ul.sp-list a{display:flex;align-items:center;gap:10px;padding:11px 12px;text-decoration:none;color:var(--txt)}
+  ul.sp-list a:active{background:#eef3f1}
+  .sp-time{flex:0 0 auto;min-width:3.6em;font-family:"IBM Plex Mono",monospace;font-weight:700;font-variant-numeric:tabular-nums;font-size:.92em}
+  .sp-body{flex:1 1 auto;min-width:0}
+  .sp-name{display:block;font-weight:800;font-size:.92em;line-height:1.35}
+  .sp-sub{display:block;font-size:.78em;color:var(--mut);margin-top:2px}
+  .sp-go{flex:0 0 auto;font-size:.78em;font-weight:800;color:var(--gold-ink);white-space:nowrap}
+  a.sp-back{display:inline-block;margin:4px 0 10px;padding:7px 12px;border:1px solid var(--bor);border-radius:16px;font-size:.86em;font-weight:800;text-decoration:none;background:var(--sur)}
+  .sp-pn{display:flex;gap:8px;margin:16px 0 8px}
+  .sp-pn a,.sp-pn span{flex:1 1 0;display:block;padding:10px 11px;border:1px solid var(--bor);border-radius:var(--r);background:var(--sur);text-decoration:none;font-size:.8em;line-height:1.4;color:var(--txt);min-width:0}
+  .sp-pn span{visibility:hidden}
+  .sp-pn small{display:block;color:var(--mut);font-weight:700}
+  .sp-pn .nx{text-align:right}
+`;
+// 全日程ページの日別リスト。1行まるごとが個別ページへのリンク(どこを押せばいいか迷わせない)。
 function spadieDaySections() {
   const byDay = {};
   SPADIE.tournaments.forEach(t => { (byDay[t.day] = byDay[t.day] || []).push(t); });
   return SPADIE.days.map(day => {
     const f = fmtDate(day);
     const list = byDay[day] || [];
-    const sum = list.map(t => `      <tr><td class="no"><a href="#${spadieAnchor(t)}">#${esc(t.no)}</a></td><td class="start">${esc(t.start)}</td><td>${esc(t.name)}${t.flight ? `<br><small>${esc(t.flight)}</small>` : ''}</td><td class="buyin">${esc(t.entry)}</td><td class="buyin">${esc(t.stack)}</td></tr>`).join('\n');
-    return `<h2 class="day" id="day-${day}">${f.m}月${f.d}日（${f.wd}）のトーナメント（${list.length}件）</h2>
-<div class="sched-wrap"><table class="sched">
-  <thead><tr><th>No.</th><th>開始</th><th>トーナメント</th><th>参加費</th><th>スタック</th></tr></thead>
-  <tbody>
-${sum}
-  </tbody>
-</table></div>
-${list.map(spadieCard).join('\n')}`;
+    const lis = list.map(t => {
+      const ev = spadieEventOf(t);
+      const anchor = t.flight ? '#' + t.flight.toLowerCase().replace(/[^a-z0-9]+/g, '') : '';
+      const sub = [t.entry, t.stack !== '—' ? `スタック ${t.stack}` : '', t.prize && t.prize.total ? `Prize ${t.prize.total}` : ''].filter(Boolean).join('／');
+      return `  <li><a href="${esc(ev.path + anchor)}"><span class="sp-time">${esc(t.start)}</span><span class="sp-body"><span class="sp-name">#${esc(t.no)} ${esc(t.name)}${t.flight ? `（${esc(t.flight)}）` : ''}</span><span class="sp-sub">${esc(sub)}</span></span><span class="sp-go">詳細 ›</span></a></li>`;
+    }).join('\n');
+    return `<h2 class="day" id="day-${day}">${f.m}月${f.d}日（${f.wd}）（${list.length}件）</h2>
+<ul class="sp-list">
+${lis}
+</ul>`;
   }).join('\n');
 }
-const SPADIE_CSS = `
-  h3.sp-t{font-size:1em;margin:20px 0 6px;color:var(--txt);scroll-margin-top:70px}
-  details.sp-st{margin:4px 0 10px}
-  details.sp-st summary{cursor:pointer;font-size:.86em;font-weight:700;color:var(--gold-ink);padding:6px 0}
-  .sp-daynav{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 14px;padding:0;list-style:none}
-  .sp-daynav a{display:inline-block;padding:5px 10px;border:1px solid var(--bor);border-radius:16px;font-size:.86em;font-weight:700;text-decoration:none;background:var(--sur)}
-`;
 function spadieFaqItems() {
   const xLink = `<a href="${esc(SPADIE_X)}" target="_blank" rel="noopener">公式X（@SPADIE_FUKUOKA）</a>`;
   const n = SPADIE.tournaments.filter(t => !t.flight || t.flight === 'Day 1A').length;
@@ -860,7 +877,7 @@ function spadieFaqItems() {
     },
     {
       q: 'どんなトーナメントがありますか？',
-      aHtml: `メインイベント（#01 NLH Main Event）を含む全${n}イベントが予定されています。参加費は¥5,000〜¥150,000で、NLHのほかPLO、FL 2-7 Triple Draw & Badugi、2人1組のタッグ戦、3人1組のチーム戦、レディース戦、サテライトもあります。日程ごとの詳細は本ページ上部の日別一覧をご覧ください。`,
+      aHtml: `メインイベント（#01 NLH Main Event）を含む全${n}イベントが予定されています。参加費は¥5,000〜¥150,000で、NLHのほかPLO、FL 2-7 Triple Draw & Badugi、2人1組のタッグ戦、3人1組のチーム戦、レディース戦、サテライトもあります。日程ごとの一覧から各トーナメントの専用ページに移動できます。`,
       aText: `メインイベント(#01 NLH Main Event)を含む全${n}イベントが予定されています。参加費は5,000円〜150,000円で、NLHのほかPLO、FL 2-7 Triple Draw & Badugi、タッグ戦、チーム戦、レディース戦、サテライトもあります。`
     },
     {
@@ -918,6 +935,13 @@ function buildSpadie() {
     "url": canonical,
     "isAccessibleForFree": false
   };
+  // 個別ページの一覧(ItemList)。親ページから各トーナメントページへの関係を検索エンジンに伝える。
+  const itemList = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "SPADIE FUKUOKA 1st トーナメント一覧",
+    "itemListElement": SPADIE.events.map((e, i) => ({ "@type": "ListItem", "position": i + 1, "name": `#${e.no} ${e.name}`, "url": SITE + e.path }))
+  };
   const faq = faqBlock(spadieFaqItems(), { headingId: 'spadie-faq' });
   const dayNav = SPADIE.days.map(d => { const f = fmtDate(d); return `<li><a href="#day-${d}">${f.m}/${f.d}（${f.wd}）</a></li>`; }).join('');
   const body = `
@@ -932,7 +956,7 @@ ${SITE_BANNER_SECTION.html}<h1>SPADIE FUKUOKA 1st 全日程（2026年11月12日�
   <b>アクセス</b>　地下鉄空港線 天神駅から徒歩約10分／西鉄福岡（天神）駅から徒歩約11分<br>
   <b>メインイベント</b>　<span class="prize">1,000万円保証</span>（参加費: SPADIEチケット2枚＋¥5,000）
 </div>
-<div class="tba"><b>${SPADIE_AS_OF}時点の公式Players Guideにもとづき、全${nEvents}イベントの詳細を日程ごとに掲載しています。</b>各トーナメントの開始・受付締切・終了予定・参加費・スタック・プライズ・ストラクチャー（全レベル）を確認できます。プライズは公式表記の米ドルで、円の目安は公式シートの仮レート（${SPADIE.fxTemp}円/$）で当サイトが換算したものです（確定額は実施日3日前に発表される固定レートで再計算されます）。深夜開始の大会は、その夜が始まる日の枠に「翌0:00」のように載せています。</div>
+<div class="tba"><b>${SPADIE_AS_OF}時点の公式Players Guideにもとづき、全${nEvents}イベントを日程ごとに掲載しています。</b>トーナメントの行をタップすると、そのトーナメントの専用ページ（開始・受付締切・終了予定・参加費・スタック・プライズ・全レベルのストラクチャー）に移動します。プライズは公式表記の米ドルで、円の目安は公式シートの仮レート（${SPADIE.fxTemp}円/$）で当サイトが換算したものです（確定額は実施日3日前に発表される固定レートで再計算されます）。深夜開始の大会は、その夜が始まる日の枠に「翌0:00」のように載せています。</div>
 <ul class="sp-daynav">${dayNav}</ul>
 ${spadieDaySections()}
 <p class="lead" style="margin-top:14px">※ #34 NLH Employees（11/15 19:00）は本大会の勤務者限定のため掲載していません。プライズは賞金ではなく、対象ポーカートーナメントへの参加補助が受けられる任意の選手契約（委託料）です。ルールはJOPT Official Ruleが採用されています。</p>
@@ -948,7 +972,126 @@ ${adCard()}
   ▶ <a href="/">福岡の他のポーカートーナメント日程を見る</a>
 </div>
 ${faq.script}`;
-  return pageHead({ title, desc, canonical, jsonld, image, extraCss: FAQ_CSS + ADCARD_CSS + BANNER_CSS + SPADIE_CSS, breadcrumb: pageBreadcrumb('spadie', canonical) }) + body + pageFoot('/events/spadie-fukuoka-1st/');
+  return pageHead({ title, desc, canonical, jsonld: [jsonld, itemList], image, extraCss: FAQ_CSS + ADCARD_CSS + BANNER_CSS + SPADIE_CSS, breadcrumb: pageBreadcrumb('spadie', canonical) }) + body + pageFoot('/events/spadie-fukuoka-1st/');
+}
+
+
+// ---- SPADIE トーナメント個別ページ(/events/spadie-fukuoka-1st/<slug>/。2026-11-12) ----
+// 全日程ページに39件の詳細を縦に並べると「どこを押せばいいか分からない」「上に戻るのが大変」だったため
+// (運営指摘)、1トーナメント=1ページに分けた。全日程ページの各行はここへの行リンク。
+// SEO: 「SPADIE FUKUOKA <トーナメント名>」「<トーナメント名> ストラクチャー」等の個別検索を受けるため、
+//   title/description/H1 にトーナメント名・日時・参加費・プライズを入れ、Event構造化データ
+//   (superEvent=SPADIE FUKUOKA 1st)とパンくず(4階層)を持たせる。sitemap.xml にも載せる(gen-sitemap.js)。
+function spadieStructureBlocks(ev) {
+  // 同じストラクチャーのフライトは1つの表にまとめる(Main Event の Day 1A〜1C 等)。
+  const groups = [];
+  ev.flights.forEach(t => {
+    const key = JSON.stringify(t.structure);
+    const g = groups.find(x => x.key === key);
+    if (g) g.flights.push(t); else groups.push({ key, st: t.structure, flights: [t] });
+  });
+  return groups.map(g => {
+    const label = ev.flights.length > 1 ? `（${g.flights.map(t => t.flight).join('・')}）` : '';
+    return `<h2 class="day">ブラインドストラクチャー${esc(label)}</h2>
+<p class="lead">${spadieStructSummary(g.st)}</p>
+${spadieStructureTable(g.st)}`;
+  }).join('\n');
+}
+function spadieOneDetailTable(t, ev) {
+  const p = t.prize || {};
+  const extra = (p.extra || []).map(x => `    <tr><th>賞品</th><td>${esc(x)}</td></tr>`).join('\n');
+  return `<div class="sched-wrap"><table class="sched">
+  <tbody>
+    <tr><th>開始</th><td>${esc(spadieWhen(t))}</td></tr>
+    <tr><th>受付</th><td>${spadieRegText(t)}</td></tr>
+    <tr><th>終了予定</th><td>${esc(t.end || '—')}</td></tr>
+    <tr><th>参加費</th><td>${esc(t.entry)}</td></tr>
+    <tr><th>スタック</th><td>${esc(t.stack)}</td></tr>
+    <tr><th>プライズ</th><td class="fst-prize">${spadiePrizeHtml(p)}</td></tr>
+${extra ? extra + '\n' : ''}    <tr><th>ストラクチャー</th><td>${spadieStructSummary(t.structure)}<br><small><a href="#structure">全レベルの表を見る ↓</a></small></td></tr>
+${t.notes && t.notes.length ? `    <tr><th>備考</th><td>${t.notes.map(esc).join('<br>')}</td></tr>\n` : ''}    <tr><th>会場</th><td>${esc(SPADIE.venue)}（${esc(SPADIE.address)}）</td></tr>
+  </tbody>
+</table></div>`;
+}
+function spadieFlightsTable(ev) {
+  return `<h2 class="day">フライト別の日程</h2>
+<div class="sched-wrap"><table class="sched">
+  <thead><tr><th>フライト</th><th>開始</th><th>受付</th><th>終了予定</th></tr></thead>
+  <tbody>
+${ev.flights.map(t => `    <tr id="${t.flight.toLowerCase().replace(/[^a-z0-9]+/g, '')}"><td class="no">${esc(t.flight)}</td><td>${esc(spadieWhen(t))}</td><td>${spadieRegText(t)}</td><td>${esc(t.end || '—')}</td></tr>`).join('\n')}
+  </tbody>
+</table></div>`;
+}
+function buildSpadieEventPage(ev, idx) {
+  const base = `${SITE}${SPADIE.basePath}`;
+  const canonical = `${SITE}${ev.path}`;
+  const image = 'img/spadie/spadie-og.jpg';
+  const t0 = ev.flights[0];
+  const tl = ev.flights[ev.flights.length - 1];
+  const p = t0.prize || {};
+  const multi = ev.flights.length > 1;
+  const f0 = fmtDate(t0.day);
+  const whenShort = multi
+    ? `${f0.m}/${f0.d}〜${fmtDate(tl.day).m}/${fmtDate(tl.day).d}`
+    : `${f0.m}/${f0.d} ${t0.start.replace('翌', '翌')}`;
+  const prizeShort = p.seat ? p.seat.replace(/（.*?）/g, '') : `Prize Total ${p.total}（${spadieYen(p.total)}）`;
+  const title = `${ev.name}（#${ev.no}）SPADIE FUKUOKA 1st ${whenShort} 参加費・ストラクチャー | ふくおかポーカーナビ`;
+  const desc = `SPADIE FUKUOKA 1st（福岡・大名 UNITEDLAB）の #${ev.no} ${ev.name}。`
+    + `${multi ? `Day 1は${ev.flights.filter(t => /Day 1/.test(t.flight)).length}フライト、` : `${spadieWhen(t0)}開始、`}参加費${t0.entry}、スタック${t0.stack}、${prizeShort}。`
+    + '受付締切・終了予定・全レベルのブラインドストラクチャーを公式Players Guideからまとめています。';
+  const cash = cashOffer(`#${ev.no} ${ev.name}`, String(t0.entry).replace(/（.*?）/g, ''), SPADIE.scheduleUrl);
+  const jsonld = {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    "name": `SPADIE FUKUOKA 1st #${ev.no} ${ev.name}`,
+    "image": abs(image),
+    "startDate": spadieStartIso(t0),
+    "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+    "eventStatus": "https://schema.org/EventScheduled",
+    "location": {
+      "@type": "Place",
+      "name": "UNITEDLAB",
+      "address": { "@type": "PostalAddress", "streetAddress": "大名1-3-36", "addressRegion": "福岡県", "addressLocality": "福岡市中央区", "postalCode": "810-0041", "addressCountry": "JP" }
+    },
+    "superEvent": { "@type": "Event", "name": "SPADIE FUKUOKA 1st", "url": base, "startDate": BIG.eventFirstDay(SPADIE.days), "endDate": BIG.eventLastDay(SPADIE.days) },
+    "description": desc,
+    "url": canonical,
+    "isAccessibleForFree": false
+  };
+  if (cash) jsonld.offers = cash;
+  const breadcrumb = pageBreadcrumb('spadie', base).concat([{ name: `#${ev.no} ${ev.name}`, url: canonical }]);
+  const backHref = `${SPADIE.basePath}#day-${t0.day}`;
+  const prev = SPADIE.events[idx - 1], next = SPADIE.events[idx + 1];
+  const pn = `<nav class="sp-pn" aria-label="前後のトーナメント">
+  ${prev ? `<a href="${esc(prev.path)}"><small>‹ 前のトーナメント</small>#${esc(prev.no)} ${esc(prev.name)}</a>` : '<span></span>'}
+  ${next ? `<a class="nx" href="${esc(next.path)}"><small>次のトーナメント ›</small>#${esc(next.no)} ${esc(next.name)}</a>` : '<span></span>'}
+</nav>`;
+  const sameDay = SPADIE.events.filter(e => e !== ev && e.flights.some(t => t.day === t0.day));
+  const guides = t0.guide.map((g, i) => `<a href="${esc(SPADIE.guideImgBase + g + '.webp')}" target="_blank" rel="noopener">公式シート画像${t0.guide.length > 1 ? (i + 1) : ''}</a>`).join('・');
+  const body = `
+${SITE_BANNER_SECTION.html}<a class="sp-back" href="${esc(backHref)}">‹ SPADIE FUKUOKA 1st 全日程に戻る</a>
+<h1>#${esc(ev.no)} ${esc(ev.name)}（SPADIE FUKUOKA 1st）</h1>
+<p class="lead">${multi ? `${f0.m}月${f0.d}日〜${fmtDate(tl.day).m}月${fmtDate(tl.day).d}日（全${ev.flights.length}フライト）` : esc(spadieWhen(t0)) + '開始'}／UNITEDLAB（福岡市中央区大名）</p>
+${multi ? spadieFlightsTable(ev) : ''}
+<h2 class="day">トーナメント概要</h2>
+${multi ? spadieOneDetailTable(Object.assign({}, t0, { start: t0.start, end: '各フライトの表を参照' }), ev).replace(/<tr><th>開始<\/th>.*?<\/tr>\n\s*<tr><th>受付<\/th>.*?<\/tr>\n/s, '') : spadieOneDetailTable(t0, ev)}
+<div id="structure"></div>
+${spadieStructureBlocks(ev)}
+<p class="lead" style="margin-top:10px">出典: <a href="${esc(SPADIE.scheduleUrl)}" target="_blank" rel="noopener">SPADIE FUKUOKA 公式トーナメントリスト</a>・${guides}（${esc(SPADIE_AS_OF)}時点）。プライズは公式表記の米ドルで、円は公式シートの仮レートによる目安です。</p>
+${pn}
+${sameDay.length ? `<h2 class="day">同じ日（${f0.m}/${f0.d}）のほかのトーナメント</h2>
+<ul class="sp-list">
+${sameDay.map(e => { const t = e.flights.find(x => x.day === t0.day); return `  <li><a href="${esc(e.path)}"><span class="sp-time">${esc(t.start)}</span><span class="sp-body"><span class="sp-name">#${esc(e.no)} ${esc(e.name)}${t.flight ? `（${esc(t.flight)}）` : ''}</span><span class="sp-sub">${esc(t.entry)}</span></span><span class="sp-go">詳細 ›</span></a></li>`; }).join('\n')}
+</ul>` : ''}
+<a class="sp-back" href="${esc(backHref)}">‹ SPADIE FUKUOKA 1st 全日程に戻る</a>
+${adCard()}
+<div class="disclaimer">当サイトはSPADIE FUKUOKA 1stの主催者・公式媒体ではありません。公式Players Guide（画像で公開されているシート）を当サイトが転記した<b>非公式のまとめ</b>で、転記の誤りが含まれる可能性があります。プライズは賞金ではなく、対象ポーカートーナメントへの参加補助が受けられる任意の選手契約（委託料）です。参加前に必ず公式情報をご確認ください。<br>${POSITIONING}</div>`;
+  return pageHead({ title, desc, canonical, jsonld, image, extraCss: ADCARD_CSS + BANNER_CSS + SPADIE_CSS, breadcrumb }) + body + pageFoot(ev.path);
+}
+function spadieEventFiles() {
+  const out = {};
+  SPADIE.events.forEach((ev, i) => { out[ev.path.replace(/^\//, '') + 'index.html'] = buildSpadieEventPage(ev, i); });
+  return out;
 }
 
 // ---- 大型大会: 日程(トーナメント別スケジュール)が未発表の日の書き方(2026-11-12・運営の恒久ルール) ----
@@ -1150,6 +1293,7 @@ const files = {
   'events/nippon-series-2026-fukuoka/index.html': buildNippon(),
   'events/fst-2026-fukuoka/index.html': buildFst(),
   'events/spadie-fukuoka-1st/index.html': buildSpadie(),
+  ...spadieEventFiles(),   // トーナメント個別ページ(35件)
   'events/fst-kitakyushu-2027/index.html': buildFstKitakyushu(),
   'index.html': buildIndexHtml(),     // 恒久リンク行(#evtLinks)だけを差し替えたもの
   // sitemap.xml の中身は tools/gen-sitemap.js が決める(このスクリプトは組み立てない)。

@@ -40,11 +40,22 @@ const SB = require('../site-banner.js');
 // 1. visibleSiteBanners(): 連結順
 // ============================================================
 
-test('visibleSiteBanners(): 単発/常設プロモ → 大型大会 → 掲載店舗募集 の順で連結される', () => {
-  // FST 5.0(2026-09-19〜23)の掲載ウィンドウ内(2026-09-20)を使う。
-  // このタイミングでは常設プロモ(dream-saturday-tournament)・FST・掲載店舗募集の3件が揃う。
+test('visibleSiteBanners(): 大型大会の開催中は、店舗プロモより大型大会が先頭(2026-11-12〜)', () => {
+  // FST 5.0(2026-09-19〜23)の会期中(2026-09-20)。開催中なので FST が常設プロモより前に来る。
   const ids = SB.visibleSiteBanners('2026-09-20').map(e => e.id);
-  assert.deepEqual(ids, ['dream-saturday-tournament', 'fst', 'listing-recruit']);
+  assert.deepEqual(ids, ['fst', 'dream-saturday-tournament', 'listing-recruit']);
+});
+
+test('visibleSiteBanners(): 開催前(まもなく)の大型大会は店舗プロモの後ろ', () => {
+  // FST 5.0 の掲載ウィンドウ内だが会期前(2026-09-10)。
+  const ids = SB.visibleSiteBanners('2026-09-10').map(e => e.id);
+  assert.ok(ids.indexOf('fst') > ids.indexOf('dream-saturday-tournament'), ids.join(','));
+  assert.equal(ids[ids.length - 1], 'listing-recruit');
+});
+
+test('visibleSiteBanners(): SPADIE開催中(2026-11-12)はSPADIEが先頭', () => {
+  const ids = SB.visibleSiteBanners('2026-11-12').map(e => e.id);
+  assert.equal(ids[0], 'spadie', ids.join(','));
 });
 
 test('visibleSiteBanners(): 大型大会が0件の日でも、常設プロモ・掲載店舗募集はそのまま出る', () => {

@@ -33,7 +33,8 @@
  *
  * ■ トップページ(index.html)側の使い方
  *   renderBigEventBanner() が visiblePromoBanners() の結果を visibleBigEvents() の
- *   【結果の先頭に連結】して描画する。「常に大型大会より先頭(1枚目)」はこの連結順で実現している
+ *   前に連結して描画する。ただし2026-11-12以降、【開催中の大型大会だけはプロモより先頭】
+ *   (site-banner.js の visibleSiteBanners() 参照)。まもなく・終了の大型大会よりは引き続き先頭
  *   (visibleBigEvents() 側の開催中/まもなく/終了の並び替えロジックには一切手を入れない)。
  *   バナー1枚分のHTML生成(bigEventBannerHtml())・横スライド機構
  *   (.evtCarousel/.ec-slide/initBigEventCarousel())はどちらも index.html 側の既存の仕組みを

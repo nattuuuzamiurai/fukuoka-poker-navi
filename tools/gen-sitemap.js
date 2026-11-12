@@ -159,6 +159,21 @@ function buildSitemap(REPO) {
       ...EVENT
     }));
 
+  // 大型イベントのトーナメント個別ページ(2026-11-12〜。SPADIE FUKUOKA 1st)。データファイルが
+  // `events`(path を持つ個別ページの一覧)を公開している大会だけ載せる。lastmod は親ページと同じ組み合わせ。
+  BIG.BIG_EVENTS.forEach(e => {
+    (EVENT_DATA_FILES[e.id] || []).forEach(f => {
+      let mod = null;
+      try { mod = require(path.join(REPO, f)); } catch (err) { return; }
+      if (!mod || !Array.isArray(mod.events)) return;
+      mod.events.filter(ev => ev && ev.path && ev.path.startsWith('/events/')).forEach(ev => urls.push({
+        loc: SITE + ev.path,
+        lastmod: lastmodFor(['big-events.js', ...(EVENT_DATA_FILES[e.id] || [])]),
+        ...EVENT
+      }));
+    });
+  });
+
   // 単発の店舗プロモーションページ(promo-banners.js。2026-09-02追加): 静的ページを持つものだけ。
   // BIG_EVENTSと同じ理由(掲載中/終了で出し分けない。上記「changefreq/priorityを日付で変えない理由」参照)で、
   // 掲載ウィンドウ(visiblePromoBanners)には縛られず、レジストリにある間は常にsitemapへ載せ続ける。

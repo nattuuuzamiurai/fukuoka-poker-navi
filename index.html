@@ -1081,7 +1081,7 @@
 <main class="wrap">
   <div id="page-list">
     <!-- 大型イベント(big-events.js)＋単発の店舗プロモーション(promo-banners.js)のバナー。
-         renderBigEventBanner() が両レジストリから描画する(プロモは常に先頭)。
+         renderBigEventBanner() が両レジストリから描画する(開催中の大型大会 → プロモ → その他の大型大会)。
          0件=空(領域ごと非表示) / 1件=バナー1枚 / 2件以上=横スライド(カルーセル)。中身はJS生成。 -->
     <div class="shead">
       <!-- ★この見出しの文言・高さは変えないこと。README「トップのバナーの見せ方」の
@@ -2719,8 +2719,8 @@
   // すべて出す。0件のことも複数件のこともある(big-events.js の説明を参照)。
   // 並び順(開催中→まもなく→終了)の決定は big-events.js の visibleBigEvents() に一本化する。
   //
-  // 【単発/常設プロモ(promo-banners.js)は常に大型大会より先頭、掲載店舗募集(listing-banner.js)
-  //   は常に最後尾】この連結(promos → 大型大会 → 掲載店舗募集)は site-banner.js の
+  // 【開催中の大型大会 → 単発/常設プロモ(promo-banners.js) → それ以外の大型大会 → 掲載店舗募集
+  //   (listing-banner.js)の順(2026-11-12〜。それまではプロモが常に先頭)】この連結は site-banner.js の
   //   visibleSiteBanners() に一本化した(2026-09-26。店舗ページ等の静的ページ・このページ内
   //   SPAの店舗詳細ビュー(renderVenuePage)からも同じ順序で同じ内容を出すため)。
   //   BIG_EVENTSに混ぜない理由は promo-banners.js 冒頭のコメントを参照。
