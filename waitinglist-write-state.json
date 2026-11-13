@@ -66,22 +66,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M5C7W2WHN45JXMDNMSWDQ8ER": {
-      "id": "wl-01M5C7W2WHN45JXMDNMSWDQ8ER",
-      "venueId": "v19",
-      "name": "FREEZE OUT TOURNAMENT",
-      "date": "2026-11-12",
-      "start": "18:30",
-      "buyin": 3000,
-      "addon": null,
-      "stack": 30000,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M5C7W2WHRRN7BRDA5PERXY2D": {
       "id": "wl-01M5C7W2WHRRN7BRDA5PERXY2D",
       "venueId": "v19",
@@ -1288,24 +1272,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M6AMBVWARAJXH3EKN7HQ2TJQ": {
-      "id": "wl-01M6AMBVWARAJXH3EKN7HQ2TJQ",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-11-12",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M6AMBVWARDDFZG2JY05XD2AD": {
       "id": "wl-01M6AMBVWARDDFZG2JY05XD2AD",
       "venueId": "v27",
@@ -1467,24 +1433,6 @@
       "venueId": "v27",
       "name": "ディープスタックターボ",
       "date": "2026-11-26",
-      "start": "19:00",
-      "buyin": 5000,
-      "addon": 5000,
-      "stack": 50000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M6ARDRESFZSAMG5V51H17Q4C": {
-      "id": "wl-01M6ARDRESFZSAMG5V51H17Q4C",
-      "venueId": "v27",
-      "name": "ディープスタックターボ",
-      "date": "2026-11-12",
       "start": "19:00",
       "buyin": 5000,
       "addon": 5000,
