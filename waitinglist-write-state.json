@@ -150,24 +150,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M5VHXBP7FDY7Q3STJQMKVZSY": {
-      "id": "wl-01M5VHXBP7FDY7Q3STJQMKVZSY",
-      "venueId": "v3",
-      "name": "ｍ Hyper Deep Turbo",
-      "date": "2026-11-13",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": null,
-      "stack": 100000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M5VJMS9HDDDA3B4247G0FMA5": {
       "id": "wl-01M5VJMS9HDDDA3B4247G0FMA5",
       "venueId": "v3",
@@ -207,22 +189,6 @@
       "venueId": "v3",
       "name": "m FT Bounty",
       "date": "2026-11-14",
-      "start": "18:00",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M5VJSH9V4H88GA548RFGFJB4": {
-      "id": "wl-01M5VJSH9V4H88GA548RFGFJB4",
-      "venueId": "v3",
-      "name": "m ORIGIN NEW✨",
-      "date": "2026-11-13",
       "start": "18:00",
       "buyin": 4000,
       "addon": null,
@@ -1295,24 +1261,6 @@
       "venueId": "v27",
       "name": "ヘッズアップ〜DOJO破り〜",
       "date": "2026-11-21",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M6AMBVWAXNJBF6Y59ZT5RE6R": {
-      "id": "wl-01M6AMBVWAXNJBF6Y59ZT5RE6R",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-11-13",
       "start": "12:00",
       "buyin": 5000,
       "addon": null,
