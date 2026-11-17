@@ -35159,7 +35159,7 @@ const TOURNAMENTS = [
   {
     "id": "wl-01M4Q1AE7SH119CETB7TNEFR6M",
     "venueId": "v3",
-    "name": "【4K飲み放題！】ｍ Booze up ✨NEW✨",
+    "name": "【4K飲み放題！】ｍ Booze up",
     "date": "2026-11-18",
     "start": "18:00",
     "buyin": 4000,
@@ -35261,7 +35261,7 @@ const TOURNAMENTS = [
   {
     "id": "wl-01M6T46RXHNVFPM0P5WHMZW533",
     "venueId": "v3",
-    "name": "m Monster Stack ✨NEW✨",
+    "name": "m Monster Stack",
     "date": "2026-11-21",
     "start": "13:10",
     "buyin": 4000,
@@ -37079,6 +37079,22 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01M7HS46ASCF84BJZT1BED9MDE",
+    "venueId": "v19",
+    "name": "KO BOUNTY TOURNAMENT",
+    "date": "2026-11-23",
+    "start": "18:10",
+    "buyin": 3000,
+    "addon": null,
+    "stack": 30000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "wl-01M74X7HE5V3RDYKD9KCVBGY41",
     "venueId": "v19",
     "name": "FST Satellite",
@@ -37127,6 +37143,22 @@ const TOURNAMENTS = [
     "tags": [
       "ターボ"
     ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M7HS46AS4JGR2P8QJ2HXCGMG",
+    "venueId": "v19",
+    "name": "KO BOUNTY TOURNAMENT",
+    "date": "2026-11-30",
+    "start": "18:10",
+    "buyin": 3000,
+    "addon": null,
+    "stack": 30000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
     "source": "auto",
     "verified": false
   },
@@ -37183,6 +37215,22 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01M7HS46ASVG469NDSH7YWF680",
+    "venueId": "v19",
+    "name": "KO BOUNTY TOURNAMENT",
+    "date": "2026-12-07",
+    "start": "18:10",
+    "buyin": 3000,
+    "addon": null,
+    "stack": 30000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "wl-01M74X7HE50H4E0T7V2320N9P3",
     "venueId": "v19",
     "name": "FST Satellite",
@@ -37213,6 +37261,22 @@ const TOURNAMENTS = [
     "tags": [
       "ディープ"
     ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M7HS46AS6CFRQA2CJD1VWDJC",
+    "venueId": "v19",
+    "name": "KO BOUNTY TOURNAMENT",
+    "date": "2026-12-14",
+    "start": "18:10",
+    "buyin": 3000,
+    "addon": null,
+    "stack": 30000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
     "source": "auto",
     "verified": false
   },
