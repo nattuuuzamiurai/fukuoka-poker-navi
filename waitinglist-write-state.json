@@ -34,44 +34,12 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M5C7W2WHRRN7BRDA5PERXY2D": {
-      "id": "wl-01M5C7W2WHRRN7BRDA5PERXY2D",
-      "venueId": "v19",
-      "name": "FREEZE OUT TOURNAMENT",
-      "date": "2026-11-19",
-      "start": "18:30",
-      "buyin": 3000,
-      "addon": null,
-      "stack": 30000,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M5VG483S79C0004BYH5E8QC1": {
       "id": "wl-01M5VG483S79C0004BYH5E8QC1",
       "venueId": "v3",
       "name": "✨VS m IBUKI✨",
       "date": "2026-11-20",
       "start": "17:30",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M5VHQWPYA1MWM1TZ54RVKM3H": {
-      "id": "wl-01M5VHQWPYA1MWM1TZ54RVKM3H",
-      "venueId": "v3",
-      "name": "m LIVE LEAGUE season1",
-      "date": "2026-11-19",
-      "start": "18:00",
       "buyin": 4000,
       "addon": null,
       "stack": 40000,
@@ -150,24 +118,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M5W4SE8010VZJCYTJD6S1SHK": {
-      "id": "wl-01M5W4SE8010VZJCYTJD6S1SHK",
-      "venueId": "v3",
-      "name": "ｍ Hyper Deep Turbo",
-      "date": "2026-11-19",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": null,
-      "stack": 100000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M5W4VH9VTRAWNRX8JCSZ362T": {
       "id": "wl-01M5W4VH9VTRAWNRX8JCSZ362T",
       "venueId": "v3",
@@ -235,22 +185,6 @@
       "tags": [
         "ターボ"
       ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M61FPPC0EAXS6MDAKPB01P78": {
-      "id": "wl-01M61FPPC0EAXS6MDAKPB01P78",
-      "venueId": "v3",
-      "name": "m ORIGIN NEW✨",
-      "date": "2026-11-23",
-      "start": "18:00",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
       "source": "auto",
       "verified": false
     },
@@ -944,24 +878,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M6AMBVWAN383W3HPXWB3MNTW": {
-      "id": "wl-01M6AMBVWAN383W3HPXWB3MNTW",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-11-19",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M6AMBVWAWZQRZ2QSPJS0M6MF": {
       "id": "wl-01M6AMBVWAWZQRZ2QSPJS0M6MF",
       "venueId": "v27",
@@ -1011,24 +927,6 @@
       "reentry": true,
       "prize": null,
       "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M6ARDRES0J3Q8ASPFSJ2N28M": {
-      "id": "wl-01M6ARDRES0J3Q8ASPFSJ2N28M",
-      "venueId": "v27",
-      "name": "ディープスタックターボ",
-      "date": "2026-11-19",
-      "start": "19:00",
-      "buyin": 5000,
-      "addon": 5000,
-      "stack": 50000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
       "source": "auto",
       "verified": false
     },
@@ -1534,22 +1432,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M7MD6Z9T2ACGXHRYQTD2CX7J": {
-      "id": "wl-01M7MD6Z9T2ACGXHRYQTD2CX7J",
-      "venueId": "v22",
-      "name": "LFES サテライト",
-      "date": "2026-11-19",
-      "start": "19:00",
-      "buyin": 3000,
-      "addon": 3000,
-      "stack": 20000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M7MD909H066XSYH3QSAN330A": {
       "id": "wl-01M7MD909H066XSYH3QSAN330A",
       "venueId": "v22",
@@ -1595,6 +1477,22 @@
       "buyin": 3000,
       "addon": 3000,
       "stack": 20000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M7T8GFP5HSRQGYX126WWGVG4": {
+      "id": "wl-01M7T8GFP5HSRQGYX126WWGVG4",
+      "venueId": "v3",
+      "name": "m Magic",
+      "date": "2026-11-23",
+      "start": "18:00",
+      "buyin": 4000,
+      "addon": null,
+      "stack": 40000,
       "guarantee": null,
       "reentry": true,
       "prize": null,

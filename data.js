@@ -35463,9 +35463,9 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
-    "id": "wl-01M61FPPC0EAXS6MDAKPB01P78",
+    "id": "wl-01M7T8GFP5HSRQGYX126WWGVG4",
     "venueId": "v3",
-    "name": "m ORIGIN NEW✨",
+    "name": "m Magic",
     "date": "2026-11-23",
     "start": "18:00",
     "buyin": 4000,
