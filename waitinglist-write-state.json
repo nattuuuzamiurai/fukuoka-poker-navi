@@ -52,22 +52,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M5VJX1PGEJPVW94P9ZQ8X129": {
-      "id": "wl-01M5VJX1PGEJPVW94P9ZQ8X129",
-      "venueId": "v3",
-      "name": "m VAULT",
-      "date": "2026-11-21",
-      "start": "17:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M5VK1H2AX44XTBWVTKN1K4CD": {
       "id": "wl-01M5VK1H2AX44XTBWVTKN1K4CD",
       "venueId": "v3",
@@ -81,24 +65,6 @@
       "reentry": true,
       "prize": null,
       "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M5VYWGZD4P24AJH4K5RFE7QT": {
-      "id": "wl-01M5VYWGZD4P24AJH4K5RFE7QT",
-      "venueId": "v3",
-      "name": "m DICE Poker Turbo",
-      "date": "2026-11-21",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": 1000,
-      "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
       "source": "auto",
       "verified": false
     },
@@ -808,24 +774,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M6AMBVWAWZQRZ2QSPJS0M6MF": {
-      "id": "wl-01M6AMBVWAWZQRZ2QSPJS0M6MF",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-11-21",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M6AMBVWAZHCZAG4NSTKPVB1Q": {
       "id": "wl-01M6AMBVWAZHCZAG4NSTKPVB1Q",
       "venueId": "v27",
@@ -945,24 +893,6 @@
       "reentry": true,
       "prize": null,
       "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M6AT2P9VFQANGJZYT8RY7W6Y": {
-      "id": "wl-01M6AT2P9VFQANGJZYT8RY7W6Y",
-      "venueId": "v27",
-      "name": "DOJO LEAGUE 第15節 ACE MATCH",
-      "date": "2026-11-21",
-      "start": "14:00",
-      "buyin": 3000,
-      "addon": null,
-      "stack": 50000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
       "source": "auto",
       "verified": false
     },
@@ -1093,24 +1023,6 @@
       "venueId": "v3",
       "name": "m Monster Stack ✨NEW✨",
       "date": "2026-12-12",
-      "start": "13:10",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 60000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M6T46RXHNVFPM0P5WHMZW533": {
-      "id": "wl-01M6T46RXHNVFPM0P5WHMZW533",
-      "venueId": "v3",
-      "name": "m Monster Stack",
-      "date": "2026-11-21",
       "start": "13:10",
       "buyin": 4000,
       "addon": null,
@@ -1262,24 +1174,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M7CDFVD4T82GCF6JCPAV69C5": {
-      "id": "wl-01M7CDFVD4T82GCF6JCPAV69C5",
-      "venueId": "v19",
-      "name": "3000 Deep Stack",
-      "date": "2026-11-21",
-      "start": "16:10",
-      "buyin": 3000,
-      "addon": 2000,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M7CDFVD4Z01HP8G6JXJTZ36W": {
       "id": "wl-01M7CDFVD4Z01HP8G6JXJTZ36W",
       "venueId": "v19",
@@ -1359,24 +1253,6 @@
       "reentry": true,
       "prize": null,
       "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M7MDAFB334M6ZD2PFVRH813W": {
-      "id": "wl-01M7MDAFB334M6ZD2PFVRH813W",
-      "venueId": "v22",
-      "name": "FreeRoll",
-      "date": "2026-11-21",
-      "start": "19:00",
-      "buyin": 0,
-      "addon": 1500,
-      "stack": 20000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
       "source": "auto",
       "verified": false
     },
