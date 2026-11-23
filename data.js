@@ -17762,6 +17762,22 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01M81DJTJX4DGWNYDPZRXT97D8",
+    "venueId": "v22",
+    "name": "サテライト",
+    "date": "2026-11-23",
+    "start": "00:00",
+    "buyin": 3000,
+    "addon": 3000,
+    "stack": 20000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "wl-01M7WDW96EYQEQXZ47PCGR1C03",
     "venueId": "v22",
     "name": "FreeRoll",
