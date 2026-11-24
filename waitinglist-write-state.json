@@ -34,40 +34,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M61FF6P6479VC7ZHW7B7R0Q9": {
-      "id": "wl-01M61FF6P6479VC7ZHW7B7R0Q9",
-      "venueId": "v3",
-      "name": "m WARRIOR",
-      "date": "2026-11-23",
-      "start": "13:10",
-      "buyin": 4500,
-      "addon": null,
-      "stack": 45000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M61FMMNE1G2ABGXP83RJF75V": {
-      "id": "wl-01M61FMMNE1G2ABGXP83RJF75V",
-      "venueId": "v3",
-      "name": "⚔ VS m Turbo ⚔",
-      "date": "2026-11-23",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": 1000,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M61FQMV5CEE3Y84HGKSRFCBZ": {
       "id": "wl-01M61FQMV5CEE3Y84HGKSRFCBZ",
       "venueId": "v3",
@@ -704,24 +670,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M6AMBVWAZHCZAG4NSTKPVB1Q": {
-      "id": "wl-01M6AMBVWAZHCZAG4NSTKPVB1Q",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-11-23",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M6APTNM2K4170ERXKGZX3S71": {
       "id": "wl-01M6APTNM2K4170ERXKGZX3S71",
       "venueId": "v27",
@@ -822,24 +770,6 @@
       "prize": null,
       "tags": [
         "ディープ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M6AVC5VF4RQ23HV0C7ZHJ689": {
-      "id": "wl-01M6AVC5VF4RQ23HV0C7ZHJ689",
-      "venueId": "v27",
-      "name": "DOJO PLO トナメ",
-      "date": "2026-11-23",
-      "start": "19:00",
-      "buyin": 3000,
-      "addon": 3000,
-      "stack": 30000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "PLO"
       ],
       "source": "auto",
       "verified": false
@@ -1100,22 +1030,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M7HS46ASCF84BJZT1BED9MDE": {
-      "id": "wl-01M7HS46ASCF84BJZT1BED9MDE",
-      "venueId": "v19",
-      "name": "KO BOUNTY TOURNAMENT",
-      "date": "2026-11-23",
-      "start": "18:10",
-      "buyin": 3000,
-      "addon": null,
-      "stack": 30000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M7HS46ASVG469NDSH7YWF680": {
       "id": "wl-01M7HS46ASVG469NDSH7YWF680",
       "venueId": "v19",
@@ -1125,22 +1039,6 @@
       "buyin": 3000,
       "addon": null,
       "stack": 30000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M7T8GFP5HSRQGYX126WWGVG4": {
-      "id": "wl-01M7T8GFP5HSRQGYX126WWGVG4",
-      "venueId": "v3",
-      "name": "m Magic",
-      "date": "2026-11-23",
-      "start": "18:00",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
       "guarantee": null,
       "reentry": true,
       "prize": null,
@@ -1439,40 +1337,6 @@
       "tags": [
         "ターボ"
       ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M7WDW96EYQEQXZ47PCGR1C03": {
-      "id": "wl-01M7WDW96EYQEQXZ47PCGR1C03",
-      "venueId": "v22",
-      "name": "FreeRoll",
-      "date": "2026-11-23",
-      "start": "19:00",
-      "buyin": 0,
-      "addon": 1500,
-      "stack": 20000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M81DJTJX4DGWNYDPZRXT97D8": {
-      "id": "wl-01M81DJTJX4DGWNYDPZRXT97D8",
-      "venueId": "v22",
-      "name": "サテライト",
-      "date": "2026-11-23",
-      "start": "00:00",
-      "buyin": 3000,
-      "addon": 3000,
-      "stack": 20000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
       "source": "auto",
       "verified": false
     }
