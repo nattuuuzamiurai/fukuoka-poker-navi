@@ -2,22 +2,6 @@
   "version": 1,
   "writtenBy": "tools/monitor-instagram-apify.js",
   "entries": {
-    "ig-v18-2026-11-24-nostart-1k": {
-      "id": "ig-v18-2026-11-24-nostart-1k",
-      "venueId": "v18",
-      "name": "1Kトナメ",
-      "date": "2026-11-24",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
     "ig-v18-2026-11-25-nostart-deep": {
       "id": "ig-v18-2026-11-25-nostart-deep",
       "venueId": "v18",
@@ -50,25 +34,6 @@
       "prize": null,
       "tags": [
         "特別開催"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v20-2026-11-24-nostart-satelite": {
-      "id": "ig-v20-2026-11-24-nostart-satelite",
-      "venueId": "v20",
-      "name": "SATELITE",
-      "date": "2026-11-24",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "サテライト",
-        "FST"
       ],
       "source": "semi",
       "verified": false
@@ -122,38 +87,6 @@
       "tags": [
         "ディープ"
       ],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v35-2026-11-23-1730-aki": {
-      "id": "ig-v35-2026-11-23-1730-aki",
-      "venueId": "v35",
-      "name": "討伐●AKI●●",
-      "date": "2026-11-23",
-      "start": "17:30",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": "late",
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v35-2026-11-24-1915-800-highroller-eflipout": {
-      "id": "ig-v35-2026-11-24-1915-800-highroller-eflipout",
-      "venueId": "v35",
-      "name": "$800 HighRoller -eFLIPOUT-",
-      "date": "2026-11-24",
-      "start": "19:15",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": "late",
-      "prize": null,
-      "tags": [],
       "source": "semi",
       "verified": false
     },
@@ -271,41 +204,6 @@
       "prize": null,
       "tags": [
         "フリーロール"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v40-2026-11-23-nostart-post": {
-      "id": "ig-v40-2026-11-23-nostart-post",
-      "venueId": "v40",
-      "name": "ビックマッチ",
-      "date": "2026-11-23",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v40-2026-11-24-nostart-plo": {
-      "id": "ig-v40-2026-11-24-nostart-plo",
-      "venueId": "v40",
-      "name": "フリロPLOトナメ",
-      "date": "2026-11-24",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "フリーロール",
-        "PLO"
       ],
       "source": "semi",
       "verified": false
