@@ -34,22 +34,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M61FQMV5CEE3Y84HGKSRFCBZ": {
-      "id": "wl-01M61FQMV5CEE3Y84HGKSRFCBZ",
-      "venueId": "v3",
-      "name": "m LIVE LEAGUE season1",
-      "date": "2026-11-24",
-      "start": "18:00",
-      "buyin": 4000,
-      "addon": null,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M61FQMVQG3XF0ZY8D80F6NPN": {
       "id": "wl-01M61FQMVQG3XF0ZY8D80F6NPN",
       "venueId": "v3",
@@ -233,24 +217,6 @@
       "venueId": "v3",
       "name": "m Super Hold'em Turbo",
       "date": "2026-11-25",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": 1000,
-      "stack": 25000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M61G1VD7NHS5SEMC3QW39KNE": {
-      "id": "wl-01M61G1VD7NHS5SEMC3QW39KNE",
-      "venueId": "v3",
-      "name": "m Bounty Turbo",
-      "date": "2026-11-24",
       "start": "21:00",
       "buyin": 2500,
       "addon": 1000,
@@ -616,24 +582,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M6AMBVWAJ89K1M88GPE8FSW0": {
-      "id": "wl-01M6AMBVWAJ89K1M88GPE8FSW0",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-11-24",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M6AMBVWAJYM4ZJ7Y9RPV7S1S": {
       "id": "wl-01M6AMBVWAJYM4ZJ7Y9RPV7S1S",
       "venueId": "v27",
@@ -667,22 +615,6 @@
       "tags": [
         "ターボ"
       ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M6APTNM2K4170ERXKGZX3S71": {
-      "id": "wl-01M6APTNM2K4170ERXKGZX3S71",
-      "venueId": "v27",
-      "name": "ミステリーバウンティ",
-      "date": "2026-11-24",
-      "start": "19:00",
-      "buyin": 4000,
-      "addon": 4000,
-      "stack": 30000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
       "source": "auto",
       "verified": false
     },
@@ -1337,6 +1269,70 @@
       "tags": [
         "ターボ"
       ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M86C7PFG55QNHJGFRMGVTN7V": {
+      "id": "wl-01M86C7PFG55QNHJGFRMGVTN7V",
+      "venueId": "v19",
+      "name": "FST Satellite",
+      "date": "2026-12-15",
+      "start": "18:30",
+      "buyin": 3000,
+      "addon": 1000,
+      "stack": 30000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M86C7PFG98XFB5QYAGRD8V6W": {
+      "id": "wl-01M86C7PFG98XFB5QYAGRD8V6W",
+      "venueId": "v19",
+      "name": "FST Satellite",
+      "date": "2026-12-01",
+      "start": "18:30",
+      "buyin": 3000,
+      "addon": 1000,
+      "stack": 30000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M86C7PFGEM7MMQ0D20Y3CV0C": {
+      "id": "wl-01M86C7PFGEM7MMQ0D20Y3CV0C",
+      "venueId": "v19",
+      "name": "FST Satellite",
+      "date": "2026-12-08",
+      "start": "18:30",
+      "buyin": 3000,
+      "addon": 1000,
+      "stack": 30000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M86C7PFGQK94SF9GFFNHDW3G": {
+      "id": "wl-01M86C7PFGQK94SF9GFFNHDW3G",
+      "venueId": "v19",
+      "name": "FST Satellite",
+      "date": "2026-12-22",
+      "start": "18:30",
+      "buyin": 3000,
+      "addon": 1000,
+      "stack": 30000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [],
       "source": "auto",
       "verified": false
     }
