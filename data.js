@@ -17796,6 +17796,108 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01M898S67BS2D56DEA906M3563",
+    "venueId": "v22",
+    "name": "FreeRoll",
+    "date": "2026-11-26",
+    "start": "19:00",
+    "buyin": 0,
+    "addon": 1000,
+    "stack": 20000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M898VV3P9K0JJ9A1RBGVZ9RC",
+    "venueId": "v22",
+    "name": "LFES サテライト",
+    "date": "2026-11-27",
+    "start": "19:00",
+    "buyin": 3000,
+    "addon": 3000,
+    "stack": 20000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M8999WPNBSJ535S4C2N4KK4A",
+    "venueId": "v22",
+    "name": "FreeRoll",
+    "date": "2026-11-28",
+    "start": "15:00",
+    "buyin": 0,
+    "addon": 1000,
+    "stack": 20000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M8995YS78T688F086PVCH7TM",
+    "venueId": "v22",
+    "name": "LFES サテライト",
+    "date": "2026-11-28",
+    "start": "19:00",
+    "buyin": 3000,
+    "addon": 3000,
+    "stack": 20000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M899ATCNXA7X68SPH341KKSX",
+    "venueId": "v22",
+    "name": "FreeRoll",
+    "date": "2026-11-29",
+    "start": "15:00",
+    "buyin": 0,
+    "addon": 1000,
+    "stack": 20000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [
+      "ターボ"
+    ],
+    "source": "auto",
+    "verified": false
+  },
+  {
+    "id": "wl-01M8997D5N78B5DQM2TYVMZ0MA",
+    "venueId": "v22",
+    "name": "LFES サテライト",
+    "date": "2026-11-29",
+    "start": "19:00",
+    "buyin": 3000,
+    "addon": 3000,
+    "stack": 20000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "s70712",
     "venueId": "v25",
     "name": "GⅡ ブランドGETトーナメント",
@@ -23332,24 +23434,6 @@ const TOURNAMENTS = [
     "buyin": 5000,
     "addon": null,
     "stack": 15000,
-    "guarantee": null,
-    "reentry": true,
-    "prize": null,
-    "tags": [
-      "ターボ"
-    ],
-    "source": "auto",
-    "verified": false
-  },
-  {
-    "id": "wl-01M6ARDRES75E8A74NXR68ZKJZ",
-    "venueId": "v27",
-    "name": "ディープスタックターボ",
-    "date": "2026-11-26",
-    "start": "19:00",
-    "buyin": 5000,
-    "addon": 5000,
-    "stack": 50000,
     "guarantee": null,
     "reentry": true,
     "prize": null,

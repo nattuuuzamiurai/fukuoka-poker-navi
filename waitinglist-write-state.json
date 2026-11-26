@@ -18,22 +18,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M4Q1AE7STCBQSXEQ0H0GMKXK": {
-      "id": "wl-01M4Q1AE7STCBQSXEQ0H0GMKXK",
-      "venueId": "v3",
-      "name": "【4K飲み放題！】ｍ Booze up ✨NEW✨",
-      "date": "2026-11-25",
-      "start": "18:00",
-      "buyin": 4000,
-      "addon": 1500,
-      "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M61FQMVQG3XF0ZY8D80F6NPN": {
       "id": "wl-01M61FQMVQG3XF0ZY8D80F6NPN",
       "venueId": "v3",
@@ -203,24 +187,6 @@
       "buyin": 2500,
       "addon": 1000,
       "stack": 40000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M61G13DS6CA86WK1JVTCTAMV": {
-      "id": "wl-01M61G13DS6CA86WK1JVTCTAMV",
-      "venueId": "v3",
-      "name": "m Super Hold'em Turbo",
-      "date": "2026-11-25",
-      "start": "21:00",
-      "buyin": 2500,
-      "addon": 1000,
-      "stack": 25000,
       "guarantee": null,
       "reentry": true,
       "prize": null,
@@ -474,24 +440,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M6AMBVWA6AJB55JY0FBRZ3E7": {
-      "id": "wl-01M6AMBVWA6AJB55JY0FBRZ3E7",
-      "venueId": "v27",
-      "name": "ヘッズアップ〜DOJO破り〜",
-      "date": "2026-11-25",
-      "start": "12:00",
-      "buyin": 5000,
-      "addon": null,
-      "stack": 15000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M6AMBVWA9GW98V471T3WSAQ6": {
       "id": "wl-01M6AMBVWA9GW98V471T3WSAQ6",
       "venueId": "v27",
@@ -618,24 +566,6 @@
       "source": "auto",
       "verified": false
     },
-    "wl-01M6ARDRES75E8A74NXR68ZKJZ": {
-      "id": "wl-01M6ARDRES75E8A74NXR68ZKJZ",
-      "venueId": "v27",
-      "name": "ディープスタックターボ",
-      "date": "2026-11-26",
-      "start": "19:00",
-      "buyin": 5000,
-      "addon": 5000,
-      "stack": 50000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
-      "source": "auto",
-      "verified": false
-    },
     "wl-01M6ARWGAZADJS9GXWQNYYSZTD": {
       "id": "wl-01M6ARWGAZADJS9GXWQNYYSZTD",
       "venueId": "v27",
@@ -667,24 +597,6 @@
       "reentry": true,
       "prize": null,
       "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M6AT7CS1R2KP3WPB9DWFZMAF": {
-      "id": "wl-01M6AT7CS1R2KP3WPB9DWFZMAF",
-      "venueId": "v27",
-      "name": "DOJO LEAGUE 第16節 FREEZEOUT",
-      "date": "2026-11-25",
-      "start": "19:00",
-      "buyin": 3000,
-      "addon": null,
-      "stack": 30000,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "ターボ"
-      ],
       "source": "auto",
       "verified": false
     },
@@ -849,22 +761,6 @@
       "venueId": "v19",
       "name": "FST Satellite",
       "date": "2026-12-02",
-      "start": "18:30",
-      "buyin": 3000,
-      "addon": 1000,
-      "stack": 30000,
-      "guarantee": null,
-      "reentry": true,
-      "prize": null,
-      "tags": [],
-      "source": "auto",
-      "verified": false
-    },
-    "wl-01M74X7HE5V3RDYKD9KCVBGY41": {
-      "id": "wl-01M74X7HE5V3RDYKD9KCVBGY41",
-      "venueId": "v19",
-      "name": "FST Satellite",
-      "date": "2026-11-25",
       "start": "18:30",
       "buyin": 3000,
       "addon": 1000,
@@ -1333,6 +1229,108 @@
       "reentry": true,
       "prize": null,
       "tags": [],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M898S67BS2D56DEA906M3563": {
+      "id": "wl-01M898S67BS2D56DEA906M3563",
+      "venueId": "v22",
+      "name": "FreeRoll",
+      "date": "2026-11-26",
+      "start": "19:00",
+      "buyin": 0,
+      "addon": 1000,
+      "stack": 20000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ターボ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M898VV3P9K0JJ9A1RBGVZ9RC": {
+      "id": "wl-01M898VV3P9K0JJ9A1RBGVZ9RC",
+      "venueId": "v22",
+      "name": "LFES サテライト",
+      "date": "2026-11-27",
+      "start": "19:00",
+      "buyin": 3000,
+      "addon": 3000,
+      "stack": 20000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M8995YS78T688F086PVCH7TM": {
+      "id": "wl-01M8995YS78T688F086PVCH7TM",
+      "venueId": "v22",
+      "name": "LFES サテライト",
+      "date": "2026-11-28",
+      "start": "19:00",
+      "buyin": 3000,
+      "addon": 3000,
+      "stack": 20000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M8997D5N78B5DQM2TYVMZ0MA": {
+      "id": "wl-01M8997D5N78B5DQM2TYVMZ0MA",
+      "venueId": "v22",
+      "name": "LFES サテライト",
+      "date": "2026-11-29",
+      "start": "19:00",
+      "buyin": 3000,
+      "addon": 3000,
+      "stack": 20000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M8999WPNBSJ535S4C2N4KK4A": {
+      "id": "wl-01M8999WPNBSJ535S4C2N4KK4A",
+      "venueId": "v22",
+      "name": "FreeRoll",
+      "date": "2026-11-28",
+      "start": "15:00",
+      "buyin": 0,
+      "addon": 1000,
+      "stack": 20000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ターボ"
+      ],
+      "source": "auto",
+      "verified": false
+    },
+    "wl-01M899ATCNXA7X68SPH341KKSX": {
+      "id": "wl-01M899ATCNXA7X68SPH341KKSX",
+      "venueId": "v22",
+      "name": "FreeRoll",
+      "date": "2026-11-29",
+      "start": "15:00",
+      "buyin": 0,
+      "addon": 1000,
+      "stack": 20000,
+      "guarantee": null,
+      "reentry": true,
+      "prize": null,
+      "tags": [
+        "ターボ"
+      ],
       "source": "auto",
       "verified": false
     }
