@@ -20,22 +20,6 @@
       "source": "semi",
       "verified": false
     },
-    "ig-v20-2026-11-26-nostart-c-entry-tourney": {
-      "id": "ig-v20-2026-11-26-nostart-c-entry-tourney",
-      "venueId": "v20",
-      "name": "C ENTRY TOURNEY",
-      "date": "2026-11-26",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
     "ig-v20-2026-11-28-nostart-deep-stack": {
       "id": "ig-v20-2026-11-28-nostart-deep-stack",
       "venueId": "v20",
@@ -51,22 +35,6 @@
       "tags": [
         "ディープ"
       ],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v35-2026-11-26-1915-gan-cup-free-life": {
-      "id": "ig-v35-2026-11-26-1915-gan-cup-free-life",
-      "venueId": "v35",
-      "name": "GAN CUP Free Life",
-      "date": "2026-11-26",
-      "start": "19:15",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": "late",
-      "prize": null,
-      "tags": [],
       "source": "semi",
       "verified": false
     },
