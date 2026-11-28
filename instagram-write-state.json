@@ -38,22 +38,6 @@
       "source": "semi",
       "verified": false
     },
-    "ig-v35-2026-11-27-1915-post": {
-      "id": "ig-v35-2026-11-27-1915-post",
-      "venueId": "v35",
-      "name": "楽岳杯",
-      "date": "2026-11-27",
-      "start": "19:15",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": "late",
-      "prize": null,
-      "tags": [],
-      "source": "semi",
-      "verified": false
-    },
     "ig-v35-2026-11-28-1815-tournament": {
       "id": "ig-v35-2026-11-28-1815-tournament",
       "venueId": "v35",
@@ -118,25 +102,6 @@
       "prize": null,
       "tags": [
         "フリーロール"
-      ],
-      "source": "semi",
-      "verified": false
-    },
-    "ig-v40-2026-11-27-nostart-fst-satellite": {
-      "id": "ig-v40-2026-11-27-nostart-fst-satellite",
-      "venueId": "v40",
-      "name": "FST北九州SATELLITE",
-      "date": "2026-11-27",
-      "start": "",
-      "buyin": null,
-      "addon": null,
-      "stack": null,
-      "guarantee": null,
-      "reentry": false,
-      "prize": null,
-      "tags": [
-        "サテライト",
-        "FST"
       ],
       "source": "semi",
       "verified": false
