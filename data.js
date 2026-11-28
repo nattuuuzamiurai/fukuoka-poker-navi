@@ -23498,6 +23498,22 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
+    "id": "wl-01M8E4K15GDVC1QJDTBAQ23NNE",
+    "venueId": "v27",
+    "name": "LFESサテライト",
+    "date": "2026-11-28",
+    "start": "17:00",
+    "buyin": 3000,
+    "addon": 3000,
+    "stack": 20000,
+    "guarantee": null,
+    "reentry": true,
+    "prize": null,
+    "tags": [],
+    "source": "auto",
+    "verified": false
+  },
+  {
     "id": "wl-01M6AMBVWAE164FTPYQCSDSNQQ",
     "venueId": "v27",
     "name": "ヘッズアップ〜DOJO破り〜",
@@ -23552,18 +23568,20 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
-    "id": "wl-01M6AS3FYMB8ZJAXZ1XS5HNMJR",
+    "id": "wl-01M8E4MGKK5VADH0VCHXT0NXP2",
     "venueId": "v27",
-    "name": "ルーキー＆学生トナメ",
+    "name": "DOJO PLO トナメ",
     "date": "2026-11-30",
     "start": "19:00",
-    "buyin": 1000,
-    "addon": 1000,
-    "stack": 20000,
+    "buyin": 3000,
+    "addon": 3000,
+    "stack": 30000,
     "guarantee": null,
     "reentry": true,
     "prize": null,
-    "tags": [],
+    "tags": [
+      "PLO"
+    ],
     "source": "auto",
     "verified": false
   },
@@ -36007,20 +36025,18 @@ const TOURNAMENTS = [
     "verified": false
   },
   {
-    "id": "wl-01M639J7623GP1Q8C76AFDMMBV",
+    "id": "wl-01M8EZEQK6GFFATQCPENCBWNMP",
     "venueId": "v3",
-    "name": "m ULTIMA",
+    "name": "m ORIGIN",
     "date": "2026-12-04",
-    "start": "17:10",
+    "start": "18:00",
     "buyin": 4000,
-    "addon": 1000,
+    "addon": null,
     "stack": 40000,
     "guarantee": null,
     "reentry": true,
     "prize": null,
-    "tags": [
-      "ディープ"
-    ],
+    "tags": [],
     "source": "auto",
     "verified": false
   },
